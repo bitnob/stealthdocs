@@ -1,0 +1,28 @@
+---
+title: "Transfer between wallets"
+description: "Transfers between wallets on the same Bitnob account settle instantly, cost no gas, and never touch the chain, using the same request and webhook shapes as external sends."
+related:
+  - /docs/stablecoins/sending-stablecoins
+  - /docs/stablecoins/webhooks
+---
+
+When both sides of a transfer are wallets on your Bitnob account, the value moves on the internal ledger instead of the blockchain: no gas, no confirmation wait, instant settlement. The request and [webhook](/docs/stablecoins/webhooks) shapes are identical to external sends, so nothing else in your integration changes.
+
+| Property | Internal transfer | On-chain transfer |
+|---|---|---|
+| Settlement | Instant | Chain confirmation threshold |
+| Network fees | None | Dynamic per chain |
+| Chain interaction | None | Broadcast and confirm |
+| Webhooks | Same events | Same events |
+
+## How routing works
+
+You submit the transfer exactly like an [external send](/docs/stablecoins/sending-stablecoins), with the destination set to a Bitnob-issued deposit address. Bitnob detects that the destination is internal and nets the transfer on the ledger; anything else routes to the chain.
+
+To route deliberately, keep a registry of your own issued addresses, retrievable with [List addresses](/api-reference/addresses/list-addresses), and check destinations against it before choosing what to promise the user about speed and fees.
+
+## Where it pays off
+
+- **Sub-account and business-unit moves**: treasury shuffles that would otherwise pay gas for no reason.
+- **Instant customer credits**: users with Bitnob-linked wallets receive value with zero latency.
+- **Aggregation before settlement**: sweep user funds internally, then settle outward in one batched on-chain send instead of many.

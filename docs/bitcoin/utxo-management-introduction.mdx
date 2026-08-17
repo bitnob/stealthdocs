@@ -1,0 +1,151 @@
+---
+title: "UTXO management"
+description: "Why coin selection, change output, and consolidation decisions determine what a Bitcoin transaction costs."
+related:
+  - /docs/bitcoin/fee-market-and-transaction-strategies
+  - /learn/playbooks/bitcoin/address-and-privacy-best-practices
+---
+## What is a UTXO?
+
+UTXO stands for Unspent Transaction Output.
+
+1. Every Bitcoin transaction consumes previous outputs ("spends") and creates new outputs ("UTXOs").
+2. UTXOs are discrete pieces of bitcoin sitting on the blockchain.
+3. To send bitcoin, a wallet must select UTXOs, combine them, and create a new transaction.
+
+A Bitcoin wallet is simply a collection of UTXOs owned by a set of private keys.
+
+**Example:** If a user receives 0.5 BTC from Musa and 1.0 BTC from Kwame,
+they now hold two UTXOs: 0.5 BTC and 1.0 BTC.
+
+## Why UTXO management matters
+
+In the early days of a wallet app, UTXO handling can seem invisible. But as wallets grow in volume and complexity, poor UTXO management causes real problems:
+
+| Problem | Impact |
+|---|---|
+| Too many small UTXOs | Transaction sizes grow larger → fees become very expensive. |
+| Not consolidating during low fees | Wallets face high costs when network congestion spikes. |
+| Privacy leaks | Bad UTXO selection patterns can link user activities together on-chain. |
+| Change outputs poorly managed | User funds are easier to track publicly. |
+| Dust outputs | Very small UTXOs cost more in fees to spend than they're worth, leading to wallet bloat. |
+
+**Conclusion:** A wallet's financial efficiency, scalability, and user privacy depend directly on smart UTXO management.
+
+## Core UTXO management techniques
+
+Here are the techniques serious Bitcoin wallets use:
+
+1. Consolidation :
+
+   During periods of low Bitcoin transaction fees, wallets should consolidate small UTXOs into larger ones.
+
+   Create transactions that combine many small UTXOs into one big one.
+
+   Saves fees in the long term.
+
+   **Example:** Merge 20 small UTXOs of 0.001 BTC into 1 UTXO of 0.02 BTC when network fees are cheap.
+
+2. Coin Selection Strategies
+
+   When sending bitcoin, the wallet must decide which UTXOs to spend .
+
+   Common strategies include:
+
+   | Strategy | Description |
+   |---|---|
+   | Largest-First | Spend the largest UTXOs first to minimize transaction size. |
+   | Oldest-First | Spend the oldest UTXOs first (helps with privacy). |
+   | Randomized | Randomly select UTXOs to obscure patterns. |
+   | Merge Outputs | Merge multiple small UTXOs when sending to optimize fees. |
+   | Privacy-Preserving Selection | Minimize linkability of different user activities (e.g., using only outputs from a single prior receive). |
+
+   <Note>
+     BDK and some advanced Bitcoin libraries allow you to plug in coin selection strategies dynamically.
+   </Note>
+
+3. Dust Management
+
+   Dust refers to UTXOs that are **smaller than the cost to spend them.**
+
+   **Example:** A UTXO of 200 satoshis when a transaction fee is 500 satoshis.
+
+   Wallets must:
+
+   Avoid creating dust outputs.
+
+   Optionally "sweep dust" during periods of low network congestion.
+
+4. Change Output Management
+
+When you send bitcoin and there is extra value left over, it becomes a change output.
+
+Best practices:
+
+Always send change to a new internal address.
+
+Avoid sending change back to the same address that received funds.
+
+Consider minimizing change generation through smarter coin selection.
+
+## Practical wallet behaviors
+
+| Scenario | Best Practice |
+|---|---|
+| High fee environment | Spend fewer UTXOs, minimize transaction size. |
+| Low fee environment | Consolidate many small UTXOs into bigger ones. |
+| User wants privacy | Use coin selection that reduces address linkability. |
+| User sends dust | Warn them and offer "sweep dust" option only when fees are cheap. |
+
+## How Bitnob helps
+
+You manage UTXOs on the client side with your wallet engine (BDK or bitcoinjs-lib); Bitnob provides the broadcast, monitoring, and fee-estimation layer underneath.
+
+Design your wallet to model UTXOs internally.
+
+Use libraries that allow UTXO control (e.g., BDK).
+
+## Practical implementation outline
+
+Basic wallet data model:
+
+```json
+Wallet {
+  accounts: [
+    {
+      externalAddresses: [address0, address1, ...],
+      internalAddresses: [change0, change1, ...],
+      utxos: [
+        { txid, vout, amount, confirmations, address }
+      ],
+      balance: total of all utxos,
+      pendingTransactions: [],
+    }
+  ]
+}
+```
+
+When sending bitcoin:
+
+1. Select UTXOs based on desired coin selection strategy.
+2. Estimate fee using Bitnob's fee estimator API.
+3. Build transaction with selected inputs and outputs.
+4. Add a change output if needed.
+5. Sign and broadcast.
+
+## Real-World risks of poor UTXO management
+
+| Problem | Real Example |
+|---|---|
+| Wallet gets bloated with dust | User cannot send reasonable transactions without paying absurd fees. |
+| Over-linking addresses | Observers can build detailed user profiles based on transaction graph analysis. |
+| Emergency spending impossible | When fees spike (e.g., mempool backlog), poorly consolidated wallets cannot make affordable transactions. |
+
+### Final recommendations
+
+- Start with simple UTXO models, but build wallet infrastructure ready for optimization later.
+- Track UTXOs internally even if you hide the complexity from users at MVP stage.
+- Educate advanced users about privacy, coin control, and fee optimization.
+- Monitor network fee markets dynamically to plan consolidation events.
+
+Wallets that understand UTXOs control fees, preserve privacy, and scale cleanly over time.

@@ -1,0 +1,89 @@
+---
+title: "Supported chains"
+description: "Every chain the stablecoin API reaches, which tokens it carries in sandbox and production, token decimals, and the confirmation threshold enforced before a deposit is credited."
+related:
+  - /docs/stablecoins/issuing-stablecoin-addresses
+  - /docs/stablecoins/why-support-stablecoins-on-multiple-chains
+---
+
+[Supported chains](/api-reference/addresses/supported-chains) returns the live list for your environment, including native token decimals per chain. Query it at runtime rather than hardcoding this page; chains are added and occasionally paused.
+
+```http
+GET /api/stablecoins/supported-chains
+```
+
+## Chains and tokens
+
+| Chain | Sandbox | Production |
+|---|---|---|
+| `arbitrum` | — | USDT, USDC |
+| `avalanche` | USDT, USDC | USDT, USDC |
+| `base` | USDC | USDC |
+| `bsc` | — | USDT, USDC |
+| `ethereum` | USDT, USDC | USDT, USDC |
+| `optimism` | USDT, USDC | USDT, USDC |
+| `plasma` | — | USDT |
+| `polygon` | USDT, USDC | USDT, USDC |
+| `solana` | USDT, USDC | USDT, USDC |
+| `stellar` | USDC | USDC |
+| `tron` | — | USDT |
+
+Production-only chains: `arbitrum`, `bsc`, `plasma`, `tron`. Stablecoin amounts use 6 decimals on every chain, so `2000000` is 2 USDT.
+
+## Confirmation thresholds
+
+A deposit is credited, and `deposit.success` fired, only after the chain's confirmation threshold. Bitnob enforces these internally; they explain why a Solana deposit credits in seconds while a Polygon deposit takes minutes.
+
+| Chain | Confirmations | Finality |
+|---|---|---|
+| Ethereum | 15 | Probabilistic |
+| Arbitrum | 15 | Probabilistic |
+| Base | 15 | Probabilistic |
+| Optimism | 15 | Probabilistic |
+| BSC | 15 | Probabilistic |
+| Plasma | 15 | Probabilistic |
+| Tron | 19 | Probabilistic |
+| Polygon | 128 | Probabilistic |
+| Solana | 1 | Absolute |
+| Avalanche | 1 | Absolute |
+
+## Stellar is different
+
+Stellar uses one shared address per company rather than an address per user. Incoming funds are attributed by the **memo** field, and memos are your responsibility: assign a unique memo per user or deposit, surface it to the sender, and map incoming funds back with it. Without memos, all Stellar deposits land on your company account and must be reconciled manually. When sending on Stellar, forward any memo the destination gives you exactly as provided.
+
+## Example response
+
+```json
+{
+  "success": true,
+  "message": "Supported chains retrieved successfully",
+  "data": {
+    "chains": [
+      {
+        "chain": "tron",
+        "native_token": { "symbol": "TRX", "decimals": 6 },
+        "stablecoins": [
+          { "symbol": "USDT", "decimals": 6 }
+        ]
+      },
+      {
+        "chain": "solana",
+        "native_token": { "symbol": "SOL", "decimals": 9 },
+        "stablecoins": [
+          { "symbol": "USDT", "decimals": 6 },
+          { "symbol": "USDC", "decimals": 6 }
+        ]
+      },
+      {
+        "chain": "stellar",
+        "native_token": { "symbol": "XLM", "decimals": 7 },
+        "stablecoins": [
+          { "symbol": "USDC", "decimals": 6 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+The full response carries one entry per chain in the same shape.

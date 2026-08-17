@@ -1,0 +1,152 @@
+---
+title: "Observability, logging, and traceability"
+description: "Which identifiers to record, what to log at each step, and how to trace one transaction from request to settlement."
+---
+
+Once money moves, the question changes from "does this work" to "what happened to this specific payment". Your system has to answer that without a call to support.
+
+This guide covers what to record and how to connect the records so that one query returns the whole story.
+
+## The three identifiers
+
+Every trace hangs on three values. Record all three, on every step.
+
+| Identifier | Who creates it | What it answers |
+|---|---|---|
+| `reference` | You, before the first attempt | Which business action is this? |
+| `correlation_id` | Bitnob, per request | Which exact API call was this? |
+| `event_id` | Bitnob, per webhook | Which delivery was this? |
+
+The `reference` ties your record to ours. The `correlation_id` appears in every error body and identifies one request in our systems. The `event_id` distinguishes a first delivery from a retry.
+
+<Warning>
+  A log line with a message but no identifier is close to useless during an incident. Attach the reference to every line you write about a transaction.
+</Warning>
+
+## What to record
+
+Log five things:
+
+- Every request you send, with its reference and the response status.
+- Every webhook you receive, with its event name, event id, and full payload.
+- Every quote you create, with its rate and `expires_at`.
+- Every error, with its `code` and `correlation_id`.
+- Every state change, appended rather than overwritten.
+
+```json
+{
+  "reference": "payout_20260408_a41f9c",
+  "type": "payout",
+  "status": "initiated",
+  "quote_id": "QT2_21015643",
+  "from_asset": "USDT",
+  "to_currency": "NGN",
+  "amount": "0.724761",
+  "settlement_amount": "1000",
+  "expires_at": "2026-07-04T22:12:36Z",
+  "correlation_id": "req_019d9b7e-9e76-711e-afbe-aba9b9455412",
+  "created_at": "2026-07-04T21:56:36Z"
+}
+```
+
+### Append, do not overwrite
+
+Store status changes as new rows, not as an updated field.
+
+| reference | status | source | at |
+|---|---|---|---|
+| `payout_20260408_a41f9c` | initiated | api | 2026-04-08T12:45:00Z |
+| `payout_20260408_a41f9c` | processing | webhook | 2026-04-08T12:45:41Z |
+| `payout_20260408_a41f9c` | delivered | webhook | 2026-04-08T12:47:12Z |
+
+An overwritten field tells you where a payment is. An append-only log tells you how it got there and how long each stage took. Only the second answers a dispute.
+
+## Redact before you log
+
+Never write these to a log, a dashboard, or an error tracker:
+
+- Your `CLIENT_SECRET`.
+- The `X-Auth-Signature` header.
+- Full card numbers or card security details.
+
+Log the `CLIENT_ID` and the `correlation_id` instead. Both identify the caller without exposing the credential. See [API keys and credential security](/docs/getting-started/api-best-practices/api-keys-and-credentials).
+
+## Trace one transaction end to end
+
+![Transaction Flow](/images/transaction-flow.svg)
+
+A complete trace covers each step:
+
+1. The user's request into your system.
+2. The quote you created, and the rate you displayed.
+3. The request you sent to Bitnob, and its response status.
+4. Each webhook you received, and whether you processed it.
+5. The final state, and when you told the user.
+
+Server-side, resolve a single record with [Get transaction by id or reference](/api-reference/transactions/get-transaction-by-id). Sweep a period with [Get all transactions](/api-reference/transactions/list-transactions).
+
+## Reconcile on a schedule
+
+Webhook retries are finite. An endpoint that is down long enough misses events permanently, and no amount of logging recovers what you never received.
+
+Run a scheduled job that compares our record against yours:
+
+<Steps>
+  <Step title="List recent transactions">
+    Query [Get all transactions](/api-reference/transactions/list-transactions) for the period since your last run.
+  </Step>
+  <Step title="Match on reference">
+    Join our records to yours by reference.
+  </Step>
+  <Step title="Flag the mismatches">
+    Anything complete on our side and pending on yours is a missed delivery. Anything pending on our side past its expected window needs a human.
+  </Step>
+  <Step title="Repair and record">
+    Apply the correct state, and log that reconciliation made the change rather than a webhook.
+  </Step>
+</Steps>
+
+## Alert on the right signals
+
+Alert on conditions that mean money is stuck, not on raw error counts.
+
+| Alert | Why it matters |
+|---|---|
+| Webhook processing failures rise | Your handler is broken; events are being lost |
+| Payout failure rate crosses your baseline | A corridor or a provider is degraded |
+| Quotes expiring before execution | Your flow is too slow, or the interface is confusing |
+| Reconciliation finds mismatches | Deliveries are being missed |
+| Requests failing with `401` | A credential is wrong or expired |
+
+Send them somewhere a person reads. A message to a chat channel beats a dashboard nobody opens.
+
+Metrics tools such as Datadog, Prometheus, or Grafana handle the counting. Log tools such as CloudWatch or Logtail handle the search. Either is enough to start.
+
+## Build an internal lookup tool
+
+Support questions arrive as "where is my money", not as a reference. Build one internal page that lets your team:
+
+- Search by reference, customer, or amount.
+- See the full status history.
+- See the raw request and response.
+- Replay a failed webhook.
+- Mark a case resolved, with a note.
+
+This is usually the highest-leverage internal tool a payments integration has, and it takes a day to build.
+
+## Show users their own trace
+
+Expose a reduced version to the user: the status, the amount they sent, the rate they got, the timestamps, and what happens next if it is stuck.
+
+Most support tickets are requests for information the user could have read themselves.
+
+## Next
+
+<Columns cols={2}>
+  <Card title="Errors and retries" icon="triangle-exclamation" href="/docs/getting-started/api-best-practices/errors-and-retries">
+    Status codes, the error body, and the retry rules.
+  </Card>
+  <Card title="Test in sandbox" icon="flask" href="/docs/getting-started/api-best-practices/simulating-flows-and-testing-in-sandbox">
+    Produce the failures you want to be ready for.
+  </Card>
+</Columns>

@@ -1,0 +1,145 @@
+---
+title: "Module 6: Managing user expectations: Speed, fees, success rates"
+description: "User expectations on speed, fees, and success rates, set before they turn into support tickets."
+---
+## Introduction
+
+Unlike traditional software where delays or errors can be quietly resolved, in payout products:
+
+- Delays cause user panic
+- Errors cause financial loss
+
+Poor communication destroys trust.
+
+Managing user expectations clearly about speed, fees, volatility, and success rates is critical for survival.
+
+This module covers:
+
+Designing realistic user expectations,
+
+Testing both happy and unhappy paths to ensure reliability.
+
+### Key realities you must set correct expectations about
+
+| Reality | Why It Matters |
+|---|---|
+| Payout Speed | Users expect near-instant delivery, but blockchain confirmations and fiat rail speed vary. |
+| Network Confirmations | Bitcoin and stablecoin funding requires confirmations that introduce real delays. |
+| FX Rate Volatility | Cross-currency payouts involve real-time FX risks between funding and payout. |
+| Fees | Blockchain network fees are unpredictable and can spike. |
+| Success Rates | Some payout corridors are inherently less reliable than others. No system achieves 100% success. |
+
+### Communicating speed expectations
+
+Inform users that funding confirmations are mandatory before payout processing.
+
+Differentiate user payment speed ("sent immediately") from network confirmation speed ("waiting on blockchain confirmations").
+
+Provide corridor-specific payout timelines clearly:
+
+Nigeria NIP: typically \<1 minute.
+
+UK Faster Payments: 5–30 minutes.
+
+SEPA: 1 business day.
+
+### Communicating fees expectations
+
+Offer fee previews wherever possible at quote generation.
+
+Display warnings if network congestion fees rise significantly.
+
+Avoid hard promises of "fixed fees" unless fully under your operational control.
+
+### Communicating success rate expectations
+
+Acknowledge that payout success is very high but not perfect.
+
+Proactively notify users if a payout is delayed or fails.
+
+Commit to transparent refund or retry policies in user communications.
+
+### Designing UX for real-world payout conditions
+
+| Ux Element | Good Practice |
+|---|---|
+| Funding Confirmation Screen | Show 'Payment received awaiting confirmations' with time estimate. |
+| Payout Processing Screen | Indicate payout is underway, specify average corridor time. |
+| Success Screen | Display payout completion clearly with reference ID. |
+| Failure Handling Screen | Inform user of failure and next steps (retry, refund). |
+| Expiry Warning Screen | Notify users before quote expiry with countdown timers. |
+
+### Testing the happy paths (QA expectations)
+
+Happy paths are the flows where everything goes right.
+
+| Happy Path Scenario | Expected Outcome |
+|---|---|
+| User requests quote, initiates payout, funds address correctly, payout succeeds within SLA. | Payout confirmed, success webhook sent, user notified. |
+| Payment is detected immediately; payout processing begins with minimal delay. | Fast trip lifecycle, successful settlement. |
+| Partial underpayment detected; payout amount adjusted accordingly without errors. | Proportional payout delivered with adjusted notifications. |
+| Webhooks delivered successfully and idempotently. | No duplicate processing, user systems updated correctly. |
+| Time-to-completion matches corridor SLA benchmarks. | Monitored, no breach. |
+
+### Testing the unhappy paths (QA expectations)
+
+Unhappy paths are flows where problems occur.
+
+Professional payout products must handle these with grace and predictability.
+
+| Unhappy Path Scenario | Expected Outcome |
+|---|---|
+| User delays funding beyond quote expiry. | Funding refused or manually handled, clear expiry notification to user. |
+| User underpays significantly. | Payout fails or partial payout delivered with user consent/notification. |
+| User overpays. | Intended payout delivered, excess held securely or refunded. |
+| User pays wrong asset or wrong chain. | Payment flagged, operations alerted, user informed of resolution steps. |
+| Blockchain confirmation delayed (low fees) | User notified of pending status, timeout alerts triggered internally. |
+| Payout rail failure (bank/mobile money offline). | Retry logic triggered, user informed of retry or refund. |
+| Webhook failures (customer server down). | Webhook retries scheduled, internal reconciliation supported. |
+| Compliance block (sanctions or risk trigger). | Payout held, compliance review process initiated, user informed properly. |
+
+### Key testing metrics
+
+| Metric | Purpose |
+|---|---|
+| Time-to-Funding-Confirmation | Detect payment detection delays. |
+| Time-to-Payout-Processing | Identify processing slowdowns internally. |
+| Time-to-Settlement | Measure end-to-end time from funding to a completed payout. |
+| Time-to-Final-Settlement | Track full payout SLA performance. |
+| Funding Expiry Rate | Measure how often users fail to fund quotes |
+| Payout Failure Rate | Monitor corridor health and operational reliability. |
+| Webhook Delivery Success Rate | Ensure events are reliably reaching customer systems. |
+
+## Best practices for managing QA and UX testing
+
+Build full trip timeline trackers for each payout in QA (submittedAt, assetReceivedAt, assetConfirmedAt, processingAt, settlementAt).
+
+Simulate network congestion environments to validate system behavior under stress. Run expiry simulations by delaying funding deliberately.
+
+Build webhook replay simulators to test customer webhook receivers against retries and duplicates.
+
+Test multilingual or multi-currency user messaging for failures.
+
+Monitor and report not just technical success, but user-facing success (did user feel payout happened transparently and reliably?).
+
+## PM action checklist
+
+Define clear user communication at every major lifecycle stage.
+
+Create happy path and unhappy path test cases before launch.
+
+Ensure UX, operations, and engineering align on real-world payout delays and failure handling.
+
+Set corridor-specific SLA expectations for users.
+
+Build proactive notification systems tied to trip events and webhook triggers.
+
+## Closing reflection
+
+Money movement is a trust business.
+
+Success is not measured only by how often payouts succeed, but by how professionally users are informed and protected when things occasionally go wrong.
+
+In the next module, we will address
+
+Treasury and Liquidity 101 for PMs (Without Becoming a CFO).

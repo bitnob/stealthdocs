@@ -1,0 +1,97 @@
+---
+title: "Developer resources"
+description: "One page of links: the in-browser API reference and playground, OpenAPI spec downloads, and Postman import for both Bitnob APIs."
+related:
+  - /docs/getting-started/quickstart
+  - /api-reference/authentication/authentication
+---
+
+Everything on this page is a link out to a tool, a spec, or a playground. The API reference tabs on this site are generated from the same OpenAPI specs you can download below, so the reference is always the live, browsable preview of the spec.
+
+## Explore the API in your browser
+
+No downloads needed. The reference tabs render every endpoint, schema, and error shape from the spec, and each endpoint page has a built-in playground: add your credentials and send real requests against sandbox.
+
+<Columns cols={2}>
+  <Card title="API v2 reference and playground" icon="play" href="/api-reference/authentication/authentication">
+    Payouts, trading, cards, lightning, virtual accounts, and more. Uses HMAC request signing.
+  </Card>
+  <Card title="Wallet infrastructure reference and playground" icon="wallet" href="/api-reference/wallet-infrastructure/meta/get-api-key-info">
+    Non-custodial wallets, transactions, gas stations, and subscriptions. Uses `X-API-Key` auth.
+  </Card>
+</Columns>
+
+## Download the OpenAPI specs
+
+Both specs are OpenAPI 3.0, served publicly with no authentication. JSON is best for code generators; YAML is easier to read and diff.
+
+<Columns cols={2}>
+  <Card title="bitnob-api-v2.openapi.json" icon="download" href="/api-collections/swagger/bitnob-api-v2.openapi.json">
+    API v2 spec in JSON, for openapi-generator, Prism, Spectral, or Stoplight.
+  </Card>
+  <Card title="bitnob-api-v2.openapi.yaml" icon="download" href="/api-collections/swagger/bitnob-api-v2.openapi.yaml">
+    The same v2 spec in YAML, for review and pull-request diffs.
+  </Card>
+  <Card title="bitnob-wallet-infrastructure.openapi.json" icon="download" href="/api-collections/swagger/bitnob-wallet-infrastructure.openapi.json">
+    Wallet infrastructure spec in JSON.
+  </Card>
+  <Card title="bitnob-wallet-infrastructure.openapi.yaml" icon="download" href="/api-collections/swagger/bitnob-wallet-infrastructure.openapi.yaml">
+    Wallet infrastructure spec in YAML.
+  </Card>
+</Columns>
+
+Or pull them straight from the command line:
+
+```bash
+curl -O https://bitnob.dev/api-collections/swagger/bitnob-api-v2.openapi.json
+curl -O https://bitnob.dev/api-collections/swagger/bitnob-wallet-infrastructure.openapi.json
+```
+
+If you want the classic Swagger view instead, download a spec and drag it into [Swagger Editor](https://editor-next.swagger.io). The editor cannot fetch the hosted URL directly from the browser, but a downloaded file drops straight in.
+
+## Import into Postman
+
+Download a ready-made collection and its environment, then drag both into Postman. The API v2 collection ships with a pre-request script that computes the HMAC-SHA256 signature (`X-Auth-Client`, `X-Auth-Timestamp`, `X-Auth-Nonce`, `X-Auth-Signature`) on every request: fill in `client_id` and `client_secret` in the environment and send.
+
+<Columns cols={2}>
+  <Card title="API v2 collection" icon="download" href="/api-collections/postman/bitnob_api.postman_collection.json">
+    Every v2 endpoint, with request signing handled by a collection pre-request script.
+  </Card>
+  <Card title="API v2 environment" icon="download" href="/api-collections/postman/bitnob_environment.postman_environment.json">
+    Base URL plus empty `client_id` and `client_secret` variables to fill in.
+  </Card>
+  <Card title="Wallet infrastructure collection" icon="download" href="/api-collections/postman/bitnob_wallet_infrastructure.postman_collection.json">
+    Every wallet infrastructure endpoint. No signing script needed.
+  </Card>
+  <Card title="Wallet infrastructure environment" icon="download" href="/api-collections/postman/bitnob_wallet_infrastructure.postman_environment.json">
+    Base URL plus an empty `api_key` variable that fills the `X-API-Key` header.
+  </Card>
+</Columns>
+
+<Note>
+  If you prefer to build your own collection, Postman also imports the OpenAPI specs by URL: **Import** → paste a spec URL from above. A raw spec import does not include the signing script, so add one yourself; see [Authentication](/api-reference/authentication/authentication) for the exact algorithm.
+</Note>
+
+## Generate a typed client
+
+Feed either spec to [openapi-generator](https://openapi-generator.tech) to produce a client in 40+ languages:
+
+```bash
+openapi-generator-cli generate \
+  -i https://bitnob.dev/api-collections/swagger/bitnob-api-v2.openapi.json \
+  -g typescript-fetch \
+  -o ./bitnob-client
+```
+
+Commit the spec to your repo so upgrades are a one-line bump, and run [oasdiff](https://github.com/Tufin/oasdiff) between versions to see exactly which endpoints, schemas, and enums changed.
+
+## Getting help
+
+<Columns cols={2}>
+  <Card title="Support center" icon="life-ring" href="https://support.bitnob.com">
+    Guides and answers from the support team.
+  </Card>
+  <Card title="Dashboard" icon="gauge" href="https://app.bitnob.com">
+    Create and manage your API credentials.
+  </Card>
+</Columns>

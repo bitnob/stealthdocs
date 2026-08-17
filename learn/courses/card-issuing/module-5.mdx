@@ -1,0 +1,167 @@
+---
+title: "Module 5: Funding virtual cards"
+description: "How prepaid funding works, which assets can fund a card, and the FX and fee edge cases to expect."
+---
+## Learning objectives
+
+- Understand how prepaid virtual card funding works
+- Know what assets can be used to fund cards
+- Learn how to combine card registration, issuance, and funding into one clean flow
+- Handle common edge cases (errors, fees, FX behavior)
+
+## What does “funding a virtual card” mean?
+
+Funding is the act of preloading money onto a virtual card. Since virtual cards are prepaid by design, they must be funded before use.
+
+Think of it like putting money into a secure digital envelope that only works on the internet.
+
+The money typically comes from:
+
+- A fiat wallet (NGN, GHS, ZAR, etc.)
+- A stablecoin balance (e.g. USDT)
+- A treasury float controlled by your platform
+
+## How funding works (conceptually)
+
+Here’s the typical flow:
+
+```text
+Your Wallet/Float
+⬇ (deduct amount)
+Virtual Card Processor
+⬇ (credit card balance)
+Card is ready to spend online
+```
+
+## Supported funding assets
+
+| Asset Type | Examples | Auto-converted to |
+|---|---|---|
+| Stablecoins | USDT (TRC20 /ERC20 ), USDC | USD |
+| Bitcoin | BTC | USD |
+
+Most virtual card systems (including Bitnob) handle automatic FX conversion. You don’t need to fund cards in native USD. It’s abstracted behind the scenes.
+
+## Top-up rules and limits
+
+| Rule | Value (example) |
+|---|---|
+| Minimum top-up | $2 |
+| Maximum per top-up | $2,500 |
+| Maximum card balance | $50,000 |
+| Flat top-up fee | $1 (per up to $100) |
+| FX markup (if applicable) | Varies per platform |
+
+These limits help control risk and fraud. They’re also adjustable based on business model.
+
+## Full flow: Register → issue → fund
+
+Let’s now walk through the combined MVP flow:
+
+### Step 1: Register the card user
+
+```bash
+POST /virtualcards/registercarduser
+```
+
+```json
+{
+  "reference": "user_001",
+  "first_name": "Tunde",
+  "last_name": "Okoro",
+  "email": "tunde@example.com",
+  "phone_number": "+2348012345678",
+  "country": "NG"
+}
+```
+
+➡ Store the returned `card_user_id`.
+
+### Step 2: Create a card for the user
+
+```bash
+POST /virtualcards/createcard
+```
+
+```json
+{
+  "reference": "user_001",
+  "label": "Tunde’s Shopping Card"
+}
+```
+
+➡ You’ll receive card metadata (`card ID`, masked PAN, expiry, etc.) ➡ Store `cardId` securely.
+
+### Step 3: Fund the card
+
+```bash
+POST /virtualcards/topup
+```
+
+```json
+{
+  "cardId": "8e2a77a1-913a-4aa6-8f29-c4e4a26e36a1",
+  "amount": 100,
+  "sourceAsset": "USDT_TRC20"
+}
+```
+
+➡ Response includes status, exchange rate, new card balance.
+
+## What to show the user
+
+| Step | Ux Element |
+|---|---|
+| Register | No UI shown: background action |
+| Create | Show virtual card details (one time only) |
+| Fund | Show balance immediately, with success banner |
+| Failed Top-Up | Display failure reason (e.g. insufficient wallet balance) and retry CTA |
+
+## Common funding errors
+
+| Error | Reason |
+|---|---|
+| insufficient_funds | Wallet doesn’t have enough to cover top-up + fees |
+| card_not_active | You tried funding a frozen or terminated card |
+| invalid_card_id | The cardId doesn’t exist or doesn’t belong to your account |
+| rate_expired | Market price changed; retry with a fresh quote (if rate locking used) |
+
+## Funding use cases
+
+| Use Case | Pattern |
+|---|---|
+| User-triggered top-up | Let users tap “Add Funds” manually in UI |
+| Auto-fund after payout | When user receives crypto or fiat payment, auto-top-up a card |
+| Budgeted card issuance | Top-up the card with $200 monthly allowance |
+| Pay-as-you-spend | Top-up in real time based on transaction attempt (advanced) |
+
+## Best practices
+
+| Practice | Why |
+|---|---|
+| Show current card balance in UI | Helps users understand availability before spending |
+| Validate card status before funding | Prevent wasteful operations and stuck funds |
+| Show fee breakdown and FX conversion | Builds transparency and trust |
+| Always log top-up reference IDs | Helps with reconciliation and dispute handling |
+| Use webhooks to confirm top-up success | Never assume success from just a `200` response |
+
+## Recap exercise
+
+You're building an app that gives each new user a \$50 shopping card after KYC.
+
+Sketch out your backend flow in pseudocode or sequence:
+
+1. Register user
+2. Issue card
+3. Fund with \$50 from marketing wallet
+4. Display card
+5. Listen to `virtualcard.topup.completed` webhook
+
+This is your **basic card distribution engine.**
+
+## Key takeaways
+
+- Virtual cards must be funded before use, they’re not credit-based
+- Most systems support funding from crypto, fiat, or wallet balances
+- You can combine registration, issuance, and top-up into a smooth experience
+- Design your UI and backend to show status clearly, handle errors, and listen to webhooks

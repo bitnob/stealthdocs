@@ -1,0 +1,127 @@
+---
+title: "Core concepts and architecture"
+description: "The objects the Bitnob API is built from, how a request moves through the platform, and why money movement completes asynchronously."
+---
+
+Bitnob exposes one API over three kinds of rail: bitcoin, stablecoins, and local currency payment networks. The products differ, but they share the same object model and the same request lifecycle. This page explains that shared model. Learn it once and every product section reads the same way.
+
+## The object model
+
+Nine objects carry almost every integration.
+
+| Object | What it is | Where you meet it |
+|---|---|---|
+| Account | Your Bitnob business account. It holds your credentials, your balances, and your settings. | [Set up your account](/docs/getting-started/account-setup) |
+| Customer | A person or business you serve. Cards and virtual accounts belong to a customer. | [Create customer](/api-reference/customers/create-customer) |
+| Beneficiary | A saved payout destination, such as a bank account or a mobile money wallet. | [Create beneficiary](/api-reference/beneficiaries/create-beneficiary) |
+| Address | A deposit address you issue for bitcoin or a stablecoin chain. | [Generate address](/api-reference/addresses/generate-address) |
+| Balance | Funds you hold, held separately per currency. | [List balances](/api-reference/balances/list-balances) |
+| Quote | A price and an amount, fixed for a short time. | [Create payout quote](/api-reference/payouts/create-quote) |
+| Reference | A unique string you attach to an action. It makes retries safe. | [Idempotency and references](/docs/getting-started/api-best-practices/idempotency-and-reference-integrity) |
+| Transaction | The record of one movement of value. | [List transactions](/api-reference/transactions/list-transactions) |
+| Webhook event | A message we push to your server when state changes. | [Webhooks and event handling](/docs/getting-started/api-best-practices/webhook-best-practices) |
+
+<Note>
+  The API returns `company_id` on some objects. It identifies your account.
+</Note>
+
+### Accounts and customers
+
+Your account is the top-level container. It owns your credentials and your balances.
+
+A customer is a person or business you serve. You create customers when a product needs to attribute funds or a card to a named end user. Cards and virtual accounts always belong to a customer. Payouts and trades do not.
+
+This distinction matters for compliance. When you issue a card, the card carries your customer's identity, not yours.
+
+### Balances
+
+You hold a balance per currency. Balances are your working capital on the platform.
+
+Funds arrive in a balance in three ways:
+
+- A deposit to an address you issued.
+- A deposit to a virtual account.
+- The proceeds of a trade.
+
+Funds leave a balance through a payout, a withdrawal, a card funding operation, or a trade.
+
+### References
+
+You supply a reference on every action that moves money. The reference is your idempotency key. If you send the same request twice with the same reference, the platform executes it once.
+
+This is the single most important habit in the API. [Idempotency and references](/docs/getting-started/api-best-practices/idempotency-and-reference-integrity) explains how to design them.
+
+## The request lifecycle
+
+Every authenticated call follows the same path.
+
+<Steps>
+  <Step title="You sign the request">
+    You compute an HMAC-SHA256 signature over `CLIENT_ID:TIMESTAMP:NONCE:BODY` and send it in four headers. See [Authentication](/api-reference/authentication/authentication).
+  </Step>
+  <Step title="We verify the signature and the timestamp">
+    A bad signature returns `401`. A stale timestamp also returns `401`, because the timestamp prevents replay of an old request.
+  </Step>
+  <Step title="We validate the request">
+    Missing or malformed fields return `400`. Requests that parse but cannot execute, such as an amount above your limit, return `422`.
+  </Step>
+  <Step title="We accept the action and answer">
+    The response confirms that we accepted the action. For money movement it does not confirm delivery.
+  </Step>
+  <Step title="We send a webhook event when the outcome is known">
+    Settlement happens on an external rail. The webhook carries the result.
+  </Step>
+</Steps>
+
+![Architecture diagram](/images/architecture-diagram.png)
+
+## Why money movement is asynchronous
+
+The API answers in milliseconds. Bitcoin, stablecoin chains, and bank rails do not.
+
+A bitcoin transaction waits for confirmations. A bank transfer waits for the receiving bank. A card authorization waits for the network. Bitnob cannot make an external rail faster, so it reports progress instead of blocking.
+
+This has one consequence that shapes every integration:
+
+<Warning>
+  A `200` response means we accepted the action. It does not mean the money arrived. Treat the webhook event as the record of the outcome.
+</Warning>
+
+Integrations that treat the synchronous response as final report success too early. Users then see a delivered payment that has not settled.
+
+## Quotes and price risk
+
+Exchange rates move. A quote fixes a rate and an amount for a short window, and it carries an `expires_at` timestamp.
+
+You create a quote, then execute against it before it expires. If it expires, you create a new one. The platform never re-prices an expired quote at the old rate, because that rate no longer reflects the market.
+
+[Quote lifecycle and expiry](/docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows) covers the handling in detail.
+
+## Amounts
+
+The API represents amounts as integers in the smallest unit of the currency. One BTC is 100,000,000 satoshis. One USDT is 1,000,000 base units.
+
+Integer amounts remove rounding error. [Currencies and amounts](/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts) explains how to store and display them.
+
+## One environment, two credentials
+
+Sandbox and production share the base URL `https://api.bitnob.com`. Your `CLIENT_ID` is the same in both. Your `CLIENT_SECRET` differs.
+
+The secret you sign with selects the environment. Keep the two secrets in separate configuration, because a production secret in a test job moves real money.
+
+## Errors
+
+All products share one error model, and error bodies follow RFC 7807. Each body carries a `correlation_id`. Quote that value when you contact support, because it identifies the exact request.
+
+See [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries) for the status codes and the retry rules.
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="Currencies and amounts" icon="calculator" href="/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts">
+    How to store, convert, and display value without precision loss.
+  </Card>
+  <Card title="Build reliably" icon="shield-halved" href="/docs/getting-started/api-best-practices/api-keys-and-credentials">
+    Credentials, idempotency, webhooks, errors, and observability.
+  </Card>
+</Columns>

@@ -1,0 +1,215 @@
+---
+title: "Module 9: Designing a Bitcoin wallet for real users"
+description: "Translate Bitcoin's constraints into an experience ordinary users can survive without losing money."
+---
+## 9.1 Introduction
+
+Building a Bitcoin wallet isn't just about cryptography or clean architecture. At the product level, you must translate Bitcoin’s real constraints into an experience normal people can actually survive without losing their money.
+
+Bitcoin is powerful, but unforgiving. Users are human: they forget passwords, ignore warnings, fall for scams. Wallet product design must balance safety, usability, education, and empowerment.
+
+This module will cover how to design:
+
+- Onboarding flows
+- Backup flows
+- Receiving flows
+- Sending flows
+- Fee handling
+- Transaction tracking
+- Privacy protections
+- Recovery processes
+
+If you design Bitcoin UX naively, you will lose users. If you design it wisely, you will create true Bitcoin citizens.
+
+## 9.2 First principles for wallet UX
+
+| Principle | Meaning |
+|---|---|
+| Protect the user from themselves without lying to them | Make safety easy but real, don’t create illusions of reversibility. |
+| Teach at critical moments | Onboard users into Bitcoin concepts when they need to understand, not before or after. |
+| Minimize irreversible errors | Make backup mandatory, validate addresses, confirm send actions clearly. |
+| Default to privacy, not exposure | Rotate addresses, warn against address reuse. |
+| Make security invisible when possible, visible when necessary | Use biometrics quietly but celebrate backup achievements. |
+
+## 9.3 Designing onboarding
+
+The first user experience is critical. At onboarding, users must:
+
+- Generate a seed phrase.
+- Understand its critical importance.
+- Backup securely before they can receive bitcoin.
+
+**Critical rule:** Do not allow receiving bitcoin until backup is complete.
+
+Good flow:
+
+1. Welcome → Explain Bitcoin wallet basics
+2. Generate Seed → Show 12 or 24 words
+3. Backup Flow → User must record the seed
+4. Seed Verification → User must re-enter certain words to continue
+5. Wallet Ready → Only now allow address generation
+
+Onboarding is your single chance to teach users they control their Bitcoin, not your app.
+
+**Tip: Use powerful language.** Use human, powerful language: "This is not a password. This is the key to your Bitcoin vault. Lose it, and your Bitcoin is gone forever. Protect it like you protect your life savings."
+
+## 9.4 Designing backup flows
+
+Backup must be serious, unavoidable, and verifiable.
+
+Backup education must explain:
+
+- The seed phrase is not recoverable by your company.
+- The seed phrase must never be shared with anyone.
+- The seed phrase must be written down or secured somewhere offline.
+
+Seed verification examples:
+
+- Pick 3 random words and ask the user to select the correct ones.
+- Ask for specific word positions (e.g., "Enter word 5").
+
+**Optional advanced:** Allow optional encrypted cloud backups only if encryption happens client-side with user’s passphrase.
+
+## 9.5 Designing receiving flows
+
+When a user wants to receive bitcoin:
+
+- Display a new Bitcoin address (QR code + text).
+- Rotate address after it is used for a transaction.
+- Label the address internally if needed (e.g., "Savings," "Payment from Amina").
+- Notify user upon receipt of incoming transaction.
+
+**Important privacy note:** Never encourage address reuse, it damages privacy permanently.
+
+Display friendly language: "Share this address to receive bitcoin. For your privacy, a new address will be automatically generated after you receive a payment."
+
+## 9.6 Designing sending flows
+
+When a user wants to send bitcoin:
+
+- Show clear fields: amount, destination address, optional label.
+- Validate destination address format immediately (catch typos).
+- Allow users to set the fee: Fast, Normal, Economy.
+- Display estimated confirmation time based on fee level.
+- Confirm sending action clearly.
+
+Send confirmation screen example:
+
+```
+You are about to send 0.03 BTC
+
+To: bc1qxyz...
+
+Fee: 0.0002 BTC (Fast, estimated 10 minutes)
+
+[Confirm Send] [Cancel]
+```
+
+Protect users from accidental mistakes:
+
+- Warn if users try to send with extremely low fees.
+- Double-check if sending large amounts.
+
+## 9.7 Handling fees
+
+Because Bitcoin’s fee market fluctuates:
+
+Always fetch dynamic fee estimates.
+
+Offer simple options:
+
+- Fast (next block)
+- Normal (1–3 blocks)
+- Economy (3+ blocks)
+
+Show total cost clearly:
+
+```
+Transaction Size: 250 bytes
+Fee Rate: 50 sats/vByte
+Total Fee: 12,500 sats (~$5.00)
+```
+
+Help users understand why fees vary without overwhelming them with technical details.
+
+## 9.8 Handling transaction confirmations
+
+After sending bitcoin:
+
+- Show pending transactions immediately.
+- Update status dynamically:
+  - Pending (0 confirmations)
+  - Confirming (1–5 confirmations)
+  - Finalized (6+ confirmations)
+- Notify user when confirmations progress.
+
+Example language: "Transaction broadcasted. Waiting for network confirmation. This may take 10–60 minutes depending on network congestion."
+
+If a transaction gets stuck or dropped:
+
+- Offer "Speed up" (RBF fee bumping) if supported.
+- Warn clearly if stuck beyond reasonable times.
+
+## 9.9 Privacy protection defaults
+
+Wallets should automatically:
+
+- Rotate addresses after every incoming payment.
+- Avoid showing user’s full balance publicly if not necessary.
+- Avoid linking multiple transactions together unless explicitly grouped by the user.
+- Encourage use of SegWit and Taproot addresses (better privacy + lower fees).
+
+You can expose advanced privacy settings later, but good privacy must be the default, not a "pro" feature.
+
+## 9.10 Designing recovery flows
+
+When users reinstall or change devices:
+
+- Offer clear "Recover Wallet" option.
+- Require full seed phrase entry.
+- Guide user gently through recovery.
+
+Recovery flow steps:
+
+1. Welcome → "Recover existing Bitcoin wallet"
+2. Enter Seed Phrase
+3. Derive Wallet Keys
+4. Scan Blockchain or Register Addresses
+5. Show Wallet Dashboard
+
+**Important: Error handling.** If seed phrase is incorrect, error clearly and respectfully, never fake partial recovery. "We could not match this seed phrase to a valid Bitcoin wallet. Please double-check each word carefully."
+
+## 9.11 Example end-to-end user journey
+
+Scenario: Kojo in Accra installs a Bitcoin wallet.
+
+1. Kojo downloads the app.
+2. Kojo generates a 12-word seed phrase.
+3. Kojo backs up his seed, verifies 3 random words.
+4. Kojo receives 0.1 BTC from a friend using a fresh SegWit address.
+5. Kojo sees 0.1 BTC balance after 3 confirmations.
+6. Kojo sends 0.05 BTC to his cousin Amina.
+7. Wallet offers fee options. Kojo chooses "Fast" (~10 minutes).
+8. Transaction is broadcasted and confirmed.
+9. Kojo installs app on a new phone six months later.
+10. Kojo recovers wallet using his seed phrase, regains access to his Bitcoin.
+
+Every step protects Kojo’s autonomy, privacy, and security without unnecessary friction.
+
+## 9.12 Summary of module 9
+
+Real Bitcoin wallet UX must:
+
+- Force and verify backup at onboarding.
+- Rotate addresses automatically.
+- Explain sending and fees clearly and responsibly.
+- Show transaction status accurately.
+- Protect user privacy by default.
+- Handle stuck transactions intelligently.
+- Offer clean, trustworthy recovery flows.
+
+Bitcoin wallets succeed when users feel powerful but safe, because good design made serious security feel natural.
+
+## Module 9 complete
+
+You now understand how to design a Bitcoin wallet product that real users can survive, trust, and grow with, without sacrificing Bitcoin’s serious security and privacy foundations.

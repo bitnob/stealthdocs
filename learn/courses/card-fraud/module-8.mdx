@@ -1,0 +1,162 @@
+---
+title: "Module 8: Logging, audit trails, and incident reporting"
+description: "Tamper-proof audit trails and reporting that can reconstruct any incident."
+---
+## Module objective
+
+This module trains your engineering, treasury, support, compliance, and fraud ops teams to:
+
+- Establish tamper-proof audit trails across virtual card systems
+- Build logs that help explain and reconstruct incidents
+- Enable reporting that satisfies internal, partner, and scheme-level requirements
+- Make fraud investigations fast, reliable, and reproducible
+
+## The importance of logging in virtual card systems
+
+Virtual cards are ephemeral. They're created, funded, used, frozen, or terminated in minutes. If you don't log each state, you'll never know what went wrong when fraud or operational failure occurs.
+
+Logging is also the primary input for security, compliance, and dispute resolution.
+
+## What should be logged?
+
+### 1. Card lifecycle logs
+
+| Action | What to Log |
+|---|---|
+| Creation | cardId, userId, IP, deviceHash, BIN, time |
+| Freeze/Unfreeze | cardId, reason, actor, time |
+| Termination | cardId, terminationType (manual, auto), trigger, time |
+| Top-up | amount, walletId, float source, topUpRef, time |
+| Withdrawal | amount, float destination, userId, status, time |
+
+### 2. Transaction logs
+
+| Action | What to Log |
+|---|---|
+| Authorization | cardId, amount, MCC, merchantName, BIN, country, success/fail |
+| Refund | cardId, refundRef, originalSpendRef, amount, sourceMCC, status |
+| Reversal | cardId, reversalRef, merchantName, originalAuthId |
+| Chargeback | cardId, chargebackRef, merchant, reason, status, fee |
+| Decline | reason, declineCode, retry attempts |
+
+### 3. Security events
+
+| Action | What to Log |
+|---|---|
+| Login | userId, IP, deviceHash, 2FA method |
+| API key usage | IP, action, endpoint, auth status |
+| Webhook activity | delivery status, headers, payload hash, retries |
+| Failed webhook signature | cardId, endpoint, timestamp, source |
+
+## Audit trails
+
+An audit trail is a time-sequenced, immutable history of all actions taken on or by a system. It's not just logs. It's structured accountability.
+
+Every audit trail entry should include:
+
+- timestamp
+- actor (user, API key, system job)
+- action (e.g., freeze card, authorize spend)
+- target (cardId, userId, walletId)
+- before/after state
+- origin (IP, device, internal service)
+- correlationId (for grouping related actions across services)
+
+These trails help in:
+
+- Regulatory investigations
+- Merchant disputes
+- Support complaint resolution
+- Chargeback defense
+- Internal compliance reviews
+
+## Fraud & risk reporting templates
+
+Every confirmed fraud incident must be documented in a reproducible and shareable format. Create reports that support:
+
+- Scheme audits
+- Treasury float reconciliation
+- Engineering post-mortems
+- Legal escalation
+- Team training
+
+**Incident report template (fraud):**
+
+| Field | Description |
+|---|---|
+| Case ID | Unique identifier, e.g. FRC-2024-0012 |
+| User ID(s) | All associated users |
+| Card ID(s) | All cards involved |
+| Merchant(s) | Names, MCCs, processor info |
+| Float Impact | Value affected |
+| Action Timeline | Full chain of actions by timestamp |
+| Containment Steps | Freezes, locks, fund moves |
+| Decision Log | What was done, by whom, why |
+| Lessons | What to change next |
+| Attachments | Logs, screenshots, charts |
+
+## Tooling recommendations
+
+| Purpose | Tool/process |
+|---|---|
+| Central logging | Elastic, Datadog, or self-hosted Loki + Grafana |
+| Log retention | At least 1 year for all card and transaction logs |
+| Alerting | Real-time alerts for flagged MCCs, reversals, chargebacks |
+| Risk dashboard | Internal UI that visualizes card lifecycle and actions |
+| Export tooling | Ability to export fraud reports for regulators and partners |
+
+## Developer practices
+
+Developers must:
+
+- Log every mutating action on a card or user account
+- Add correlationId to every system-initiated card operation
+- Validate and enforce webhook signature checks
+- Avoid overwriting logs with retries or updates, append only
+- Provide APIs to query logs per user/card/ref for support teams
+
+## What not to miss
+
+- Log decline codes with explanations
+- Keep a reason field for every freeze, unfreeze, or termination
+- Use consistent reference IDs across systems for reconciliation
+- Enable log search by time, user, cardId, and merchant
+- Don't log PII or CVV values in plaintext
+
+## Module 8 knowledge check
+
+### 1. What should be logged when a card is frozen?
+
+A. Only the time
+
+B. Only the cardId
+
+C. cardId, reason, actor, and timestamp
+
+D. Just the freeze status
+
+**Answer:** C
+
+### 2. Why are audit trails critical?
+
+A. They reduce payment fees
+
+B. They track marketing spend
+
+C. They enable accountability and traceable decisions
+
+D. They automate refunds
+
+**Answer:** C
+
+### 3. What is a correlation ID useful for?
+
+A. Tracking device geolocation
+
+B. Matching merchant records
+
+C. Connecting related actions across systems
+
+D. Mapping MCC categories
+
+**Answer:** C

@@ -1,0 +1,46 @@
+---
+title: "Supported currencies and rails"
+description: "The currencies Bitnob pays out in, the settlement rail behind each one, and the countries each rail reaches. Call the API for what is live in your account."
+related:
+  - /docs/payouts/corridor-specific-behavior
+  - /docs/payouts/swift-payout
+---
+
+This table is a snapshot for planning. [Supported countries](/api-reference/payouts/supported-countries) returns what is live in your environment right now, and [Country requirements](/api-reference/payouts/country-requirements) returns the beneficiary fields each destination needs. Read both at runtime rather than hardcoding this page.
+
+## Currencies and rails
+
+| Currency | Settlement rail | Countries |
+|---|---|---|
+| USD | ACH, wire transfer | United States |
+| GBP | Faster Payments | United Kingdom |
+| EUR | SEPA, SWIFT | European Union |
+| NGN | NIP instant transfer | Nigeria |
+| GHS | Bank transfer, mobile money (MTN, Vodafone Cash) | Ghana |
+| KES | Bank transfer, M-Pesa | Kenya |
+| XAF | Bank transfer | Cameroon, Central African Republic, Chad, Congo-Brazzaville, Equatorial Guinea, Gabon |
+| XOF | Bank transfer, mobile money (Orange, MTN) | Benin, Burkina Faso, Guinea-Bissau, Ivory Coast, Mali, Niger, Senegal, Togo |
+| ZAR | Bank transfer, EFT | South Africa |
+| AUD | Bank transfer, SWIFT | Australia |
+| CNY | Bank transfer | China |
+| VND | Bank transfer | Vietnam |
+
+## What each rail means for speed
+
+The rail, not Bitnob, sets how long the fiat leg takes. Size your SLAs around the slowest rail you use.
+
+| Rail | Typical speed |
+|---|---|
+| NIP (Nigeria) | Seconds. Real-time interbank settlement via NIBSS. |
+| Mobile money | Seconds to minutes. Available in Ghana, Kenya, and parts of West and Central Africa. |
+| Faster Payments (UK) | Seconds to minutes. |
+| SEPA (EU and EEA) | Same day to next business day. |
+| ACH (US domestic) | One to three business days. Cheaper than wire. |
+| Wire and SWIFT | Same day to several business days. Used for high-value and urgent cross-border payouts. |
+| EFT (South Africa) | One to two business days. |
+
+Corridors differ in more than speed. See [Corridor behaviour](/docs/payouts/corridor-specific-behavior) for the operational detail per country.
+
+## Requesting a new corridor
+
+New currencies and channels are added based on demand and available liquidity. If you need a destination that is not listed, contact your account manager or the [support centre](https://support.bitnob.com).

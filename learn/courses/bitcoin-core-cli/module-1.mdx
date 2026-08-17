@@ -1,0 +1,225 @@
+---
+title: "Module 1: Installing & running Bitcoin Core"
+description: "Bitcoin Core installation and first run: bitcoind in regtest, driven from bitcoin-cli."
+---
+## Learning objectives
+
+- Understand what Bitcoin Core is and how it differs from wallets or Lightning nodes
+- Install and configure bitcoind in regtest mode
+- Use bitcoin-cli to connect, query, and control your node
+- Set up a persistent Bitcoin Core environment for future modules
+
+## Lesson outline
+
+## What is Bitcoin Core?
+
+It is the reference implementation of the Bitcoin protocol and it Includes:
+
+Includes:
+
+- bitcoind: the daemon that runs the full node
+- bitcoin-cli: the command-line tool to interact with it
+
+<Note>
+  Unlike wallet apps or exchanges, Bitcoin Core gives you full control and visibility over the network.
+</Note>
+
+## Preparing your system
+
+Dependencies:
+
+- Linux/macOS (Ubuntu preferred)
+- 2–4GB RAM minimum
+- Disk space: ~500MB for regtest; ~500GB+ for full mainnet node
+
+Recommended Setup:
+
+- Use a clean VPS or local Linux machine
+- Optional: Use Docker for sandboxing (we’ll cover later)
+
+## Downloading Bitcoin Core
+
+Visit: [https://bitcoincore.org/en/download/](https://bitcoincore.org/en/download/)
+
+Choose the binary for your OS (Linux, Mac, Windows).
+
+Verify the GPG signature (optional but best practice).
+
+```bash
+wget https://bitcoincore.org/bin/bitcoin-core-25.0/bitcoin-25.0-x86_64-linux-gnu.tar.gz
+tar -xvf bitcoin-25.0-x86_64-linux-gnu.tar.gz
+sudo install -m 0755 -o root -g root -t /usr/local/bin bitcoin-25.0/bin/*
+```
+
+## Launching in Regtest mode
+
+Regtest = “Regression Test” mode = your own private Bitcoin network.
+
+```bash
+bitcoind -regtest -daemon
+```
+
+This:
+
+- Starts the node in the background
+- Creates a local chain with zero blocks
+- No external network connection required
+
+## Connecting via bitcoin-cli
+
+Once the daemon is running, connect using:
+
+```bash
+bitcoin-cli -regtest getblockchaininfo
+```
+
+This should return JSON showing:
+
+- Chain: regtest
+- Blocks: 0
+- Headers: 0
+- VerificationProgress: 1.000000
+
+## Setting up a bitcoin.conf file (optional)
+
+Located at ~/.bitcoin/bitcoin.conf
+
+```plaintext
+regtest=1
+server=1
+daemon=1
+rpcuser=admin
+rpcpassword=strongpassword
+fallbackfee=0.0001
+```
+
+Restart with:
+
+```bash
+bitcoind -conf=~/.bitcoin/bitcoin.conf
+```
+
+## bitcoind as a daemon
+
+By default, bitcoind runs in the foreground. To run it in the background (as a daemon), simply add the -daemon flag:
+
+```bash
+bitcoind -regtest -daemon
+```
+
+This will:
+
+- Start the Bitcoin Core node in regtest mode
+- Fork it into the background so you can continue using the terminal
+- Create and use the default data directory at ~/.bitcoin/regtest
+
+You can always check whether it’s running with:
+
+```bash
+ps aux | grep bitcoind
+```
+
+To stop the daemon gracefully:
+
+```bash
+bitcoin-cli -regtest stop
+```
+
+## Basic node health checks
+
+After launching your node, verify it’s functioning properly with these checks:
+
+Check the blockchain state:
+
+```bash
+bitcoin-cli -regtest getblockchaininfo
+```
+
+Look for:
+
+- `blocks`: should be 0 initially
+- `initialblockdownload`: should be `false`
+- `chain`: should be `regtest`
+
+Check your wallet:
+
+```bash
+bitcoin-cli -regtest listwallets
+```
+
+If you haven't created a wallet yet, it will return an empty list. You can create one with:
+
+```bash
+bitcoin-cli -regtest createwallet "testwallet"
+```
+
+Check node status:
+
+```bash
+bitcoin-cli -regtest getnetworkinfo
+```
+
+Version
+
+Local relay status
+
+Network type (regtest)
+
+Connection count (should be 0 in regtest)
+
+Check available RPC commands:
+
+```bash
+bitcoin-cli help
+```
+
+This is useful to explore the full range of bitcoin-cli capabilities.
+
+This shows:
+
+- Version
+- Local relay status
+- Network type (regtest)
+- Connection count (should be 0 in regtest)
+
+Check available RPC commands:
+
+```bash
+bitcoin-cli help
+```
+
+This is useful to explore the full range of bitcoin-cli capabilities.
+
+## Activity
+
+Run this sequence:
+
+1. Start bitcoind in regtest mode.
+
+   ```bash
+   bitcoind -regtest -daemon
+   ```
+
+2. Query the chain info with bitcoin-cli.
+
+   ```bash
+   bitcoin-cli -regtest getblockchaininfo
+   ```
+
+3. Generate your first block
+
+   ```bash
+   bitcoin-cli -regtest createwallet "testwallet"
+   bitcoin-cli -regtest getnewaddress
+   bitcoin-cli -regtest generatetoaddress 101 <your_address>
+   ```
+
+   <Note>
+     Ensure to replace \<your_address\> with the actual address from getnewaddress
+   </Note>
+
+4. Confirm you now have spendable coins in your wallet with:
+
+   ```bash
+   bitcoin-cli -regtest getbalance
+   ```

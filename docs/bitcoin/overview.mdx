@@ -1,0 +1,29 @@
+---
+title: "Overview"
+description: "Bitcoin on Bitnob: a custodial wallet on every account for on-chain and Lightning payments, plus managed infrastructure for teams that hold their own keys."
+---
+
+Every Bitnob account includes a custodial Bitcoin wallet that sends and receives on-chain and over Lightning with no key management on your side. For teams that need to control keys, the same platform provides managed node infrastructure, from address watching to transaction broadcast, without running Bitcoin Core.
+
+![wallet](/images/bitcoin-wallet.svg)
+
+Which of the three custody arrangements you build on is the first decision; [Custody models](/docs/bitcoin/custody-models) lays them out. Everything else is the same Bitcoin: addresses and invoices to receive, fees and UTXOs to manage, webhooks to confirm.
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="Send bitcoin on-chain or over Lightning" icon="rocket" href="/docs/bitcoin/send-bitcoin">
+    The tutorial: one balance, both rails.
+  </Card>
+  <Card title="Custody models" icon="key" href="/docs/bitcoin/custody-models">
+    Custodial, business-managed, or self-custodial, and how to choose.
+  </Card>
+  <Card title="Issue addresses and Lightning invoices" icon="qrcode" href="/docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices">
+    Receive BTC: address generation, invoices, confirmations, webhooks.
+  </Card>
+  <Card title="Fees and confirmation strategy" icon="gauge" href="/docs/bitcoin/fee-market-and-transaction-strategies">
+    The fee market, estimation, batching, RBF, and CPFP.
+  </Card>
+</Columns>
+
+Deeper background, threat models, wallet architecture, privacy practice, lives in the [Bitcoin playbooks](/learn/playbooks/bitcoin/threat-models-and-security-risks) on the Learn tab.

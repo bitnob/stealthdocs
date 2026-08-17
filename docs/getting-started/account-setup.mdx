@@ -1,0 +1,134 @@
+---
+title: "Set up your account"
+description: "Account creation, sandbox and production credentials, safe storage, and a call that confirms they work."
+related:
+  - /docs/getting-started/quickstart
+  - /docs/getting-started/core-concepts-and-architecture
+  - /docs/getting-started/api-best-practices/api-keys-and-credentials
+---
+
+This guide takes you from no account to a verified credential pair. It covers registration, credential creation, storage, and one call that proves the setup works.
+
+Everything after this page assumes you hold a `CLIENT_ID` and a `CLIENT_SECRET`. The [Quickstart](/docs/getting-started/quickstart) picks up here and shows you how to sign a request with them.
+
+## Create your account
+
+<Steps>
+  <Step title="Register">
+    Go to [accounts.bitnob.com](https://accounts.bitnob.com/auth/signup) and enter a valid email address.
+  </Step>
+  <Step title="Confirm your email">
+    Enter the confirmation code we send you.
+  </Step>
+  <Step title="Set a password">
+    Use at least 12 characters, with letters, numbers, and symbols.
+  </Step>
+  <Step title="Sign in to the dashboard">
+    Go to [app.bitnob.com](https://app.bitnob.com/). The dashboard holds your API keys, balances, transactions, and webhook logs.
+  </Step>
+</Steps>
+
+![Bitnob account setup process](/images/login.svg)
+
+<Tip>
+  Invite your colleagues from account settings before you start building. Shared access avoids credential sharing later.
+</Tip>
+
+## Complete your profile
+
+Open the **Profile** section and add:
+
+- Your company or project name.
+- A contact phone number and a mailing address. We use both for invoices and notifications.
+
+## Submit compliance documents
+
+Sandbox works without verification, under default limits. Production does not.
+
+To unlock production and raise your limits, open **Identity & Compliance** and submit:
+
+- Your business registration documents.
+- Identity documents for the account holders.
+- Your settlement bank account details.
+
+Review usually takes 24 to 48 hours. We email you the result.
+
+## Create API credentials
+
+Your credentials are a pair: a `CLIENT_ID` that identifies you, and a `CLIENT_SECRET` that signs your requests.
+
+<Steps>
+  <Step title="Open the API keys page">
+    In the dashboard, select **Settings** > **API Keys**.
+  </Step>
+  <Step title="Create a key">
+    Select **Create Key** and complete the form.
+  </Step>
+  <Step title="Copy both values now">
+    We show the secret once. Copy it before you close the dialog.
+  </Step>
+  <Step title="Repeat for the other environment">
+    Create a separate key for sandbox and for production.
+  </Step>
+</Steps>
+
+<Warning>
+  We cannot recover a lost secret. If you lose one, revoke the key and create a new one.
+</Warning>
+
+### How sandbox and production differ
+
+Both environments use the same base URL, `https://api.bitnob.com`. Your `CLIENT_ID` is the same in both. Only the `CLIENT_SECRET` differs.
+
+The secret you sign with selects the environment. There is no environment header and no separate host.
+
+| Value | Sandbox | Production |
+|---|---|---|
+| Base URL | `https://api.bitnob.com` | `https://api.bitnob.com` |
+| `CLIENT_ID` | Same | Same |
+| `CLIENT_SECRET` | Sandbox secret | Production secret |
+| Funds | Simulated | Real |
+
+<Warning>
+  A production secret in a test job moves real money. Keep the two secrets in separate configuration, and never load both into the same process.
+</Warning>
+
+Sandbox data resets from time to time. Do not use it for records you need to keep.
+
+## Store your credentials
+
+Keep credentials out of source control and out of client applications.
+
+```bash
+BITNOB_CLIENT_ID=yourClientId
+BITNOB_CLIENT_SECRET=yourSecretKey
+```
+
+In production, read them from a secret manager rather than a file. [API keys and credential security](/docs/getting-started/api-best-practices/api-keys-and-credentials) covers storage, rotation, and leak response.
+
+## Verify the setup
+
+Call `/api/whoami`. It returns your authenticated account details and nothing else, so it is safe to call at any time.
+
+```bash
+curl -X GET "https://api.bitnob.com/api/whoami" \
+  -H "Content-Type: application/json" \
+  -H "x-auth-client: <CLIENT_ID>" \
+  -H "x-auth-timestamp: <ts>" \
+  -H "x-auth-nonce: <nonce>" \
+  -H "x-auth-signature: <signature>"
+```
+
+A `200` with your company details confirms that your credentials and your signing are correct.
+
+A `401` means the signature, the timestamp, or the client id is wrong. The [Quickstart](/docs/getting-started/quickstart) shows a working signing script and lists the three common causes.
+
+<Note>
+  To sign this request from application code, copy a signing helper for Node.js, Go, or Python from [Authentication](/api-reference/authentication/authentication).
+</Note>
+
+## Wallet infrastructure credentials
+
+The Wallet infrastructure API is separate. It uses a different base URL and an `X-API-Key` header instead of HMAC signing.
+
+If you need it, see the [Wallet infrastructure authentication guide](/docs/enterprise/authentication).

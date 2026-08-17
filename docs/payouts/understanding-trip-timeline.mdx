@@ -1,0 +1,67 @@
+---
+title: "The Trip timeline"
+description: "The `trip` object on every payout records when each lifecycle stage was reached. A field is set when the stage happens and absent until then, so the newest field tells you where the payout is."
+related:
+  - /docs/payouts/payouts-lifecycle
+  - /docs/payouts/statuses-and-webhook-events
+---
+
+Every payout carries a `trip` object recording when it reached each stage. It is returned on the payout record by [Get payout](/api-reference/payouts/get-payout), and it grows as the payout advances: a freshly quoted payout has only `quote_at`, an initialized one adds `initialized_at`, and so on.
+
+Use it to answer where a payout is, how long it has been there, and how long the whole thing took. That covers reconciliation, SLA reporting, status dashboards, and disputes where you need to show exactly when funds arrived and when they left.
+
+## Fields
+
+Timestamps are ISO 8601 strings. A field that is absent or null means the payout has not reached that stage.
+
+| Field | Meaning |
+|---|---|
+| `quote_at` | The quote was generated. |
+| `expired_at` | The quote expired without funding. |
+| `submitted_at` | The payout request reached Bitnob. |
+| `initialized_at` | The payout was initialized against the quote. |
+| `asset_received_at` | Incoming funding was first detected on-chain or over Lightning. |
+| `asset_confirmed_at` | Funding was confirmed and treated as spendable. |
+| `processing_at` | The payout started processing to the beneficiary. |
+| `settlement_at` | The fiat leg settled. |
+| `settlement_failed_at` | The fiat leg failed. |
+| `completion_time` | The payout reached a terminal state: success, failure, or expiry. |
+| `time_to_finish` | Seconds between `submitted_at` and `completion_time`. |
+
+Two rules worth relying on:
+
+- `completion_time` matches `settlement_at` on success and `settlement_failed_at` on failure. It is set on any terminal outcome, so test it rather than checking the two separately.
+- `time_to_finish` is `completion_time` minus `submitted_at`, in seconds.
+
+## Reading a timeline
+
+A successful payout fills the fields in this order:
+
+```text
+submitted_at → asset_received_at → asset_confirmed_at → processing_at → settlement_at (= completion_time)
+```
+
+A failed payout is identical until the fiat leg:
+
+```text
+submitted_at → asset_received_at → asset_confirmed_at → processing_at → settlement_failed_at (= completion_time)
+```
+
+An expired payout stops early: `expired_at` is set and everything from `asset_received_at` onward never appears.
+
+Because the fields fill in order, the newest field tells you where a payout is stuck. Funding confirmed but no `processing_at` after several minutes means the payout is queued behind the local rail, not waiting on the blockchain.
+
+## Example
+
+A quote that has just been initialized:
+
+```json
+{
+  "trip": {
+    "quote_at": "2026-06-19T11:50:18.933821639Z",
+    "initialized_at": "2026-06-19T11:50:19.531892243Z"
+  }
+}
+```
+
+[Webhooks](/docs/payouts/webhook-payout) fire on four transitions. The rest you read from the Trip, so poll [Get payout](/api-reference/payouts/get-payout) when you need the intermediate stages. See [The payout lifecycle](/docs/payouts/payouts-lifecycle) for which transitions emit an event.

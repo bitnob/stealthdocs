@@ -1,0 +1,45 @@
+---
+title: "Overview"
+description: "USDT and USDC across a dozen chains through one API: deposit addresses, confirmation tracking, and webhooks as the source of truth."
+---
+
+The stablecoins API moves USDT and USDC across every chain Bitnob supports through one request shape. You issue deposit addresses per user and chain, Bitnob watches the chain and credits your balance when a deposit confirms, and outbound transfers go from one endpoint regardless of network.
+
+Chain differences, token standards, confirmation thresholds, and gas markets are abstracted behind the API: you pass a `chain` parameter, and the webhooks, status codes, and response shapes stay identical.
+
+## When to use it
+
+Wallets, remittance, merchant settlement, and treasury: anywhere dollar-denominated value needs to move at internet speed. If the destination is a bank account or mobile money wallet rather than a crypto address, that is [Payouts](/docs/payouts/overview); if it is a Visa card, that is [Card issuing](/docs/card-issuing/overview).
+
+## How it fits together
+
+<Steps>
+  <Step title="Issue a deposit address">
+    [Generate an address](/api-reference/addresses/generate-address) per user, per chain. Incoming funds to it are tracked and credited to your balance.
+  </Step>
+  <Step title="Get credited on confirmation">
+    Bitnob waits out the chain's confirmation threshold, then fires `deposit.success`. Credit users from the webhook, never from the first sighting on-chain.
+  </Step>
+  <Step title="Send when you need to">
+    [Initiate a withdrawal](/api-reference/withdrawals/initiate-withdrawal) to any supported address. `transfer.success` or `transfer.failed` reports the outcome.
+  </Step>
+</Steps>
+
+Minimums are $1 per deposit and $1 per send. Transfers between wallets on your own account settle [instantly and gas-free](/docs/stablecoins/internal-wallet-to-wallet-transfers).
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="Accept USDT and settle in naira" icon="rocket" href="/docs/stablecoins/accept-usdt-and-settle-in-naira">
+    The end-to-end tutorial: receive on-chain, settle to a bank account.
+  </Card>
+  <Card title="How stablecoins work on Bitnob" icon="lightbulb" href="/docs/stablecoins/key-concepts">
+    Chains, wallets vs addresses, confirmations, and idempotency.
+  </Card>
+  <Card title="Receive deposits" icon="arrow-down" href="/docs/stablecoins/receiving-stablecoin-deposits">
+    Detection, confirmation, and the deposit.success event.
+  </Card>
+  <Card title="Supported chains" icon="link" href="/docs/stablecoins/supported-chains">
+    Every chain, its tokens, decimals, and confirmation threshold.
+  </Card>
+</Columns>

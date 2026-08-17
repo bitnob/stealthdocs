@@ -1,0 +1,60 @@
+---
+title: "Overview"
+description: "Conversion between USDT, USDC, Bitcoin, and naira in two calls: quote, then order. Atomic execution, instant wallet settlement, no volume limits."
+---
+
+The trading API converts between USDT, USDC, Bitcoin, and Nigerian naira in two calls: [create a quote](/api-reference/trading/create-quote), then [submit an order](/api-reference/trading/submit-order). Pricing, liquidity routing across exchanges and OTC desks, execution, and settlement are handled behind the API.
+
+Execution is atomic: an order fills completely or not at all, so there are no partial fills and no slippage drift. Settled assets land directly in the matching Bitnob balance on either side of the trade, and there are no volume limits: $5 and $5 million ride the same integration.
+
+![Trading](/images/trading.svg)
+
+## Supported pairs
+
+| Pair | Direction |
+|---|---|
+| USDT ↔ BTC | Either way |
+| USDC ↔ BTC | Either way |
+| USDC ↔ USDT | Either way |
+| NGN ↔ USDT | Either way |
+| NGN ↔ USDC | Either way |
+| NGN ↔ BTC | Either way |
+
+Live rates per pair come from [List all prices](/api-reference/trading/list-all-prices) and [Get price by pair](/api-reference/trading/get-price-by-pair).
+
+<Note>
+  NGN trading is rolling out gradually and must be enabled on your account. NGN orders also always require a locked quote; see [Create a quote](/docs/trading/create-quote).
+</Note>
+
+## The two-call flow
+
+<Steps>
+  <Step title="Quote">
+    [Create a quote](/docs/trading/create-quote) to lock a rate for a short window, roughly 30 seconds in development and 10 in production. Or skip it and trade at the live market rate for crypto pairs.
+  </Step>
+  <Step title="Order">
+    [Execute the trade](/docs/trading/execute-trade) with the quote's `id` and `price`, plus your unique `reference` for idempotency.
+  </Step>
+  <Step title="Confirm">
+    `trade.completed` or `trade.failed` reports the outcome; see [Receive trade webhooks](/docs/trading/trade-webhooks). Balances update immediately on completion.
+  </Step>
+</Steps>
+
+Beyond spot orders, the API also supports [scheduled orders](/api-reference/trading/create-scheduled-order) on a recurring cadence and [target orders](/api-reference/trading/create-target-order) that execute when a price is reached.
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="Swap bitcoin to USDT" icon="rocket" href="/docs/trading/swap-bitcoin-to-usdt">
+    The worked tutorial: balance check to confirmed swap.
+  </Card>
+  <Card title="How trading works" icon="lightbulb" href="/docs/trading/how-trading-works">
+    Pricing, quote locking, atomicity, and the questions integrators ask.
+  </Card>
+  <Card title="Execute a trade" icon="bolt" href="/docs/trading/execute-trade">
+    The order call, its responses, and idempotent retries.
+  </Card>
+  <Card title="Handle trading failures" icon="shield" href="/docs/trading/error-handling-patterns">
+    Every failure case with its fallback path.
+  </Card>
+</Columns>

@@ -1,0 +1,109 @@
+---
+title: "Stablecoins UX best practices"
+description: "Interface patterns that make chains, fees, confirmations, and addresses understandable to users."
+---
+## Let users choose chain, but only when it adds value
+
+If advanced users want control, expose a "Select Network" dropdown, populated from [Stablecoins Supported Chains](/api-reference/addresses/supported-chains) rather than a hardcoded list, with:
+
+- Network name (e.g., Solana (SPL))
+- Token type (e.g., USDT)
+- Estimated fee (e.g., ~\$0.01)
+- Average confirmation time (e.g., ~10s)
+
+Educate the user at the moment of decision, not in a separate guide.
+
+## Always show status clearly
+
+For every transfer or deposit:
+
+- Show “Pending” with a live progress bar (e.g., “6/15 confirmations”)
+- Auto-update to “Confirmed” when Bitnob emits the [webhook](/api-reference/addresses/webhooks#webhook)
+
+On failure (transfer.failed), see the [error responses](/api-reference/withdrawals/initiate-withdrawal) for the codes you may receive, surface:
+
+- Error summary (e.g., "Transaction reverted. Try again with a higher gas limit.")
+- Reference ID for support
+- Option to retry or contact support
+
+Transaction feedback is critical. Never leave users in a “did it work?” state.
+
+## Display fees transparently
+
+Before submitting a send:
+
+- You’re sending: \$100 USDT
+- Network: Polygon (USDT)
+- Estimated Network Fee: \$0.02
+- You will be charged: \$100.02
+
+After confirmation:
+
+- Display amount, centFees, chain, txHash, all returned by [Create Withdrawal](/api-reference/withdrawals/initiate-withdrawal)
+- Let users click to view the transaction in a block explorer
+
+## Reuse the reference field for trust & transparency
+
+- Show users their reference when [initiating a send](/api-reference/withdrawals/initiate-withdrawal)
+- Reuse the same reference in receipts, webhooks, logs, and support tickets
+- Encourage merchants to share that reference with customers when automating payouts
+
+This improves user trust and makes internal debugging much faster.
+
+## Surface the chain and token format
+
+Check the destination with [Validate Address](/api-reference/addresses/validate-address) before submitting, and always show:
+
+- Chain (e.g., Ethereum)
+- Token format (e.g., ERC-20)
+- Wallet address format (e.g., 0x..., T..., 3...)
+
+Warn users:
+
+<Info>
+  “Make sure you're sending USDT using the TRC-20 format. Sending USDT from the wrong chain may result in permanent loss of funds.”
+</Info>
+
+## QR code generation
+
+For deposits:
+
+Show a QR code containing:
+
+- The blockchain address returned by [Generate Addresses](/api-reference/addresses/generate-address)
+- Optionally: metadata (e.g., chain type in the URI)
+
+Label it clearly:
+
+“Scan to send USDT on Tron (TRC-20)”
+
+## Mobile UX
+
+Use action sheets for selecting chain/token Include touch-friendly copy buttons for wallet addresses
+
+Show [transaction history](/api-reference/transactions/list-transactions) with clear icons:
+
+- Received → Green
+- Sent → Red
+- Pending → Yellow
+
+## Error and edge case UX
+
+If a user sends to the wrong address or chain:
+
+- Don’t promise recovery
+- Offer an “Unverified Deposit” view for manual follow-up with support
+
+Surface a support contact flow with:
+
+- txHash
+- address used
+- chain and token
+
+## Real-time alerts
+
+Integrate [Bitnob webhooks](/api-reference/addresses/webhooks#overview) with:
+
+- Toasts/snackbars on successful deposits or transfers
+- In-app notifications
+- Email/SMS if applicable for higher-value transfers

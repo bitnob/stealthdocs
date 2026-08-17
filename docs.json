@@ -1,0 +1,1252 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "palm",
+  "name": "Bitnob Docs",
+  "colors": {
+    "primary": "#00A57F",
+    "light": "#00E4AF",
+    "dark": "#00795D"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Get started",
+            "icon": "rocket",
+            "expanded": true,
+            "pages": [
+              "docs/getting-started/overview",
+              "docs/getting-started/account-setup",
+              "docs/getting-started/quickstart",
+              {
+                "group": "Concepts",
+                "pages": [
+                  "docs/getting-started/core-concepts-and-architecture",
+                  "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts",
+                  "docs/getting-started/about"
+                ]
+              },
+              {
+                "group": "Build reliably",
+                "pages": [
+                  "docs/getting-started/api-best-practices/api-keys-and-credentials",
+                  "docs/getting-started/api-best-practices/idempotency-and-reference-integrity",
+                  "docs/getting-started/api-best-practices/webhook-best-practices",
+                  "docs/getting-started/api-best-practices/errors-and-retries",
+                  "docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows",
+                  "docs/getting-started/api-best-practices/simulating-flows-and-testing-in-sandbox",
+                  "docs/getting-started/api-best-practices/observability-logging-and-traceability"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Bitcoin",
+            "pages": [
+              "docs/bitcoin/overview",
+              {
+                "group": "Concepts",
+                "pages": [
+                  "docs/bitcoin/custody-models",
+                  "docs/bitcoin/lnurl-and-lightning-addresses",
+                  "docs/bitcoin/utxo-management-introduction",
+                  "docs/bitcoin/fee-market-and-transaction-strategies"
+                ]
+              },
+              {
+                "group": "Get started",
+                "pages": [
+                  "docs/bitcoin/send-bitcoin"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices",
+                  "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
+                  "docs/bitcoin/user-managed-self-custodial-wallets"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "docs/bitcoin/confirmations-and-webhook-events"
+                ]
+              }
+            ],
+            "icon": "bitcoin"
+          },
+          {
+            "group": "Stablecoins",
+            "pages": [
+              "docs/stablecoins/overview",
+              {
+                "group": "Concepts",
+                "pages": [
+                  "docs/stablecoins/key-concepts",
+                  "docs/stablecoins/why-support-stablecoins-on-multiple-chains"
+                ]
+              },
+              {
+                "group": "Get started",
+                "pages": [
+                  "docs/stablecoins/accept-usdt-and-settle-in-naira"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "docs/stablecoins/getting-started-with-stablecoins",
+                  "docs/stablecoins/issuing-stablecoin-addresses",
+                  "docs/stablecoins/receiving-stablecoin-deposits",
+                  "docs/stablecoins/sending-stablecoins",
+                  "docs/stablecoins/internal-wallet-to-wallet-transfers",
+                  "docs/stablecoins/webhooks",
+                  "docs/stablecoins/error-handling-and-failure-scenarios",
+                  "docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "docs/stablecoins/supported-chains"
+                ]
+              }
+            ],
+            "icon": "coins"
+          },
+          {
+            "group": "Trading",
+            "pages": [
+              "docs/trading/overview",
+              {
+                "group": "Concepts",
+                "pages": [
+                  "docs/trading/how-trading-works"
+                ]
+              },
+              {
+                "group": "Get started",
+                "pages": [
+                  "docs/trading/swap-bitcoin-to-usdt"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "docs/trading/create-quote",
+                  "docs/trading/execute-trade",
+                  "docs/trading/trade-status-and-history",
+                  "docs/trading/trade-webhooks",
+                  "docs/trading/error-handling-patterns"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "docs/trading/statuses-and-webhook-events"
+                ]
+              }
+            ],
+            "icon": "arrow-right-arrow-left"
+          },
+          {
+            "group": "Payouts",
+            "icon": "money-bill-transfer",
+            "pages": [
+              "docs/payouts/overview",
+              {
+                "group": "Concepts",
+                "pages": [
+                  "docs/payouts/settlement-models",
+                  "docs/payouts/payouts-lifecycle"
+                ]
+              },
+              {
+                "group": "Get started",
+                "pages": [
+                  "docs/payouts/send-your-first-payout"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "docs/payouts/validate-a-beneficiary",
+                  "docs/payouts/swift-payout",
+                  "docs/payouts/mass-payouts",
+                  "docs/payouts/webhook-payout",
+                  "docs/payouts/error-handling"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "docs/payouts/statuses-and-webhook-events",
+                  "docs/payouts/understanding-trip-timeline",
+                  "docs/payouts/supported-currencies",
+                  {
+                    "group": "Corridors",
+                    "pages": [
+                      "docs/payouts/corridor-specific-behavior",
+                      "docs/payouts/corridor-specific-behavior/nigeria-payout",
+                      "docs/payouts/corridor-specific-behavior/ghana-payout",
+                      "docs/payouts/corridor-specific-behavior/kenya-payout"
+                    ]
+                  },
+                  "docs/payouts/glossary-terms",
+                  "docs/payouts/payout-incident-postmortem"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Card issuing",
+            "icon": "credit-card",
+            "pages": [
+              "docs/card-issuing/overview",
+              {
+                "group": "Concepts",
+                "pages": [
+                  "docs/card-issuing/card-issuance"
+                ]
+              },
+              {
+                "group": "Get started",
+                "pages": [
+                  "docs/card-issuing/issue-your-first-card"
+                ]
+              },
+              {
+                "group": "Guides",
+                "pages": [
+                  "docs/card-issuing/card-funding",
+                  "docs/card-issuing/card-status-management",
+                  "docs/card-issuing/transaction-monitoring",
+                  "docs/card-issuing/receive-card-webhooks"
+                ]
+              },
+              {
+                "group": "Reference",
+                "pages": [
+                  "docs/card-issuing/webhooks",
+                  "docs/card-issuing/card-fees",
+                  "docs/card-issuing/virtual-card-glossary"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Virtual accounts",
+            "pages": [
+              "docs/virtual-accounts/overview"
+            ],
+            "icon": "building-columns"
+          },
+          {
+            "group": "Resources",
+            "icon": "folder-open",
+            "expanded": true,
+            "pages": [
+              "docs/developer-resources/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "icon": "code",
+        "groups": [
+          {
+            "group": "Authentication",
+            "icon": "key",
+            "expanded": true,
+            "pages": [
+              "api-reference/authentication/authentication",
+              "api-reference/authentication/usage-examples"
+            ]
+          },
+          {
+            "group": "Identity",
+            "icon": "id-card",
+            "expanded": true,
+            "pages": [
+              "GET /api/whoami"
+            ]
+          },
+          {
+            "group": "Balances",
+            "icon": "scale-balanced",
+            "expanded": true,
+            "pages": [
+              "GET /api/balances",
+              "GET /api/balances/{currency}"
+            ]
+          },
+          {
+            "group": "Customers",
+            "icon": "users",
+            "expanded": true,
+            "pages": [
+              "GET /api/customers/countries",
+              "GET /api/customers/countries/{countryCode}/states",
+              "POST /api/customers",
+              "GET /api/customers",
+              "GET /api/customers/{customerId}",
+              "PUT /api/customers/{customerId}"
+            ]
+          },
+          {
+            "group": "Beneficiaries",
+            "icon": "user-check",
+            "expanded": true,
+            "pages": [
+              "POST /api/beneficiaries",
+              "GET /api/beneficiaries",
+              "GET /api/beneficiaries/{beneficiaryId}",
+              "PUT /api/beneficiaries/{beneficiaryId}"
+            ]
+          },
+          {
+            "group": "Addresses",
+            "icon": "location-dot",
+            "expanded": true,
+            "pages": [
+              "POST /api/addresses",
+              "GET /api/addresses",
+              "GET /api/addresses/{id}",
+              "POST /api/addresses/validate",
+              "GET /api/stablecoins/supported-chains",
+              "api-reference/addresses/webhooks"
+            ]
+          },
+          {
+            "group": "Lightning",
+            "icon": "bolt",
+            "expanded": true,
+            "pages": [
+              "POST /api/lightning/invoices",
+              "GET /api/lightning/invoices",
+              "GET /api/lightning/invoices/{id}",
+              "POST /api/lightning/decode",
+              "POST /api/lightning/preview",
+              "POST /api/lightning/pay"
+            ]
+          },
+          {
+            "group": "Withdrawals",
+            "icon": "arrow-up-from-bracket",
+            "expanded": true,
+            "pages": [
+              "POST /api/withdrawals",
+              "api-reference/withdrawal/webhooks"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "icon": "receipt",
+            "expanded": true,
+            "pages": [
+              "GET /api/transactions",
+              "GET /api/transactions/{id}"
+            ]
+          },
+          {
+            "group": "Exchange rates",
+            "icon": "chart-line",
+            "expanded": true,
+            "pages": [
+              "GET /api/exchange-rates",
+              "GET /api/exchange-rates/convert"
+            ]
+          },
+          {
+            "group": "Trading",
+            "icon": "arrow-right-arrow-left",
+            "expanded": true,
+            "pages": [
+              "GET /api/trading/prices",
+              "GET /api/trading/prices/{pair}",
+              "POST /api/trading/quotes",
+              "GET /api/trading/quotes/{id}",
+              "POST /api/trading/orders",
+              "GET /api/trading/orders",
+              "GET /api/trading/orders/{id}",
+              "DELETE /api/trading/orders/{id}",
+              "POST /api/trading/scheduled-orders",
+              "GET /api/trading/scheduled-orders",
+              "GET /api/trading/scheduled-orders/{id}",
+              "PUT /api/trading/scheduled-orders/{id}",
+              "GET /api/trading/scheduled-orders/{id}/executions",
+              "POST /api/trading/target-orders",
+              "GET /api/trading/target-orders",
+              "GET /api/trading/target-orders/{id}"
+            ]
+          },
+          {
+            "group": "Payouts",
+            "icon": "money-bill-transfer",
+            "expanded": true,
+            "pages": [
+              "POST /api/payouts/quotes",
+              "POST /api/payouts/{quoteId}/initialize",
+              "POST /api/payouts/{quoteId}/finalize",
+              "GET /api/payouts/account-lookup",
+              "GET /api/payouts/supported-countries",
+              "GET /api/payouts/supported-countries/{country}",
+              "GET /api/payouts/limits",
+              "GET /api/payouts/banks/{countryCode}",
+              "GET /api/payouts",
+              "GET /api/payouts/{id}",
+              "api-reference/payouts/usage-example",
+              "api-reference/payouts/swift-payouts",
+              "api-reference/payouts/webhooks"
+            ]
+          },
+          {
+            "group": "Bulk transfers",
+            "icon": "layer-group",
+            "expanded": true,
+            "pages": [
+              "POST /api/bulk-transfers",
+              "GET /api/bulk-transfers",
+              "POST /api/bulk-transfers/upload-urls",
+              "POST /api/bulk-transfers/previews",
+              "GET /api/bulk-transfers/{batchId}",
+              "POST /api/bulk-transfers/{batchId}/confirm",
+              "POST /api/bulk-transfers/{batchId}/retry",
+              "POST /api/bulk-transfers/schedules",
+              "GET /api/bulk-transfers/schedules",
+              "PUT /api/bulk-transfers/schedules/{scheduleId}",
+              "GET /api/bulk-transfers/schedules/{scheduleId}/executions",
+              "POST /api/bulk-transfers/executions/{executionId}/retry"
+            ]
+          },
+          {
+            "group": "Virtual accounts",
+            "icon": "building-columns",
+            "expanded": true,
+            "pages": [
+              "POST /api/virtual-accounts",
+              "GET /api/virtual-accounts",
+              "GET /api/virtual-accounts/supported-currencies",
+              "GET /api/virtual-accounts/{id}",
+              "GET /api/virtual-accounts/{id}/transactions",
+              "PATCH /api/virtual-accounts/{id}/alias",
+              "POST /api/virtual-accounts/{id}/simulate-deposit"
+            ]
+          },
+          {
+            "group": "Virtual cards",
+            "icon": "credit-card",
+            "expanded": true,
+            "pages": [
+              "POST /api/cards",
+              "GET /api/cards",
+              "POST /api/cards/encryption-key",
+              "GET /api/cards/team-members",
+              "GET /api/cards/transactions",
+              "GET /api/cards/{cardId}",
+              "DELETE /api/cards/{cardId}",
+              "GET /api/cards/{cardId}/secure",
+              "GET /api/cards/{cardId}/transactions",
+              "GET /api/cards/{cardId}/transactions/{transactionId}",
+              "POST /api/cards/{cardId}/balance",
+              "POST /api/cards/{cardId}/status",
+              "PUT /api/cards/{cardId}/spend-limits",
+              "PATCH /api/cards/{cardId}/contact",
+              "GET /api/customers/{customerId}/cards",
+              "api-reference/virtual-cards/webhooks"
+            ]
+          }
+        ],
+        "openapi": {
+          "source": "api-collections/swagger/bitnob-api-v2.openapi.json",
+          "directory": "api-reference"
+        }
+      },
+      {
+        "tab": "Wallet infrastructure",
+        "icon": "wallet",
+        "groups": [
+          {
+            "group": "Guides",
+            "icon": "book",
+            "expanded": true,
+            "pages": [
+              "docs/enterprise/overview",
+              "docs/enterprise/core-concepts",
+              "docs/enterprise/authentication",
+              "docs/enterprise/exchange-integration-guide"
+            ]
+          },
+          {
+            "group": "Meta",
+            "icon": "circle-info",
+            "expanded": true,
+            "pages": [
+              "GET /me"
+            ]
+          },
+          {
+            "group": "Assets",
+            "icon": "cubes",
+            "expanded": true,
+            "pages": [
+              "GET /assets",
+              "GET /assets/chains",
+              "GET /assets/{id}"
+            ]
+          },
+          {
+            "group": "Vaults",
+            "icon": "vault",
+            "expanded": true,
+            "pages": [
+              "GET /vaults",
+              "GET /vaults/{id}"
+            ]
+          },
+          {
+            "group": "Wallets",
+            "icon": "layer-group",
+            "expanded": true,
+            "pages": [
+              "GET /wallets",
+              "POST /wallets",
+              "GET /wallets/{id}",
+              "PATCH /wallets/{id}",
+              "GET /wallets/{id}/addresses",
+              "POST /wallets/{id}/addresses",
+              "GET /wallets/{id}/addresses/{addressId}",
+              "GET /wallets/{id}/balances"
+            ]
+          },
+          {
+            "group": "Transactions",
+            "icon": "receipt",
+            "expanded": true,
+            "pages": [
+              "GET /transactions",
+              "POST /transactions",
+              "GET /transactions/{id}"
+            ]
+          },
+          {
+            "group": "Gas stations",
+            "icon": "gas-pump",
+            "expanded": true,
+            "pages": [
+              "GET /gasstations",
+              "POST /gasstations",
+              "GET /gasstations/{id}",
+              "PATCH /gasstations/{id}",
+              "POST /gasstations/{id}/refill",
+              "POST /gasstations/{id}/sponsor-broadcast"
+            ]
+          },
+          {
+            "group": "Subscriptions",
+            "icon": "bell",
+            "expanded": true,
+            "pages": [
+              "GET /subscriptions",
+              "POST /subscriptions",
+              "GET /subscriptions/events",
+              "GET /subscriptions/events/{id}",
+              "POST /subscriptions/events/{id}/retry",
+              "DELETE /subscriptions/{id}",
+              "GET /subscriptions/{id}",
+              "PATCH /subscriptions/{id}",
+              "POST /subscriptions/{id}/rotate-secret"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "icon": "satellite-dish",
+            "expanded": true,
+            "pages": [
+              "GET /webhooks",
+              "POST /webhooks",
+              "GET /webhooks/events",
+              "GET /webhooks/events/{id}",
+              "POST /webhooks/events/{id}/retry",
+              "DELETE /webhooks/{id}",
+              "GET /webhooks/{id}",
+              "PATCH /webhooks/{id}",
+              "POST /webhooks/{id}/rotate-secret"
+            ]
+          },
+          {
+            "group": "RPC",
+            "icon": "network-wired",
+            "expanded": true,
+            "pages": [
+              "POST /rpc/{chain}"
+            ]
+          }
+        ],
+        "openapi": {
+          "source": "api-collections/swagger/bitnob-wallet-infrastructure.openapi.json",
+          "directory": "api-reference/wallet-infrastructure"
+        }
+      },
+      {
+        "tab": "Playground",
+        "icon": "flask",
+        "groups": [
+          {
+            "group": "Overview",
+            "icon": "compass",
+            "expanded": true,
+            "pages": [
+              "docs/playground/overview"
+            ]
+          },
+          {
+            "group": "Hash and crypto",
+            "icon": "key",
+            "expanded": true,
+            "pages": [
+              "docs/playground/hash-crypto/hmac-generator",
+              "docs/playground/hash-crypto/sha256-generator",
+              "docs/playground/hash-crypto/hash-file-checker",
+              "docs/playground/hash-crypto/bitcoin-address-validator",
+              "docs/playground/hash-crypto/uuid-generator",
+              "docs/playground/hash-crypto/random-string-generator",
+              "docs/playground/hash-crypto/private-key-generator"
+            ]
+          },
+          {
+            "group": "JSON tools",
+            "icon": "brackets-curly",
+            "expanded": true,
+            "pages": [
+              "docs/playground/json-tools/json-formatter",
+              "docs/playground/json-tools/json-validator",
+              "docs/playground/json-tools/json-minifier",
+              "docs/playground/json-tools/json-to-csv",
+              "docs/playground/json-tools/jsonpath-tester",
+              "docs/playground/json-tools/json-diff-checker"
+            ]
+          },
+          {
+            "group": "Text and binary",
+            "icon": "binary",
+            "expanded": true,
+            "pages": [
+              "docs/playground/text-binary/base64-encoder",
+              "docs/playground/text-binary/base64-decoder",
+              "docs/playground/text-binary/hex-encoder",
+              "docs/playground/text-binary/hex-decoder",
+              "docs/playground/text-binary/utf8-encoder",
+              "docs/playground/text-binary/utf8-decoder",
+              "docs/playground/text-binary/url-encoder",
+              "docs/playground/text-binary/url-decoder",
+              "docs/playground/text-binary/ascii-binary-converter",
+              "docs/playground/text-binary/rot13-cipher",
+              "docs/playground/text-binary/base32-converter",
+              "docs/playground/text-binary/string-byte-inspector"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Learn",
+        "icon": "graduation-cap",
+        "groups": [
+          {
+            "group": "Learn",
+            "icon": "graduation-cap",
+            "pages": [
+              "learn/overview"
+            ]
+          },
+          {
+            "group": "Courses",
+            "icon": "graduation-cap",
+            "pages": [
+              {
+                "group": "Bitcoin for product managers",
+                "icon": "bitcoin",
+                "pages": [
+                  "learn/courses/bitcoin-for-product-managers",
+                  "learn/courses/bitcoin-for-product-managers/module-1",
+                  "learn/courses/bitcoin-for-product-managers/module-2",
+                  "learn/courses/bitcoin-for-product-managers/module-3",
+                  "learn/courses/bitcoin-for-product-managers/module-4",
+                  "learn/courses/bitcoin-for-product-managers/module-5",
+                  "learn/courses/bitcoin-for-product-managers/module-6",
+                  "learn/courses/bitcoin-for-product-managers/module-7",
+                  "learn/courses/bitcoin-for-product-managers/module-8",
+                  "learn/courses/bitcoin-for-product-managers/module-9",
+                  "learn/courses/bitcoin-for-product-managers/module-10",
+                  "learn/courses/bitcoin-for-product-managers/module-11",
+                  "learn/courses/bitcoin-for-product-managers/module-12",
+                  "learn/courses/bitcoin-for-product-managers/module-13",
+                  "learn/courses/bitcoin-for-product-managers/module-14",
+                  "learn/courses/bitcoin-for-product-managers/module-15",
+                  "learn/courses/bitcoin-for-product-managers/module-16",
+                  "learn/courses/bitcoin-for-product-managers/module-17",
+                  "learn/courses/bitcoin-for-product-managers/module-18",
+                  "learn/courses/bitcoin-for-product-managers/module-19",
+                  "learn/courses/bitcoin-for-product-managers/module-20",
+                  "learn/courses/bitcoin-for-product-managers/module-21"
+                ]
+              },
+              {
+                "group": "Card issuing",
+                "icon": "credit-card",
+                "pages": [
+                  "learn/courses/card-issuing/module-1",
+                  "learn/courses/card-issuing/module-2",
+                  "learn/courses/card-issuing/module-3",
+                  "learn/courses/card-issuing/module-4",
+                  "learn/courses/card-issuing/module-5",
+                  "learn/courses/card-issuing/module-6",
+                  "learn/courses/card-issuing/module-7",
+                  "learn/courses/card-issuing/module-8",
+                  "learn/courses/card-issuing/module-9",
+                  "learn/courses/card-issuing/module-10",
+                  "learn/courses/card-issuing/module-11",
+                  "learn/courses/card-issuing/module-12",
+                  "learn/courses/card-issuing/module-13",
+                  "learn/courses/card-issuing/module-14",
+                  "learn/courses/card-issuing/module-15",
+                  "learn/courses/card-issuing/module-16",
+                  "learn/courses/card-issuing/module-17",
+                  "learn/courses/card-issuing/module-18",
+                  "learn/courses/card-issuing/module-19",
+                  "learn/courses/card-issuing/module-20",
+                  "learn/courses/card-issuing/module-21",
+                  "learn/courses/card-issuing/module-22",
+                  "learn/courses/card-issuing/module-23"
+                ]
+              },
+              {
+                "group": "Card fraud",
+                "icon": "user-secret",
+                "pages": [
+                  "learn/courses/card-fraud/module-1",
+                  "learn/courses/card-fraud/module-2",
+                  "learn/courses/card-fraud/module-3",
+                  "learn/courses/card-fraud/module-4",
+                  "learn/courses/card-fraud/module-5",
+                  "learn/courses/card-fraud/module-6",
+                  "learn/courses/card-fraud/module-7",
+                  "learn/courses/card-fraud/module-8",
+                  "learn/courses/card-fraud/module-9",
+                  "learn/courses/card-fraud/module-10"
+                ]
+              },
+              {
+                "group": "Payouts for product managers",
+                "icon": "money-bill-transfer",
+                "pages": [
+                  "learn/courses/payouts-for-product-managers/module-1",
+                  "learn/courses/payouts-for-product-managers/module-2",
+                  "learn/courses/payouts-for-product-managers/module-3",
+                  "learn/courses/payouts-for-product-managers/module-4",
+                  "learn/courses/payouts-for-product-managers/module-5",
+                  "learn/courses/payouts-for-product-managers/module-6",
+                  "learn/courses/payouts-for-product-managers/module-7",
+                  "learn/courses/payouts-for-product-managers/module-8",
+                  "learn/courses/payouts-for-product-managers/module-9",
+                  "learn/courses/payouts-for-product-managers/module-10",
+                  "learn/courses/payouts-for-product-managers/module-11-circular",
+                  "learn/courses/payouts-for-product-managers/module-12",
+                  "learn/courses/payouts-for-product-managers/capstone-project",
+                  "learn/courses/payouts-for-product-managers/payouts-use-cases-unlocking-the-potential-of-bitcoin-and-stablecoin-settlement"
+                ]
+              },
+              {
+                "group": "Bitcoin Core from the CLI",
+                "icon": "terminal",
+                "pages": [
+                  "learn/courses/bitcoin-core-cli/module-1",
+                  "learn/courses/bitcoin-core-cli/module-2",
+                  "learn/courses/bitcoin-core-cli/module-3",
+                  "learn/courses/bitcoin-core-cli/module-4",
+                  "learn/courses/bitcoin-core-cli/module-5",
+                  "learn/courses/bitcoin-core-cli/module-6",
+                  "learn/courses/bitcoin-core-cli/module-7",
+                  "learn/courses/bitcoin-core-cli/module-8",
+                  "learn/courses/bitcoin-core-cli/capstone-project"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Playbooks",
+            "icon": "book-open-reader",
+            "pages": [
+              {
+                "group": "Trading",
+                "icon": "arrow-right-arrow-left",
+                "pages": [
+                  "learn/playbooks/trading/how-integrators-can-make-money",
+                  "learn/playbooks/trading/on-designing-the-trading-experience",
+                  "learn/playbooks/trading/support-manual-for-integrator-teams",
+                  "learn/playbooks/trading/trading-api-revenue-playbook",
+                  "learn/playbooks/trading/trading-revenue-reporting-manual",
+                  "learn/playbooks/trading/trading-ux-implementation-guidelines"
+                ]
+              },
+              {
+                "group": "Card issuing",
+                "icon": "credit-card",
+                "pages": [
+                  "learn/playbooks/cards/contactless-cards",
+                  "learn/playbooks/cards/marketing-virtual-cards",
+                  "learn/playbooks/cards/support-team-playbook",
+                  "learn/playbooks/cards/treasury-and-finance-operations-playbook",
+                  "learn/playbooks/cards/virtual-card-fraud-and-compliance-playbook",
+                  "learn/playbooks/cards/zero-to-card-business-toolkit"
+                ]
+              },
+              {
+                "group": "Stablecoins",
+                "icon": "coins",
+                "pages": [
+                  "learn/playbooks/stablecoins/operations-guide",
+                  "learn/playbooks/stablecoins/ux-best-practices",
+                  "learn/playbooks/stablecoins/blockchain-explorer-guide"
+                ]
+              },
+              {
+                "group": "Bitcoin",
+                "icon": "bitcoin",
+                "pages": [
+                  "learn/playbooks/bitcoin/security-and-compliance",
+                  "learn/playbooks/bitcoin/threat-models-and-security-risks",
+                  "learn/playbooks/bitcoin/fatal-mistakes-to-avoid",
+                  "learn/playbooks/bitcoin/address-and-privacy-best-practices",
+                  "learn/playbooks/bitcoin/sample-code-architecture-and-folder-structure",
+                  "learn/playbooks/bitcoin/putting-it-all-together",
+                  "learn/playbooks/bitcoin/future-upgrade-readiness"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "icon": "clock-rotate-left",
+        "pages": [
+          "changelog"
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "javascript",
+        "python",
+        "php",
+        "go",
+        "java"
+      ],
+      "prefill": true
+    },
+    "params": {
+      "expanded": "closed"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://app.bitnob.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://bitnob.com"
+    }
+  },
+  "contextual": {
+    "display": "header",
+    "options": [
+      "copy",
+      "view",
+      "assistant",
+      "download-pdf",
+      "download-spec",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "grok",
+      "devin",
+      "windsurf",
+      "cursor",
+      "vscode",
+      "mcp",
+      "add-mcp",
+      "devin-mcp"
+    ]
+  },
+  "markdown": {
+    "schema": true,
+    "instructions": [
+      "Bitnob API requests authenticate with an `X-Auth-Client` API key header against https://api.bitnob.com.",
+      "Always use the sandbox environment for testing. Never put live API keys in sample code.",
+      "Money amounts are integers in the smallest unit of the currency (satoshis for BTC, cents for fiat). Never use floats.",
+      "Every state-changing request takes a client-supplied `reference` and must be treated as idempotent on retry.",
+      "Quotes expire. Re-quote rather than reusing a stale quote id."
+    ]
+  },
+  "search": {
+    "prompt": "Ask a question or search the Bitnob docs"
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/bitnob",
+      "github": "https://github.com/bitnob",
+      "website": "https://bitnob.com"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/changelog/overview",
+      "destination": "/changelog"
+    },
+    {
+      "source": "/docs/genesis/api-best-practices",
+      "destination": "/docs/getting-started/api-best-practices/api-keys-and-credentials"
+    },
+    {
+      "source": "/docs/genesis/:slug*",
+      "destination": "/docs/getting-started/:slug*"
+    },
+    {
+      "source": "/docs/bitcoin/a-practical-guide-for-non-technical-pms",
+      "destination": "/learn/courses/bitcoin-for-product-managers"
+    },
+    {
+      "source": "/docs/bitcoin/a-practical-guide-for-non-technical-pms/:slug*",
+      "destination": "/learn/courses/bitcoin-for-product-managers/:slug*"
+    },
+    {
+      "source": "/docs/card-issuing/card-issuing-course",
+      "destination": "/learn/courses/card-issuing/module-1"
+    },
+    {
+      "source": "/docs/card-issuing/card-issuing-course/:slug*",
+      "destination": "/learn/courses/card-issuing/:slug*"
+    },
+    {
+      "source": "/docs/card-issuing/card-fraud-course",
+      "destination": "/learn/courses/card-fraud/module-1"
+    },
+    {
+      "source": "/docs/card-issuing/card-fraud-course/:slug*",
+      "destination": "/learn/courses/card-fraud/:slug*"
+    },
+    {
+      "source": "/docs/payouts/payouts-for-pms",
+      "destination": "/learn/courses/payouts-for-product-managers/module-1"
+    },
+    {
+      "source": "/docs/payouts/payouts-for-pms/:slug*",
+      "destination": "/learn/courses/payouts-for-product-managers/:slug*"
+    },
+    {
+      "source": "/docs/courses/mastering-bitcoin-core-from-the-command-line",
+      "destination": "/learn/courses/bitcoin-core-cli/module-1"
+    },
+    {
+      "source": "/docs/courses/mastering-bitcoin-core-from-the-command-line/:slug*",
+      "destination": "/learn/courses/bitcoin-core-cli/:slug*"
+    },
+    {
+      "source": "/docs/trading/trading-api-revenue-playbook",
+      "destination": "/learn/playbooks/trading/trading-api-revenue-playbook"
+    },
+    {
+      "source": "/docs/trading/trading-revenue-reporting-manual",
+      "destination": "/learn/playbooks/trading/trading-revenue-reporting-manual"
+    },
+    {
+      "source": "/docs/trading/support-manual-for-integrator-teams",
+      "destination": "/learn/playbooks/trading/support-manual-for-integrator-teams"
+    },
+    {
+      "source": "/docs/trading/on-designing-the-trading-experience",
+      "destination": "/learn/playbooks/trading/on-designing-the-trading-experience"
+    },
+    {
+      "source": "/docs/trading/trading-ux-implementation-guidelines",
+      "destination": "/learn/playbooks/trading/trading-ux-implementation-guidelines"
+    },
+    {
+      "source": "/docs/trading/how-integrators-can-make-money",
+      "destination": "/learn/playbooks/trading/how-integrators-can-make-money"
+    },
+    {
+      "source": "/docs/card-issuing/support-team-playbook",
+      "destination": "/learn/playbooks/cards/support-team-playbook"
+    },
+    {
+      "source": "/docs/card-issuing/treasury-and-finance-operations-playbook",
+      "destination": "/learn/playbooks/cards/treasury-and-finance-operations-playbook"
+    },
+    {
+      "source": "/docs/card-issuing/virtual-card-fraud-and-compliance-playbook",
+      "destination": "/learn/playbooks/cards/virtual-card-fraud-and-compliance-playbook"
+    },
+    {
+      "source": "/docs/card-issuing/marketing-virtual-cards",
+      "destination": "/learn/playbooks/cards/marketing-virtual-cards"
+    },
+    {
+      "source": "/docs/card-issuing/zero-to-card-business-toolkit",
+      "destination": "/learn/playbooks/cards/zero-to-card-business-toolkit"
+    },
+    {
+      "source": "/docs/card-issuing/contactless-cards",
+      "destination": "/learn/playbooks/cards/contactless-cards"
+    },
+    {
+      "source": "/docs/stablecoins/stablecoin-operations-guide",
+      "destination": "/learn/playbooks/stablecoins/operations-guide"
+    },
+    {
+      "source": "/docs/stablecoins/stablecoins-ux-best-practices",
+      "destination": "/learn/playbooks/stablecoins/ux-best-practices"
+    },
+    {
+      "source": "/docs/bitcoin/security-and-compliance-reminders",
+      "destination": "/learn/playbooks/bitcoin/security-and-compliance"
+    },
+    {
+      "source": "/docs/bitcoin",
+      "destination": "/docs/bitcoin/overview"
+    },
+    {
+      "source": "/docs/bounties",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/card-issuing",
+      "destination": "/docs/card-issuing/overview"
+    },
+    {
+      "source": "/docs/courses",
+      "destination": "/learn/overview"
+    },
+    {
+      "source": "/docs/developer-resources",
+      "destination": "/docs/developer-resources/overview"
+    },
+    {
+      "source": "/docs/enterprise",
+      "destination": "/docs/enterprise/overview"
+    },
+    {
+      "source": "/docs/marketplace",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/payouts",
+      "destination": "/docs/payouts/overview"
+    },
+    {
+      "source": "/docs/stablecoins",
+      "destination": "/docs/stablecoins/overview"
+    },
+    {
+      "source": "/docs/tooling",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/trading",
+      "destination": "/docs/trading/overview"
+    },
+    {
+      "source": "/docs/virtual-accounts",
+      "destination": "/docs/virtual-accounts/overview"
+    },
+    {
+      "source": "/docs/getting-started/api-best-practices",
+      "destination": "/docs/getting-started/api-best-practices/api-keys-and-credentials"
+    },
+    {
+      "source": "/docs/courses/:slug*",
+      "destination": "/learn/overview"
+    },
+    {
+      "source": "/docs/bounties/:slug*",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/marketplace/:slug*",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/tooling/:slug*",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/playground/:slug*",
+      "destination": "/docs/playground/overview"
+    },
+    {
+      "source": "/docs/payouts/settlemnt-models",
+      "destination": "/docs/payouts/settlement-models"
+    },
+    {
+      "source": "/docs/payouts/payout-live-example",
+      "destination": "/docs/payouts/send-your-first-payout"
+    },
+    {
+      "source": "/docs/payouts/requesting-and-initiating-payment",
+      "destination": "/docs/payouts/send-your-first-payout"
+    },
+    {
+      "source": "/docs/payouts/full-payout-flow",
+      "destination": "/docs/payouts/send-your-first-payout"
+    },
+    {
+      "source": "/docs/payouts/incident-reporting",
+      "destination": "/docs/payouts/payout-incident-postmortem"
+    },
+    {
+      "source": "/docs/getting-started/tutorials",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/getting-started/tutorials/send-bitcoin",
+      "destination": "/docs/bitcoin/send-bitcoin"
+    },
+    {
+      "source": "/docs/getting-started/tutorials/send-usdt-to-ngn",
+      "destination": "/docs/stablecoins/accept-usdt-and-settle-in-naira"
+    },
+    {
+      "source": "/docs/getting-started/tutorials/swap",
+      "destination": "/docs/trading/swap-bitcoin-to-usdt"
+    },
+    {
+      "source": "/docs/card-issuing/virtual-card-integration-guide",
+      "destination": "/docs/card-issuing/issue-your-first-card"
+    },
+    {
+      "source": "/docs/card-issuing/virtual-card-api-endpoint-reference",
+      "destination": "/api-reference/cards/list-cards"
+    },
+    {
+      "source": "/docs/card-issuing/webhook-security-delivery",
+      "destination": "/docs/card-issuing/receive-card-webhooks"
+    },
+    {
+      "source": "/docs/card-issuing/card-decline-rule-policy",
+      "destination": "/docs/card-issuing/card-fees"
+    },
+    {
+      "source": "/docs/stablecoins/preparing-to-work-with-stablecoins",
+      "destination": "/docs/stablecoins/getting-started-with-stablecoins"
+    },
+    {
+      "source": "/docs/stablecoins/handling-webhooks-for-stablecoin-transfers",
+      "destination": "/docs/stablecoins/webhooks"
+    },
+    {
+      "source": "/docs/stablecoins/security-and-reliability-best-practices",
+      "destination": "/docs/getting-started/api-best-practices/api-keys-and-credentials"
+    },
+    {
+      "source": "/docs/stablecoins/advanced-topics-and-best-practices-for-stablecoins",
+      "destination": "/docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide"
+    },
+    {
+      "source": "/docs/stablecoins/blockchain-explorer-guide",
+      "destination": "/learn/playbooks/stablecoins/blockchain-explorer-guide"
+    },
+    {
+      "source": "/docs/trading/how-trading-works-2",
+      "destination": "/docs/trading/how-trading-works"
+    },
+    {
+      "source": "/docs/trading/faq-trading-fundamentals",
+      "destination": "/docs/trading/how-trading-works"
+    },
+    {
+      "source": "/docs/trading/best-practices-for-trading",
+      "destination": "/docs/trading/how-trading-works"
+    },
+    {
+      "source": "/docs/bitcoin/threat-models-and-security-risks",
+      "destination": "/learn/playbooks/bitcoin/threat-models-and-security-risks"
+    },
+    {
+      "source": "/docs/bitcoin/fatal-mistakes-to-avoid",
+      "destination": "/learn/playbooks/bitcoin/fatal-mistakes-to-avoid"
+    },
+    {
+      "source": "/docs/bitcoin/address-and-privacy-best-practices",
+      "destination": "/learn/playbooks/bitcoin/address-and-privacy-best-practices"
+    },
+    {
+      "source": "/docs/bitcoin/sample-code-architecture-and-folder-structure",
+      "destination": "/learn/playbooks/bitcoin/sample-code-architecture-and-folder-structure"
+    },
+    {
+      "source": "/docs/bitcoin/putting-it-all-together",
+      "destination": "/learn/playbooks/bitcoin/putting-it-all-together"
+    },
+    {
+      "source": "/docs/bitcoin/future-upgrade-readiness",
+      "destination": "/learn/playbooks/bitcoin/future-upgrade-readiness"
+    },
+    {
+      "source": "/docs/developer-resources/postman-collection",
+      "destination": "/docs/developer-resources/overview"
+    },
+    {
+      "source": "/docs/developer-resources/swagger-explorer",
+      "destination": "/docs/developer-resources/overview"
+    },
+    {
+      "source": "/docs/developer-resources/wallet-infrastructure-api",
+      "destination": "/docs/developer-resources/overview"
+    },
+    {
+      "source": "/docs/developer-resources/payout-incident-postmortem",
+      "destination": "/docs/payouts/payout-incident-postmortem"
+    },
+    {
+      "source": "/docs/getting-started/core-concepts-and-architecture/currency-handling-for-inexperienced-devs",
+      "destination": "/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts"
+    },
+    {
+      "source": "/docs/virtual-accounts/getting-started",
+      "destination": "/docs/virtual-accounts/overview"
+    },
+    {
+      "source": "/docs/virtual-accounts/errors",
+      "destination": "/docs/virtual-accounts/overview"
+    },
+    {
+      "source": "/learn/courses/bitcoin-core-cli/final-quiz",
+      "destination": "/learn/courses/bitcoin-core-cli/module-1"
+    },
+    {
+      "source": "/learn/courses/bitcoin-core-cli/Capstone-Project-Bitcoin-Core-CLI-Automation",
+      "destination": "/learn/courses/bitcoin-core-cli/capstone-project"
+    }
+  ]
+}

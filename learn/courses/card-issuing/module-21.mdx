@@ -1,0 +1,122 @@
+---
+title: "Module 21: Compliance, security, and regulatory responsibilities in virtual card products"
+description: "The compliance and security duties that fall on card platforms, from PCI DSS to KYC and AML."
+---
+## Learning objectives
+
+- Understand the core compliance frameworks that govern card products (especially PCI DSS)
+- Learn what responsibilities fall on product teams, platforms, and partners
+- Avoid major risks related to data handling, KYC, AML, and merchant behavior
+- Know how to build card features that comply with scheme and issuer policy
+- Design systems and flows that minimize your regulatory surface area while enabling scale
+
+## Why compliance matters in virtual cards
+
+Card products touch:
+
+- End-user identity and spending behavior
+- Regulated financial networks (Visa, Mastercard, Verve, UnionPay)
+- Stored and transmitted card data (PAN, CVV, expiry)
+- Cross-border currency conversion and asset movement
+
+Even if your API provider (like Bitnob or Marqeta) abstracts some complexity, you are still operationally and reputationally responsible for compliance.
+
+If you get this wrong:
+
+- Your BIN can be blacklisted
+- Your merchant partners may be cut off
+- You expose users to fraud and data breaches
+- You risk heavy fines from card networks or regulators
+
+## Core frameworks you must understand
+
+| Framework | Scope | Who It Applies to |
+|---|---|---|
+| PCI DSS | Card data security (storage, access, transmission) | Anyone touching PAN, CVV, etc. |
+| KYC/AML | Identity verification, source of funds | Platform and issuer jointly |
+| Card Scheme Rules | Usage, MCCs, chargebacks, limits | Issuers, processors, you (indirectly) |
+| Data Protection (e.g. GDPR) | User consent, data storage, deletion rights | You and any third-party processors |
+| Local Regulatory (CBN, FCA, etc.) | Licensing, transaction rules | Varies by market, usually applies to issuer or platform-level partners |
+
+## PCI DSS (payment card industry data security standard)
+
+PCI DSS is the global standard that governs how cardholder data is stored, handled, and transmitted.
+
+If your system stores, processes, or even touches card data, you must comply with PCI DSS.
+
+### Key cardholder data elements:
+
+| Data Element | Can You Store It? |
+|---|---|
+| PAN (card number) | Only if encrypted and compliant |
+| CVV | No – cannot store post-issuance |
+| Expiry Date | Yes, with controls |
+| Cardholder Name | Yes, low risk |
+
+If you’re not PCI DSS compliant, you must:
+
+- Use tokenized card data via API
+- Avoid logging raw PAN or CVV
+- Never display CVV more than once
+- Mask PANs in all UIs (`5078 **** **** 1234`)
+- Use PCI-compliant SDKs or gateways for sensitive actions
+
+## What if you're using a PCI-compliant provider?
+
+Good platforms (like Bitnob, Lithic, Marqeta) are PCI DSS Level 1 certified.
+
+If you’re building on them:
+
+- You inherit part of their compliance, but you must not bypass their protections
+- Avoid doing anything that puts you back in scope (like raw PAN logging or direct DB storage)
+- Build your admin tools and support dashboards to consume tokenized data, not raw values
+
+## Compliance in product design
+
+| Area | What to Do |
+|---|---|
+| KYC Tiering | Show clear user levels (e.g. “Tier 1: ₦50k/day limit”) |
+| FX Fee Disclosure | Always display fee + rate breakdown |
+| Card Termination Flow | Clearly notify user that card cannot be recovered |
+| Dispute Workflow | Log user claims, provide evidence to issuer |
+| MCC Restrictions | Block UI entry to known-prohibited categories (e.g., gambling, crypto) |
+| Card Expiry Management | Remind user before card expires (and handle refund on termination) |
+
+## Key things you must never do
+
+- Store CVV in plaintext or even encrypted
+- Log full PANs in server logs, analytics, or error messages
+- Replay transaction payloads for debugging without secure storage
+- Let customer support copy/paste full card numbers
+- Display masked cards without authentication (e.g., app open without PIN/FaceID)
+
+## Anti-money laundering (AML) and risk controls
+
+Even if you’re not a licensed financial entity, you must design with AML best practices:
+
+| Risk | Mitigation |
+|---|---|
+| Multi-account abuse | Fingerprint devices, emails, or funding sources |
+| Card testing | Limit per-user issuance, monitor decline patterns |
+| Refund laundering | Cap refunds, link refunds to successful spend |
+| Anonymous spend | Enforce KYC before card activation or large top-ups |
+
+## Compliance logging and audits
+
+You should always log:
+
+- Card creation events
+- Card lifecycle transitions (who froze, terminated, when)
+- Transaction decline reasons
+- Refunds, chargebacks, and disputes
+- KYC tier upgrades and limits
+
+These are not only useful for support. They’re vital for audits, partner reviews, and scheme relationships.
+
+## Recap
+
+- Compliance is not just your provider’s responsibility. It's built into your product
+- PCI DSS governs what data you touch and how you touch it
+- Never store CVV, and always use masked PANs with authentication
+- Your product must explain limits, fees, and card status clearly to stay compliant
+- You’re part of a regulated value chain: act like it, even if you don’t hold a license

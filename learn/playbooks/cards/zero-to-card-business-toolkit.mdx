@@ -1,0 +1,141 @@
+---
+title: "Zero to card business toolkit"
+description: "A launch sequence for a virtual card product: what to decide, what to build, what the unit economics look like, and what has to be in place before you take real users."
+related:
+  - "Card issuing overview": /docs/card-issuing/overview
+  - /docs/card-issuing/card-fees
+---
+
+This is the path from nothing to a working virtual card product. Each stage names the decision you have to make, the pages that show you how, and the thing you should have finished before moving on.
+
+It assumes you are building on [Bitnob virtual cards](/docs/card-issuing/overview): prepaid USD Visa cards, funded from your Bitnob balance.
+
+## Who this is for
+
+- Founders building a fintech product where card spend is the core action
+- Product managers adding cards to an existing wallet or payroll product
+- Developers standing up an MVP or a proof of concept
+- Agencies enabling card services on behalf of clients
+
+## Stage 1: Decide what the card is for
+
+Before any code, answer one question: what does the card let your user do that they cannot do today? The answer determines everything downstream, including whether the economics work at all.
+
+Common shapes that work:
+
+- **Ad spend.** Agencies and marketers who need cards per campaign or per client.
+- **Freelancer and contractor payout.** Recipients who want to spend rather than withdraw.
+- **Subscriptions.** Users in markets where local cards are declined by international merchants.
+- **Corporate and team spend.** One card per employee, per project, or per vendor.
+
+Write down the single transaction you expect the user to make in their first session. If you cannot describe it in one sentence, the product is not scoped yet.
+
+## Stage 2: Learn the primitives
+
+Cards carry vocabulary that leaks into every later decision. Cover these before you design flows:
+
+| Concept | Why it matters | Where |
+|---|---|---|
+| Customer, then card | A card belongs to a verified customer, so onboarding gates issuance. | [How card issuance works](/docs/card-issuing/card-issuance) |
+| Funding and balances | Cards are prepaid. An unfunded card declines. | [Fund a card](/docs/card-issuing/card-funding) |
+| Card lifecycle | Freeze, unfreeze, and terminate are distinct states with distinct rules. | [Freeze, unfreeze, or terminate](/docs/card-issuing/card-status-management) |
+| MCCs and BINs | Merchant category and card range determine what is accepted where. | [Glossary](/docs/card-issuing/virtual-card-glossary) |
+| Webhooks | The card's real state arrives asynchronously, not in the API response. | [Receive card webhooks](/docs/card-issuing/receive-card-webhooks) |
+
+If you want the long-form version, the [card issuing course](/learn/courses/card-issuing/module-1) covers the same ground across 23 modules.
+
+## Stage 3: Model the unit economics
+
+Do this third, not last. The fee schedule decides whether your pricing can work, and it is the stage most teams skip.
+
+The published fees are on [Fees and decline rules](/docs/card-issuing/card-fees). The ones that shape a business model most:
+
+| Fee | Amount |
+|---|---|
+| Card creation | \$1.00 per card |
+| Funding | \$1.00 flat under \$100, or 1% of the load at \$100 and above |
+| Cross-border transaction | 2.5% + \$0.50 |
+| Contactless transaction | 0.25% |
+| Chargeback | \$60.00 flat |
+
+Build a sheet with one row per user cohort and these columns: cards issued, average load, loads per month, share of spend that is cross-border, and expected chargebacks. Then check three things:
+
+1. **Does a single card ever pay back its \$1.00 creation fee?** If users issue cards they never fund, your acquisition cost is higher than it looks.
+2. **Where does your revenue come from?** The usual options are a markup on funding, an FX spread, a subscription, or interchange-like share. Pick one as primary.
+3. **What does one chargeback cost you?** At \$60 flat, a single dispute can wipe out the margin on many months of ordinary spend. This is a pricing input, not an edge case.
+
+<Warning>
+  The decline rules have a business consequence, not just a technical one. A second declined authorisation costs \$0.75, and a third permanently terminates the card. Users who repeatedly attempt payments on an underfunded card will lose it and need a new one at full creation cost. Design your interface to prevent the second decline.
+</Warning>
+
+## Stage 4: Build the integration
+
+Work in sandbox until the whole path runs end to end.
+
+<Steps>
+  <Step title="Get one card issued">
+    Follow [Issue your first card](/docs/card-issuing/issue-your-first-card) start to finish. It covers credentials, customer creation, and issuance.
+  </Step>
+  <Step title="Fund it and spend from it">
+    Load the card, then confirm the balance moved. See [Fund a card](/docs/card-issuing/card-funding).
+  </Step>
+  <Step title="Receive webhooks">
+    Stand up a signed, idempotent handler before you build any interface on top. See [Receive card webhooks](/docs/card-issuing/receive-card-webhooks) and the [event reference](/docs/card-issuing/webhooks).
+  </Step>
+  <Step title="Handle the lifecycle">
+    Implement freeze, unfreeze, and terminate, and decide which of them your users can trigger themselves.
+  </Step>
+  <Step title="Monitor transactions">
+    Wire up [transaction monitoring](/docs/card-issuing/transaction-monitoring) so support can answer questions without you.
+  </Step>
+</Steps>
+
+The [API v2 Postman collection](/docs/developer-resources/overview) ships with request signing already wired up, which is the fastest way to explore before writing code.
+
+## Stage 5: Design onboarding
+
+Card issuance depends on a verified customer, so onboarding is where most conversion is lost. Two rules carry most of the value:
+
+- **Ask for identity information once, at the point it is required,** not as a wall before the user has seen the product.
+- **Explain why you need each field.** Verification requests without context read as data harvesting.
+
+The customer record must be complete before issuance, so validate your side before calling the API rather than surfacing raw API errors to users.
+
+## Stage 6: Write your operational procedures
+
+You need these before real users, not after your first incident. Each already exists as a playbook:
+
+<Columns cols={2}>
+  <Card title="Support playbook" icon="headset" href="/learn/playbooks/cards/support-team-playbook">
+    How to answer a declined transaction, a missing refund, or a frozen card.
+  </Card>
+  <Card title="Fraud and compliance" icon="shield-halved" href="/learn/playbooks/cards/virtual-card-fraud-and-compliance-playbook">
+    Controls, triage, and staying audit-ready.
+  </Card>
+  <Card title="Treasury and finance ops" icon="scale-balanced" href="/learn/playbooks/cards/treasury-and-finance-operations-playbook">
+    Float management, reconciliation, and month-end.
+  </Card>
+  <Card title="Card fraud course" icon="user-secret" href="/learn/courses/card-fraud/module-1">
+    Fraud patterns and the controls that catch them.
+  </Card>
+</Columns>
+
+At minimum, write down who is on call, what the refund decision rule is, and who can terminate a card.
+
+## Stage 7: Go to market
+
+Marketing a card product is mostly about naming the constraint you remove. The [marketing playbook](/learn/playbooks/cards/marketing-virtual-cards) covers positioning and channels.
+
+One thing worth stating plainly in your own copy: the card is prepaid and denominated in USD. Setting that expectation before signup prevents most early support volume.
+
+## Pre-launch checklist
+
+Do not take real users until every line is true:
+
+- A full issue, fund, spend, and terminate cycle works in sandbox.
+- Your webhook handler verifies signatures and is idempotent.
+- Live credentials are server-side only, and rotated away from anything used in testing.
+- Your fee model is written down and reviewed against the published schedule.
+- Support has a written procedure for declines, refunds, and disputes.
+- Someone owns the float and knows how to top it up.
+- Your interface prevents a user from attempting a second declined authorisation.

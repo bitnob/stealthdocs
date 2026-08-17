@@ -1,0 +1,1505 @@
+---
+title: "Webhooks"
+description: "Virtual card event types, payload shapes, and how to verify and acknowledge each delivery."
+---
+Learn how to listen for events that happen on your virtual cards.
+
+A webhook is a URL on your server where we send payloads for card-related events. For example, when a customer's card is successfully topped up, we immediately deliver a `virtualcard.topup.completed` event to your endpoint. Whenever you receive a webhook from us, return a `200 OK` to avoid retries.
+
+All payloads share the same envelope:
+
+All JSON keys use **camelCase**. The `event` name itself stays dot-delimited (e.g. `virtualcard.transaction.debit`) for routing. Amounts are integers in **micro-units** (1 USD = 1,000,000). Transaction events include `displayAmount` as the same value expressed as a major-unit float.
+
+```json
+{
+  "eventId": "<uuid v4 — unique per delivery, safe to use as idempotency key>",
+  "companyId": "<company uuid>",
+  "event": "<event name>",
+  "data": { ... }
+}
+```
+
+## Verifying events
+
+Verifying that these events come from Bitnob is necessary to avoid acting on a forged event.
+
+To verify events, validate the **x-bitnob-signature** header sent with the event. The HMAC SHA512 signature is the raw event body signed with your **secret key.**
+
+### Notification retries
+
+When delivering notifications we expect a `200` response. If the response is not `200`, we retry up to 3 times with exponential backoff. Use the top-level `eventId` to deduplicate retries.
+
+***Don't rely on webhooks entirely***
+
+<Note>
+  We recommend that you also poll the card transactions endpoint as a safety net in case webhook delivery fails.
+</Note>
+
+### Testing webhooks
+
+Webhook endpoints must be publicly accessible. While developing locally, use a tunnelling tool like [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/) and point your test webhook URL at the tunnel.
+
+Only use tunnels in test environments to avoid leaking data publicly.
+
+```javascript
+const crypto = require('crypto');
+const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
+// Using Express
+app.post("/webhook_url", function(req, res) {
+  //validate event
+  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
+  if (hash == req.headers['x-bitnob-signature']) {
+  // Retrieve the request's body
+  const event = req.body;
+  // Do something with event
+  }
+  res.send(200);
+});
+```
+
+## Source IPs
+
+If your firewall restricts inbound traffic, allow requests from the addresses below so our events can reach your endpoint.
+
+| Ip Address | Use |
+|---|---|
+| 18.171.51.218 | Webhook delivery |
+| 13.134.154.133 | Webhook delivery |
+
+These addresses can change. We announce changes ahead of time, but an allowlist is not a substitute for verifying the **x-bitnob-signature** header. Signature verification is the check that stays correct even if our infrastructure moves.
+
+<Warning>
+  **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
+</Warning>
+
+```nginx
+location /webhook_url {
+  allow 18.171.51.218;
+  allow 13.134.154.133;
+  deny  all;
+}
+```
+
+## Wire conventions for transaction events
+
+Transaction events carry three fields that you should branch on:
+
+**`transactionType`**: Bitnob's stable internal classification. Values: `authorization`, `settlement`, `pre_auth_approved`, `authorization_declined`, `refund_authorization`, `refund_settled`, `reversal_settled`, `cross_border_pending`, `cross_border_settled`, `cross_border_reversal`, `contactless_pending`, `contactless_settled`, `verification`.
+
+**`status`**: wire-level outcome. `completed` for settled debits / credits / reversals / verifications. `pending` for cross-border auth still awaiting settlement. `declined` for declines. `terminated` for card-terminated declines. `failed` for failed top-ups / withdrawals / authorizations.
+
+**`reference`**: local Bitnob reference (`CARD_*`-prefixed for backend-generated ones). Use it as the join key against the matching ledger entry.
+
+Some event strings (`virtualcard.transaction.contactless`, `virtualcard.transaction.crossborder`, `virtualcard.transaction.refund`, `virtualcard.transaction.reversed`) fire with multiple `transactionType` values. Always branch on `event` first, then `transactionType`.
+
+## Virtual cards webhooks
+
+Virtual card webhooks are fired when a customer performs any virtual card action.
+
+### Virtual card created successfully
+
+Fired when a virtual card is successfully created at the provider.
+
+1. `eventId` (uuid)
+
+   Unique identifier for this delivery. Stable across retries: use it as the idempotency key.
+
+2. `companyId` (uuid)
+
+   Top-level company identifier. Also repeated inside \`data\` for convenience.
+
+3. `event` (string)
+
+   Webhook event name. Value: 'virtualcard.created.completed'.
+
+4. `id` (uuid)
+
+   Unique identifier of the newly created virtual card. Use this to retrieve card details or reference the card in support cases.
+
+5. `status` (string)
+
+   Current status of the card. Typically 'active' immediately after a successful creation.
+
+6. `reference` (string)
+
+   Unique reference string for the card creation request. Use for deduplication, auditing, and reconciliation.
+
+7. `createdStatus` (string)
+
+   Outcome of the creation request. Value 'completed' confirms the card was issued without errors.
+
+8. `reissue` (boolean)
+
+Whether this card was created as a reissue of an earlier card. \`false\` for net-new cards.
+
+```json
+{
+  "eventId": "7f3a9c2b-4d1e-4f5a-8b9c-1d2e3f4a5b6c",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.created.completed",
+  "data": {
+    "id": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "status": "active",
+    "reference": "card_ref_7f1a2b3c4d5e",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "createdStatus": "completed",
+    "reissue": false
+  }
+}
+```
+
+### Virtual card creation failed
+
+Fired when the provider rejects a card creation attempt.
+
+1. `event` (string)
+
+   Webhook event name. Value: 'virtualcard.created.failed'.
+
+2. `id` (uuid)
+
+   Unique identifier for the failed virtual card creation attempt.
+
+3. `reason` (string)
+
+   Machine-readable reason code describing why creation failed (e.g. 'card_operation_failed'). Use for debugging.
+
+4. `amount` (number)
+
+   Intended initial funding amount in micro-units (1 USD = 1,000,000).
+
+5. `reference` (string)
+
+   Unique reference string used to identify the creation request across systems.
+
+6. `createdStatus` (string)
+
+   Final outcome of the creation request. Value: 'failed'.
+
+7. `customerEmail` (string)
+
+Email of the customer the card was being created for.
+
+```json
+{
+  "eventId": "8e4b0d3c-5e2f-4a6b-9c0d-2e3f4a5b6c7d",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.created.failed",
+  "data": {
+    "id": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "reference": "card_ref_7f1a2b3c4d5e",
+    "reason": "card_operation_failed",
+    "amount": 10000000,
+    "createdStatus": "failed",
+    "customerEmail": "user@example.com"
+  }
+}
+```
+
+### Virtual card terminated refund
+
+Fired when a card is terminated and any remaining balance is refunded.
+
+1. `cardId` (uuid)
+
+   Identifier of the terminated card.
+
+2. `id` (string)
+
+   Unique transaction identifier for the termination refund.
+
+3. `amount` (number)
+
+   Refund amount in micro-units.
+
+4. `reference` (string)
+
+   Reference for the termination refund. Joins to the matching ledger entry.
+
+5. `narrative` (string)
+
+   Description of the refund (typically 'card_termination_refund').
+
+6. timestampISO 8601 String
+
+   When the refund was processed.
+
+7. `status` (string)
+
+   Final status. Value: 'completed'.
+
+8. `reason` (string)
+
+Why the card was terminated (e.g. 'customer_requested_termination').
+
+```json
+{
+  "eventId": "9f5c1e4d-6f3a-4b7c-a0d1-3f4a5b6c7d8e",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.terminated.refund",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_term_9a8b7c6d5e4f",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 5250000,
+    "reference": "termination_ref_2a3b4c5d",
+    "narrative": "card_termination_refund",
+    "timestamp": "2026-05-16T10:30:45Z",
+    "status": "completed",
+    "reason": "customer_requested_termination"
+  }
+}
+```
+
+### Virtual card regularized
+
+Fired when a card moves out of a degraded or indeterminate state into a stable status (typically `active`).
+
+1. `cardId` (uuid)
+
+   Identifier of the card that was regularized.
+
+2. `status` (string)
+
+   New status after regularization (e.g. 'active').
+
+3. `reference` (string)
+
+Reference for the regularization event.
+
+```json
+{
+  "eventId": "a06d2f5e-7a4b-4c8d-b1e2-4a5b6c7d8e9f",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.regularized",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "status": "active",
+    "reference": "regularize_ref_3b4c5d6e"
+  }
+}
+```
+
+### Virtual card expiration
+
+Fired when a card reaches its expiry date and can no longer be used.
+
+1. `cardId` (uuid)
+
+   Identifier of the expired card.
+
+2. expiredAtISO 8601 String
+
+Expiration timestamp.
+
+```json
+{
+  "eventId": "b17e3a6f-8b5c-4d9e-a2f3-5b6c7d8e9f0a",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.expiration",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "expiredAt": "2026-05-16T00:00:00Z"
+  }
+}
+```
+
+### Virtual cards top-Up
+
+### Virtual card top-up completed
+
+Fired when a top-up to a virtual card succeeds.
+
+1. `cardId` (uuid)
+
+   Identifier of the card that was funded.
+
+2. `id` (string)
+
+   Unique transaction identifier for the top-up.
+
+3. `amount` (number)
+
+   Top-up amount in micro-units (1 USD = 1,000,000).
+
+4. `reference` (string)
+
+   Unique reference for the top-up. Joins to your wallet ledger entry.
+
+5. `narrative` (string)
+
+   Short description of the top-up.
+
+6. `status` (string)
+
+   Final status. Value: 'completed'.
+
+7. `initiatedFrom` (string)
+
+   Where the top-up originated (e.g. 'wallet').
+
+8. `isTerminated` (boolean)
+
+Whether the card was terminated after this top-up. Usually \`false\`.
+
+```json
+{
+  "eventId": "c28f4b7a-9c6d-4e0f-a3a4-6c7d8e9f0a1b",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.topup.completed",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "fund_tx_1a2b3c4d5e6f",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 25000000,
+    "reference": "topup_ref_9f8e7d6c",
+    "narrative": "card_topup_25_usd",
+    "status": "completed",
+    "initiatedFrom": "wallet",
+    "isTerminated": false
+  }
+}
+```
+
+### Virtual card top-up failed
+
+Fired when a virtual card top-up fails.
+
+<Note>
+  The payload shape matches **Virtual Card Top-up Completed** with `status` set to `"failed"`. Refer to that section for field explanations.
+</Note>
+
+```json
+{
+  "eventId": "d39a5c8b-ad7e-4f1a-b4b5-7d8e9f0a1b2c",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.topup.failed",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "fund_tx_1a2b3c4d5e6f",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 25000000,
+    "reference": "topup_ref_9f8e7d6c",
+    "narrative": "card_topup_25_usd",
+    "status": "failed",
+    "initiatedFrom": "wallet",
+    "isTerminated": false
+  }
+}
+```
+
+### Virtual cards withdrawal
+
+### Virtual card withdrawal completed
+
+Fired when a withdrawal on a virtual card succeeds.
+
+1. `cardId` (uuid)
+
+   Identifier of the card the funds were withdrawn from.
+
+2. `id` (string)
+
+   Unique transaction identifier for the withdrawal.
+
+3. `amount` (number)
+
+   Withdrawal amount in micro-units.
+
+4. `reference` (string)
+
+   Unique reference for the withdrawal.
+
+5. `narrative` (string)
+
+   Short description of the withdrawal.
+
+6. `status` (string)
+
+   Final status. Value: 'completed'.
+
+7. `initiatedFrom` (string)
+
+   Where the withdrawal originated (e.g. 'card').
+
+8. `isTerminated` (boolean)
+
+Whether the card was terminated as a result of this withdrawal.
+
+```json
+{
+  "eventId": "e4ab6d9c-be8f-4a2b-95c6-8e9f0a1b2c3d",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.withdrawal.completed",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "wd_tx_5e4d3c2b1a09",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 10000000,
+    "reference": "withdraw_ref_6a5b4c3d",
+    "narrative": "card_withdrawal_10_usd",
+    "status": "completed",
+    "initiatedFrom": "card",
+    "isTerminated": false
+  }
+}
+```
+
+### Virtual card withdrawal failed
+
+Fired when a withdrawal on a virtual card fails.
+
+<Note>
+  The payload shape matches **Virtual Card Withdrawal Completed** with `status` set to `"failed"`.
+</Note>
+
+```json
+{
+  "eventId": "f5bc7eaa-cf9a-4b3c-86d7-9f0a1b2c3d4e",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.withdrawal.failed",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "wd_tx_5e4d3c2b1a09",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 10000000,
+    "reference": "withdraw_ref_6a5b4c3d",
+    "narrative": "card_withdrawal_10_usd",
+    "status": "failed",
+    "initiatedFrom": "card",
+    "isTerminated": false
+  }
+}
+```
+
+### Virtual cards transaction
+
+### Virtual card transaction - debit
+
+Generic settled debit shape. Branch on `transactionType` to distinguish `settlement`, `authorization`, `pre_auth_approved`, `contactless_settled`, and `contactless_pending`. The dedicated event names below are what is actually emitted on the wire: branch on `event` first.
+
+1. `cardId` (uuid)
+
+   Identifier of the card that was charged.
+
+2. `id` (string)
+
+   Unique identifier for this transaction.
+
+3. `amount` (number)
+
+   Debit amount in micro-units (1 USD = 1,000,000).
+
+4. `displayAmount` (number)
+
+   Same value expressed as a major-unit float (e.g. 1.599 for \$1.599).
+
+5. `currency` (string)
+
+   ISO 4217 currency code, lowercase (e.g. 'usd').
+
+6. `transactionType` (string)
+
+   Bitnob's stable internal classification (e.g. 'settlement', 'authorization', 'pre_auth_approved', 'contactless_settled', 'contactless_pending').
+
+7. `reference` (string)
+
+   Local Bitnob reference. Joins to the matching ledger entry.
+
+8. `narrative` (string)
+
+   Human-readable transaction description.
+
+9. timestampISO 8601 String
+
+   When the transaction occurred at the network.
+
+10. `status` (string)
+
+   Wire-level outcome (e.g. 'completed').
+
+11. reasonString or null
+
+   Additional context if the network supplied it. Often null for successful debits.
+
+12. `merchantName` (string)
+
+   Merchant or acceptor name (e.g. 'netflix_com').
+
+13. `merchantMcc` (string)
+
+   ISO 18245 Merchant Category Code (e.g. '4899').
+
+14. `merchantCountry` (string)
+
+ISO 3166-1 alpha-2 country code of the merchant, lowercase (e.g. 'us').
+
+```json
+{
+  "eventId": "06cd8fab-da0b-4c4d-87e8-0a1b2c3d4e5f",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.debit",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_debit_a1b2c3d4e5f6",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 1599000,
+    "displayAmount": 1.599,
+    "currency": "usd",
+    "transactionType": "settlement",
+    "reference": "purchase_ref_1234abcd",
+    "narrative": "purchase_at_netflix_com",
+    "timestamp": "2026-05-16T14:22:10Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "netflix_com",
+    "merchantMcc": "4899",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - authorization
+
+Fired when an authorization hold is approved by the provider; settlement is pending.
+
+<Note>
+  Same payload shape as **Virtual Card Transaction - Debit** with `transactionType: "authorization"`.
+</Note>
+
+```json
+{
+  "eventId": "17de90bc-eb1c-4d5e-8f9a-1b2c3d4e5f60",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.authorization",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_auth_b2c3d4e5f6a1",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 4500000,
+    "displayAmount": 4.5,
+    "currency": "usd",
+    "transactionType": "authorization",
+    "reference": "auth_ref_2345bcde",
+    "narrative": "authorization_at_amazon_com",
+    "timestamp": "2026-05-16T14:22:10Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "amazon_com",
+    "merchantMcc": "5942",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - settlement
+
+Fired when a previously-authorized transaction is settled by the merchant.
+
+<Note>
+  Same payload shape as **Virtual Card Transaction - Debit** with `transactionType: "settlement"`. Match against the earlier authorization using `reference`.
+</Note>
+
+```json
+{
+  "eventId": "28ef01cd-fc2d-4e6f-9a0b-2c3d4e5f6071",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.settlement",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_settle_c3d4e5f6a1b2",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 4500000,
+    "displayAmount": 4.5,
+    "currency": "usd",
+    "transactionType": "settlement",
+    "reference": "settle_ref_3456cdef",
+    "narrative": "settlement_at_amazon_com",
+    "timestamp": "2026-05-16T15:01:33Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "amazon_com",
+    "merchantMcc": "5942",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - pre-Auth approved
+
+Fired when a pre-authorization hold is placed (e.g. hotel deposit, gas-pump pre-auth).
+
+<Note>
+  Same payload shape as **Virtual Card Transaction - Debit** with `transactionType: "pre_auth_approved"`.
+</Note>
+
+```json
+{
+  "eventId": "39f012de-0d3e-4f70-ab1c-3d4e5f607182",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.pre-auth.approved",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_preauth_d4e5f6a1b2c3",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 10000000,
+    "displayAmount": 10.0,
+    "currency": "usd",
+    "transactionType": "pre_auth_approved",
+    "reference": "preauth_ref_4567def0",
+    "narrative": "preauth_at_shell_oil",
+    "timestamp": "2026-05-16T16:10:20Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "shell_oil_12345",
+    "merchantMcc": "5541",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - contactless
+
+Contactless / tap-to-pay payment. The same `event` string fires for both the pending authorization (`transactionType: contactless_pending`) and the final settled state (`transactionType: contactless_settled`). Distinguish via `transactionType`.
+
+<Note>
+  Same payload shape as **Virtual Card Transaction - Debit**.
+</Note>
+
+```json
+{
+  "eventId": "4a012e3f-1e4f-4081-bc2d-4e5f60718293",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.contactless",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_tap_e5f6a1b2c3d4",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 750000,
+    "displayAmount": 0.75,
+    "currency": "usd",
+    "transactionType": "contactless_settled",
+    "reference": "CARD_CONTLESS_5678ef01",
+    "narrative": "Contactless transaction at Starbucks #1234",
+    "timestamp": "2026-05-16T08:15:02Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "Starbucks #1234",
+    "merchantMcc": "5814",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - credit
+
+Generic credit posting on the card (e.g. refund credit, adjustment).
+
+<Note>
+  Same payload shape as **Virtual Card Transaction - Debit**. `transactionType` will reflect the kind of credit (e.g. `refund_settled`).
+</Note>
+
+```json
+{
+  "eventId": "6c234051-3061-42a3-ae4f-60718293a45b",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.credit",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_credit_f6a1b2c3d4e5",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 1599000,
+    "displayAmount": 1.599,
+    "currency": "usd",
+    "transactionType": "refund_settled",
+    "reference": "credit_ref_6789f012",
+    "narrative": "credit_from_netflix_com",
+    "timestamp": "2026-05-16T17:00:00Z",
+    "status": "completed",
+    "merchantName": "netflix_com",
+    "merchantMcc": "4899",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - refund
+
+Merchant-initiated refund. The same `event` string fires for both the refund authorization (`transactionType: refund_authorization`) and the refund settlement (`transactionType: refund_settled`).
+
+<Note>
+  Same payload shape as **Virtual Card Transaction - Debit**. Branch on `transactionType`.
+</Note>
+
+```json
+{
+  "eventId": "7d345162-4172-43b4-8f50-718293a45b6c",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.refund",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_refund_a1b2c3d4e5f7",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 4500000,
+    "displayAmount": 4.5,
+    "currency": "usd",
+    "transactionType": "refund_settled",
+    "reference": "refund_ref_7890a123",
+    "narrative": "refund_from_amazon_com",
+    "timestamp": "2026-05-16T18:22:50Z",
+    "status": "completed",
+    "merchantName": "amazon_com",
+    "merchantMcc": "5942",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - reversed
+
+Fired when an authorization is reversed before settlement. Same `event` string is also emitted for cross-border reversals, `transactionType` is `reversal_settled` for auth reversals and `cross_border_reversal` for cross-border.
+
+1. `cardId` (uuid)
+
+   Identifier of the card whose transaction was reversed.
+
+2. `id` (string)
+
+   Unique identifier for the reversal transaction.
+
+3. `amount` (number)
+
+   Amount returned to the card in micro-units.
+
+4. `displayAmount` (number)
+
+   Same value as a major-unit float.
+
+5. `currency` (string)
+
+   Lowercase ISO 4217 currency code.
+
+6. `transactionType` (string)
+
+   'reversal_settled' for auth reversals; 'cross_border_reversal' for cross-border reversals.
+
+7. `reference` (string)
+
+   Reference for the reversal; correlates to the original authorization.
+
+8. `narrative` (string)
+
+   Human-readable description, often referencing the original merchant.
+
+9. timestampISO 8601 String
+
+   When the reversal occurred at the network.
+
+10. `status` (string)
+
+   Final status. Value: 'completed'.
+
+11. reasonString or null
+
+   Why the reversal occurred (e.g. 'authorization_expired').
+
+12. `merchantName` (string)
+
+Merchant from the original transaction.
+
+```json
+{
+  "eventId": "8e456273-5283-44c5-a061-8293a45b6c7d",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.reversed",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_rev_b2c3d4e5f7a1",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 4500000,
+    "displayAmount": 4.5,
+    "currency": "usd",
+    "transactionType": "reversal_settled",
+    "reference": "reversal_ref_8901b234",
+    "narrative": "reversal_of_authorization_at_amazon_com",
+    "timestamp": "2026-05-16T15:30:00Z",
+    "status": "completed",
+    "reason": "authorization_expired",
+    "merchantName": "amazon_com",
+    "merchantMcc": "5942",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - verification
+
+Zero-dollar verification authorization (e.g. Uber, Netflix card-on-file checks).
+
+1. `cardId` (uuid)
+
+   Identifier of the card being verified.
+
+2. `id` (string)
+
+   Unique identifier for the verification transaction.
+
+3. `amount` (number)
+
+   Always 0 for verification.
+
+4. `displayAmount` (number)
+
+   Always 0.0 for verification.
+
+5. `currency` (string)
+
+   Lowercase ISO 4217 currency code.
+
+6. `transactionType` (string)
+
+   Value: 'verification'.
+
+7. `reference` (string)
+
+   Reference for the verification authorization.
+
+8. `narrative` (string)
+
+   Short description of the verification (e.g. 'card_verification_at_uber').
+
+9. timestampISO 8601 String
+
+   When the verification occurred.
+
+10. `status` (string)
+
+   Value: 'completed'.
+
+11. `merchantName` (string)
+
+   Merchant initiating the verification.
+
+12. `merchantMcc` (string)
+
+   ISO 18245 MCC.
+
+13. `merchantCountry` (string)
+
+Lowercase ISO 3166-1 alpha-2 country code.
+
+```json
+{
+  "eventId": "9f567384-6394-45d6-8172-93a45b6c7d8e",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.verification",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_verify_c3d4e5f7a1b2",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 0,
+    "displayAmount": 0.0,
+    "currency": "usd",
+    "transactionType": "verification",
+    "reference": "verify_ref_9012c345",
+    "narrative": "card_verification_at_uber",
+    "timestamp": "2026-05-16T11:00:00Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "uber_trip",
+    "merchantMcc": "4121",
+    "merchantCountry": "nl"
+  }
+}
+```
+
+### Virtual card transaction - cross-border (pending)
+
+Fired when a cross-border fee is debited from the **company wallet** during the auth phase of an international transaction. The amount on this payload is the FEE, not the purchase principal, the purchase principal lands later as `cross_border_settled` against the card balance.
+
+**Two money paths:** Cross-border transactions emit this `event` string twice with different `transactionType` values:
+
+- `cross_border_pending` → company wallet fee debit (this event)
+- `cross_border_settled` → card balance purchase principal debit
+
+Correlate via `reference` (`CARD_CROSSBORD_*`).
+
+1. `cardId` (uuid)
+
+   Identifier of the card used for the cross-border transaction.
+
+2. `amount` (number)
+
+   Cross-border FEE charged to the company wallet, in micro-units. NOT the purchase principal.
+
+3. `chargedAmount` (number)
+
+   Same as \`amount\`, the fee amount debited to the wallet.
+
+4. `displayAmount` (number)
+
+   Fee amount as a major-unit float.
+
+5. `currency` (string)
+
+   Lowercase ISO 4217 currency code.
+
+6. `transactionType` (string)
+
+   Value: 'cross_border_pending'.
+
+7. `settlementCountry` (string)
+
+   Country where the original transaction is being settled (ISO 3166-1 alpha-2, lowercase).
+
+8. `reference` (string)
+
+   Local reference, prefixed \`CARD_CROSSBORD\_\*\`. Use it to correlate with the matching \`cross_border_settled\` event.
+
+9. `narrative` (string)
+
+   Description referencing the underlying authorization id.
+
+10. timestampISO 8601 String
+
+   When the fee was debited.
+
+11. `status` (string)
+
+   Value: 'pending', reflects the purchase lifecycle, not the fee (the fee debit itself is final).
+
+12. `merchantName` (string)
+
+   Merchant for the underlying purchase.
+
+13. `merchantMcc` (string)
+
+   ISO 18245 MCC.
+
+14. `merchantCountry` (string)
+
+Lowercase ISO 3166-1 alpha-2 country code.
+
+```json
+{
+  "eventId": "5b123f40-2f50-4192-9d3e-5f607182934a",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.crossborder",
+  "data": {
+    "chargedAmount": 250000,
+    "narrative": "Cross-border fee for authorization 64972501 on card c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "settlementCountry": "fr",
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 250000,
+    "displayAmount": 0.25,
+    "currency": "usd",
+    "transactionType": "cross_border_pending",
+    "timestamp": "2026-05-16T09:45:11Z",
+    "status": "pending",
+    "reference": "CARD_CROSSBORD_054A205F6BF5",
+    "merchantName": "Hotel Paris",
+    "merchantMcc": "7011",
+    "merchantCountry": "fr"
+  }
+}
+```
+
+### Virtual card transaction - cross-border (settled)
+
+Fired when the purchase principal of a cross-border transaction is deducted from the **card balance**. No company-wallet movement on this event, the company-wallet fee debit (if any) was emitted separately as `cross_border_pending`.
+
+**Verification-API-down variant:** If Miden's verification API was unreachable when the settlement webhook arrived, the row is recorded at pending and the wire `status` is `"pending"` instead of `"completed"`. The `transactionType` stays `cross_border_settled` (it is the settlement event, just unverified). Recovery is via the awaiting-verification reconciler.
+
+```json
+{
+  "eventId": "5c234051-3061-42a3-ae4f-60718293a45b",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.crossborder",
+  "data": {
+    "chargedAmount": 12500000,
+    "narrative": "Cross-border transaction at Hotel Paris",
+    "settlementCountry": "fr",
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 12500000,
+    "displayAmount": 12.5,
+    "currency": "usd",
+    "transactionType": "cross_border_settled",
+    "timestamp": "2026-05-16T14:13:44Z",
+    "status": "completed",
+    "reference": "CARD_CROSSBORD_92812767",
+    "merchantName": "Hotel Paris",
+    "merchantMcc": "7011",
+    "merchantCountry": "fr"
+  }
+}
+```
+
+### Virtual card transaction - terminated refund
+
+Per-transaction refund posted as part of card termination cleanup. Funds returned to the float or master account.
+
+1. `cardId` (uuid)
+
+   Identifier of the terminated card.
+
+2. `id` (string)
+
+   Unique identifier of the refund transaction.
+
+3. `amount` (number)
+
+   Refunded amount in micro-units.
+
+4. `reference` (string)
+
+   Reference for the refund.
+
+5. `narrative` (string)
+
+   Description of the refund.
+
+6. timestampISO 8601 String
+
+   When the refund was processed.
+
+7. `status` (string)
+
+   Value: 'completed'.
+
+8. `reason` (string)
+
+Why the refund was issued (e.g. 'card_terminated_by_user').
+
+```json
+{
+  "eventId": "06cdeafb-da0b-4c4d-b8e9-0a1b2c3d4e5f",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.terminated.refund",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_term_refund_c3d4e5f8a1b2",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 5250000,
+    "reference": "term_refund_ref_6789d012",
+    "narrative": "refund_of_remaining_balance_on_terminated_card",
+    "timestamp": "2026-05-16T10:31:15Z",
+    "status": "completed",
+    "reason": "card_terminated_by_user"
+  }
+}
+```
+
+### Virtual card declines
+
+### Virtual card transaction - declined
+
+Fired when a purchase attempt is declined (e.g. insufficient funds, CVV mismatch).
+
+1. `cardId` (uuid)
+
+   Identifier of the card whose transaction was declined.
+
+2. `id` (string)
+
+   Unique identifier of the decline event.
+
+3. `amount` (number)
+
+   Attempted amount in micro-units.
+
+4. `displayAmount` (number)
+
+   Attempted amount as a major-unit float.
+
+5. `currency` (string)
+
+   Lowercase ISO 4217 currency code.
+
+6. `transactionType` (string)
+
+   Indicates the underlying flow that was declined (e.g. 'debit').
+
+7. `reference` (string)
+
+   Reference for the declined attempt.
+
+8. `narrative` (string)
+
+   Human-readable description of the attempt.
+
+9. timestampISO 8601 String
+
+   When the decline occurred.
+
+10. `status` (string)
+
+   Value: 'declined'.
+
+11. `reason` (string)
+
+   Machine-readable reason code (e.g. 'insufficient_funds').
+
+12. `merchantName` (string)
+
+   Merchant attempting the charge.
+
+13. `merchantMcc` (string)
+
+   ISO 18245 MCC.
+
+14. `merchantCountry` (string)
+
+Lowercase ISO 3166-1 alpha-2 country code.
+
+```json
+{
+  "eventId": "a0678495-74a5-46e7-9283-a45b6c7d8e9f",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.declined",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_decline_d4e5f7a1b2c3",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 9999000,
+    "displayAmount": 9.999,
+    "currency": "usd",
+    "transactionType": "debit",
+    "reference": "decline_ref_0123d456",
+    "narrative": "declined_at_walmart_com",
+    "timestamp": "2026-05-16T12:30:45Z",
+    "status": "declined",
+    "reason": "insufficient_funds",
+    "merchantName": "walmart_com",
+    "merchantMcc": "5411",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction - declined charge
+
+Fired when a decline-rule violation fee is charged to your USD wallet after repeated declines, or when a card is terminated due to reaching the violation threshold. See the [Decline Rule Policy](/docs/card-issuing/card-fees) for full details.
+
+1. `cardId` (uuid)
+
+   Identifier of the card that triggered the violation.
+
+2. `id` (string)
+
+   Unique identifier of the fee transaction.
+
+3. `feeAmount` (number)
+
+   Fee amount charged in micro-units.
+
+4. `violationCount` (number)
+
+   Total number of decline-rule violations recorded on this card.
+
+5. `reference` (string)
+
+   Reference for the fee transaction.
+
+6. `status` (string)
+
+Value: 'completed'.
+
+```json
+{
+  "eventId": "b17895a6-85b6-47f8-a394-b56c7d8e9f0a",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.declined.charge",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_decline_fee_e5f7a1b2c3d4",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "feeAmount": 500000,
+    "violationCount": 5,
+    "reference": "decline_fee_ref_1234e567",
+    "status": "completed"
+  }
+}
+```
+
+### Virtual card transaction declined - frozen
+
+Fired when an authorization is declined because the card is frozen (usually triggered by a fraud rule).
+
+1. `cardId` (uuid)
+
+   Identifier of the frozen card.
+
+2. `reason` (string)
+
+   Why the card was frozen / declined (e.g. 'card_is_frozen').
+
+3. `reference` (string)
+
+Reference for the declined attempt.
+
+```json
+{
+  "eventId": "c289a6b7-96c7-4809-b4a5-c6d7e8f90a1b",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.declined.frozen",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "reason": "card_is_frozen",
+    "reference": "frozen_decline_ref_2345f678"
+  }
+}
+```
+
+### Virtual card transaction declined - terminated
+
+Fired when an authorization is attempted on a terminated card.
+
+1. `cardId` (uuid)
+
+   Identifier of the terminated card.
+
+2. `id` (string)
+
+   Unique identifier of the decline event.
+
+3. `amount` (number)
+
+   Attempted amount in micro-units.
+
+4. `displayAmount` (number)
+
+   Attempted amount as a major-unit float.
+
+5. `transactionType` (string)
+
+   Underlying flow (e.g. 'debit').
+
+6. `reference` (string)
+
+   Reference for the declined attempt.
+
+7. `status` (string)
+
+   Value: 'declined'.
+
+8. `transactionReference` (string)
+
+   Reference of the original authorization that was attempted.
+
+9. `balanceBeforeTermination` (number)
+
+   Balance on the card immediately before termination (in micro-units).
+
+10. `merchantName` (string)
+
+   Merchant attempting the charge.
+
+11. `merchantMcc` (string)
+
+   ISO 18245 MCC.
+
+12. `merchantCountry` (string)
+
+Lowercase ISO 3166-1 alpha-2 country code.
+
+```json
+{
+  "eventId": "d39ab7c8-a7d8-491a-85b6-d7e8f90a1b2c",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.declined.terminated",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_term_decline_f7a1b2c3d4e5",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 2500000,
+    "displayAmount": 2.5,
+    "currency": "usd",
+    "transactionType": "debit",
+    "reference": "term_decline_ref_3456a789",
+    "status": "declined",
+    "transactionReference": "auth_attempt_a8b7c6d5e4f3",
+    "balanceBeforeTermination": 0,
+    "merchantName": "spotify",
+    "merchantMcc": "5815",
+    "merchantCountry": "se"
+  }
+}
+```
+
+### Virtual card transaction authorization failed
+
+Fired when an authorization is rejected (e.g. bad PAN/CVV, AVS failure).
+
+1. `cardId` (uuid)
+
+   Identifier of the card used in the failed authorization.
+
+2. `id` (string)
+
+   Unique identifier of the failed authorization attempt.
+
+3. `amount` (number)
+
+   Attempted amount in micro-units.
+
+4. `displayAmount` (number)
+
+   Attempted amount as a major-unit float.
+
+5. `currency` (string)
+
+   Lowercase ISO 4217 currency code.
+
+6. `transactionType` (string)
+
+   Value: 'authorization'.
+
+7. `reference` (string)
+
+   Reference for the failed attempt.
+
+8. `status` (string)
+
+   Value: 'failed'.
+
+9. `reason` (string)
+
+   Why the authorization failed (e.g. 'avs_mismatch').
+
+10. `merchantName` (string)
+
+   Merchant attempting the charge.
+
+11. `merchantMcc` (string)
+
+   ISO 18245 MCC.
+
+12. `merchantCountry` (string)
+
+Lowercase ISO 3166-1 alpha-2 country code.
+
+```json
+{
+  "eventId": "e4abc8d9-b8e9-4a2b-96c7-e8f90a1b2c3d",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.authorization.failed",
+  "data": {
+    "reason": "avs_mismatch",
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_auth_fail_a1b2c3d4e5f8",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 4999000,
+    "displayAmount": 4.999,
+    "currency": "usd",
+    "transactionType": "authorization",
+    "reference": "auth_fail_ref_4567b890",
+    "status": "failed",
+    "merchantName": "google_youtube",
+    "merchantMcc": "4899",
+    "merchantCountry": "us"
+  }
+}
+```
+
+### Virtual card transaction issuer expiration
+
+Fired when an authorization is declined because the card has expired at the issuer.
+
+1. `cardId` (uuid)
+
+   Identifier of the expired card.
+
+2. `id` (string)
+
+   Unique identifier of the decline event.
+
+3. `amount` (number)
+
+   Attempted amount in micro-units.
+
+4. `displayAmount` (number)
+
+   Attempted amount as a major-unit float.
+
+5. `currency` (string)
+
+   Lowercase ISO 4217 currency code.
+
+6. `transactionType` (string)
+
+   Value: 'authorization'.
+
+7. `reference` (string)
+
+   Reference for the declined attempt.
+
+8. `status` (string)
+
+   Value: 'declined'.
+
+9. `reason` (string)
+
+Value: 'card_expired'.
+
+```json
+{
+  "eventId": "f5bcd9ea-c9fa-4b3c-a7d8-f90a1b2c3d4e",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.transaction.issuerexpiration",
+  "data": {
+    "reason": "card_expired",
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "id": "tx_expired_b2c3d4e5f8a1",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "amount": 1999000,
+    "displayAmount": 1.999,
+    "currency": "usd",
+    "transactionType": "authorization",
+    "reference": "expired_ref_5678c901",
+    "status": "declined"
+  }
+}
+```
+
+### Activation & KYC
+
+### Virtual card contactless activation
+
+Fired when a customer's KYC and card activation for contactless / NFC support completes.
+
+1. `cardId` (uuid)
+
+   Identifier of the card that was activated for contactless.
+
+2. `customerId` (string)
+
+   Identifier of the customer that owns the card.
+
+3. `status` (string)
+
+   Value: 'activated'.
+
+4. activatedAtISO 8601 String
+
+Activation timestamp.
+
+```json
+{
+  "eventId": "17defb0c-eb1c-4d5e-89fa-1b2c3d4e5f60",
+  "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+  "event": "virtualcard.contactless.activation",
+  "data": {
+    "cardId": "c8f1a3b2_9e4d_4f1a_b8c7_2d3e5f6a7b8c",
+    "companyId": "5f4e3d2c_1b0a_4d8c_9e7f_6a5b4c3d2e1f",
+    "customerId": "customer_1a2b3c4d5e6f",
+    "status": "activated",
+    "activatedAt": "2026-05-16T13:00:00Z"
+  }
+}
+```

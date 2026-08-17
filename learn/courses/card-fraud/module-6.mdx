@@ -1,0 +1,141 @@
+---
+title: "Module 6: Transaction pattern detection"
+description: "Fraud detection through velocity, cross-card analytics, and clustering on shared device, IP, and merchant signals."
+---
+## Overview
+
+- Cross-card analytics
+- Time-based behavior tracking
+- Velocity monitoring (how fast and how often)
+- Correlation across float, card usage, and merchant types
+- Graph-based clustering (same device, same IP, same MCC)
+
+This module will show your risk, engineering, and operations teams how to recognize these patterns early, and act before damage scales.
+
+## What is velocity monitoring?
+
+Velocity rules detect how fast or how frequently certain actions are taken. It is a key strategy in detecting abuse.
+
+### Examples of effective velocity checks
+
+| Metric | Sample Rule |
+|---|---|
+| Cards per user | No more than 2 cards per user per 24 hours |
+| Refunds per user | Max 2 refunds in 1 hour per user |
+| Spend frequency | No more than 5 authorizations in 30 minutes |
+| Float movement | Max $500 moved via refund → withdrawal in 1 hour |
+| Declines | Freeze card if 3 consecutive declines in \< 15 minutes |
+
+These rules are low cost, fast, and can prevent more expensive post-fraud reconciliation.
+
+## Float flow analysis
+
+Visualizing how float moves can uncover laundering or abuse patterns.
+
+**Watch for:**
+
+- Top-up → spend → refund → withdrawal loops
+- Float landing in same merchant or MCC across different users
+- Refund amounts matching prior spend from another account
+- Terminated card receives refund → wallet receives payout
+
+**Best practice:** Build a graph where each node is a float transaction and trace directionality.
+
+## Device & IP clustering
+
+Fraud often comes from reused infrastructure, same device, same VPN, same IP.
+
+### Techniques
+
+- Device fingerprinting (user agent + entropy + browser config)
+- Shared IP detection
+- Behavior signatures (e.g. card create + terminate in 5 mins)
+- MAC address or mobile device ID if mobile SDKs are used
+
+### Actionable rules
+
+- If 5+ accounts use same device → lock all and trigger review
+- Block IPs known for fraud or linked to previous abuse
+- Tag devices with historical fraud score
+
+## Merchant behavior mapping
+
+### Patterns
+
+- One merchant receiving refunds from many users
+- Same user spending at many MCCs in a short window
+- MCC not matching card BIN usage
+- Refund patterns aligned to merchant time zones
+
+**Risk action:** Flag merchants with refund rate \> 20% of their successful charge volume over 7 days.
+
+## Transaction graphs
+
+Mapping user → card → merchant → action chains reveals high-risk behaviors.
+
+| Graph Node | Connects to |
+|---|---|
+| Card ID | Top-up, spend, refund, withdrawal |
+| User ID | Cards, devices, IPs, wallets |
+| Merchant ID | MCCs, dispute history |
+| Device | Multiple users, common IPs |
+
+These graphs become the basis of automated risk scoring.
+
+## Pattern-triggered actions
+
+| Pattern | Action |
+|---|---|
+| 3 cards created, declined, and terminated in 1 hour | Lock account and IP |
+| Refund issued from high-risk MCC without matching spend | Freeze refund and alert treasury |
+| Shared device fingerprint across 4 accounts | Block new card issuance |
+| User receives 2 reversals followed by a large withdrawal | Flag for laundering |
+
+## Audit and alerting layer
+
+- All flagged patterns must be logged with timestamp and user context
+- Tag alerts with category: refund-abuse, velocity-spike, mcc-mismatch, etc.
+
+**Alert routing:**
+
+- Treasury if float exposed
+- Engineering if webhook anomaly
+- Compliance if BIN/MCC conflict
+
+## Module 6 quick check
+
+### 1. Why are velocity rules useful in fraud prevention?
+
+A. They reduce the number of card declines
+
+B. They make cards faster to use
+
+C. They catch behavior anomalies early
+
+D. They fix webhook failures
+
+**Answer:** C
+
+### 2. What’s suspicious about multiple users receiving refunds from one merchant?
+
+A. Indicates high user volume
+
+B. May be a refund marketing promo
+
+C. Could signal merchant collusion or laundering
+
+D. It’s always allowed
+
+**Answer:** C
+
+### 3. What’s a graph useful for in fraud detection?
+
+A. Showing user interface behavior
+
+B. Mapping relationships across users, devices, and merchants
+
+C. Measuring float velocity
+
+D. Tracking FX fees
+
+**Answer:** B

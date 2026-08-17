@@ -1,0 +1,89 @@
+---
+title: "Webhook events"
+description: "The complete card event catalogue: envelope shape, wire conventions, and all 27 events across lifecycle, funding, transactions, declines, and activation."
+related:
+  - /docs/card-issuing/receive-card-webhooks
+  - /docs/card-issuing/transaction-monitoring
+---
+
+Every card event shares one envelope. Full payloads for each event live in the [Virtual Cards webhooks reference](/api-reference/virtual-cards/webhooks); delivery, signatures, and retries are covered in [Receive card webhooks](/docs/card-issuing/receive-card-webhooks).
+
+```json
+{
+  "eventId": "<uuid, unique per delivery — your idempotency key>",
+  "companyId": "<company uuid>",
+  "event": "<dot-delimited event name>",
+  "data": { }
+}
+```
+
+Conventions: JSON keys are camelCase; amounts are integers in micro-units (1 USD = 1,000,000), with `displayAmount` as the same value in major units; `reference` is the join key against the matching ledger entry.
+
+## Wire conventions for transaction events
+
+Branch on `event` first, then on `transactionType`, several events share a name across pending and settled states. Documented as [Wire conventions](/api-reference/virtual-cards/webhooks#wire-conventions-for-transaction-events) in the API reference.
+
+| Field | Meaning |
+|---|---|
+| `transactionType` | Bitnob's stable internal classification: `authorization`, `settlement`, `pre_auth_approved`, `authorization_declined`, `refund_authorization`, `refund_settled`, `reversal_settled`, `cross_border_pending`, `cross_border_settled`, `cross_border_reversal`, `contactless_pending`, `contactless_settled`, `verification`. |
+| `status` | Wire-level outcome: `completed`, `pending`, `decline`, or `terminated`. |
+
+Three events fire more than once with different `transactionType` values:
+
+| Event | Fires for |
+|---|---|
+| `virtualcard.transaction.refund` | `refund_authorization`, then `refund_settled`. |
+| `virtualcard.transaction.contactless` | `contactless_pending`, then `contactless_settled`. |
+| `virtualcard.transaction.crossborder` | `cross_border_pending` (fee from your wallet), then `cross_border_settled` (card balance). Correlate via the `CARD_CROSSBORD_*` reference. |
+
+## Card lifecycle
+
+| Event | Fires when |
+|---|---|
+| `virtualcard.created.completed` | Card created at the provider and active. The signal to show the card. |
+| `virtualcard.created.failed` | Provider rejected creation; `reason` says why. |
+| `virtualcard.terminated.refund` | Card terminated and remaining balance refunded to your wallet. |
+| `virtualcard.regularized` | Card moved from a degraded state back to stable. |
+| `virtualcard.expiration` | Card reached its expiry date. |
+
+## Funding and withdrawal
+
+| Event | Fires when |
+|---|---|
+| `virtualcard.topup.completed` | Card load succeeded. |
+| `virtualcard.topup.failed` | Card load failed: balance, status, or rate. |
+| `virtualcard.withdrawal.completed` | Withdrawal from card back to your account completed. |
+| `virtualcard.withdrawal.failed` | Withdrawal failed: minimum balance, status, or limits. |
+
+## Transactions
+
+| Event | Fires when |
+|---|---|
+| `virtualcard.transaction.authorization` | Merchant placed an authorisation hold; settlement pending. |
+| `virtualcard.transaction.settlement` | Previously authorised charge settled. |
+| `virtualcard.transaction.debit` | Settled debit posted to the card. |
+| `virtualcard.transaction.credit` | Credit posted to the card: refund or adjustment. |
+| `virtualcard.transaction.pre-auth.approved` | Pre-authorisation hold, for example hotel or fuel. |
+| `virtualcard.transaction.verification` | Zero-amount card-on-file check, `amount: 0`. |
+| `virtualcard.transaction.refund` | Merchant refund; fires twice, see wire conventions. |
+| `virtualcard.transaction.reversed` | Authorisation reversed before settlement; also carries cross-border reversals. |
+| `virtualcard.transaction.crossborder` | Cross-border activity; fires twice, see wire conventions. |
+| `virtualcard.transaction.contactless` | Tap-to-pay; fires twice, see wire conventions. |
+| `virtualcard.transaction.terminated.refund` | Per-transaction refund posted during termination cleanup, credited to your float. |
+
+## Declines and risk
+
+| Event | Fires when |
+|---|---|
+| `virtualcard.transaction.declined` | Generic decline; `reason` says why. |
+| `virtualcard.transaction.declined.charge` | Decline-rule violation fee charged; carries `feeAmount` and `violationCount`. See [Fees and decline rules](/docs/card-issuing/card-fees). |
+| `virtualcard.transaction.declined.frozen` | Authorisation declined because the card is frozen. |
+| `virtualcard.transaction.declined.terminated` | Authorisation attempted on a terminated card. |
+| `virtualcard.transaction.authorization.failed` | Issuer rejected the authorisation: bad PAN/CVV or AVS failure. |
+| `virtualcard.transaction.issuerexpiration` | Declined because the card expired at the issuer. |
+
+## Activation and KYC
+
+| Event | Fires when |
+|---|---|
+| `virtualcard.contactless.activation` | Customer KYC and contactless activation completed. See [Activation & KYC](/api-reference/virtual-cards/webhooks#activation-kyc). |

@@ -1,0 +1,211 @@
+---
+title: "Send your first payout"
+description: "A complete first payout, from credentials to confirmed delivery: create a quote, attach a beneficiary, finalize, fund it, and track it to `COMPLETED`."
+---
+
+In this tutorial you send one payout end to end: lock a rate with a quote, attach a beneficiary, finalize, fund it over Lightning, and watch it reach `COMPLETED`. Every response shown is a real API capture.
+
+## Prerequisites
+
+- A Bitnob business account, created at [app.bitnob.com](https://app.bitnob.com/), with payouts enabled by the compliance team.
+- Your `CLIENT_ID` and `CLIENT_SECRET` from **Settings → API Keys**. The secret is shown once; store it securely.
+- A signing helper that adds the four `X-Auth-*` headers to every request. Build one with [Authentication](/api-reference/authentication/authentication); it has reference implementations in Node.js, Go, and Python.
+
+If you whitelist IPs (**Settings → IP**), add your server's IP before testing, or requests will be rejected.
+
+Throughout, `{BASE_URL}` is `https://api.bitnob.com` for live, or your sandbox URL for testing. Test in sandbox first.
+
+<Steps>
+  <Step title="Pick a destination and validate the beneficiary">
+    Look up what your destination country needs before you quote. The short version:
+
+    ```http
+    GET {BASE_URL}/api/payouts/supported-countries        # where you can pay out
+    GET {BASE_URL}/api/payouts/supported-countries/NG     # required beneficiary fields
+    GET {BASE_URL}/api/payouts/banks/NG                   # bank names and codes
+    GET {BASE_URL}/api/payouts/account-lookup?country=NG&account_number=0123456789&bank_code=058
+    ```
+
+    Confirm the lookup returns `is_verified: true` and the `account_name` you expect. The full walkthrough, including mobile money destinations, is in [Validate a beneficiary](/docs/payouts/validate-a-beneficiary).
+  </Step>
+
+  <Step title="Create a quote">
+    A quote locks the exchange rate and fees. `source` decides where the funds come from: `offchain` charges your Bitnob balance, `onchain` gives you a deposit address to pay per transaction.
+
+    ```http
+    POST {BASE_URL}/api/payouts/quotes
+    ```
+
+    ```json
+    {
+      "from_asset": "BTC",
+      "to_currency": "KES",
+      "source": "onchain",
+      "country": "KE",
+      "chain": "lightning",
+      "settlement_amount": "500",
+      "payment_reason": "Invoice payment",
+      "reference": "your-un-kes"
+    }
+    ```
+
+    Provide one side of the conversion: `settlement_amount` (what the beneficiary receives) or `amount` (what you pay in `from_asset`). `chain` is required when `source` is `onchain`.
+
+    The response returns the payout record in status `QUOTE`:
+
+    ```json
+    {
+      "success": true,
+      "message": "Quote created successfully",
+      "data": {
+        "payout": {
+          "id": "019f225a-7063-7636-ba95-584ccba10538",
+          "quote_id": "QT2_21012472",
+          "status": "QUOTE",
+          "source": "ONCHAIN",
+          "from_asset": "BTC",
+          "chain": "CHAIN_TYPE_LIGHTNING",
+          "to_currency": "KES",
+          "sat_amount": "635299",
+          "btc_amount": "0.0063529938756854",
+          "amount": "0.00635299",
+          "settlement_amount": "50000",
+          "fees": "0",
+          "exchange_rate": {
+            "rate": "128.9815",
+            "btc_rate": "61141.15",
+            "currency": "kes"
+          },
+          "trip": {
+            "quote_at": "2026-07-02T10:23:00.195404170Z"
+          },
+          "reference": "your-un-kes",
+          "country": "KE",
+          "expires_at": "2026-07-02T10:29:00.195416730Z"
+        }
+      }
+    }
+    ```
+
+    Save `quote_id`. Note `expires_at`: the window is minutes, so continue promptly. Full schema: [Create quote](/api-reference/payouts/create-quote).
+  </Step>
+
+  <Step title="Initialize with the beneficiary">
+    Attach the recipient to the quote. The `beneficiary` shape depends on the country; it is exactly what step 1's country requirements returned.
+
+    ```http
+    POST {BASE_URL}/api/payouts/{quoteId}/initialize
+    ```
+
+    ```json
+    {
+      "quote_id": "QT2_21012472",
+      "beneficiary": {
+        "account_number": "0123456789",
+        "bank_code": "058",
+        "account_name": "Ada Okafor",
+        "country": "NG"
+      },
+      "reference": "payout-1777919122721-wln774",
+      "payment_reason": "Invoice payment",
+      "callback_url": "https://your-app.example.com/webhooks/payout",
+      "client_meta_data": "{\"batch\":\"march-payouts\"}"
+    }
+    ```
+
+    `callback_url` is where webhook events for this payout are sent; set it. `client_meta_data` is echoed back for your own reconciliation.
+
+    For onchain funding the response moves the record to `PENDING_ADDRESS_DEPOSIT` and carries the funding instruction in `address`:
+
+    ```json
+    {
+      "success": true,
+      "message": "Payout initialized successfully",
+      "data": {
+        "payout": {
+          "id": "019f225a-7063-7636-ba95-584ccba10538",
+          "quote_id": "QT2_21012472",
+          "status": "PENDING_ADDRESS_DEPOSIT",
+          "from_asset": "BTC",
+          "chain": "CHAIN_TYPE_LIGHTNING",
+          "to_currency": "KES",
+          "sat_amount": "635299",
+          "settlement_amount": "50000.000000",
+          "beneficiary": {
+            "account_name": "Ada Okafor",
+            "account_number": "0123456789",
+            "bank_code": "058",
+            "country": "NG"
+          },
+          "address": "lnbc70070n1p4yv0gppp53agkyvtgzgdllzlpuvrkj6w6exka0d7exj4aavqs7cfkx0s9y48qdq4g4mx7h0",
+          "expires_at": "2026-07-02T10:29:39Z"
+        }
+      }
+    }
+    ```
+
+    What `address` contains depends on `chain`: a BOLT11 invoice (`lnbc…`) for `lightning`, a BTC address for `bitcoin`, or a deposit address on the relevant chain for stablecoins. With `source: "offchain"` there is no `address` and the record moves to `INITIATED` instead.
+
+    Full schema: [Initialize payout](/api-reference/payouts/initialize-payout).
+  </Step>
+
+  <Step title="Finalize">
+    Finalize commits the payout. It takes no request body, so sign an empty body string.
+
+    ```http
+    POST {BASE_URL}/api/payouts/{quoteId}/finalize
+    ```
+
+    For offchain payouts your balance is debited here. For onchain payouts nothing is debited; the payout waits for your deposit. Full schema: [Finalize payout](/api-reference/payouts/finalize-payout).
+  </Step>
+
+  <Step title="Fund it">
+    **Onchain**: pay the `address` from the initialize response before `expires_at`. For Lightning, pay the invoice from any Lightning wallet; for `bitcoin`, send the exact `btc_amount`; for stablecoins, send to the deposit address. Once the payment confirms, settlement proceeds on its own.
+
+    **Offchain**: nothing to do, the payout is already proceeding.
+  </Step>
+
+  <Step title="Track it to COMPLETED">
+    Two ways, and production systems use both:
+
+    - **Webhooks** arrive at your `callback_url` as the payout advances: `payouts.initialized`, `payouts.processing`, then `payouts.withdrawal.success` on delivery or `payouts.withdrawal.expired` if funding never arrived. Verify every signature; see [Receive payout webhooks](/docs/payouts/webhook-payout).
+    - **Polling** covers the transitions that have no event:
+
+    ```http
+    GET {BASE_URL}/api/payouts/{id}
+    ```
+
+    ```json
+    {
+      "success": true,
+      "message": "Payout retrieved successfully",
+      "data": {
+        "payout": {
+          "id": "019f225a-7063-7636-ba95-584ccba10538",
+          "quote_id": "QT2_21012472",
+          "reference": "your-un-kes",
+          "status": "COMPLETED",
+          "from_asset": "BTC",
+          "to_currency": "KES",
+          "settlement_amount": "50000",
+          "country": "KE",
+          "beneficiary": {
+            "account_name": "Ada Okafor",
+            "account_number": "0123456789",
+            "bank_code": "058"
+          }
+        }
+      }
+    }
+    ```
+
+    `COMPLETED` is the only success state. A `FAILED` payout emits no webhook, so schedule reconciliation sweeps with [List payouts](/api-reference/payouts/list-payouts). The full status vocabulary is on [Statuses and webhook events](/docs/payouts/statuses-and-webhook-events).
+  </Step>
+</Steps>
+
+## Where to go next
+
+- [How payouts settle](/docs/payouts/settlement-models), if you have not yet chosen between balance funding and per-transaction funding.
+- [Handle payout failures](/docs/payouts/error-handling), before you take this to production.
+- [Send a SWIFT payout](/docs/payouts/swift-payout) for destinations with no local rail.
+- [Send payouts in bulk](/docs/payouts/mass-payouts) when one at a time stops scaling.

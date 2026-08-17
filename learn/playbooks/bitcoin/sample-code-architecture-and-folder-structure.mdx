@@ -1,0 +1,158 @@
+---
+title: "Sample code architecture"
+description: "A reference folder layout and module boundaries for a production Bitcoin wallet codebase."
+---
+## Introduction
+
+Building a high-quality Bitcoin non-custodial wallet is not just about APIs or cryptography. Good internal architecture is critical for:
+
+- Security
+- Maintainability
+- Upgradeability (e.g., Taproot, Silent Payments, Lightning)
+- Scaling to production
+
+This section outlines a professional code architecture recommended for Bitcoin non-custodial wallets.
+
+It is designed for mobile apps (iOS/Android), web apps, or lightweight desktop clients.
+
+Even small teams should aim for this standard if they want to build trusted wallets.
+
+## Core principles
+
+- **Modular by responsibility:** Separate concerns clearly: key management, address derivation, transaction building, blockchain interface, UI.
+- **Stateless critical functions:** Critical cryptographic operations (key generation, signing) should be stateless, pure functions without side effects.
+- **Encryption at rest:** Private keys, seeds, and any critical metadata must be encrypted at rest before storage.
+- **Abstract blockchain interfaces:** Wallet logic should not hard-depend on Bitnob or any single blockchain provider. Use abstraction layers for blockchain interactions.
+- **Pluggable fee and policy engines:** Fee estimators, coin selection strategies, and transaction building policies should be modular and replaceable.
+
+## Recommended folder structure
+
+```text
+/src
+
+  /core
+    /keys
+      - keygen.js (or .swift, .kt)
+      - encrypt.js
+      - decrypt.js
+      - restoreFromSeed.js
+    /addresses
+      - deriveExternalAddress.js
+      - deriveInternalAddress.js
+      - validateAddress.js
+    /transactions
+      - buildTransaction.js
+      - signTransaction.js
+      - estimateFees.js
+      - prepareChangeOutput.js
+    /utxos
+      - utxoSelector.js
+      - consolidateUtxos.js
+
+  /infrastructure
+    /bitnob
+      - watchAddress.js
+      - broadcastTransaction.js
+      - fetchBalance.js
+      - fetchTransactions.js
+      - estimateFees.js
+    /webhooks
+      - webhookHandler.js
+      - transactionConfirmationProcessor.js
+
+  /models
+    - Wallet.js
+    - UTXO.js
+    - Address.js
+    - Transaction.js
+
+  /utils
+    - formatBitcoinAmount.js
+    - convertFiat.js
+    - logger.js
+    - errorHandling.js
+
+  /config
+    - networkConfig.js
+    - feePolicy.js
+    - constants.js
+
+  /screens (for apps)
+    - WalletDashboard.js
+    - SendBitcoin.js
+    - ReceiveBitcoin.js
+    - Settings.js
+
+  /services
+    - backupService.js
+    - securityAlertsService.js
+    - mempoolMonitorService.js (optional)
+
+  /tests
+    /unit
+    /integration
+    /e2e
+```
+
+## Core modules explained
+
+- `/core/keys/`: Handles generation, encryption, decryption, restoration of private keys and seeds. Should use strong cryptographic libraries (libsodium, bitcoinjs-lib, BDK bindings).
+- `/core/addresses/`: Handles address derivation from HD wallets. Supports all address types: Legacy, SegWit, Taproot.
+- `/core/transactions/`: Builds, signs, and prepares Bitcoin transactions. Handles fee estimation and change output generation.
+- `/core/utxos/`: Manages UTXO selection, consolidation, and optimization strategies.
+- `/infrastructure/bitnob/`: Handles all external blockchain interactions using the Bitnob API. Isolate these so that in future you can swap providers if needed without deep refactor.
+- `/models/`: Data models representing wallet objects (wallet, address, UTXO, transaction).
+- `/utils/`: Helper functions: formatting, fiat conversions, error handling, logging.
+- `/config/`: Network settings (mainnet, testnet), fee policies, hardcoded constants.
+- `/screens/`: UI Screens (for mobile or web applications). UI logic should call service layers, not handle raw cryptography.
+- `/services/`: Specialized services: backup management, alerts, webhook processing, mempool monitoring.
+- `/tests/`: Unit tests for core modules, integration tests for workflows, end-to-end tests simulating real user flows.
+
+## Important architectural recommendations
+
+- **Keep key operations local:** Private key generation, signing, and encryption should only happen on-device. Backend servers and Bitnob should never see or touch keys.
+- **Abstract blockchain client:** Wrap Bitnob APIs in an internal service class, e.g., `BlockchainClient.watchAddress()`, `BlockchainClient.broadcastTransaction()`. This allows you to swap Bitnob for direct Bitcoin Core RPC or Esplora APIs later if ever needed.
+- **Batch API calls when possible:** Batch watch requests, batch balance queries, batch transaction fetches to minimize network overhead.
+- **Fail gracefully:** If Bitnob API fails or internet is down, the wallet app should queue actions (like sending transactions) and retry later.
+- **Secure webhook handling:** All incoming webhooks from Bitnob should be authenticated (HMAC signatures recommended). Never trust incoming data blindly.
+- **Plan for multi-account wallets:** Even if you start with single accounts, design your data models to support multiple accounts (e.g., user wallets, merchant wallets, savings wallets).
+
+## Code readability guidelines
+
+- **Naming clarity:** Use clear, descriptive names. e.g., deriveExternalAddress() not getAddr().
+- **Small, focused functions:** Each function should do one thing only (Single Responsibility Principle).
+- **Document security-sensitive functions:** Functions dealing with seeds, private keys, signing must have explicit doc comments explaining what they do and what they don't.
+- **Explicit error handling:** Never swallow errors in cryptography or blockchain code. Always surface them cleanly and visibly.
+- **Unit test critical paths:** Key generation, signing, transaction building must have 100% test coverage.
+
+## Example minimal wallet app startup flow (pseudocode)
+
+```pseudocode
+// On first run
+seed = generateMnemonic()
+encryptedSeed = encryptSeed(seed, userPassphrase)
+saveToSecureStorage(encryptedSeed)
+
+// On dashboard
+wallet = loadWallet()
+addresses = deriveAddresses(wallet)
+balances = fetchBalances(addresses)
+transactions = fetchTransactions(addresses)
+
+// To receive Bitcoin
+address = getNextReceiveAddress(wallet)
+
+// To send Bitcoin
+utxos = selectUtxos(wallet, amountToSend)
+fee = estimateFees()
+tx = buildTransaction(utxos, destinationAddress, fee)
+signedTx = signTransaction(tx, walletPrivateKey)
+broadcastTransaction(signedTx)
+```
+
+## Final best practices
+
+- Build cryptographic flows first.
+- Build blockchain interface second.
+- Build UI/UX third.
+- Always separate critical wallet logic from user interface code.

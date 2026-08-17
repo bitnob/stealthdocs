@@ -1,0 +1,143 @@
+---
+title: "Receive payout webhooks"
+description: "Payout webhooks deliver four events to your callback URL. Verify the signature, de-duplicate on `event_id`, and act only on the `event` field, never on `data.status`."
+related:
+  - /docs/payouts/statuses-and-webhook-events
+  - /docs/getting-started/api-best-practices/webhook-best-practices
+---
+
+Bitnob notifies your server as a payout advances, so you can update records and notify users without polling. Set the destination with `callback_url` when you [initialize a payout](/api-reference/payouts/initialize-payout), or configure a global webhook URL on your dashboard.
+
+Before handling payout events, have the shared plumbing in place from [Webhooks](/api-reference/payouts/webhooks): verify the `x-bitnob-signature` HMAC on every delivery, return `200` quickly, and expect retries, which means the same event can arrive more than once. De-duplicate on `event_id`.
+
+## The four events
+
+| Event | Fires when | Act on it |
+|---|---|---|
+| `payouts.initialized` | Payout accepted against a quote. Nothing settled. | Mark as in flight. |
+| `payouts.processing` | The settlement rail picked it up. Not yet delivered. | Show progress. |
+| `payouts.withdrawal.success` | Funds delivered to the beneficiary. | Credit the order, notify the user. |
+| `payouts.withdrawal.expired` | Quote expired unfunded. Nothing settled. | Re-quote to retry. |
+
+This is the complete catalogue. There is no failure event: a `FAILED` payout is detected by polling [Get payout](/api-reference/payouts/get-payout), so run a reconciliation sweep alongside your webhook handler. The status vocabularies are compared on [Statuses and webhook events](/docs/payouts/statuses-and-webhook-events).
+
+<Note>
+  `data.status` in a payout webhook is the lowercase event outcome (`initiated`, `processing`, `success`, `expired`). It is not the payout record's uppercase lifecycle status. Route on the `event` field.
+</Note>
+
+## Payloads
+
+Every event carries the payout record, so field names match the payouts API responses. Use `reference` to match events to your own records. On `payouts.withdrawal.success`, `completed_at` is when settlement finished; act on this event when crediting an order. On `payouts.withdrawal.expired`, nothing settled; create a fresh quote to retry.
+
+<CodeGroup>
+
+```json payouts.initialized
+{
+  "event": "payouts.initialized",
+  "event_id": "802561d3-78fa-4436-a3cc-fdbebe4772ed",
+  "data": {
+    "id": "019f8132-4969-7e63-a2da-c439ace1613d",
+    "quote_id": "QT2_21434859",
+    "company_id": "8263c9991-6c68-477b-bd12-c759rjtg",
+    "reference": "6c9ace6b-891a-4b91-bff4-8bfdh784jc3f",
+    "status": "initiated",
+    "from_asset": "btc",
+    "to_currency": "ngn",
+    "amount": "0.00018555",
+    "settlement_amount": "16823.2",
+    "fees": "0",
+    "beneficiary": {
+      "country": "ng",
+      "bank_code": "100004",
+      "account_number": "****3123"
+    },
+    "created_at": "2026-07-20T20:23:04.297953Z",
+    "updated_at": "2026-07-20T20:23:25.444269082Z"
+  }
+}
+```
+
+```json payouts.processing
+{
+  "event": "payouts.processing",
+  "event_id": "51ff21dc-9629-41b5-8771-9cbc0d670000",
+  "data": {
+    "id": "019f8330-71e6-7649-a382-2209fd73b56f",
+    "quote_id": "QT2_21439667",
+    "company_id": "9876543-6c68-477b-bd95-769nn698",
+    "reference": "4fb1e02e-1234-467a-b91b-3a18dc000000",
+    "status": "processing",
+    "from_asset": "usdt",
+    "to_currency": "ngn",
+    "amount": "1.801875",
+    "settlement_amount": "2500",
+    "fees": "0",
+    "beneficiary": {
+      "country": "ng",
+      "bank_code": "100004",
+      "account_number": "****4000"
+    },
+    "created_at": "2026-07-21T05:40:18.02242Z",
+    "updated_at": "2026-07-21T05:40:47.522051588Z"
+  }
+}
+```
+
+```json payouts.withdrawal.success
+{
+  "event": "payouts.withdrawal.success",
+  "event_id": "d9c4758ub-5e93-4cdf-bb123-frt474865",
+  "data": {
+    "id": "019f812d-ed2c-7f17-a2e9-12435e670813",
+    "quote_id": "QT2_21434859",
+    "company_id": "9876543-6c68-477b-bd95-769nn698",
+    "reference": "76543-1234-4304-869j-3a98e85f0812",
+    "status": "success",
+    "from_asset": "usdt",
+    "to_currency": "ngn",
+    "amount": "100.988948",
+    "settlement_amount": "140174.8",
+    "fees": "0",
+    "beneficiary": {
+      "country": "ng",
+      "bank_code": "100004",
+      "account_number": "****3001"
+    },
+    "created_at": "2026-07-20T20:18:18.541002Z",
+    "updated_at": "2026-07-20T20:18:39.515031203Z",
+    "completed_at": "2026-07-20T20:18:39.515031203Z"
+  }
+}
+```
+
+```json payouts.withdrawal.expired
+{
+  "event": "payouts.withdrawal.expired",
+  "event_id": "0756585e-8oa1-4eb8-a9aa-85957450",
+  "data": {
+    "id": "08565964-01b9-8801-b123-123456789",
+    "quote_id": "QT2_21434706",
+    "company_id": "c234567-4117-45be-456-123456789",
+    "reference": "12345678-c888-0987-1234-2435464844",
+    "status": "expired",
+    "from_asset": "usdc",
+    "to_currency": "ngn",
+    "amount": "25.795811",
+    "settlement_amount": "35804.11",
+    "fees": "0",
+    "payment_reason": "Crypto offramp",
+    "created_at": "2026-07-20T20:05:17.371329Z",
+    "updated_at": "2026-07-20T20:24:01.352781396Z",
+    "completed_at": "2026-07-20T20:24:01.352781396Z"
+  }
+}
+```
+
+</CodeGroup>
+
+## Handler checklist
+
+- Verify the signature before parsing anything else; see [Verifying events](/api-reference/payouts/webhooks#verifying-events).
+- Return `200` immediately and process asynchronously. Bitnob retries non-200 deliveries 3 times after the first failure.
+- Make the handler idempotent on `event_id`.
+- Confirm terminal state with [Get payout](/api-reference/payouts/get-payout) before releasing goods or services; do not act on a webhook alone.

@@ -1,0 +1,150 @@
+---
+title: "Module 3: Incident response and post-Fraud investigation workflows"
+description: "The containment, investigation, and close-out steps for a card fraud incident, and what to record while doing it."
+---
+## First principles
+
+Fraud in virtual card systems cannot always be prevented in real time. But your response determines your loss exposure, operational impact, and reputational damage.
+
+Effective incident response must be:
+
+- **Fast** (contain damage quickly)
+- **Documented** (for internal audit and external partners)
+- **Cross-functional** (finance, support, legal, engineering)
+- **Recoverable** (able to refund, freeze, reverse if needed)
+
+## Example scenarios that require incident response
+
+| Scenario | Why It Matters |
+|---|---|
+| Card receives large refund with no matching spend | Float may be credited improperly |
+| Support reports multiple users complaining of unauthorized spend | Could indicate a compromise or system-wide issue |
+| Rapid spike in top-ups and refunds across different users | May be a coordinated laundering attempt |
+| Merchant reports chargebacks from known user base | Requires backtrace, merchant support, and logs |
+| Internal detection flags a user for 5+ card terminations | Suggests behavioral fraud needing containment |
+
+## Standard investigation playbook
+
+Every virtual card fraud response should include the following trace:
+
+1. **Identify the card and user**
+
+   Fetch the `cardId`, `cardUserId`, or reference used in the support ticket or fraud alert.
+
+2. **Retrieve the timeline**
+
+   Use your transaction record / internal logs to determine:
+
+   - When the card was created
+   - When it was topped up
+   - When the spend happened
+   - If and when a refund or reversal was received
+   - Whether the card was terminated/frozen before or after
+
+3. **Confirm webhook and API behavior**
+
+   - Pull webhook logs by reference ID
+   - Confirm webhook delivery for `transaction.debit`, `refund`, or `chargeback`
+   - Look for duplicated webhook IDs (common with retries or abuse)
+
+4. **Analyze float exposure**
+
+   - Was float deducted but not matched to valid spend?
+   - Did a terminated card result in refund to float or wallet?
+   - Is the system compensating fraudulently credited funds?
+
+5. **Review device and IP history**
+
+   - Was the card issued from a known fingerprint?
+   - Is the user related to flagged accounts (same IP/device)?
+
+6. **Containment action**
+
+   - Freeze all active cards on the user profile
+   - Block user from creating new cards
+   - Disable withdrawals until internal review is completed
+   - Log incident in audit system with timestamp and handler signature
+
+## Incident response matrix
+
+| Fraud Type | Action | Sla |
+|---|---|---|
+| Suspicious refund to terminated card | Freeze account, investigate refund path | 1 hour |
+| Multiple failed spends on new card | Freeze card, alert fraud analyst | 30 min |
+| Chargeback from partner merchant | Pull logs, generate incident report | 24 hours |
+| API key leak detected | Revoke, rotate, alert engineering | Immediate |
+| User impersonation reported to support | Lock account, request KYC re-verification | 2 hours |
+
+## Internal report template
+
+Each fraud incident should have a post-mortem record including:
+
+- **Template: Fraud Incident Summary**
+- **Incident ID:** FRC-2024-0021
+- **Date/Time Detected:** [timestamp]
+- **Reporter:** [name or system flag]
+- **User ID(s):**
+- **Card(s) Involved:**
+- **Webhook Reference(s):**
+- **Float Exposure:**
+- **Fraud Type:** [e.g., refund abuse, ATO, merchant collusion]
+- **Timeline:** (chronological summary of events)
+- **Containment Actions:**
+- **Final Resolution:**
+- **Lessons Learned / Process Improvements:**
+- **Audit Log Link:**
+
+## Escalation protocol
+
+| Condition | Escalate to | Channel |
+|---|---|---|
+| Float exposure > $1000 from refund or reversal | Treasury Lead | Slack / PagerDuty |
+| Missing webhook after confirmed refund | API Infra / Engineering | Internal ticket |
+| User behavior matches existing flagged pattern | Risk Ops | Graph investigation |
+| Merchant suspected of collusion | Compliance / Legal | Email, submit SAR if required |
+
+## Aftermath & monitoring
+
+- Add user and card to blocklist/fraud database
+- Re-test webhook and refund matching engine for similar flaws
+- Review logs for other cards with similar behavior
+- Create internal incident review summary and circulate
+- Update ruleset (velocity, refund validation, merchant limits)
+
+## Module 3 knowledge check
+
+### 1. What is the first step in fraud incident investigation?
+
+A. Alert the legal team
+
+B. Freeze all user cards
+
+C. Pull user and card ID
+
+D. Contact the merchant
+
+**Correct answer:** C
+
+### 2. Why is the webhook log critical to fraud investigations?
+
+A. It shows if the merchant is fraudulent
+
+B. It determines the current card balance
+
+C. It confirms transaction timeline and integrity
+
+D. It reveals KYC documents
+
+**Correct answer:** C
+
+### 3. What is the correct action when you detect a refund to a terminated card?
+
+A. Refund the card again
+
+B. Create a new card for the user
+
+C. Route the refund to float (not the user wallet) and freeze/flag the account
+
+D. Escalate to engineering
+
+**Correct answer:** C

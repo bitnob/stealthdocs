@@ -1,0 +1,169 @@
+---
+title: "Create a quote"
+description: "Request a priced quote between two supported currencies, and read what the response commits you to."
+related:
+  - /docs/trading/execute-trade
+  - /docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows
+---
+Retrieve a real-time conversion quote between any two supported currencies: USDT, USDC, Bitcoin, and NGN.
+
+This endpoint allows you to preview the expected rate, amount received, and validity period for a trade between any supported pair (for example USDT ↔ BTC, or NGN ↔ USDT). Quotes can be used to show customers live pricing or to execute a trade with a locked rate.
+
+## Endpoint
+
+Full request and response schema: [Quotes](/api-reference/trading/create-quote) in the API reference.
+
+```bash
+POST /api/trading/quotes
+```
+
+## Purpose
+
+Use this endpoint to:
+
+- Display current pricing before executing a trade
+- Evaluate exact cost or return amount for conversions
+- Fetch trade metadata (fees, expiry, reference) before committing
+
+Re-read a quote you already created with [Get Quote by ID](/api-reference/trading/get-quote-status), or skip the quote entirely and read indicative pricing from [Get Prices](/api-reference/trading/list-all-prices)
+
+## Request
+
+<ParamField body="base_currency" type="string" required>
+  The base currency for the trade. One of `BTC`, `USDT`, `USDC`, or `NGN`.
+</ParamField>
+
+<ParamField body="quote_currency" type="string" required>
+  The quote currency for the trade. One of `BTC`, `USDT`, `USDC`, or `NGN`. For naira trades, one side of the pair must be NGN.
+</ParamField>
+
+<ParamField body="side" type="string" required>
+  `buy` or `sell`.
+</ParamField>
+
+<ParamField body="quantity" type="string" required>
+  Amount of base currency to trade, in major units: `0.0001` (BTC) or `5000` (₦5,000).
+</ParamField>
+
+## Example request
+
+```bash
+curl --location 'https://api.bitnob.com/api/trading/quotes' \
+--header 'Content-Type: application/json' \
+--header 'x-auth-client: CLIENT_ID' \
+--header 'x-auth-timestamp: TIMESTAMP' \
+--header 'x-auth-nonce: NONCE' \
+--header 'x-auth-signature: SIGNATURE' \
+--data '{
+    "base_currency": "BTC",
+    "quote_currency": "USDT",
+    "side": "sell",
+    "quantity": "0.0001"
+}'
+```
+
+### Example request (NGN pair) preview
+
+<Note>
+  **Preview, enabled per account:** NGN (naira) trading is being rolled out gradually and is not enabled for all companies yet.
+</Note>
+
+To quote a naira trade, set base_currency to what you are spending and use side: "sell". Here, 5000 means ₦5,000.
+
+```bash
+curl --location 'https://api.bitnob.com/api/trading/quotes' \
+--header 'Content-Type: application/json' \
+--header 'x-auth-client: CLIENT_ID' \
+--header 'x-auth-timestamp: TIMESTAMP' \
+--header 'x-auth-nonce: NONCE' \
+--header 'x-auth-signature: SIGNATURE' \
+--data '{
+    "base_currency": "NGN",
+    "quote_currency": "USDT",
+    "side": "sell",
+    "quantity": "5000"
+}'
+```
+
+## Response
+
+```json
+{
+    "success": true,
+    "message": "Quote retrieved successfully",
+    "data": {
+        "quote": {
+            "id": "b27f6b8a-b8f4-4d46-8c84-c4a52240d2a2",
+            "base_currency": "BTC",
+            "quote_currency": "USDT",
+            "side": "BUY",
+            "quantity": "0.0001",
+            "price": "69034.33817175",
+            "expires_at": "2026-03-26T21:14:45.357876312Z",
+            "created_at": "2026-03-26T21:14:15.357876782Z",
+            "original_quantity": "0.0001",
+            "consumed_quantity": "0",
+            "remaining_quantity": "0.0001",
+            "is_exhausted": false,
+            "exchange": {
+                "send_quantity": "6.91",
+                "send_currency": "USDT",
+                "receive_quantity": "0.00010000",
+                "receive_currency": "BTC"
+            }
+        }
+    },
+    "metadata": {
+        "request_id": "req_019d2bff-74a7-77fb-9e94-429f8e09d260"
+    },
+    "timestamp": "2026-03-26T21:14:15.38207726Z"
+}
+```
+
+## Response fields
+
+| Field | Type | Description |
+|---|---|---|
+| id | string | Unique ID for this quote. Use it when executing the trade |
+| base_currency | string | The base currency for the trade (e.g., BTC) |
+| quote_currency | string | The quote currency for the trade (e.g., USDT) |
+| side | string | The side of the trade: BUY or SELL |
+| quantity | string | The amount of base currency to trade |
+| price | string | The quoted price per unit of base currency in terms of quote currency |
+| expires_at | string | ISO 8601 timestamp after which this quote is no longer valid |
+| created_at | string | ISO 8601 timestamp when the quote was created |
+| original_quantity | string | The original quantity requested when the quote was created |
+| consumed_quantity | string | The amount of the quote already used in executed trades |
+| remaining_quantity | string | The amount still available to trade (original minus consumed) |
+| is_exhausted | boolean | Whether the quote has been fully consumed. If true, no more trades can use this quote |
+| exchange | object | Summary of what will be sent and received if the quote is executed |
+| send_quantity | string | The amount you will send to execute the trade (e.g., 6.91) |
+| send_currency | string | The currency you will send (e.g., USDT for a BUY order) |
+| receive_quantity | string | The amount you will receive after the trade (e.g., 0.00010000) |
+| receive_currency | string | The currency you will receive (e.g., BTC for a BUY order) |
+
+## Notes
+
+Quotes are valid for a short time (usually 30 seconds for development and 10 seconds in production)
+
+Use the `quoteId` in `/trading/quotes` to ensure price locking
+
+Use the `price` from the quote when [creating the order](/api-reference/trading/submit-order).
+
+Without `quoteId`, the trade executes at current market rate
+
+Fees depend on your integration tier (default is 0)
+
+For NGN pairs, one side of the pair must be NGN, amounts are in major units (whole naira), and a `quote_id` is required at execution. The rate must be locked before funds move
+
+NGN conversions are limited to ₦500–₦10,000,000 per trade and must be enabled on your account before use
+
+## Errors
+
+| Code | Message | Fix |
+|---|---|---|
+| 400 | Invalid asset pair | Use a supported pair (USDT, USDC, BTC, NGN). Naira trades must have NGN on one side |
+| 400 | Missing or invalid amount | Must be a positive number in major units, within any pair limits |
+| 403 | NGN not enabled | Ask Bitnob to enable naira trading on your account |
+| 403 | Insufficient balance | Only applies if pre-balance checks are enabled |
+| 500 | Quote service unavailable | Retry or contact support if persistent |

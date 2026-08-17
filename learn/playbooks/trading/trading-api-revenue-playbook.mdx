@@ -1,0 +1,130 @@
+---
+title: "Trading API revenue playbook"
+description: "Business models integrators can build on the Trading API, and which ones suit which teams."
+---
+## Overview
+
+Bitnob provides the infrastructure. You control the business model.
+
+This guide outlines how integrators, platforms, and apps can generate revenue using the Bitnob Trading API while delivering great experiences to users. You can apply these strategies whether you're a wallet, exchange, neobank, remittance company, or B2B fintech.
+
+The same strategies apply across every supported pair, including the NGN pairs (naira ↔ USDT, USDC, Bitcoin), which open a naira on/off-ramp you can price and earn a spread on.
+
+## Revenue model #1: Spread-based trading (invisible profit)
+
+Concept: You offer a trade rate slightly less favorable than what Bitnob provides, and you keep the difference.
+
+How it works:
+
+- Fetch quote: Bitnob gives you rate = 2250 sats per cent
+- Show your user: rate = 2200 sats per cent
+- Execute trade using original Bitnob quote
+- Profit = (Bitnob output - User output)
+
+You earn in sats or cents, without needing to show any fees.
+
+Recommended when:
+
+- You want to keep UX clean
+- You're competing on convenience, not pricing
+- You want to earn at scale silently
+
+## Revenue model #2: Markup fees (transparent trade fees)
+
+Concept: Charge users a visible fee per trade, shown in UI or baked into output.
+
+Example:
+
+- User sells \$100 BTC
+- Fee: 1% = \$1
+- User receives \$99 in USDT
+- You receive \$100, keep \$1
+
+You earn via markup, and can adjust fee tiers per user, volume, or plan.
+
+Recommended when:
+
+- You want users to understand your revenue model
+- You support multiple B2B clients or need fine-grained billing
+- You're matching competitors with clear pricing
+
+## Revenue model #3: FX control in cross-Border flows
+
+Concept: Control the full remittance or payout flow by fixing the FX rate, while optimizing execution backend via Bitnob.
+
+How it works:
+
+- You promise: “\$100 worth of BTC = ₦90,000 payout”
+- Internally: You use Bitnob Trading API to convert BTC to USDT
+- You set a margin buffer (e.g. 1–2%) in your FX model
+- Fulfill payout via stablecoin → fiat off-ramp
+
+You earn from timing advantage or pricing spread.
+
+Recommended when:
+
+- You're running a remittance, gig payout, or merchant payment platform
+- You need guaranteed fiat delivery while controlling your liquidity flow
+
+## Revenue model #4: Sub-account / platform margining (B2B2C)
+
+Concept: Provide trading access to partners or agents, while controlling the execution layer and price markup.
+
+Flow:
+
+- Create sub-ledgers or tenants in your system
+- Fetch real quotes, inject a spread per partner
+- Show that partner their custom pricing
+- Route everything via your backend to Bitnob
+
+You earn on every trade via controlled pricing.
+
+Recommended when:
+
+- You're a fintech infra provider, white-labeled platform, or multi-tenant wallet
+- You want to build a margin-generating partner ecosystem
+
+## Revenue model #5: Batch execution & treasury optimization
+
+Concept: Let users initiate trades instantly, but batch execution in backend for better pricing.
+
+Workflow:
+
+- User sees: “Buy BTC now for \$50”
+- Backend queues requests for 1–5 minutes
+- You batch execute using Bitnob at optimal moment
+- You keep timing-based profit delta (risk-managed)
+
+You earn from price timing or aggregation gains.
+
+Recommended only if:
+
+- You have experience managing BTC liquidity or risk
+- You have internal treasury or trading logic
+- You're handling large volume across users
+
+## Ledger & tracking framework
+
+Use this reference to track and report earnings per trade.
+
+| Field | Description |
+|---|---|
+| reference | Your internal trade ID |
+| bitnobRate | Actual rate used in /trades/execute |
+| userRate | Rate shown to user |
+| inputAmount | Amount user is converting (cents or sats) |
+| outputAmount | Amount user received |
+| bitnobOutput | Actual amount received from Bitnob |
+| spreadEarned | bitnobOutput - outputAmount |
+| feeCharged | Optional flat/percentage trade fee |
+| timestamp | Time of trade |
+
+## Playbook summary
+
+| Model | Transparent to User | Risk Level | Revenue Potential |
+|---|---|---|---|
+| Spread-based pricing | No | Low | Scales silently |
+| Flat/percentage trade fees | Yes | Low | Simple, visible |
+| FX margin control | No | Medium | High with volume |
+| Platform-wide pricing tier | Optional | Low | Works with B2B |
+| Delayed batch execution | No | High | Advanced model |

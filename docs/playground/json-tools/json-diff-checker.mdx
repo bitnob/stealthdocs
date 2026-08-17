@@ -1,0 +1,39 @@
+---
+title: "JSON diff checker"
+description: "Text diffs mislead when key order changes. Compare two JSON documents structurally and see exactly which paths were added, removed, or changed."
+---
+
+import { JsonDiffChecker } from "/snippets/playground/json-tools.jsx";
+
+<JsonDiffChecker />
+
+A line-based diff reports every reordered key as a change, which buries the differences that matter. A structural diff compares values at each path instead, so reordering is invisible and a genuine change stands out.
+
+## Reading the output
+
+Each difference is reported against the path where it occurs:
+
+- **Added**: the path exists only in the right document.
+- **Removed**: the path exists only in the left document.
+- **Changed**: the path exists in both, with different values.
+
+Array elements are addressed by index, so inserting an element near the start reports every following index as changed.
+
+## Where this helps
+
+- Comparing a webhook payload against the record returned by a lookup
+- Checking what actually changed between two states of a payout or card
+- Reviewing an OpenAPI spec between versions, alongside [oasdiff](https://github.com/Tufin/oasdiff)
+
+## Diffing in code
+
+```bash
+# Sort keys on both sides first so a text diff is meaningful
+diff <(jq -S . before.json) <(jq -S . after.json)
+```
+
+```python
+# pip install deepdiff
+from deepdiff import DeepDiff
+DeepDiff(before, after)
+```

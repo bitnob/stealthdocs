@@ -1,0 +1,75 @@
+---
+title: "Handle transfer failures"
+description: "Where stablecoin transfers fail: synchronous validation, broadcast, on-chain execution, and webhook delivery, with the recovery move for each stage."
+related:
+  - /docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide
+  - /docs/stablecoins/supported-chains
+---
+
+A stablecoin transfer can fail at four points, and each surfaces differently: validation failures come back synchronously on the API call, everything after broadcast arrives asynchronously as `transfer.failed`, and delivery failures hide in your own infrastructure. Handle all four and the integration is boring in the best way.
+
+Two ground rules:
+
+- Every send carries a unique `reference`. On a timeout, re-submit with the **same** reference: if the first attempt succeeded you get its result back, and nothing sends twice.
+- Held funds return to your available balance when a transfer reaches the terminal failed state; reconcile your ledger from the events, not from what you intended to happen.
+
+## The four failure stages
+
+<AccordionGroup>
+  <Accordion title="Pre-validation: rejected before anything moves">
+    Invalid address, unsupported chain or token pair, malformed amount. Returned synchronously as a `400` with a code:
+
+    ```json
+    {
+      "status": false,
+      "message": "Unsupported blockchain network for asset type",
+      "errorCode": "CHAIN_ASSET_MISMATCH"
+    }
+    ```
+
+    **Recovery:** fix and resubmit. Prevent the whole class by running [Validate address](/api-reference/addresses/validate-address) before submitting, and reading sendable chains from [Supported chains](/api-reference/addresses/supported-chains).
+  </Accordion>
+
+  <Accordion title="Broadcast: accepted but not yet on-chain">
+    RPC node issues or network congestion between acceptance and broadcast. The transfer sits pending longer than usual.
+
+    **Recovery:** wait; Bitnob retries broadcasting internally. Alert only when a pending transfer exceeds your per-chain expectation, and resist re-submitting with a fresh reference, which is how double-sends happen.
+  </Accordion>
+
+  <Accordion title="On-chain: broadcast but failed to execute">
+    Out-of-gas, contract revert, or a frozen token. Arrives as `transfer.failed`, with the held amount returned to your balance:
+
+    ```json
+    {
+      "event": "transfer.failed",
+      "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+      "data": {
+        "address": "TKVy2qjGyfxhPMvkeA8AEhv5XvpzLxGA5W",
+        "amount": "2000000",
+        "chain": "tron",
+        "currency": "USDT",
+        "fee": "0",
+        "hash": "",
+        "reference": "your-transfer-reference",
+        "timestamp": "2025-12-12T20:30:00Z"
+      }
+    }
+    ```
+
+    **Recovery:** unlock the funds in your ledger, tell the user, and retry deliberately with a fresh reference once the cause is understood. Never show success until `transfer.success` arrives.
+  </Accordion>
+
+  <Accordion title="Webhook delivery: the outcome happened, you missed it">
+    Your endpoint timed out or returned non-2xx. Bitnob retries with backoff, but your ledger is stale until a delivery lands.
+
+    **Recovery:** idempotent handlers, fast `200`s, and a scheduled sweep of [List transactions](/api-reference/transactions/list-transactions) that backfills anything missed. [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a single reference on demand.
+  </Accordion>
+</AccordionGroup>
+
+## Retry discipline
+
+- Exponential backoff on network and `5xx` errors; respect `Retry-After` on `429`.
+- No retry storms during congestion: cap attempts and escalate to a human.
+- Never blind-retry a failed send without checking the webhook outcome first; the failure reason decides whether retrying is safe.
+
+For the operational layer above this, mismatch detection and daily balance checks, see [Reconcile balances](/docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide).

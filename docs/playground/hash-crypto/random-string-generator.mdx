@@ -1,0 +1,42 @@
+---
+title: "Random string generator"
+description: "Cryptographically secure random strings with a configurable charset and length, for tokens, webhook secrets, and test fixtures."
+---
+
+import { RandomStringGenerator } from "/snippets/playground/hash-crypto.jsx";
+
+<RandomStringGenerator />
+
+Random values are generated with the browser's `crypto.getRandomValues`, which draws from the operating system's cryptographically secure source. Nothing here uses `Math.random`, which is predictable and must never be used for anything security-related.
+
+## Picking a length
+
+Security depends on entropy, which is length combined with charset size. As a rough guide:
+
+| Charset | Characters needed for ~128 bits |
+|---|---|
+| Hex (16 chars) | 32 |
+| Alphanumeric (62 chars) | 22 |
+| Full ASCII (94 chars) | 20 |
+
+For a webhook signing secret or an API token, 32 alphanumeric characters is a comfortable default.
+
+## Generating them in code
+
+```javascript
+const bytes = crypto.getRandomValues(new Uint8Array(24));
+const token = Buffer.from(bytes).toString("base64url");
+```
+
+```python
+import secrets
+secrets.token_urlsafe(24)
+```
+
+```bash
+openssl rand -base64 24
+```
+
+<Warning>
+  Treat generated secrets as production credentials the moment you use them. Store them in a secret manager, never in source control. See [API keys and credential security](/docs/getting-started/api-best-practices/api-keys-and-credentials).
+</Warning>

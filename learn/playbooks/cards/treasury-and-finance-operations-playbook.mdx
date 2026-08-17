@@ -1,0 +1,209 @@
+---
+title: "Virtual card treasury & finance operations playbook"
+description: "How finance teams manage float, funding, settlement, refunds, and reconciliation on a card programme."
+---
+This playbook outlines how treasury and finance teams should manage float, funding, settlements, refunds, reconciliation, and compliance around Bitnob's virtual card system. It is designed to ensure the safe, efficient, and auditable flow of value from funding sources to user cards and back.
+
+## 1. Treasury function in the card ecosystem
+
+Treasury’s role is to ensure that the fiat, crypto, or stablecoin funding sources backing virtual card operations are always:
+
+- Sufficiently capitalized for real-time transactions
+- Reconciled against actual user activity
+- Auditable, reported, and monitored daily
+- Resilient to FX volatility, system downtime, or processor-side delays
+
+The treasury team is the financial clearing layer between:
+
+- Bitnob’s float accounts (USDT, fiat, wallets)
+- The card processor’s clearing and settlement systems
+- The end user’s real-time card behavior (top-up, spend, refund)
+
+## 2. Funding infrastructure and float management
+
+### 2.1 Primary float types
+
+- Crypto-based float (e.g., USDT on TRC20, SOL, ETH)
+- Fiat float (e.g., USD bank account, settlement ledger at card issuer)
+- Prepaid account balance with the card processor
+
+### 2.2 Daily monitoring tasks
+
+| Task | Action |
+|---|---|
+| USDT wallet balances | Verify on-chain reserves across supported networks |
+| Processor pre-funded balance | Login to issuer dashboard; confirm available balance |
+| FX risk exposure | Review open USD balances vs. settlement flows |
+| Refill thresholds | Trigger top-up when float drops below operating minimum (e.g. $5,000) |
+
+### 2.3 Resolution logic
+
+If top-up requests are failing due to insufficient float:
+
+- Pause card creation until refill is complete
+- Raise urgent refill request with treasury controller
+
+Use Slack or email alerting for real-time float breaches.
+
+## 3. Top-up flows and float mapping
+
+When a top-up API call is made:
+
+- Bitnob verifies that wallet or balance covers the top-up
+- Funds are reserved and mapped to a `cardId`
+- Treasury must ensure pre-funded reserves at processor match total daily volume
+
+### Key metrics to track
+
+- Total daily card funding volume
+- Float usage per hour
+- % of failed top-ups due to backend funding shortages
+- Wallet-to-card latency (from user action to card availability)
+
+## 4. Refund and reversal handling
+
+### 4.1 Refund types
+
+| Type | Description |
+|---|---|
+| Refund | Occurs after settlement (merchant returns funds) |
+| Reversal | Occurs pre-settlement (auth hold is voided) |
+
+### 4.2 Processing logic
+
+- If the card is active → refund is credited to card
+- If card is terminated → refund must be routed to company float or master account
+
+### 4.3 Actions
+
+Reconcile daily webhook events for:
+
+- virtualcard.transaction.refund
+- virtualcard.transaction.reversed
+- virtualcard.transaction.terminated.refund
+
+Post to the treasury ledger with clear metadata:
+
+`cardId`, `reference`, `timestamp`, `sourceMerchant`, `refundTarget`
+
+### 4.4 Refund delays
+
+- Some merchants take 7–14 days for refunds to reflect
+- Card processors may batch process settlements once per day
+
+### Resolution SOP
+
+- Mark unconfirmed refund after 14 days as exception case
+- Raise to settlements desk with processor if webhook is missing
+- Maintain an exceptions report for delayed merchant refunds
+
+## 5. Reconciliation
+
+### 5.1 Daily reconciliation tasks
+
+Pull the authoritative figures from [List Cards](/api-reference/cards/list-cards) and [Card Transactions](/api-reference/cards/list-card-transactions-by-card); top-ups and withdrawals both go through [Fund or Withdraw](/api-reference/cards/fund-or-withdraw-balance). Reconcile card top-ups with:
+
+- User wallets
+- Bitnob ledger
+- Processor balance movement
+- Reconcile refunds and reversals
+- Verify termination refunds against closed card balances
+- Generate discrepancy report
+
+### 5.2 Weekly & monthly
+
+- Float usage vs funding inflows
+- Failed top-up report
+- Refund aging report
+- Cross-border surcharge accounting
+- Compliance check (KYC tiers, float limits, 3rd-party involvement)
+
+## 6. Float thresholding and alerts
+
+Set threshold rules for:
+
+| Condition | Action |
+|---|---|
+| Float \< $5,000 | Notify Treasury Team, disable auto-issuance |
+| Daily top-ups exceed $30,000 | Trigger volume anomaly alert |
+| Aggregate refund volume > 5% of daily top-ups | Investigate potential merchant flow issues |
+
+Use logs and metrics from:
+
+- Webhook events
+- Card API responses
+- Internal wallet movements
+- External bank API confirmations
+
+## 7. Settlement and FX risk management
+
+### 7.1 FX management
+
+- Track difference between stablecoin inflows and USD-denominated card funding
+- Maintain FX buffer to absorb 1–2% swings for frequent use currencies
+
+### 7.2 Settlement delays
+
+If a card processor delays debiting or refunding balances:
+
+- Monitor webhook queue aging
+- Maintain a “Settlement Pending” report
+- Escalate if pending entries \> 24h
+
+## 8. Chargebacks and disputes
+
+Chargebacks carry financial liability.
+
+### Treasury responsibilities
+
+- Ensure reversal is correctly debited from merchant-side funds
+- Deduct from master float or merchant-controlled balance
+- Allocate chargeback fees (if applicable)
+
+Maintain case ledger with `reasonCode`, `merchantId`, `chargebackAmount`, `resolutionStatus`.
+
+Track:
+
+- Monthly chargeback %
+- High-risk MCCs
+- Dispute turnaround times
+
+## 9. Controls and compliance
+
+Ensure compliance with:
+
+- Internal audit trail on all float adjustments
+- Role-based permissions for issuing or moving card funds
+- Access controls for processor dashboards
+- PCI DSS boundaries (do not store CVV/PAN in logs)
+- Regulator reporting on USD flow (especially for cross-border settlement partners)
+
+## 10. Treasury incident response playbook
+
+| Incident | Action |
+|---|---|
+| Card top-ups failing system-wide | Check processor float, suspend issuance, trigger refill |
+| Refund issued but not credited | Reconcile webhook events, escalate to ops |
+| Termination refund not routed | Review card balance on close, reroute to master account |
+| Multiple declines after top-up | Check float applied, retry webhook delivery |
+| Suspicious refund volumes | Review MCCs, raise to fraud/risk team |
+
+## 11. Daily checklist
+
+| Task | Description |
+|---|---|
+| Verify USDT wallet balance | On-chain check, multiple networks |
+| Check processor USD float | Match to expected usage volume |
+| Confirm refunds and reversals | Post to internal ledger |
+| Match top-up inflows vs wallet deductions | Reconciliation report |
+| Review threshold alerts | Take action if float low |
+| Monitor webhook delivery | Retry or escalate missing events |
+
+## 12. Weekly review cadence
+
+- Float levels by funding source
+- Top card users / high-risk usage patterns
+- Processor audit logs
+- Exception reports
+- Refund age tracking
+- Compliance flags or suspicious activity

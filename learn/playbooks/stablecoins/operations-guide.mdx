@@ -1,0 +1,99 @@
+---
+title: "Stablecoin operations guide"
+description: "Daily operating procedures for teams running live USDT and USDC flows across chains."
+---
+This section is designed for internal operators and support teams managing the live flow of USDT/USDC across Bitnob's infrastructure and the external blockchain networks.
+
+## Key responsibilities
+
+### Finance & treasury ops
+
+- Monitor [wallet balances](/api-reference/balances/list-balances) across chains
+- Fund hot wallets and manage liquidity thresholds
+- Oversee reconciliation and transaction finality
+
+### Customer support
+
+- Investigate missing deposits, failed transfers, or wrong chain usage
+- Escalate stuck transactions or edge cases to engineering
+- Communicate clearly with customers using txHash, reference, and chain context
+
+### Risk & compliance
+
+- Flag unusual transfer patterns or wallet usage
+- Monitor webhook failure rates
+- Ensure address whitelisting and transfer limits are enforced if enabled: [Validate Address](/api-reference/addresses/validate-address) confirms an address belongs to the expected chain
+
+## Monitoring tools
+
+| Tool | What to Monitor |
+|---|---|
+| Webhook logs | Delivery failures, retries, latencies |
+| Transfer status tracker | Transfers stuck in pending for too long |
+| Wallet balance dashboard | Liquidity thresholds per chain/token |
+| Audit log | Key usage, manual overrides, replays |
+| Reconciliation reports | Bitnob vs internal ledger differences |
+
+## Standard operating procedures (SOPs)
+
+### 1. Deposit not showing up
+
+- Confirm chain, token, and address used by customer
+- Lookup the [Bitnob transaction record](/api-reference/transactions/get-transaction-by-id), then the chain explorer using txHash
+- Check Bitnob webhook log for deposit.success: see the [deposit webhook payload](/api-reference/addresses/webhooks#webhook)
+- If not received: escalate to Engineering with txHash and address
+
+### 2. Transfer in pending status \> X mins
+
+- Lookup transfer by reference using [Get Transaction By ID Or Reference](/api-reference/transactions/get-transaction-by-id), and check it against the [withdrawal status lifecycle](/api-reference/withdrawals/initiate-withdrawal)
+- Check chain congestion / gas status
+- If gas fees too low → resubmit with higher priority
+- If tx broadcasted but not confirmed → monitor block height
+- If stuck \>30 mins → initiate escalation protocol
+
+### 3. Webhook delivery failure
+
+- Retry via Dashboard or Support CLI
+- If issue persists:
+  - Validate destination endpoint status
+  - Check [signature verification](/api-reference/addresses/webhooks#verifying-events) is not failing silently, and that any IP allowlist still matches the published [Source IPs](/api-reference/addresses/webhooks#source-ips)
+  - Notify integration partner (client)
+
+### 4. Wrong chain deposit
+
+- Unfortunately, most are irrecoverable
+- If sent to a Bitnob-controlled contract on the wrong chain: escalate for manual recovery (case-by-case, no guarantee)
+
+**Response template:**
+
+“Your deposit was sent via [chain X], but the address issued was for [chain Y]. These networks are not compatible. Funds are likely unrecoverable. For future deposits, please double-check the network and address format.”
+
+## Reconciliation flow
+
+Daily or hourly, your ops team should compare [wallet balances](/api-reference/balances/list-balances) against the [transaction history](/api-reference/transactions/list-transactions):
+
+![Reconciliation Flow Diagram](/images/Reconciliation-Flow-Diagram.svg)
+
+- Flag any mismatches \> 0.5%
+- Include details like reference IDs, txHashes, webhook events, and timestamps
+- Use this data to correct ledger state or follow up on external deposits
+
+## Escalation channels
+
+| Issue | Route |
+|---|---|
+| API downtime | Engineering + Infra |
+| Large value transfer stuck | Engineering + Treasury |
+| Wrong token or chain deposit | Support → Ops → Engineering |
+| Webhook system-wide failure | SRE → Engineering |
+| Wallet showing unexpected balance | Engineering + Finance (Reconciliation) |
+
+## Training & internal docs
+
+Operations teams should be trained to:
+
+- Read blockchain explorers (Etherscan, Tronscan, Solscan)
+- Understand Bitnob reference IDs and idempotency
+- Parse [webhook payloads](/api-reference/addresses/webhooks#webhook) and link to user accounts
+- Use internal tools to replay or verify events
+- Communicate using chain-aware language with customers

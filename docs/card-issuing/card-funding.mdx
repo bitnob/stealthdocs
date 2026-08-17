@@ -1,0 +1,104 @@
+---
+title: "Fund a card"
+description: "Load USD onto a prepaid card from your Bitnob balance, with the constraints to check first and the failure cases to handle."
+related:
+  - /docs/card-issuing/transaction-monitoring
+  - /docs/card-issuing/card-fees
+---
+
+Cards are prepaid, so they hold nothing until you load them. Funding draws on your Bitnob balance in BTC, USDT, USDC, or NGN; Bitnob converts to USD internally at funding time, so you never need to hold USD yourself.
+
+## Check before you fund
+
+| Constraint | Value |
+|---|---|
+| Minimum per top-up | $2 |
+| Maximum per transaction | $2,500 |
+| Maximum card balance | $50,000 |
+| Card status | Must be `active`. Frozen and terminated cards cannot be funded. |
+| Source balance | The debit fails if your balance cannot cover amount plus fee. |
+| FX tolerance | Funding fails if the source asset's value moves too far between quote and execution. Retry to get a fresh rate. |
+
+Funding fees are on [Fees and decline rules](/docs/card-issuing/card-fees): $1 flat below $100, 1% at $100 and above.
+
+## Make the call
+
+Full schema: [Fund or withdraw balance](/api-reference/cards/fund-or-withdraw-balance). Amounts are micro-units, 1 USD = 1,000,000.
+
+```http
+POST /api/cards/{cardId}/balance
+```
+
+```json
+{
+  "amount": 2000000,
+  "reference": "FUND_TYU039847383",
+  "type": "fund"
+}
+```
+
+<ParamField body="amount" type="integer" required>
+  The amount to move, in micro-units of the card currency. `2000000` is $2.00.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  `fund` credits the card from your balance. `withdraw` reverses direction and returns card balance to your account.
+</ParamField>
+
+<ParamField body="reference" type="string" required>
+  Your unique identifier for this operation, and its idempotency key: retrying with the same reference returns the original transaction instead of creating a duplicate.
+</ParamField>
+
+The response returns the funding transaction in status `pending`, including `balance_before`, `balance_after`, and the `fee_amount` charged.
+
+## Confirm with the webhook
+
+`virtualcard.topup.completed` confirms the load; do not treat the HTTP response alone as success.
+
+```json
+{
+  "eventId": "c28f4b7a-9c6d-4e0f-a3a4-6c7d8e9f0a1b",
+  "companyId": "1e340e84-f42e-4b11-b241-4d0c10c28e33",
+  "event": "virtualcard.topup.completed",
+  "data": {
+    "cardId": "f7e37478-6569-4979-92d2-1a46d9c8e33d",
+    "id": "0464f449-dbbf-4f1a-bedf-e78e0cd78e0e",
+    "amount": 3000000,
+    "reference": "FUND_WITH_IS870100180800301200300078",
+    "narrative": "card_topup_3_usd",
+    "status": "completed",
+    "initiatedFrom": "wallet",
+    "isTerminated": false
+  }
+}
+```
+
+A failed load arrives as `virtualcard.topup.failed` with the same shape and `status: "failed"`.
+
+## When funding fails
+
+<AccordionGroup>
+  <Accordion title="Insufficient balance (400)">
+    Your Bitnob balance cannot cover the amount plus fee. Check with [List balances](/api-reference/balances/list-balances) before funding, then top up your account.
+  </Accordion>
+  <Accordion title="Card is frozen or terminated (403)">
+    Only `active` cards can be funded. Check status with [Get card](/api-reference/cards/get-card) first, and [unfreeze](/api-reference/cards/freeze-or-unfreeze) if appropriate.
+  </Accordion>
+  <Accordion title="Unsupported source asset (400)">
+    Funding draws only on supported assets: USDT, USDC, BTC, NGN.
+  </Accordion>
+  <Accordion title="Exchange rate expired (409)">
+    The conversion rate moved too much mid-funding. Retry the call; it will pick up a fresh rate.
+  </Accordion>
+</AccordionGroup>
+
+## Funding patterns
+
+| Pattern | When it fits |
+|---|---|
+| On demand | The user taps "Top up" in your app and you fund immediately. |
+| Auto-fund | You top up automatically when the card balance drops below a threshold. |
+| Per event | You load the card right before a known spend, for example at payout time. |
+| Recurring | Scheduled loads for allowances and spend programmes. |
+
+All funding is platform-initiated through your API; cardholders cannot fund cards directly. Whatever the pattern, log the rate used per funding for reconciliation, and confirm each load from the webhook rather than assuming it.

@@ -1,0 +1,27 @@
+---
+title: "Glossary"
+description: "Definitions for the card terms used across the card issuing API and shown to cardholders: CVV, MCC, authorisation, reversal, chargeback, float, and more."
+related:
+  - /docs/card-issuing/card-issuance
+  - /docs/card-issuing/card-fees
+---
+
+| Term | Definition |
+|---|---|
+| CVV | CVV (Card Verification Value) is a 3-digit code used to verify your card during online transactions. It adds a layer of security to protect your card from unauthorized use. |
+| Expiry Date | The expiration date shows when your virtual card will stop working. It's usually in MM/YY format. You can always create a new card once one expires. |
+| Card Termination | A terminated card has been deactivated and cannot be used again. Any refunds that arrive after termination are routed to the master account (float), not back to the card, and it won't work for new transactions. |
+| Card Freeze | A frozen card can't be used for transactions. You can unfreeze it if needed. Cards may be frozen for security reasons like suspicious activity or multiple failed attempts. |
+| Top-up | This is how you fund your virtual card. You can top it up from your wallet or float. |
+| Withdrawal | You can move money back from your card into your wallet, but you must leave at least $1 on the card to keep it active. |
+| Decline | A declined transaction means your card couldn't complete the payment. This can be due to insufficient funds, merchant blocks, or other restrictions. |
+| Cross-Border Fee | Even though your card is in USD, some merchants process payments outside the US, which triggers a cross-border fee. It's common with companies like Meta, Netflix, etc. |
+| Reversal | A reversal happens when a transaction is stopped right after authorization. No money is deducted, and the amount is unlocked again. It can take a few days to reflect. |
+| Refund | A refund is when a merchant returns money for a completed transaction, maybe because you cancelled an order. It goes back to your card or your wallet depending on card status. |
+| Chargeback | If you didn't authorize a transaction or the product wasn't delivered, you can initiate a chargeback. This starts a formal investigation and may refund you if approved. |
+| MCC (Merchant Category Code) | Some merchants are blocked based on this code: like crypto, gambling, etc. This protects your card from risky transactions. |
+| BIN (Bank Identification Number) | This determines the card's type (prepaid, debit), country of issue, and helps merchants understand card behavior. |
+| Authorization | This happens when the merchant checks if your card can pay. If successful, the funds are reserved. It doesn't mean money has left yet. |
+| Float | Float is your pool of funds that can be used to top up cards, make payments, or receive refunds. |
+| FX Fee | Charged when your card pays in a currency different from its base (USD). It's usually a small percentage. |
+| Sandbox | Use the sandbox to test how card APIs or actions work without real money. Developers use this before going live. |

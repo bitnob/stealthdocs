@@ -1,0 +1,32 @@
+---
+title: "Hex encoder"
+description: "Hexadecimal encoding represents each byte as two characters, the standard way to display hashes, signatures, and keys."
+---
+
+import { HexTool } from "/snippets/playground/text-binary.jsx";
+
+<HexTool mode="encode" />
+
+Hexadecimal represents each byte as exactly two characters using `0`-`9` and `a`-`f`. It doubles the size of the data, which is worse than Base64, but it has a property Base64 lacks: the byte boundaries are obvious, so you can read and compare values by eye.
+
+That is why hashes, signatures, and keys are almost always shown as hex.
+
+## Where you will see it
+
+- **HMAC signatures.** [Request signing](/api-reference/authentication/authentication) sends a hex-encoded digest in `X-Auth-Signature`.
+- **Hashes.** A SHA-256 digest is 32 bytes, shown as 64 hex characters.
+- **Bitcoin.** Transaction IDs, raw transactions, and public keys are all hex.
+
+## Encoding in code
+
+```javascript
+Buffer.from("hello", "utf8").toString("hex");
+```
+
+```python
+"hello".encode().hex()
+```
+
+```bash
+echo -n "hello" | xxd -p
+```

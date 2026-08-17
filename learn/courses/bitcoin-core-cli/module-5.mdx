@@ -1,0 +1,139 @@
+---
+title: "Module 5: Transactions and UTXO control"
+description: "Raw transactions by hand: inspecting UTXOs, then building, signing, broadcasting, and decoding."
+---
+## Learning objectives
+
+- Understand the UTXO model and inspect your spendable outputs
+- Build and sign a raw transaction from scratch
+- Broadcast a transaction to the regtest network
+- Decode and analyze a transaction using Bitcoin Core tools
+
+## What is the UTXO model?
+
+Bitcoin doesn't use account balances like banks or Ethereum.
+
+Instead, it tracks unspent transaction outputs (UTXOs):
+
+- Each output is discrete and must be fully spent
+- Change goes back to you as a new UTXO
+- Wallets typically manage this automatically
+
+Check your wallet’s UTXOs:
+
+```bash
+bitcoin-cli -regtest listunspent
+```
+
+Example output:
+
+```json
+[
+  {
+    "txid": "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+    "vout": 0,
+    "address": "bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080",
+    "amount": 50.00000000,
+    "confirmations": 101,
+    "spendable": true,
+    "solvable": true,
+    "safe": true
+  }
+]
+```
+
+## Funding transactions manually
+
+To build a transaction manually:
+
+1. Choose an input UTXO (txid and vout)
+2. Specify your outputs (recipient address + amount, and change)
+3. Create, sign, and send the transaction
+
+## Creating a raw transaction
+
+Step 1: Define the input Use bitcoin-cli -regtest listunspent.
+
+Assume:
+
+TXID: abc123...
+
+VOUT: 0
+
+Address to send to: bcrt1qrecipient...
+
+Step 2: Create the transaction
+
+```bash
+bitcoin-cli -regtest createrawtransaction \\
+  '[{"txid":"abc123...","vout":0}]' \\
+  '{"bcrt1qrecipient...":0.5,"bcrt1qchangeaddress...":9.4999}'
+```
+
+This outputs a hex-encoded raw transaction.
+
+## Signing the raw transaction
+
+```bash
+bitcoin-cli -regtest signrawtransactionwithwallet <raw_tx_hex>
+```
+
+It will return:
+
+- The signed hex
+- A boolean complete: true if fully signed
+
+## Broadcasting the transaction
+
+Send it to the network
+
+```bash
+bitcoin-cli -regtest sendrawtransaction <signed_tx_hex>
+```
+
+To confirm it:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 1 <miner_address>
+```
+
+Check status
+
+```bash
+bitcoin-cli -regtest gettransaction <txid>
+```
+
+## Decoding transactions
+
+To analyze a raw transaction (replace \<tx_hex\> with any transaction hex):
+
+```bash
+bitcoin-cli -regtest decoderawtransaction <tx_hex>
+```
+
+You’ll see:
+
+- vin (inputs): where the funds came from
+- vout (outputs): destination addresses and values
+- Script types (e.g. witness_v0_keyhash)
+
+This is useful for:
+
+- Debugging transaction construction
+- Verifying output order and structure
+- Teaching UTXO mechanics
+
+## Activity
+
+Build and broadcast a full transaction manually:
+
+1. Mine 101 blocks to have spendable BTC
+2. Use the listunspent command to find UTXO
+3. Create a raw transaction sending 0.5 BTC to another address
+4. Sign it with your wallet
+5. Broadcast and mine 1 block
+6. Decode the transaction with decoderawtransaction
+
+Bonus
+
+Try building a transaction that includes a custom fee or dust change

@@ -1,0 +1,38 @@
+---
+title: "JSON validator"
+description: "A single stray comma breaks a whole payload. Validate JSON syntax and get the exact line and column where parsing fails."
+---
+
+import { JsonValidator } from "/snippets/playground/json-tools.jsx";
+
+<JsonValidator />
+
+Most JSON errors come from a handful of causes: a trailing comma, a single quote where a double quote belongs, an unescaped newline inside a string, or a missing closing brace. The parser reports the first position it cannot make sense of, which is usually just after the real mistake.
+
+## Common causes
+
+| Symptom | Usual cause |
+|---|---|
+| Unexpected token `}` | A trailing comma after the last property |
+| Unexpected token `'` | Single-quoted keys or strings, which JSON does not allow |
+| Unterminated string | A raw newline or unescaped `"` inside a string |
+| Unexpected end of input | A brace or bracket was never closed |
+
+## Validating in code
+
+```bash
+# jq exits non-zero and prints the parse error
+echo '{"amount":25000,}' | jq empty
+```
+
+```python
+import json
+try:
+    json.loads(raw)
+except json.JSONDecodeError as e:
+    print(f"{e.msg} at line {e.lineno}, column {e.colno}")
+```
+
+<Tip>
+  Validating a webhook body before parsing it lets you return `200` and log the malformed payload, rather than throwing and triggering a redelivery you cannot process either.
+</Tip>

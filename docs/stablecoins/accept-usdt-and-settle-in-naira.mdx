@@ -1,0 +1,327 @@
+---
+title: "Accept USDT and settle in naira"
+description: "Receive USDT on-chain and settle it as naira in a local bank account using the Offramp APIs."
+---
+This guide shows you how to use Bitnob’s Offramp APIs to receive USDT from a user on-chain (e.g., via TRC20) and automatically convert and settle it into Nigerian Naira (NGN) into a local bank account.
+
+We’ll walk through the entire value flow, what each step means, and how to present each step clearly in your application.
+
+## Key concepts
+
+### The quote
+
+Before you receive any crypto, you must **lock in an exchange rate** using a quote. The quote:
+
+- Tells you the exchange rate that will be used (e.g., 1 USDT = ₦1702)
+- Defines how many NGN the user will receive
+- Is valid for 15 minutes to avoid market volatility
+
+### Source of funds
+
+You're specifying:
+
+- source: "onchain" – meaning the user will send USDT from an external wallet
+- chain: "trc20" – which network the user will use to send the USDT (TRC20 is fastest and cheapest)
+
+### The address
+
+After the quote is accepted via the initiate step, Bitnob gives you a **USDT address**. This is what you show the user to send funds to.
+
+### Settlement
+
+When funds arrive at the address:
+
+- Bitnob automatically detects the incoming USDT
+- Converts it using the locked-in quote rate
+- Settles the equivalent NGN into the bank account you provided
+
+### Full flow overview
+
+![Bitnob account setup process](/images/flow-overview.svg)
+
+## Request a quote
+
+Step: Lock in the exchange rate. Full schema: [Create Payouts Quote](/api-reference/payouts/create-quote).
+
+```bash
+POST /api/payouts/quotes
+```
+
+**Example request:**
+
+```json
+{
+    "from_asset": "USDT",
+    "to_currency": "NGN",
+    "country": "NG",
+    "source": "onchain",
+    "chain": "trc20",
+    "amount": "1000",
+    "reference": "PAYOUT_RS27519160015009872077"
+}
+```
+
+**Example response:**
+
+```json
+{
+  "success": true,
+  "message": "Quote created successfully",
+  "data": {
+    "payout": {
+      "id": "56a44dc1-f8ac-4bf4-93d8-002be684fe82",
+      "quote_id": "QT_86",
+      "company_id": "1bc7caba-08b9-49ff-a911-2a8fb570cbb9",
+      "status": "QUOTE",
+      "source": "ONCHAIN",
+      "chain": "CHAIN_TYPE_TRON",
+      "from_asset": "USDT",
+      "to_currency": "NGN",
+      "sat_amount": "1838425",
+      "btc_amount": "0.01838425",
+      "cent_amount": "139979480",
+      "amount": "1000",
+      "settlement_amount": "1399794.80",
+      "cent_fees": "0",
+      "fees": "0",
+      "exchange_rate": {
+        "rate": "1399.7948",
+        "btc_rate": "76210.05",
+        "currency": "ngn"
+      },
+      "trip": {
+        "quote_at": "2026-03-22T12:03:56.314166596Z"
+      },
+      "reference": "PAYOUT_RS27519160015009872077",
+      "country": "NG",
+      "expires_at": "2026-03-22T12:18:56.314166596Z",
+      "created_at": "2026-03-22T12:03:56.319957313Z",
+      "updated_at": "2026-03-22T12:03:56.319957313Z"
+    }
+  },
+  "metadata": {
+    "request_id": "payout_req_019d156e-2390-7af6-ade5-7a006f421c0a"
+  },
+  "timestamp": "2026-03-22T12:03:56.327593116Z"
+}
+```
+
+What this means:
+
+- The rate is guaranteed for 15 minutes, until the expires_at timestamp
+- You must initialize, finalize, and receive funds within this window
+
+## Initiate the payout
+
+This step binds the quote to the destination bank account: see [Initialize Payout](/api-reference/payouts/initialize-payout). Confirm the account resolves first with [Account Lookup](/api-reference/payouts/account-lookup#overview).
+
+```bash
+POST /api/payouts/:quoteId/initialize
+```
+
+**Example request:**
+
+```json
+{
+    "quote_id": "QT_86",
+    "beneficiary": {
+        "destination_type": "bank",
+        "country": "NG",
+        "account_number": "0123456789",
+        "bank_code": "058",
+        "account_name": "Ada Okafor"
+    },
+    "reference": "PAYOUT_RS27519160015009872077",
+    "payment_reason": "vendor payment",
+    "callback_url": "https://example.com/webhooks/payouts"
+}
+```
+
+**Example response:**
+
+```json
+{
+  "success": true,
+  "message": "Payout initialized successfully",
+  "data": {
+    "payout": {
+      "id": "0cbb4682-55e3-403a-ae78-d71be1942274",
+      "quote_id": "QT_86",
+      "company_id": "1bc7caba-08b9-49ff-a911-2a8fb570cbb9",
+      "status": "INITIATED",
+      "source": "ONCHAIN",
+      "chain": "CHAIN_TYPE_TRON",
+      "address": "TJZCwdcH2GZRLjt8aAphrhCZtEbJLqEAfC",
+      "from_asset": "USDT",
+      "to_currency": "NGN",
+      "sat_amount": "1838425",
+      "btc_amount": "0.01838425",
+      "amount": "1000.000000",
+      "settlement_amount": "1399794.800000",
+      "cent_fees": "0",
+      "fees": "0.000000",
+      "exchange_rate": {
+        "rate": "1399.794800",
+        "btc_rate": "76210.050000",
+        "currency": "ngn"
+      },
+      "beneficiary": {
+        "account_name": "Ada Okafor",
+        "account_number": "0123456789",
+        "bank_code": "058",
+        "country": "NG",
+        "destination_type": "bank"
+      },
+      "payment_reason": "vendor payment",
+      "reference": "PAYOUT_RS27519160015009872077",
+      "callback_url": "https://example.com/webhooks/payouts",
+      "country": "NG",
+      "expires_at": "2026-03-22T12:18:56.314166596Z",
+      "created_at": null,
+      "updated_at": null
+    },
+    "data": null
+  },
+  "metadata": {
+    "request_id": "payout_req_019d157e-0c7e-79cb-b368-e267408cc26e"
+  },
+  "timestamp": "2026-03-22T12:21:33.699062536Z"
+}
+```
+
+What you should do next:
+
+- Display the returned USDT address to the user
+- Prompt them to send exactly 1000 USDT on TRC20 to the address
+- Start tracking the reference and quote_id for this session
+
+## Finalize the payout
+
+This approves the payout and submits it for processing, see [Finalize Payout](/api-reference/payouts/finalize-payout). It takes **no request body**, remember to sign with an **empty** body string.
+
+<Note>
+  **Required before expiry:** You must call finalize before the `expires_at` returned by initialize. If it passes, the quote is dead, re-run the quote and initialize steps to lock a fresh rate.
+</Note>
+
+```bash
+POST /api/payouts/:quoteId/finalize
+```
+
+**Example response:**
+
+```json
+{
+  "success": true,
+  "message": "Payout finalized successfully",
+  "data": {
+    "payout": {
+      "id": "0cbb4682-55e3-403a-ae78-d71be1942274",
+      "quote_id": "QT_86",
+      "company_id": "1bc7caba-08b9-49ff-a911-2a8fb570cbb9",
+      "status": "PENDING",
+      "source": "ONCHAIN",
+      "chain": "CHAIN_TYPE_TRON",
+      "address": "TJZCwdcH2GZRLjt8aAphrhCZtEbJLqEAfC",
+      "from_asset": "USDT",
+      "to_currency": "NGN",
+      "amount": "1000",
+      "settlement_amount": "1399794.80",
+      "fees": "0",
+      "beneficiary": {
+        "account_name": "Ada Okafor",
+        "account_number": "0123456789",
+        "bank_code": "058",
+        "country": "NG",
+        "destination_type": "bank"
+      },
+      "reference": "PAYOUT_RS27519160015009872077",
+      "callback_url": "https://example.com/webhooks/payouts",
+      "country": "NG",
+      "expires_at": "2026-03-22T12:18:56.314166596Z"
+    }
+  },
+  "timestamp": "2026-03-22T12:22:10.114820391Z"
+}
+```
+
+The payout moves to PENDING. The USDT address stays valid until `expires_at`, once the deposit lands, settlement proceeds automatically.
+
+## Simulate deposit (sandbox only)
+
+For testing purposes, you can simulate a deposit.
+
+```http
+POST /api/addresses/simulate-deposit
+```
+
+**Example request:**
+
+```json
+{
+  "address": "TJZCwdcH2GZRLjt8aAphrhCZtEbJLqEAfC",
+  "amount": "1000000000",
+  "currency": "USDT",
+  "chain": "tron"
+}
+```
+
+<Note>
+  **Sandbox-only helper:** This endpoint exists only in sandbox. It tells the simulator to act as if the user just deposited the specified `amount` of `currency` at `address` on `chain`. The resulting transaction shows up in the Transactions API with `metadata.is_simulated: "true"` and a `sim_*` reference. Production accounts will reject the call.
+</Note>
+
+## Settlement lifecycle (what happens after deposit)
+
+Once the user funds the address, Bitnob handles the rest of the flow: track it with [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) or the [payout webhooks](/api-reference/payouts/webhooks#payout-webhooks):
+
+1. It confirms receipt (usually within 1–2 blocks for TRC20)
+2. Converts the USDT to NGN at the locked quote rate
+3. Sends the NGN to the provided bank account
+4. Sends a payouts.processing webhook when the settlement rail picks up the payout, then a payouts.withdrawal.success webhook to your callback_url when completed
+
+## Handling quote expiry, underpayment, or failure
+
+If the user sends less than quoted, the payout still processes. The fiat amount delivered is pro-rated based on the amount actually received, with the difference calculated at the original quoted FX rate (within allowed margin).
+
+If no deposit is received before expiry (15 min), Bitnob cancels the payout and sends a payouts.withdrawal.expired webhook.
+
+If a withdrawal fails (e.g., due to an invalid account), the payout record moves to FAILED. Poll [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) to detect it.
+
+<Note>
+  **Always listen for webhooks** to track transaction outcomes.
+</Note>
+
+## Best practices
+
+Always display the exact amount and chain to the user.
+
+Poll [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) if you don't implement [webhooks](/api-reference/payouts/webhooks#payout-webhooks) yet.
+
+Use a unique reference per payout. This is your trace ID.
+
+Store the quote_id, reference, beneficiary, and address in your database for future reconciliation.
+
+## What this flow enables
+
+You now have a programmable way to:
+
+- Receive USDT from anywhere in the world
+- Convert it automatically
+- Deliver it in local fiat to a verified bank account
+- Handle all messaging via webhooks
+
+### This is ideal for:
+
+- Remittance apps
+- Pay suppliers or gig workers in Nigeria
+- Crypto liquidation from global wallets
+
+## Next
+
+<Columns cols={2}>
+  <Card title="Failure scenarios" icon="triangle-exclamation" href="/docs/stablecoins/error-handling-and-failure-scenarios">
+    Where this flow breaks, and what to do.
+  </Card>
+  <Card title="Reconciliation and ledger integrity" icon="scale-balanced" href="/docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide">
+    Keep both ledgers in agreement.
+  </Card>
+</Columns>

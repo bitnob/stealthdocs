@@ -1,0 +1,33 @@
+---
+title: "Glossary"
+description: "Definitions for quote, trip, beneficiary, settlement models, and the other terms used throughout the Payouts API and its webhooks."
+related:
+  - /docs/payouts/payouts-lifecycle
+  - /docs/payouts/statuses-and-webhook-events
+---
+
+| Term | Definition |
+|---|---|
+| Quote | A temporary, binding price for a specific payout: funding amount, destination amount, FX rate, and an `expires_at` timestamp. Created with [Create quote](/api-reference/payouts/create-quote). |
+| Quote ID | The identifier for a quote. Passed to the initialize and finalize calls. |
+| Reference | A unique identifier you generate per payout, used for idempotency and to find the payout in your own records. |
+| Beneficiary | The recipient of a payout: the person or business whose bank account or wallet receives the funds. Attached at [Initialize payout](/api-reference/payouts/initialize-payout). |
+| Funding address | The blockchain address or Lightning invoice returned by initialize for onchain payouts. Paying it funds the payout. |
+| Funding window | The period between quote creation and `expires_at`, during which funding must arrive. |
+| Payment asset | The asset funding a payout: BTC (on-chain or Lightning), USDT, or USDC. |
+| Payout status | The record's lifecycle state: `QUOTE`, `INITIATED`, `PENDING_ADDRESS_DEPOSIT`, `PROCESSING`, `COMPLETED`, or `FAILED`. `COMPLETED` is the only success state. See [Statuses and webhook events](/docs/payouts/statuses-and-webhook-events). |
+| Trip | The per-payout timeline object recording when each lifecycle stage was reached. See [The Trip timeline](/docs/payouts/understanding-trip-timeline). |
+| Completion time | The Trip field set when a payout reaches a terminal state: success, failure, or expiry. |
+| Time to finish | Seconds between submission and completion, from the Trip. |
+| Settlement | Delivery of fiat funds to the beneficiary's account. |
+| Settlement failure | A funded payout that could not be delivered: invalid account, bank rejection, or compliance block. |
+| Wallet-funded settlement | The model where payouts debit a pre-funded Bitnob balance. See [How payouts settle](/docs/payouts/settlement-models). |
+| On-the-fly settlement | The model where each payout is funded individually by paying its funding address. |
+| Underpayment | Funding that arrives short of the quoted amount. The payout is adjusted down proportionally. |
+| Overpayment | Funding that exceeds the quoted amount. The excess is credited to your balance. |
+| Expiry | A quote or funding window lapsing before payment arrives, cancelling the payout attempt. |
+| Callback URL | The URL where Bitnob delivers webhook events for a payout, set at initialize. |
+| Webhook | An event notification delivered to your server. Payouts emit four: see [Receive payout webhooks](/docs/payouts/webhook-payout). |
+| Corridor | A destination country and its rails, requirements, and behaviour. See [Corridor behaviour](/docs/payouts/corridor-specific-behavior). |
+| Settlement window | The expected time for the fiat leg once processing starts, set by the corridor's rail. |
+| Sandbox | The simulated environment for testing payout flows without moving real money. |

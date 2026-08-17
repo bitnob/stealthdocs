@@ -1,0 +1,182 @@
+---
+title: "Issue your first card"
+description: "The full card lifecycle in one pass: create a virtual card, fund it, watch a real spend arrive as a webhook, handle a refund, and freeze or terminate the card."
+---
+
+In this tutorial you take one card through its whole life: create it, fund it, see a transaction land, handle a refund, and shut the card down. By the end you have every integration point a production card programme needs.
+
+## Prerequisites
+
+- Your API credentials and a working signing helper; see [Authentication](/api-reference/authentication/authentication).
+- A reachable webhook endpoint that [verifies signatures](/api-reference/virtual-cards/webhooks#verifying-events).
+- Balance in your Bitnob account to fund from.
+
+Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` is $2.00.
+
+<Steps>
+  <Step title="Create the card">
+    One call creates the customer and the card together. Full schema: [Create card](/api-reference/cards/create-card-embedded-customer).
+
+    ```http
+    POST /api/cards
+    ```
+
+    ```json
+    {
+      "card_type": "virtual",
+      "name": "Ifeoma Okafor",
+      "currency": "USD",
+      "amount": 5000000,
+      "webhook_url": "https://example.com/webhook/callback",
+      "reference": "CARD_CREATE_3e096ff5-0c94-4653-adcc-b232676c84e7",
+      "card_brand": "visa",
+      "customer": {
+        "customer_type": "individual",
+        "first_name": "Ifeoma",
+        "last_name": "Okafor",
+        "date_of_birth": "1993-07-08",
+        "id_type": "national_id",
+        "id_number": "NIN12345678901",
+        "email": "ifeoma.okafor@example.com",
+        "phone_number": "8034567890",
+        "dial_code": "+234",
+        "line1": "18 Wuse Zone 4",
+        "city": "Abuja",
+        "state": "FCT",
+        "postal_code": "900271",
+        "country": "NGA"
+      }
+    }
+    ```
+
+    For an existing customer, pass `customer_id` instead of the `customer` object. The response returns the card in status `pending`:
+
+    ```json
+    {
+      "success": true,
+      "message": "Card created successfully",
+      "data": {
+        "card": {
+          "id": "019eeff9-d55e-79a4-9ca3-b86db3b3f7fb",
+          "card_type": "virtual",
+          "status": "pending",
+          "created_status": "processing",
+          "card_brand": "visa",
+          "name": "Ifeoma Okafor",
+          "balance_amount": "0",
+          "balance_currency": "USD",
+          "reference": "CARD_CREATE_0e42b068-53d3-4683-86d3-8d873a5b0437",
+          "created_at": "2026-06-22T15:36:28Z"
+        }
+      }
+    }
+    ```
+
+    Store the card `id`. Every later call uses it.
+  </Step>
+
+  <Step title="Wait for the activation webhook">
+    The issuer confirms creation with `virtualcard.created.completed`:
+
+    ```json
+    {
+      "eventId": "7f3a9c2b-4d1e-4f5a-8b9c-1d2e3f4a5b6c",
+      "companyId": "6fbce816-de98-45e5-882f-70fb379d0a0c",
+      "event": "virtualcard.created.completed",
+      "data": {
+        "id": "80dd9cc5-82ba-4395-8c8e-4567f1e90ab4",
+        "status": "active",
+        "reference": "CARD_CREATE_A4FAC6DF5727",
+        "createdStatus": "completed",
+        "reissue": false
+      }
+    }
+    ```
+
+    This is the signal to show the card in your UI. Fetch the PAN, CVV, and expiry with [Get secure card details](/api-reference/cards/get-secure-card-details), display them once, and do not store the CVV. If creation fails you get `virtualcard.created.failed` with a `reason`.
+  </Step>
+
+  <Step title="Fund the card">
+    Load USD from your balance with [Fund or withdraw balance](/api-reference/cards/fund-or-withdraw-balance). `type: "fund"` credits the card; `type: "withdraw"` moves value back.
+
+    ```http
+    POST /api/cards/{cardId}/balance
+    ```
+
+    ```json
+    {
+      "amount": 2000000,
+      "reference": "FUND_TYU039847383",
+      "type": "fund"
+    }
+    ```
+
+    `reference` is your idempotency key: retrying with the same reference returns the original transaction instead of double-funding. Confirmation arrives as `virtualcard.topup.completed`; a failure, for example insufficient balance or a frozen card, arrives as `virtualcard.topup.failed`. Funding constraints and fees are in [Fund a card](/docs/card-issuing/card-funding).
+  </Step>
+
+  <Step title="Handle a spend">
+    When the cardholder pays a merchant, the settled charge reaches you as `virtualcard.transaction.debit`:
+
+    ```json
+    {
+      "eventId": "06cd8fab-da0b-4c4d-87e8-0a1b2c3d4e5f",
+      "companyId": "c16a147e-119f-4de4-88c0-b14d908f9727",
+      "event": "virtualcard.transaction.debit",
+      "data": {
+        "cardId": "8a1fcb84-28cb-4d6e-a6c3-a19dbac4789b",
+        "id": "tx_debit_a1b2c3d4e5f6",
+        "amount": 10000000,
+        "displayAmount": 10.0,
+        "currency": "usd",
+        "transactionType": "settlement",
+        "reference": "spend_txn_001",
+        "narrative": "SPOTIFY",
+        "timestamp": "2026-05-16T14:22:10Z",
+        "status": "completed",
+        "merchantName": "spotify",
+        "merchantMcc": "5815",
+        "merchantCountry": "se"
+      }
+    }
+    ```
+
+    Branch on `event` first, then on `transactionType`; several events share a name across pending and settled states. The full catalogue is on [Webhook events](/docs/card-issuing/webhooks). The same activity is queryable with [List card transactions](/api-reference/cards/list-card-transactions-by-card).
+  </Step>
+
+  <Step title="Handle a refund or reversal">
+    Merchants return money two ways, and both arrive as webhooks: `virtualcard.transaction.refund` after settlement, `virtualcard.transaction.reversed` when an authorisation is cancelled before settlement. Credit your user's view of the balance from these events; correlate to the original spend via `reference`.
+  </Step>
+
+  <Step title="Freeze, unfreeze, or terminate">
+    Give users a freeze button, and keep termination for endings:
+
+    ```http
+    POST /api/cards/{cardId}/status
+    { "status": "frozen" }     # or "active" to unfreeze
+
+    DELETE /api/cards/{cardId}
+    { "reason": "Card no longer needed" }
+    ```
+
+    Freezing blocks new authorisations immediately and is reversible via [Freeze or unfreeze](/api-reference/cards/freeze-or-unfreeze). [Terminate](/api-reference/cards/terminate-card) is permanent, sweeps the remaining balance back to your wallet, and cannot be called within 24 hours of creation. Details and the automatic transitions are in [Freeze, unfreeze, or terminate a card](/docs/card-issuing/card-status-management).
+  </Step>
+</Steps>
+
+## Production checklist
+
+- Idempotency keys on card creation and every top-up.
+- Webhook handler verifies the signature, de-duplicates on `eventId`, and returns `200` fast.
+- Card status tracked in your database and reflected in your UI.
+- CVV never stored; `masked_pan` shown only after user authentication.
+- Decline handling wired: repeated declines carry fees and can terminate the card. See [Fees and decline rules](/docs/card-issuing/card-fees).
+
+## Next
+
+<Columns cols={2}>
+  <Card title="Fund a card" icon="money-bill-transfer" href="/docs/card-issuing/card-funding">
+    Load the card you just issued.
+  </Card>
+  <Card title="Receive card webhooks" icon="bell" href="/docs/card-issuing/receive-card-webhooks">
+    Learn what the card is doing.
+  </Card>
+</Columns>

@@ -1,0 +1,145 @@
+---
+title: "Run business-managed custody"
+description: "Wallet infrastructure your business controls, built on Bitnob's managed Bitcoin RPC, with private keys never leaving your systems."
+related:
+  - /docs/bitcoin/custody-models
+  - /docs/bitcoin/confirmations-and-webhook-events
+---
+## Overview
+
+Bitnob provides a managed Bitcoin RPC service that allows businesses to build Bitcoin custodial infrastructure for their users without ceding any control of the private keys.
+
+**In this model:**
+
+- Businesses manage and control all private keys securely on their own infrastructure.
+- Bitnob provides the Bitcoin node infrastructure: address generation, transaction monitoring, broadcasting, and full blockchain query capabilities.
+- Bitnob never touches customer funds, cannot access private keys, and only relays blockchain information and transactions.
+
+**This allows you to build applications such as:**
+
+1. Bitcoin custodial wallets
+2. Crypto neobanks
+3. Bitcoin exchanges
+4. Internal Bitcoin treasuries
+5. Bitcoin payment processors
+6. Explorers and analytics platforms
+
+### Core concepts
+
+| Concepts | Explanations |
+|---|---|
+| Managed Non-Custodial Wallets | You (the business) generate and store private keys. Users have accounts within your app. Bitnob only provides blockchain access. |
+| Bitnob’s Role | Blockchain infrastructure: node connectivity, transaction relaying, address monitoring. Never key custody. |
+| Signing Transactions | All signing operations happen on your backend. You control funds completely. |
+| Supported Address Types | Legacy (P2PKH), Nested SegWit (P2SH), Native SegWit (P2WPKH), Taproot (P2TR). |
+
+### Primary capabilities
+
+| Capability | Description |
+|---|---|
+| Address Generation | Request new Bitcoin addresses (specify address type). |
+| Transaction Broadcasting | Broadcast signed transactions (single or batch). |
+| Address Monitoring | Set up webhooks to detect inbound transactions. |
+| Balance Queries | Fetch confirmed and pending balances for addresses. |
+| Transaction Queries | Fetch full transaction data from mempool or blockchain. |
+| Fee Estimation | Get dynamic fee suggestions for fast, medium, or economical confirmations. |
+| Explorer and Indexing | Perform full chain queries (blocks, transactions, addresses) if building explorer-style applications. |
+
+### API endpoints
+
+| Action | Method | Endpoint |
+|---|---|---|
+| Generate new address | POST | `/api/noncustodial/bitcoin/address/new` |
+| Watch address | POST | `/api/noncustodial/bitcoin/address/watch` |
+| Watch multiple addresses | POST | `/api/noncustodial/bitcoin/address/watch/bulk` |
+| Broadcast signed transaction | POST | `/api/noncustodial/bitcoin/transaction/broadcast` |
+| Broadcast batch transactions | POST | `/api/noncustodial/bitcoin/transaction/batch/broadcast` |
+| Fetch balance | GET | `/api/noncustodial/bitcoin/address/balance` |
+| Fetch transaction history | GET | `/api/noncustodial/bitcoin/address/transactions` |
+| Query transaction by TXID | GET | `/api/noncustodial/bitcoin/transaction/{txid}` |
+| Label address for business use | POST | `/api/noncustodial/bitcoin/address/label` |
+| General RPC queries | POST | `/api/noncustodial/bitcoin/rpc` |
+
+### Using different address types
+
+When requesting a new Bitcoin address, you can specify the address type:
+
+| Address Type | Description |
+|---|---|
+| legacy (P2PKH) | Traditional Bitcoin address (starts with 1...). Higher fees. |
+| p2sh-segwit (Nested SegWit) | Compatibility addresses (starts with 3...). |
+| native-segwit (P2WPKH) | Modern, cheaper transaction fees (starts with bc1q...). Recommended. |
+| taproot (P2TR) | Next-gen privacy, efficiency (starts with bc1p...). Recommended for advanced apps. |
+
+Sample Request Body:
+
+```json
+{
+  "address_type": "native-segwit",
+  "label": "user_wallet_123"
+}
+```
+
+### Webhooks and monitoring
+
+You can configure:
+
+Global webhook: Receive all incoming transaction events to a single endpoint.
+
+Address-specific webhook: Define a webhook per generated or watched address.
+
+Customizable webhook payloads to fit your internal event structures.
+
+Webhook events include:
+
+- Incoming transaction detected
+- Transaction confirmation updates
+- Failed transaction broadcast notifications (if configured)
+
+### Security and best practices
+
+Secure Private Keys: Use HSMs or encrypted databases for key management.
+
+Cold/Hot Wallet Separation: For high-volume businesses, segregate hot wallets (daily operations) from cold wallets (treasury).
+
+Fee Strategy: Use real-time fee estimation APIs before sending large transactions.
+
+Address Rotation: Use a new receiving address per payment for better privacy and easier reconciliation.
+
+Confirmations Policy: Always wait at least 3 confirmations before reflecting deposits in user balances.
+
+Reconciliation Jobs: Set periodic background jobs to query blockchain state to cross-verify webhook events.
+
+### Notes on explorer and heavy queries
+
+Since Bitnob provides general Bitcoin RPC access, businesses can:
+
+- Fetch raw blocks (getblock, getblockhash)
+- Fetch mempool data
+- Query full transaction histories
+- Build analytics dashboards
+- Build lightweight explorers
+
+without running their own Bitcoin Core full node infrastructure.
+
+<Note>
+  Rate limits and usage quotas will apply depending on your subscription tier.
+</Note>
+
+### Example end-to-end flow
+
+![End-to-end Flow](/images/end-to-end-flow.png)
+
+1. Client App sends a request to the Bitnob API Layer with HMAC-authenticated headers.
+2. Auth & Security verifies credentials and roles.
+3. Depending on the endpoint, the request may route to Wallet Management, the Transactions Engine, or Value-Added Services.
+4. All modules update and retrieve data from the Database & Ledger.
+5. Client App receives a response with transaction details, balances, or confirmation of a completed service.
+
+In the Business-Managed Custody model:
+
+You fully own the custody responsibility.
+
+Bitnob provides you with highly available, highly scalable Bitcoin node access.
+
+You can build any Bitcoin-based financial product without worrying about blockchain ops complexity.

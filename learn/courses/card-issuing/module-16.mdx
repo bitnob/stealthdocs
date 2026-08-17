@@ -1,0 +1,119 @@
+---
+title: "Module 16: Metrics and KPIs for card products"
+description: "The metrics that describe a healthy card product, across engagement, spend, and operations."
+---
+## Learning objectives
+
+- Know the key metrics that define a healthy card product
+- Understand what to track for user engagement, spend behavior, and operational health
+- Learn how to combine transactional and behavioral KPIs
+- Use data to identify product gaps, fraud, revenue leakage, or growth opportunities
+- Know how to report success internally and to stakeholders
+
+## Why metrics are critical for card products
+
+Virtual cards touch infrastructure, user behavior, and financial outcomes, which means they expose more data and risk than most product features.
+
+If you aren’t measuring:
+
+- How people are using their cards
+- What’s working and what’s failing
+- Where your fees and float are going
+- Which user segments are active
+
+Then you’re flying blind, and you won’t be able to grow or defend the product.
+
+## Foundational KPI categories
+
+| Category | Examples |
+|---|---|
+| Adoption & Issuance | Cards created, users with active cards, issuance success rate |
+| Usage & Engagement | Number of transactions, frequency of spend, card retention |
+| Monetization & Revenue | Top-up volume,FX margins, fee revenue, card lifetime value |
+| Risk & Fraud | Decline rate, chargeback rate, refund volume, suspicious patterns |
+| Operational Health | Refund time, webhook success rate, failed top-up volume |
+
+### 1. Adoption & issuance
+
+These metrics tell you how many users are creating and activating cards, and whether issuance is smooth.
+
+| Metric | Why It Matters |
+|---|---|
+| Cards issued per user | Are users creating multiple cards? Too few? Too many? |
+| Card activation rate | % of issued cards that received at least one transaction |
+| Issuance success rate | Are cards failing at creation? What’s causing it? |
+| Time to first top-up | How fast are users funding and using their cards? |
+
+Segment by source (wallet users vs. promo users), geography, or plan type.
+
+### 2. Usage & engagement
+
+You’re not just measuring functionality. You’re measuring value.
+
+| Metric | Why It Matters |
+|---|---|
+| Transactions per active card per month | Low = dead cards, high = engaged users |
+| Average top-up amount | Indicates trust and card role (small spends vs. core spending) |
+| Time to first spend | Shorter = good UX, trust, and onboarding |
+| Spend per MCC or merchant | Are users paying for subscriptions, ads, services? |
+| Card churn rate | % of cards not used again after first transaction |
+
+These help you decide where to invest in features, UI improvements, or education.
+
+### 3. Monetization & revenue
+
+Revenue doesn’t only come from usage volume. It comes from spend mix, FX exposure, and behavior patterns.
+
+| Metric | Why It Matters |
+|---|---|
+| FX margin per transaction | What are you earning from currency conversion? |
+| Average fee per user | Sum of card creation, top-up, cross-border, and usage-based fees |
+| Monthly card LTV | Total revenue generated per card over time |
+| Cross-border revenue vs. cost | Are international transactions profitable? |
+| Float margin (if any) | Difference between float usage and issuance cost |
+
+Be honest with yourself: if usage is high but revenue is low, your business model needs to evolve.
+
+### 4. Risk & fraud metrics
+
+These protect your platform, partners, and users.
+
+| Metric | Why It Matters |
+|---|---|
+| Decline rate | High = poor UX or fraud attempts |
+| Auto-termination rate | Are your fraud rules working or misfiring? |
+| Refund volume as % of spend | Too high = merchant risk, refund farming |
+| Chargeback rate | Network compliance issue if too high (>1%) |
+| High-velocity users flagged | Prevent multi-account or automation abuse |
+
+You must measure not only who spends, but how and why they stop.
+
+### 5. Operational KPIs
+
+These track performance of your integration and user experience.
+
+| Metric | Why It Matters |
+|---|---|
+| Webhook success rate | Are you receiving and handling events reliably? |
+| Average refund time | Delay here causes support friction |
+| Failed top-ups | Are users hitting balance, FX, or card status issues? |
+| Support tickets per 1000 users | Are users confused or confident? |
+| Card lifecycle delay (issue → fund → spend) | Shorter = better UX and onboarding |
+
+## Advanced metrics for strategic teams
+
+Once your product is growing, add:
+
+- Revenue per MCC or merchant type
+- Top-up conversion rate: % of users who top-up after card issuance
+- Cost per issued card (including support and fraud losses)
+- Break-even point per card: at what point does each card become profitable
+- Cards per account type or pricing tier: detect usage-value gaps
+
+## Recap
+
+- A virtual card product without metrics is unscalable and unaccountable
+- Measure more than transactions: measure behavior, timing, margin, and retention
+- Build dashboards for product, ops, and finance that surface the *why*, not just the *what*
+- Use metrics to improve onboarding, user education, risk, and monetization
+- Your card metrics should tie back to business KPIs: activation, trust, and margin

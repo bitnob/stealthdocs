@@ -1,0 +1,151 @@
+---
+title: "Track orders and history"
+description: "Check the state of a single trade and page through past trades for reconciliation."
+related:
+  - /docs/trading/statuses-and-webhook-events
+  - /docs/trading/trade-webhooks
+---
+The Trade Status & History endpoints allow you to:
+
+- Fetch a single trade by ID or reference
+- List all trades across your account (optionally filtered)
+- Monitor conversion volumes, timestamps, and trade outcomes
+- Power your ledger, dashboards, and audit flows
+
+## Retrieve one order
+
+Full reference: [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference).
+
+```bash
+GET /api/trading/orders/:id
+```
+
+### Path parameter
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| id | string | Yes | Trade ID or reference ID |
+
+You can use either a Bitnob-generated tradeId or your own reference to fetch the trade.
+
+### Example request
+
+```bash
+curl --location 'https://api.bitnob.com/api/trading/orders/4ac59dd0-3c25-43c7-8e51-2ed020149e1b' \
+--header 'Content-Type: application/json' \
+--header 'x-auth-client: CLIENT_ID' \
+--header 'x-auth-timestamp: TIMESTAMP' \
+--header 'x-auth-nonce: NONCE' \
+--header 'x-auth-signature: SIGNATURE'
+```
+
+### Example response
+
+```json
+{
+    "success": true,
+    "message": "Order retrieved successfully",
+    "data": {
+        "order": {
+            "id": "4ac59dd0-3c25-43c7-8e51-2ed020149e1b",
+            "base_currency": "USDC",
+            "quote_currency": "USDT",
+            "side": "SELL",
+            "order_type": "limit",
+            "quantity": "10.00000000",
+            "price": "0.99725063",
+            "status": "filled",
+            "exchange": "internal",
+            "created_at": "2025-12-14T11:40:53.802259000Z",
+            "updated_at": "2025-12-14T11:40:55.216095000Z",
+            "filled_quantity": "10.00000000",
+            "remaining_quantity": "0"
+        }
+    },
+    "metadata": {
+        "request_id": "trading_req_019b219e-659a-7870-b44b-71dd179c2362"
+    },
+    "timestamp": "2025-12-15T10:46:27.59472953Z"
+}
+```
+
+## List orders
+
+Full reference, including the supported filters: [Get Orders](/api-reference/trading/list-orders).
+
+```bash
+GET /api/trading/orders
+```
+
+### Query parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| from | string | No | Filter by source asset (usdt, usdc, btc, or ngn) |
+| to | string | No | Filter by target asset (usdt, usdc, btc, or ngn) |
+| status | string | No | Filter by status (completed, failed) |
+| startDate | string | No | ISO8601 format: return trades after this date |
+| endDate | string | No | ISO8601 format: return trades before this date |
+| limit | integer | No | Number of trades per page (default 20, max 100) |
+| cursor | string | No | Cursor for pagination |
+
+### Example request
+
+```bash
+curl --location 'https://api.bitnob.com/api/trading/orders' \
+--header 'Content-Type: application/json' \
+--header 'x-auth-client: CLIENT_ID' \
+--header 'x-auth-timestamp: TIMESTAMP' \
+--header 'x-auth-nonce: NONCE' \
+--header 'x-auth-signature: SIGNATURE'
+```
+
+### Example response
+
+```json
+{
+    "success": true,
+    "message": "Orders retrieved successfully",
+    "data": {
+        "orders": [
+            {
+                "id": "4bcda61a-c24d-434a-a31c-3ab31e8281d2",
+                "base_currency": "USDT",
+                "quote_currency": "BTC",
+                "side": "SELL",
+                "order_type": "limit",
+                "quantity": "10",
+                "price": "69920.93408475",
+                "status": "filled",
+                "created_at": "2026-03-23T12:07:17.344023000Z",
+                "updated_at": "2026-03-23T12:07:18.214985000Z",
+                "filled_quantity": "9.9993927834600975",
+                "remaining_quantity": "0",
+                "quote_id": ""
+            }
+        ]
+    },
+    "metadata": {
+        "request_id": "req_019d1a9b-d4f6-71c6-bd99-0c71a1e644d4"
+    },
+    "timestamp": "2026-03-23T12:11:53.506843746Z"
+}
+```
+
+## Order statuses
+
+| Status | Meaning |
+|---|---|
+| `pending` | Accepted, not yet filled. |
+| `filled` | Executed completely. The terminal success state. |
+| `cancelled` | Cancelled before fill via [Cancel order](/api-reference/trading/cancel-order). |
+
+## What to build on it
+
+Powering ledger UIs or admin dashboards with completed trade data
+
+Matching internal accounting and reconciliation jobs
+
+Investigating failed trades by reference ID via [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference)
+
+Generating usage-based analytics or reporting

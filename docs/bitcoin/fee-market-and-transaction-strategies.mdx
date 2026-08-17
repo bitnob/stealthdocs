@@ -1,0 +1,193 @@
+---
+title: "Fees and confirmation strategy"
+description: "How the Bitcoin fee market prices blockspace, and the estimation, batching, RBF, and CPFP strategies that keep costs predictable."
+related:
+  - /docs/bitcoin/utxo-management-introduction
+  - /docs/bitcoin/send-bitcoin
+---
+## Introduction: Why fees matter
+
+Unlike traditional payment networks where fees are often static or hidden, Bitcoin operates on a dynamic fee market:
+
+Fees are determined by supply and demand for blockspace.
+
+Users compete to have their transactions included in blocks.
+
+Fees can fluctuate dramatically over short periods depending on network congestion.
+
+<Note>
+  In Bitcoin, you are not paying for the amount of bitcoin sent. You are paying for the size (in virtual bytes / vBytes) of your transaction.
+</Note>
+
+Building a non-custodial Bitcoin wallet means you must account for fee dynamics at every step of your product design .
+
+Poor fee handling destroys user experience during congestion periods.
+
+## Core concepts in Bitcoin fee markets
+
+| Terms | Description |
+|---|---|
+| Fee rate | Amount of satoshis paid per virtual byte sats/vByte. |
+| Mempool | Waiting area for unconfirmed transactions. |
+| Block target | Number of blocks in which the user hopes the transaction gets confirmed. |
+| Replace-by-Fee (RBF) | A Bitcoin protocol feature that allows users to bump the fee of an unconfirmed transaction by creating a replacement transaction. |
+| Child-Pays-For-Parent (CPFP) | A technique where a new transaction (child) spends from a stuck parent transaction with a high enough fee to "drag" both into confirmation. |
+
+## How fee markets actually behave
+
+| Situation | Fee Behaviour |
+|---|---|
+| Low network activity | 1–2 sat/vByte transactions confirm within a few blocks. |
+| Medium congestion | 10–20 sats/vByte becomes typical. |
+| Major congestion (mempool backlog) | 50–200+ sats/vByte needed for fast confirmations. |
+| Fee spikes (e.g., Ordinals, BRC-20 craze) | 500+ sats/vByte may be required for next-block confirmation. |
+
+During fee spikes:
+
+Cheap transactions get stuck for hours or days.
+
+Users who don't understand fees will panic.
+
+Wallets that handle fee strategies poorly will get bad reviews.
+
+## Best practices for fee handling in non-Custodial wallets
+
+1. Offer Fee Options: Fast, Normal, Economical
+
+   At send time, allow users to select their preferred speed vs cost tradeoff.
+
+   Example UI:
+
+   | Option | Target Confirmation Time | Est. Fee Rate |
+   |---|---|---|
+   | Fast | Next block (~10 min) | High fee |
+   | Normal | 3–6 blocks (30–60 min) | Moderate fee |
+   | Economy | 6+ blocks (1+ hour) | Low fee |
+
+   <Tip>
+     Use Bitnob's fee estimation API to fetch real-time fee recommendations.
+   </Tip>
+
+2. Show Actual Fee Costs in Bitcoin and Fiat
+
+   Do not just show users "10 sats/vByte". Instead, calculate:
+
+- Estimated total transaction size in vBytes
+- Total fee in satoshis
+- Total fee in USD (or user's local currency)
+- Example
+- Transaction Size: 200 vBytes
+- Fee Rate: 20 sats/vByte
+- Estimated Total Fee: 4,000 sats (~\$1.80)
+
+   Show the estimated fee clearly before broadcasting.
+
+3. Support Replace-by-Fee (RBF)
+
+   If a user's transaction gets stuck:
+
+   Allow them to bump the fee using Bitcoin's RBF feature.
+
+   Present a "Speed up this transaction" option in the UI.
+
+   Build your transaction building engine to mark transactions as RBF replaceable
+
+   (sequence \< 0xffffffff - 1).
+
+   This greatly improves user experience during fee spikes.
+
+4. Consider Child-Pays-For-Parent (CPFP)
+
+   In case the wallet spends from a stuck unconfirmed transaction:
+
+   Automatically offer a CPFP option where a new transaction pays enough fee to pull both into confirmation.
+
+   BDK and advanced libraries can help with CPFP constructions.
+
+5. Warn About Low-Fee Transactions
+
+If a user tries to send with a very low fee:
+
+Show a warning:
+
+"This transaction may take several hours or days to confirm due to low fees. Proceed anyway?"
+
+Optionally, default users to Normal or Fast unless they explicitly choose Economy.
+
+## UX design for Bitcoin fees
+
+Designing around fees is not just a technical problem. It’s a UX problem.
+
+| Ux Mistake | Correct Design |
+|---|---|
+| Hide fee settings entirely | Expose user-friendly fee options with clear descriptions |
+| Show fee rates only in sats/vByte | Show estimated total fee in Bitcoin and fiat |
+| Panic users with "Transaction stuck!" error | Offer "Speed Up" with RBF automatically |
+| Force manual re-sending if fees are wrong | Allow easy bumping or CPFP flows |
+
+Well-designed wallets like Muun, Phoenix, and BlueWallet handle fees gracefully.
+
+## Fee behavior in real world wallets (lessons)
+
+| Wallet | Fee Behaviour |
+|---|---|
+| Muun Wallet | Dynamically calculates pre-built CPFP bundles under the hood for invisible confirmation guarantee. |
+| BlueWallet | Lets users customize exact fee rates manually (advanced mode). |
+| Phoenix Wallet | Internal "smart" fees and auto CPFP for Lightning channels. |
+| CashApp | Offers "instant send" fee options backed by high fee prepayments. |
+
+Depending on your user type (consumer, advanced), you can pick whether to auto-handle or expose fine-grained controls .
+
+## Mempool monitoring (optional advanced strategy)
+
+For large wallets:
+
+Monitor Bitcoin mempool via Bitnob (or internal nodes).
+
+Detect congestion.
+
+Adjust fee recommendation presets dynamically.
+
+**Example:** If mempool \> 300 MB → Adjust Fast fee preset to +20% over normal.
+
+If mempool \< 30 MB → Lower default fast fee by -10%.
+
+This dynamic behavior shows professionalism and protects user funds.
+
+## How Bitnob supports your fee strategy
+
+Today:
+
+Bitnob offers dynamic fee estimation API: low, medium, high fee targets.
+
+Allows your wallet to fetch updated fee recommendations before every send.
+
+Future:
+
+Planned support for:
+
+- Mempool event webhooks
+- Fee market monitoring APIs
+- Enhanced Replace-by-Fee (RBF) helper APIs
+- CPFP construction templates
+
+You can start simple now, and grow with Bitnob into advanced fee management over time.
+
+## Final thoughts
+
+Fees are not optional details in Bitcoin UX.
+
+They are central to wallet experience and user satisfaction.
+
+Wallets that hide fees, guess wrong, or fail to help users during congestion will quickly lose trust.
+
+Wallets that respect users, explain fees well, and offer real control or intelligent defaults will dominate.
+
+### Quick developer checklist
+
+- Always fetch real-time fee estimates.
+- Offer Fast, Normal, and Economy options at minimum.
+- Display the total fee in both BTC and fiat terms.
+- Support Replace-by-Fee (RBF) where possible.
+- Plan CPFP flows internally for stuck transactions.
+- Watch mempool activity to adapt your strategy.

@@ -1,0 +1,128 @@
+---
+title: "Module 4: Using Regtest to simulate Bitcoin"
+description: "A private regtest chain lets you mine blocks on demand and test integrations without real funds."
+---
+## Learning objectives
+
+- Understand the purpose and power of Bitcoin Core's regtest mode
+- Set up a private, fully controlled Bitcoin network
+- Mine blocks and confirm transactions instantly
+- Use regtest for API testing, integration flows, and simulations
+
+## Why Regtest matters
+
+regtest stands for Regression Test mode. It is a fully offline, developer-first Bitcoin network that:
+
+- Has no network peers (your node is the entire network)
+- Lets you mine blocks instantly
+- Offers zero-fee, instant transaction confirmation
+- Works perfectly with automated testing, CI flows, and local wallets
+
+For building real Bitcoin apps, regtest is the fastest and safest sandbox.
+
+## Setting up a fully isolated Bitcoin environment
+
+Start your node in regtest mode:
+
+```bash
+bitcoind -regtest -daemon
+```
+
+This creates:
+
+- ~/.bitcoin/regtest/ as your data directory
+- A zero-block chain, ready to mine
+- No connections to testnet, mainnet, or the internet
+
+You can confirm the mode using:
+
+```bash
+bitcoin-cli -regtest getblockchaininfo
+```
+
+Look for "chain": "regtest"
+
+## Mining blocks instantly
+
+Regtest allows manual block generation.
+
+First, create a wallet and get a new address:
+
+```bash
+bitcoin-cli -regtest createwallet "miner"
+bitcoin-cli -regtest getnewaddress
+```
+
+Now mine 101 blocks (to unlock coinbase rewards):
+
+```bash
+bitcoin-cli -regtest generatetoaddress 101 <your_address>
+```
+
+This gives you spendable BTC for testing.
+
+You can generate 1 block at a time to simulate confirmation behavior.
+
+## Sending transactions instantly
+
+With freshly mined coins, you can now send BTC:
+
+```bash
+bitcoin-cli -regtest sendtoaddress <destination> 1.5
+```
+
+Check mempool:
+
+```bash
+bitcoin-cli -regtest getrawmempool
+```
+
+Confirm instantly by mining a block:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 1 <miner_address>
+```
+
+Now check the recipient’s balance:
+
+```bash
+bitcoin-cli -regtest getbalance
+```
+
+## GUI alternative: Polar
+
+Polar is a desktop app that sets up a regtest Bitcoin + Lightning network for you using Docker.
+
+Why use it?
+
+No terminal needed
+
+Visual interface for nodes, wallets, payments
+
+Supports Bitcoin Core + LND + Core Lightning
+
+🖥️ If you prefer a GUI for testing, Polar is highly recommended. It is especially useful for team demos, education, and debugging.
+
+ Install it via:
+
+1. macOS: brew install --cask polar
+2. Linux: .AppImage from GitHub
+3. Windows: .exe installer
+
+You can still inspect logs, addresses, and transactions under the hood.
+
+## Activity
+
+Set up a regtest sandbox from scratch:
+
+1. Start bitcoind in regtest mode.
+2. Create a wallet, generate 101 blocks (replace \<your_address\> with an address from the new wallet).
+3. Send 2 test transactions (replace \<destination_1\>, \<destination_2\> with valid addresses).
+4. Mine 1 block to confirm (use the same \<your_address\> as before or another address in activity_wallet).
+5. Use listtransactions to view history.
+
+Wallets that understand UTXOs deeply will control fees, preserve privacy, and scale cleanly over time.
+
+Bonus:
+
+Try doing the same flow inside Polar

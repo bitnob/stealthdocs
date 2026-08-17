@@ -1,0 +1,33 @@
+---
+title: "SHA-256 generator"
+description: "SHA-256 is the hash function behind Bitcoin block hashing and most integrity checks. Hash any text with SHA-256, SHA-384, SHA-512, or SHA-1 locally."
+---
+
+import { Sha256Generator } from "/snippets/playground/hash-crypto.jsx";
+
+<Sha256Generator />
+
+A cryptographic hash turns any input into a fixed-length digest. The same input always produces the same digest, and changing a single bit changes the output completely. You cannot reverse a digest back into its input.
+
+## Where you will meet SHA-256
+
+- **Bitcoin.** Block hashing and mining use double SHA-256, and transaction IDs are SHA-256 digests.
+- **Integrity checks.** Publish a digest alongside a file so downloaders can confirm it arrived intact.
+- **Request signing.** [Bitnob API v2](/api-reference/authentication/authentication) signs requests with HMAC-SHA256, which uses SHA-256 with a secret key.
+
+## Choosing an algorithm
+
+| Algorithm | Digest size | Use it for |
+|---|---|---|
+| SHA-256 | 256 bits (64 hex chars) | The default choice for new work |
+| SHA-384 | 384 bits (96 hex chars) | Longer digests where required by policy |
+| SHA-512 | 512 bits (128 hex chars) | Longer digests, faster than SHA-256 on 64-bit CPUs |
+| SHA-1 | 160 bits (40 hex chars) | Reading legacy systems only |
+
+<Warning>
+  SHA-1 is broken for security purposes: practical collision attacks exist. Never use it to verify signatures or integrity in new systems.
+</Warning>
+
+## Hashing is not encryption
+
+A hash cannot be reversed, so it is not a way to store data you need to read back. It is also not sufficient on its own for passwords: use a purpose-built password hash such as Argon2 or bcrypt, which are deliberately slow and salted.

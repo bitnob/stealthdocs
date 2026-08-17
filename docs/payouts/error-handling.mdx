@@ -1,0 +1,103 @@
+---
+title: "Handle payout failures"
+description: "Every way a payout can fail, how you detect each case, and what to do about it, from expired quotes and underpayment to delivery rejection and compliance blocks."
+related:
+  - /docs/payouts/statuses-and-webhook-events
+  - /docs/payouts/payout-incident-postmortem
+---
+
+A payout crosses a blockchain, an FX conversion, a compliance check, and a local banking rail. Each can fail independently, and each failure surfaces differently: some as API errors, some as webhook events, and some only in the record's status. This page covers every case.
+
+Two rules underpin all of them:
+
+- Track by the payout `id` and your `reference`; the [Trip timeline](/docs/payouts/understanding-trip-timeline) tells you exactly which stage a payout stalled at.
+- Failure emits no webhook. Only `payouts.withdrawal.success` and `payouts.withdrawal.expired` are terminal events; a `FAILED` record is found by polling [Get payout](/api-reference/payouts/get-payout). Build a reconciliation sweep, not just a webhook handler.
+
+## Failure scenarios
+
+<AccordionGroup>
+  <Accordion title="Expired quote">
+    The quote passed `expires_at` before you initialized, or before funding arrived.
+
+    **Detection:** using an expired `quoteId` returns `410 QUOTE_EXPIRED`. An initialized but unfunded payout emits `payouts.withdrawal.expired`.
+
+    **Response:** request a fresh quote and start over. Nothing was settled. In your UI, check `expires_at` before showing payment instructions, and stop showing them once it passes.
+  </Accordion>
+
+  <Accordion title="Underpayment">
+    The funding payment arrived short of the quoted amount.
+
+    **Behaviour:** the payout still processes; the fiat amount delivered is adjusted down proportionally at the quoted rate.
+
+    **Response:** read the delivered amount from the payout record rather than assuming the quoted amount, and tell the recipient-facing side of your product that an adjusted amount was delivered.
+  </Accordion>
+
+  <Accordion title="Overpayment">
+    The funding payment exceeded the quoted amount.
+
+    **Behaviour:** the intended fiat amount is paid out; the excess is credited to your Bitnob balance.
+
+    **Response:** nothing required for delivery. Track the excess in your reconciliation so your books match your balance.
+  </Accordion>
+
+  <Accordion title="Payment after expiry">
+    Funds arrived on-chain after the quote window closed.
+
+    **Behaviour:** the payout does not proceed automatically. Depending on configuration the amount is refunded, credited to your balance, or held for manual resolution with support.
+
+    **Response:** design your payment screen so paying late is hard: show a countdown from `expires_at` and hide the address once it passes.
+  </Accordion>
+
+  <Accordion title="Funding stuck on the blockchain">
+    The deposit was sent with too low a fee and confirms slowly.
+
+    **Detection:** the Trip shows `asset_received_at` set but `asset_confirmed_at` still null.
+
+    **Behaviour:** the payout waits; nothing proceeds until confirmation thresholds are met.
+
+    **Response:** show an "awaiting confirmations" state. For Bitcoin funding, recommend a competitive fee; for Lightning, this case does not exist, which is a reason to prefer it.
+  </Accordion>
+
+  <Accordion title="Delivery failure">
+    Funding succeeded, but the bank or mobile money operator rejected the payout: an invalid account, a closed account, or rail downtime.
+
+    **Detection:** the record moves to `FAILED`. No webhook fires; catch it with your reconciliation sweep against [Get payout](/api-reference/payouts/get-payout) or [List payouts](/api-reference/payouts/list-payouts).
+
+    **Response:** read the failure reason from the record, correct the beneficiary if that was the cause, re-run [Account lookup](/api-reference/payouts/account-lookup), and retry with a fresh quote. [Validate a beneficiary](/docs/payouts/validate-a-beneficiary) before initializing prevents most of this class outright.
+  </Accordion>
+
+  <Accordion title="Compliance rejection">
+    The payout was blocked after funding by a compliance or risk check: a flagged recipient or a country restriction.
+
+    **Detection:** same as delivery failure, the record moves to `FAILED`.
+
+    **Response:** this is not retryable by changing details. Route it to your operations team, and engage your Bitnob account manager to resolve or refund.
+  </Accordion>
+
+  <Accordion title="Your webhook endpoint is down">
+    Not a payout failure, but it looks like one from inside your system: payouts complete and your records never hear about it.
+
+    **Behaviour:** Bitnob retries failed deliveries 3 times after the first failure.
+
+    **Response:** idempotent handlers, fast `200`s, and the reconciliation sweep as the backstop. See [Receive payout webhooks](/docs/payouts/webhook-payout).
+  </Accordion>
+</AccordionGroup>
+
+## The reconciliation sweep
+
+The single mechanism that catches everything above: on a schedule, list recent payouts and compare terminal states against your records.
+
+<Steps>
+  <Step title="Sweep">
+    Query [List payouts](/api-reference/payouts/list-payouts) for your open references.
+  </Step>
+  <Step title="Settle">
+    Mark `COMPLETED` records delivered, exactly as if the success webhook had arrived.
+  </Step>
+  <Step title="Route failures">
+    Send `FAILED` records to your retry or operations path.
+  </Step>
+  <Step title="Alert on stalls">
+    Flag payouts that have sat in one stage beyond your corridor's expected window; per-corridor expectations are in [Corridor behaviour](/docs/payouts/corridor-specific-behavior).
+  </Step>
+</Steps>

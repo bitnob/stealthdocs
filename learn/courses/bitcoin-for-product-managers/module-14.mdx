@@ -1,0 +1,198 @@
+---
+title: "Module 14: Practical Bitcoin product and UX guidelines for designers and product managers"
+description: "UX and copy guidelines for irreversible, public, decentralised money."
+---
+## 14.1 Introduction
+
+Bitcoin is powerful.
+But Bitcoin is also different:
+
+- It’s irreversible.
+- It’s public.
+- It’s decentralized.
+- It requires the user to think differently about money.
+
+Designers, PMs, and copywriters who do not understand Bitcoin’s realities end up confusing, frustrating, or even financially harming users.
+
+This module teaches how to design and communicate Bitcoin experiences correctly, combining:
+
+- Practical product building,
+- Behavioral psychology,
+- Clear copywriting,
+- User education,
+- And world-class UX flows.
+
+If you master these patterns, you can build Bitcoin products that are trusted, loved, and scaled globally, even for new users who have never touched Bitcoin before.
+
+## 14.2 Simple Bitcoin mental models for design teams
+
+Before designing anything Bitcoin-related, everyone on your team must internalize these simple truths:
+
+| Concept | Simple Mental Model |
+|---|---|
+| Bitcoin is Final | Once sent, Bitcoin cannot be reversed. No support agent can undo it. |
+| Bitcoin is Public | Transactions are visible forever unless protected with privacy practices. |
+| Bitcoin Balances Are Calculated | Wallets sum up pieces of bitcoin (UTXOs) owned by the user. There is no account balance server. |
+| Bitcoin Has Network Fees | Every Bitcoin transaction must pay a small miner fee. Fees vary with network traffic. |
+| Bitcoin Confirmations Take Time | Payments are not "done" until included in blocks and buried with confirmations. |
+| Bitcoin Users Hold Keys, Not Accounts | Users hold private keys that control their Bitcoin. No passwords. No resets. |
+
+**Critical foundation:** Designing without these principles in mind breaks user trust, breaks safety, and breaks product credibility.
+
+## 14.3 Designing core Bitcoin user flows
+
+### 14.3.1 Wallet creation and backup
+
+**Do:**
+
+- Make seed phrase backup mandatory before allowing Bitcoin reception.
+- Verify backup with simple word challenges ("What is word 5 of your recovery phrase?").
+- Explain clearly: "This is your vault key. Without it, your Bitcoin is lost forever."
+
+**Don't:**
+
+- Let users skip backup.
+- Call the seed phrase a "password" or "PIN."
+- Hide the seriousness behind fun language.
+
+**Copy example:** "This recovery phrase is the only way to access your Bitcoin if you lose your device. Write it down. Store it safely. If you lose it, we cannot help recover your Bitcoin."
+
+### 14.3.2 Receiving bitcoin
+
+**Do:**
+
+- Show a fresh address (QR code + text).
+- Auto-generate a new address after payment is received.
+- Show estimated confirmation times ("Most payments confirm in 10–60 minutes.").
+
+**Don't:**
+
+- Reuse the same address repeatedly without warning.
+- Promise "instant Bitcoin" unless you're using Lightning properly.
+
+**Copy example:** "This address is ready to receive bitcoin. After your payment is detected, we’ll update your balance once the network confirms it."
+
+### 14.3.3 Sending bitcoin
+
+**Do:**
+
+- Validate the format of destination Bitcoin address before allowing send.
+- Confirm final details (amount, address, fee) before broadcast.
+- Offer fee options (Fast / Normal / Economy) with time estimates.
+
+**Don't:**
+
+- Hide network fees completely.
+- Let users broadcast wrong sends easily.
+
+**Copy example for confirmation screen:**
+
+"You are about to send:
+0.0025 BTC (\$100.23)
+To: bc1qxyz...
+Fee: 5,000 sats (\$2.00)
+Estimated time to confirmation: 10–20 minutes.
+
+[Confirm Send] [Cancel]"
+
+### 14.3.4 Handling pending transactions
+
+**Do:**
+
+- Clearly label pending payments ("0 Confirmations – Payment detected, awaiting confirmation.")
+- Notify users automatically when confirmations complete.
+
+**Don't:**
+
+- Mark payments as "Received" just because they're broadcasted.
+
+**Copy example:** "We’ve detected your payment on the Bitcoin network. Confirmations are underway. You’ll see it fully completed soon."
+
+## 14.4 Writing good Bitcoin product copy
+
+Bitcoin needs clear, empathetic, and responsible copywriting.
+
+Good Bitcoin copy:
+
+- Assumes users are intelligent but new to Bitcoin.
+- Does not overpromise ("instant," "guaranteed") unless technically accurate.
+- Frames risk carefully ("Bitcoin price can go up or down. Only invest what you can afford to lose.").
+- Protects user autonomy while guiding carefully.
+
+**Golden rules for copywriters:**
+
+| Rule | Example |
+|---|---|
+| Prefer action-based clarity | "Send bitcoin" instead of "Broadcast Transaction." |
+| Use friendly but serious tone | "Protect your recovery phrase: it’s your vault key." |
+| Frame Bitcoin mechanics positively | "Waiting for confirmations ensures your Bitcoin is fully secured by the network." |
+| Avoid unnecessary jargon | No "UTXO," "OP_RETURN," "SegWit" unless in advanced settings. |
+| Always reflect Bitcoin’s real behavior | If a transaction needs confirmations, explain it gently, don't hide it. |
+
+## 14.5 Best UX decisions for common Bitcoin situations
+
+| Situation | Good Ux Behaviour |
+|---|---|
+| User sends low fee transaction | Warn them about potential delay. Allow RBF (Replace-By-Fee) option later. |
+| Blockchain congestion spikes | Update fee recommendations dynamically. Notify users politely about congestion. |
+| Address entered incorrectly | Block the transaction until corrected. |
+| Transaction stuck after broadcast | Offer "Speed Up Transaction" (RBF) if available. Show "Still Pending" with grace otherwise. |
+| Multiple payments incoming | Group visually in UI but rotate addresses internally to preserve privacy. |
+
+## 14.6 How to structure Bitcoin settings menus
+
+Good Bitcoin apps have:
+
+**Simple defaults:**
+
+- New address auto-rotation
+- Recommended fee levels
+- Backup reminders
+
+**Advanced settings:**
+
+- Manual fee setting (for advanced users)
+- Custom address labels
+- UTXO management views
+- Privacy enhancements (e.g., Tor usage, Silent Payments support)
+
+**Tip: Progressive disclosure.** Hide complexity from first-time users. Expose complexity progressively to power users over time.
+
+## 14.7 Educating users without overwhelming them
+
+| Moment | Micro-education Action |
+|---|---|
+| After wallet creation | Show "Backup Reminder" every X days until backup verified. |
+| Before sending bitcoin | Explain fees, confirmation time briefly before final send. |
+| After receiving bitcoin | Explain that more confirmations = more security. |
+| When fees are unusually high | Notify: "The network is busy. You can choose a faster or cheaper option." |
+
+**Just-in-time learning:** Teach when users are ready. Don’t throw a 20-screen Bitcoin tutorial at onboarding.
+
+## 14.8 Common UX mistakes that break Bitcoin wallets
+
+| Mistake | Why It Hurts |
+|---|---|
+| Skipping backup enforcement | Leads to mass user loss and blame after device failures. |
+| Hiding fee realities | Users get angry when transactions are delayed or stuck. |
+| Ignoring address rotation | Users lose privacy without knowing. |
+| Confusing Bitcoin with fiat money | Users expect instant, reversible payments, leading to customer service nightmares. |
+| Overcomplicating Lightning | Users should experience speed, not channels and liquidity warnings. |
+
+## 14.9 Final product reflection
+
+If you are a PM, designer, or copywriter building Bitcoin products:
+
+- Respect Bitcoin's realities first.
+- Help users adapt safely.
+- Build flows that create trust, not overconfidence.
+- Teach without scaring.
+- Default to safety without restricting advanced users forever.
+
+**Core philosophy:** Building Bitcoin products is not about "hiding Bitcoin." It is about building experiences that help people use Bitcoin safely, confidently, and freely.
+
+## Module 14 complete
+
+You now have a practical, world-class foundation for designing, writing, and product managing real Bitcoin user experiences
+
+not academic ones, not fake ones, but experiences that survive real users, real markets, real Bitcoin conditions.

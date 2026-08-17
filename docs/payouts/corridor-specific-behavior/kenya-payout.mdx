@@ -1,0 +1,131 @@
+---
+title: "Kenya"
+description: "Rails, beneficiary fields, cut-off times, and failure modes specific to KES payouts."
+related:
+  - /docs/payouts/corridor-specific-behavior
+  - /docs/payouts/validate-a-beneficiary
+---
+## 1. Overview
+
+Kenya is one of the most mature mobile money markets globally. Mobile money is the default payment method for individuals, microbusinesses, and increasingly SMEs.
+
+M-Pesa, operated by Safaricom, is the overwhelmingly dominant mobile money platform, with smaller market shares held by Airtel Money and Telkom's T-Kash.
+
+For payout products, the operational reality is:
+
+Primary rail: M-Pesa mobile money wallet payouts,
+
+Secondary rail: Bank transfers (especially for high-value payouts to formal businesses).
+
+## 2. Settlement methods available
+
+| Method | Description |
+|---|---|
+| M-Pesa Wallet Payouts (Safaricom) | Real-time wallet-to-wallet or wallet-to-bank transfers via M-Pesa APIs. |
+| Bank Transfers | Used mainly for higher-value or business payments, slower than mobile money. |
+
+<Note>
+  In retail and small SME payouts, M-Pesa dominance is absolute.
+</Note>
+
+## 3. Beneficiary validation standards
+
+Confirm a destination resolves before paying it with [Account Lookup](/api-reference/payouts/account-lookup); bank and mobile-money codes come from [Get Banks](/api-reference/payouts/banks-by-country).
+
+| Type | Validation Process |
+|---|---|
+| M-Pesa Wallets | Validate mobile number format (07xx xxx xxx). Confirm wallet registration status (through API where available). |
+| Bank Accounts | Validate account number structure (varies by bank), confirm bank codes, sometimes require manual beneficiary validation depending on integration partner. |
+|   | require manual beneficiary validation depending on integration partner. |
+
+## Best practices for M-Pesa validation
+
+Normalize phone numbers: Ensure numbers are processed as 07xxxxxxxx, no country code at input (normalize to +2547xxxxxxxx if needed internally).
+
+Carrier Mapping: Detect and validate Safaricom vs Airtel vs Telkom.
+
+Wallet Status Check: Confirm that wallet is active, not closed, frozen, or under KYC restriction.
+
+Display beneficiary name: Retrieve and show user wallet name if API allows..
+
+## 4. Wallet tiering and transaction limits
+
+M-Pesa wallets have tiered limits based on KYC level. The corridor min/max Bitnob enforces comes from [Get Limits](/api-reference/payouts/payout-limits):
+
+| Wallet Type | Limitation |
+|---|---|
+| Standard Consumer Wallet | Max single transaction KES 150,000 ($1,000), Max daily total KES 300,000 ($2,000). |
+| SME / Business Wallets (Lipa na M-Pesa, Business Tills) | Higher transaction and balance limits, designed for merchants. |
+
+Impact on Payouts:
+
+Payouts exceeding KES 150,000 must be split onto multiple transactions automatically.
+
+Users may hit daily caps if many payouts occur in a day: plan for progressive payouts if necessary.
+
+## 5. Payout timing expectations
+
+| Phase | Expected Time |
+|---|---|
+| Funding Confirmation (Bitcoin/Stablecoin) | \<15 minutes typically (network dependent). |
+| M-Pesa Wallet Payout Processing | Real-time to under 2 minutes under normal conditions. |
+| Bank Transfer Processing | Same day or next day depending on clearing hours and banks. |
+
+## 6. Common failure modes
+
+| Failure Mode | Description | Response Strategy |
+|---|---|---|
+| Invalid Mobile Number | Wrong format, non-Safaricom number for M-Pesa payout. | Normalize and validate carrier pre-payout. |
+| Inactive Wallet | Wallet closed, suspended, or deregistered. | Pre-validate wallet status if API available; handle failures and refund quickly. |
+| Transaction Limit Exceeded | Payout above KES 150,000 single transfer limit. | Automatically split large payouts into compliant chunks. |
+| User Daily Limit Reached | User has reached daily wallet cap. | Notify user; retry payout the following day automatically or with consent. |
+| Mobile Money Rail Downtime | Rare Safaricom system maintenance or overload. | Implement retry logic with exponential backoff. Communicate delay to users immediately if persistent. |
+
+## 7. Liquidity management considerations
+
+Maintain KES liquidity buffers separately from mobile money float. (M-Pesa agent cash-out networks are liquid, but KES liquidity must be managed separately for settlement.)
+
+FX Volatility Management: Kenyan Shilling (KES) is generally more stable than NGN or GHS, but large BTC or USDT conversions should still account for minor volatility across days.
+
+Mobile Money Agent Liquidity: Typically strong in urban centers, weaker in rural areas. Plan for agent liquidity challenges if payouts are intended for rural distribution.
+
+## 8. Operational best practices for Kenya corridor
+
+| Area | Recommendation |
+|---|---|
+| Validation | Always validate mobile number structure and match to carrier. |
+| Limit Handling | Auto-split payouts exceeding KES 150,000. |
+| Error Monitoring | Monitor M-Pesa error codes (e.g., insufficient funds, inactive wallet) live. |
+| Retry Strategies | Implement safe retries for temporary mobile network issues (max 3 retries over 1 hour). |
+| User Notifications | Proactively notify users if payouts must be split or delayed due to system issues. |
+| Corridor Monitoring | Track Safaricom system status if possible; rare downtime windows (~midnight to 5am local). |
+
+## 9. Mobile money networks and prefixes in Kenya
+
+| Network | Prefix Examples |
+|---|---|
+| Safaricom (M-Pesa) | 070, 071, 072, 074, 075 |
+| Airtel Money | 073, 078 |
+| Telkom T-Kash | 077 |
+
+For M-Pesa payouts, prioritize Safaricom prefixes unless Airtel/Telkom explicitly supported and integrated separately.
+
+## 10. Quick reference table
+
+| Field | Value |
+|---|---|
+| Primary Rail | M-Pesa Mobile Money (Safaricom) |
+| Standard Wallet Format | 07xxxxxxxx |
+| SLA (Normal Conditions) | 95%+ payouts under 2 minutes |
+| Main Risks | Transaction limit splits, mobile network outages, inactive wallets |
+| Reversal Timing | Instant (majority) or under 24 hours (rare exceptions) |
+| Recommended Liquidity Buffer | 2–3x daily payout volume in KES |
+
+Kenya’s M-Pesa ecosystem provides near-perfect conditions for reliable, fast mobile payouts but only for platforms that properly respect:
+
+- Wallet tier limits,
+- Carrier prefix validations,
+- Rail downtime contingencies,
+- Urban vs rural liquidity patterns.
+
+Operational excellence in the Kenya corridor means building silent, resilient payout systems that handle splitting, retries, and transparency automatically.

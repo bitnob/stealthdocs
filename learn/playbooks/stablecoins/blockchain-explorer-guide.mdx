@@ -1,0 +1,165 @@
+---
+title: "Blockchain explorer guide"
+description: "How to use block explorers to confirm transfers, read confirmation depth, and diagnose stuck transactions."
+---
+How to confidently investigate, confirm, and troubleshoot stablecoin transactions across supported chains.
+
+## Why this matters
+
+Every stablecoin transaction, deposit or payout, touches a blockchain. Start from the [transaction record](/api-reference/transactions/get-transaction-by-id) in the API, then confirm it on-chain. Explorers are your eyes on-chain, allowing your team to:
+
+- Confirm if a transfer happened
+- Understand why a deposit hasn’t been credited
+- Catch customer mistakes early (wrong token, wrong chain, failed tx)
+- Backtrace issues without waiting on engineering
+
+With Bitnob supporting multiple chains, your Ops, Finance, and Support teams need to know how to read each explorer and interpret key transaction signals correctly.
+
+## What is a blockchain explorer?
+
+A blockchain explorer is a real-time search engine for blockchains. It lets you:
+
+- Look up wallet addresses, including the deposit addresses you [issued](/api-reference/addresses/generate-address) through Bitnob
+- View stablecoin transfers (e.g. USDT, USDC)
+- See whether a transaction is confirmed
+- Decode failed transactions, gas used, and token details
+- Spot errors like wrong chain or unsupported token usage
+
+Think of it like your Stripe dashboard’s activity log, but public, transparent, and immutable.
+
+## How to investigate a transaction
+
+Let’s say a customer says:
+
+> “I sent \$100 USDT to my deposit address, but I haven’t received anything.”
+
+Your process:
+
+**Step 1: Ask for the transaction hash (txHash)**
+
+Tell them:
+
+> “Please share the transaction hash from your wallet or exchange. It’s a long string like 0xabc... or TXabc... depending on the chain you used.”
+
+**Step 2: Paste it into the right explorer**
+
+| Chain | Explorer |
+|---|---|
+| Ethereum | https://etherscan.io |
+| BSC | https://bscscan.com |
+| Polygon | https://polygonscan.com |
+| Tron | https://tronscan.org |
+| Solana | https://solscan.io |
+| TON | https://tonscan.org |
+| Arbitrum | https://arbiscan.io |
+| Base | https://basescan.org |
+| Optimism | https://optimistic.etherscan.io |
+| Avalanche | https://avascan.info/ |
+| Plasma | https://plasmascan.to/ |
+
+If you don’t know which chain they used, you can guess from the txHash format:
+
+- 0x... → Ethereum, BSC, Polygon
+- TX... → Tron
+- Base58 → Solana
+- EQ... or base64 → TON
+
+## What to look for
+
+Compare each of these against the Bitnob side of the record: the hash, amount, chain and address fields on the [webhook payload](/api-reference/addresses/webhooks#webhook), or on the [transaction record](/api-reference/transactions/get-transaction-by-id).
+
+| Section | What to Look for | Why It’s Important |
+|---|---|---|
+| Status | Success or Confirmed | Tells you the tx was accepted by the chain |
+| Confirmations | 15 (ETH, BSC), 19 (Tron), 1 (Solana) | Less than required = Bitnob won’t credit it |
+| To Address | Must match the Bitnob deposit address | If wrong, funds are unrecoverable |
+| Token Used | Must be real USDT/USDC, not a fake copy | Check contract address |
+| Token Transfer | Found in a Token tab (ERC-20, BEP-20, SPL) | Stablecoin transfers live here |
+| Amount | Match against what was expected (e.g., $100) | Validate value integrity |
+
+## Explorer examples
+
+### Ethereum / BSC / Polygon
+
+- Use “ERC-20 Token Txns” or “BEP-20 Token Txns” tab
+- Confirm USDT contract matches official one
+- USDT (BSC): `0x55d398326f99059ff775485246999027b3197955`
+- Look at gas price if tx failed
+- Reverts often say why: “out of gas”, “invalid opcode”
+
+### Tron
+
+- Use Tronscan.org
+- Check “TRC-20 Transfer” tab
+- Confirm 19 confirmations
+- Address format: starts with T
+
+Watch out for:
+
+- Token sent using TRX instead of USDT
+- Wrong memo if customer used an exchange
+
+### Solana
+
+- Use Solscan.io
+- Paste the address or txHash
+- Confirm token is USDT in the “Token Transfers” list
+- Finality is almost instant (1 confirmation)
+
+## Teach through examples
+
+### Confirmed deposit (Ethereum)
+
+- Status: Success
+- To: Bitnob-issued address
+- Confirmations: 18
+- Token: USDT
+- Contract: Matches official USDT ERC-20
+
+→ Webhook should have been emitted, wallet should be credited.
+
+### Wrong chain
+
+Customer was given a Tron USDT address (TRC-20), but they sent via Ethereum (ERC-20).
+
+**How to detect:**
+
+- Their txHash starts with 0x...
+- It only shows activity on etherscan.io, nothing on Tronscan
+- Bitnob didn’t detect anything → the address wasn’t valid on Ethereum
+
+**Response:**
+
+> "You sent USDT using Ethereum, but the address we gave you only works for USDT on Tron. These are separate networks. Unfortunately, the funds may be lost."
+
+### Stuck pending payout
+
+A transfer from Bitnob to an external wallet has been stuck in pending for 20+ minutes.
+
+**Steps:**
+
+1. Search for txHash on explorer
+2. Check:
+   - Is the tx still pending? → network congestion
+   - Did it fail? → out of gas, contract revert
+   - Was it never broadcast? → contact engineering
+3. Retry or escalate via reference ID and chain
+
+## Visual cheatsheet
+
+| Chain | Address Format | Txhash Format | Token Tab Name |
+|---|---|---|---|
+| Ethereum | 0x... | 0x... | ERC-20 Token Txns |
+| BSC | 0x... | 0x... | BEP-20 Token Txns |
+| Polygon | 0x... | 0x... | ERC-20 Token Txns |
+| Tron | T... | TX... | TRC-20 Transfers |
+| Solana | base58 | base58 | Token Transfers |
+| TON | EQ..., hex | base64 or hex | Jetton Activity |
+
+## Bonus tips for ops dashboards
+
+- Include "View on Explorer" button in every transaction record, built from the hash returned by [Get All Transactions](/api-reference/transactions/list-transactions)
+- Show a “Copy txHash” shortcut
+- Auto-detect incorrect confirmations and flag them
+- Flag tokens that don’t match official contracts
+- Add internal note: Explorer confidence: ✅ Confirmed / ⚠️ Not enough confirmations / ❌ Wrong chain

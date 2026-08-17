@@ -1,0 +1,134 @@
+---
+title: "Module 3: Wallets and addresses in Bitcoin Core"
+description: "Wallet management from the CLI: creating and loading wallets, generating address types, and labeling addresses for tracking."
+---
+## Learning objectives
+
+- Create and load Bitcoin Core wallets via the CLI
+- Generate Bech32 and legacy-style addresses
+- Understand the difference between active and watch-only wallets
+- Use labels to track address purposes or user flows
+
+## Creating and loading wallets
+
+Bitcoin Core supports multiple wallets.
+
+Create a new wallet:
+
+```bash
+bitcoin-cli -regtest createwallet "user_wallet"
+```
+
+This:
+
+- Creates a directory at ~/.bitcoin/regtest/wallets/user_wallet
+- Initializes a keypool and metadata
+- Loads the wallet into memory automatically
+
+List currently loaded wallets:
+
+```bash
+bitcoin-cli -regtest listwallets
+```
+
+Load an existing wallet manually:
+
+```bash
+bitcoin-cli -regtest loadwallet "user_wallet"
+```
+
+<Info>
+  Wallets must be loaded to interact with them (e.g. send, getbalance, generate addresses).
+</Info>
+
+## Generating new addresses
+
+Once a wallet is loaded, generate a new address:
+
+```bash
+bitcoin-cli -regtest getnewaddress
+```
+
+To specify a label (more on this below):
+
+```bash
+bitcoin-cli -regtest getnewaddress "payroll"
+```
+
+To choose an address format:
+
+```bash
+bitcoin-cli -regtest getnewaddress "" bech32
+bitcoin-cli -regtest getnewaddress "" legacy
+```
+
+Saution:
+
+Wallets must be loaded to interact with them (e.g. send, getbalance, generate addresses).
+
+## Address formats: Bech32 vs legacy
+
+| Format | Cli String | Looks Like | Pros |
+|---|---|---|---|
+| Bech32 | bech32 | bc1... | Lower fees, native SegWit, modern |
+| P2SH | p2sh-segwit | 3... | SegWit wrapped in P2SH |
+| Legacy | legacy | 1... | High fees, no SegWit support |
+
+In production, always prefer Bech32 unless interacting with legacy systems.
+
+## Watching vs active wallets
+
+Active wallets:
+
+- Contain private keys
+- Can sign and spend
+
+Watch-only wallets:
+
+- Only store addresses (public keys)
+- Cannot spend, used for audit or monitoring
+
+Add a watch-only address:
+
+```bash
+bitcoin-cli -regtest importaddress <address> "external" false
+```
+
+Use listunspent or getbalance to see funds received to that address.
+
+## Using labels for addresses
+
+Labels help you track usage or assign context to addresses.
+
+```bash
+bitcoin-cli -regtest getnewaddress "savings"
+```
+
+Now you can query:
+
+```bash
+bitcoin-cli -regtest getaddressesbylabel "savings"
+```
+
+Labels are stored per-wallet. Use them to track:
+
+- Payment types (e.g. salary, invoice)
+- Customer IDs
+- Customer IDs Internal routing (e.g. swap_funding)
+
+## Activity
+
+Run the following:
+
+1. Create a wallet: demo_wallet
+2. Load it if needed: loadwallet demo_wallet
+3. Generate one Bech32 and one legacy address.
+4. Add a watch-only address for a friend’s wallet (replace \<friends_address\> with an actual address).
+5. Label two addresses: one for merchant, one for salary.
+
+Bonus:
+
+```bash
+bitcoin-cli -regtest getwalletinfo
+bitcoin-cli -regtest listreceivedbylabel
+```

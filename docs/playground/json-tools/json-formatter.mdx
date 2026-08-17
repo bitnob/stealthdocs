@@ -1,0 +1,34 @@
+---
+title: "JSON formatter"
+description: "Pretty-printing makes nested API payloads readable. Format JSON with your preferred indentation, optionally sorting keys for stable diffs."
+---
+
+import { JsonFormatter } from "/snippets/playground/json-tools.jsx";
+
+<JsonFormatter />
+
+Minified JSON is what APIs send over the wire, but it is nearly unreadable once a payload nests more than a level or two. Formatting adds the whitespace back so you can follow the structure while debugging a webhook or an error response.
+
+## Sorting keys
+
+JSON objects have no guaranteed key order, so two servers can return the same data in different orders. Sorting keys alphabetically gives you a stable rendering, which makes line-by-line diffs meaningful.
+
+## Formatting in code
+
+```javascript
+JSON.stringify(payload, null, 2);
+```
+
+```python
+import json
+print(json.dumps(payload, indent=2, sort_keys=True))
+```
+
+```bash
+# jq formats by default
+curl -s https://api.bitnob.com/api/payouts | jq
+```
+
+<Note>
+  Formatting only changes whitespace. Values, types, and key order (unless you sort) are preserved exactly, so a formatted payload still verifies against the same signature only if you re-sign it. Signatures are computed over the exact bytes sent.
+</Note>

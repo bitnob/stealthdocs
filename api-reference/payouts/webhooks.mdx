@@ -1,0 +1,292 @@
+---
+title: "Webhooks"
+description: "Payout event types, payload shapes, and how to verify and acknowledge each delivery."
+---
+Learn how to listen for transactions that happen on your account
+
+A webhook is a URL on your server where we send payloads for transaction events. For example, if you implement webhooks, we will immediately notify your server with a btc.lightning.received.success event Once a lightning payment is received. Whenever you receive a webhook notification from us, return a 200 OK to avoid resending the same event again from our server.
+
+## Verifying events
+
+Verifying that these events come from Bitnob is necessary to avoid creating transactions due to a fraudulent event.
+
+To verify events, validate the **x-bitnob-signature** header sent with the event. The HMAC SHA512 signature is the event payload signed with your **secret key.**
+
+### Notification retries
+
+When posting notifications, we expect to receive a 200 response code from you. If the response code is not 200, we retry sending the event 3 times after the first failure.
+
+This way, whenever you experience downtime on your end, your updates will still be sent.
+
+***Don't rely on webhooks entirely***
+
+<Note>
+  We recommend that you set up a service to always query transactions, in the event that webhooks keep failing.
+</Note>
+
+### Testing webhooks
+
+Since notifications must always be available on a publicly accessible URL, you are likely to run into issues while starting to build your application in a local environment. You can get around this by using a tool like [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/)
+
+Create a tunnel, and update the new webhook URL setting on your dashboard. Only do this in your test environment to avoid leaking data to the public.
+
+```javascript
+const crypto = require('crypto');
+const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
+// Using Express
+app.post("/webhook_url", function(req, res) {
+  //validate event
+  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
+  if (hash == req.headers['x-bitnob-signature']) {
+  // Retrieve the request's body
+  const event = req.body;
+  // Do something with event  
+  }
+  res.send(200);
+});
+```
+
+## Source IPs
+
+If your firewall restricts inbound traffic, allow requests from the addresses below so our events can reach your endpoint.
+
+| Ip Address | Use |
+|---|---|
+| 18.171.51.218 | Webhook delivery |
+| 13.134.154.133 | Webhook delivery |
+
+These addresses can change. We announce changes ahead of time, but an allowlist is not a substitute for verifying the **x-bitnob-signature** header. Signature verification is the check that stays correct even if our infrastructure moves.
+
+<Warning>
+  **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
+</Warning>
+
+```nginx
+location /webhook_url {
+  allow 18.171.51.218;
+  allow 13.134.154.133;
+  deny  all;
+}
+```
+
+### Payout webhooks
+
+Payout webhooks track a payout created through the payouts API (quote → initialize → finalize) as it moves toward settlement. Every event carries the payout record itself, so the field names match the payouts API response.
+
+### Payout initialized
+
+Fired when a payout has been initialized against a quote and accepted for processing. Settlement has not happened yet: wait for **payouts.withdrawal.success** before treating the funds as delivered.
+
+<Note>
+ `data.status` on payout webhooks is the event outcome, lowercase (`initiated`, `processing`, `success`, `expired`. It is **not** the payout record's lifecycle status returned by **Get Payout**, which is uppercase and uses a different vocabulary (`QUOTE` → `INITIATED` → `PENDING` → `PROCESSING` → `COMPLETED` / `FAILED`). Check the `event` field to decide how to handle each webhook), not `data.status`.
+</Note>
+
+1. `event` (string)
+
+   Webhook event name. 'payouts.initialized' indicates the payout was accepted for processing.
+
+2. `event_id` (uuid)
+
+   Unique ID for this webhook delivery. Use it to de-duplicate events on retries.
+
+3. `data.id` (uuid)
+
+   The payout's internal identifier, the same id returned by Initialize / Finalize and accepted by GET /api/payouts/:id.
+
+4. `data.quote_id` (string)
+
+   The quote this payout was created from, e.g. 'QT2_21434949'.
+
+5. `data.company_id` (uuid)
+
+   The UUID of the company that owns the payout.
+
+6. `data.reference` (string)
+
+   Your reference for the payout, echoed back for reconciliation.
+
+7. `data.status` (string)
+
+   Outcome carried by this event. 'initiated' on payouts.initialized.
+
+8. `data.from_asset` (string)
+
+   The crypto asset debited, lowercase. For example, 'btc', 'usdt'.
+
+9. `data.to_currency` (string)
+
+   The fiat currency to be paid out, lowercase. For example, 'ngn'.
+
+10. `data.amount` (string)
+
+   Amount debited in from_asset.
+
+11. `data.settlement_amount` (string)
+
+   Amount to be credited to the beneficiary in to_currency.
+
+12. `data.fees` (string)
+
+   Fee charged for processing the payout, in from_asset.
+
+13. `data.beneficiary` (object)
+
+   The destination the funds are headed to. Contains country, bank_code and a masked account_number (e.g. '****7654').
+
+14. `data.created_at` (timestamp)
+
+   When the payout record was created (ISO 8601, UTC).
+
+15. `data.updated_at` (timestamp)
+
+When the payout record was last updated (ISO 8601, UTC).
+
+```json
+{
+  "event": "payouts.initialized",
+  "event_id": "802561d3-78fa-4436-a3cc-fdbebe4772ed",
+  "data": {
+    "id": "019f8132-4969-7e63-a2da-c439ace1613d",
+    "quote_id": "QT2_21434859",
+    "company_id": "8263c9991-6c68-477b-bd12-c759rjtg",
+    "reference": "6c9ace6b-891a-4b91-bff4-8bfdh784jc3f",
+    "status": "initiated",
+    "from_asset": "btc",
+    "to_currency": "ngn",
+    "amount": "0.00018555",
+    "settlement_amount": "16823.2",
+    "fees": "0",
+    "beneficiary": {
+      "country": "ng",
+      "bank_code": "100004",
+      "account_number": "****3123"
+    },
+    "created_at": "2026-07-20T20:23:04.297953Z",
+    "updated_at": "2026-07-20T20:23:25.444269082Z"
+  }
+}
+```
+
+### Payout processing
+
+Fired when the payout has been picked up by the settlement rail and is on its way to the beneficiary. This is an in-flight update, not a terminal state: wait for **payouts.withdrawal.success** before treating the funds as delivered.
+
+*Same fields as Payout initialized.*
+
+The payload carries the same fields as [Payout Initialized](#payout-webhooks). Refer there for the per-field explanations. One difference:
+
+<ResponseField name="data.status" type="string">
+  'processing' on this event.
+
+  ```json
+  {
+    "event": "payouts.processing",
+    "event_id": "51ff21dc-9629-41b5-8771-9cbc0d670000",
+    "data": {
+      "id": "019f8330-71e6-7649-a382-2209fd73b56f",
+      "quote_id": "QT2_21439667",
+      "company_id": "9876543-6c68-477b-bd95-769nn698",
+      "reference": "4fb1e02e-1234-467a-b91b-3a18dc000000",
+      "status": "processing",
+      "from_asset": "usdt",
+      "to_currency": "ngn",
+      "amount": "1.801875",
+      "settlement_amount": "2500",
+      "fees": "0",
+      "beneficiary": {
+        "country": "ng",
+        "bank_code": "100004",
+        "account_number": "****4000"
+      },
+      "created_at": "2026-07-21T05:40:18.02242Z",
+      "updated_at": "2026-07-21T05:40:47.522051588Z"
+    }
+  }
+  ```
+</ResponseField>
+
+### Payout withdrawal successful
+
+Fired when the payout has settled to the beneficiary. This is the event to act on when crediting an order or marking a transfer complete.
+
+*Same fields as Payout initialized.*
+
+The payload carries the same fields as [Payout Initialized](#payout-webhooks). Refer there for the per-field explanations. Two differences:
+
+1. `data.status` (string)
+
+   'success' on this event, rather than 'initiated'.
+
+2. `data.completed_at` (timestamp)
+
+When the payout reached its terminal state. Here, when settlement completed (ISO 8601, UTC). Absent while the payout is still in flight.
+
+```json
+{
+  "event": "payouts.withdrawal.success",
+  "event_id": "d9c4758ub-5e93-4cdf-bb123-frt474865",
+  "data": {
+    "id": "019f812d-ed2c-7f17-a2e9-12435e670813",
+    "quote_id": "QT2_21434859",
+    "company_id": "9876543-6c68-477b-bd95-769nn698",
+    "reference": "76543-1234-4304-869j-3a98e85f0812",
+    "status": "success",
+    "from_asset": "usdt",
+    "to_currency": "ngn",
+    "amount": "100.988948",
+    "settlement_amount": "140174.8",
+    "fees": "0",
+    "beneficiary": {
+      "country": "ng",
+      "bank_code": "100004",
+      "account_number": "****3001"
+    },
+    "created_at": "2026-07-20T20:18:18.541002Z",
+    "updated_at": "2026-07-20T20:18:39.515031203Z",
+    "completed_at": "2026-07-20T20:18:39.515031203Z"
+  }
+}
+```
+
+### Payout withdrawal expired
+
+Fired when a payout was not completed before its quote expired. No funds were settled to the beneficiary, to retry, create a fresh quote and initialize again.
+
+*Same fields as Payout initialized.*
+
+The payload carries the same fields as [Payout Initialized](#payout-webhooks). Refer there for the per-field explanations. Differences:
+
+1. `data.status` (string)
+
+   'expired' on this event.
+
+2. `data.completed_at` (timestamp)
+
+   When the payout reached its terminal state. Here, when it expired (ISO 8601, UTC).
+
+3. `data.payment_reason` (string)
+
+The payment_reason you supplied on Initialize, echoed back. For example, 'Crypto offramp'. Present when one was set.
+
+```json
+{
+  "event": "payouts.withdrawal.expired",
+  "event_id": "0756585e-8oa1-4eb8-a9aa-85957450",
+  "data": {
+    "id": "08565964-01b9-8801-b123-123456789",
+    "quote_id": "QT2_21434706",
+    "company_id": "c234567-4117-45be-456-123456789",
+    "reference": "12345678-c888-0987-1234-2435464844",
+    "status": "expired",
+    "from_asset": "usdc",
+    "to_currency": "ngn",
+    "amount": "25.795811",
+    "settlement_amount": "35804.11",
+    "fees": "0",
+    "payment_reason": "Crypto offramp",
+    "created_at": "2026-07-20T20:05:17.371329Z",
+    "updated_at": "2026-07-20T20:24:01.352781396Z",
+    "completed_at": "2026-07-20T20:24:01.352781396Z"
+  }
+}
+```

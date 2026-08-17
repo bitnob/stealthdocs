@@ -1,0 +1,148 @@
+---
+title: "Module 9: Compliance, PCI-DSS, and scheme requirements"
+description: "PCI-DSS and scheme requirements for virtual card programmes, and the controls auditors expect."
+---
+## Objective
+
+This module equips engineering, compliance, product, and executive teams with a clear understanding of:
+
+- What compliance frameworks (like PCI-DSS) apply to virtual card systems
+- How Visa, Mastercard, and other scheme rules affect what you build
+- How to stay ahead of audits, regulator queries, and partner evaluations
+- What technical and process controls must be in place to be compliant and audit-ready
+
+## Understanding PCI-DSS for virtual cards
+
+PCI-DSS (Payment Card Industry Data Security Standard) is the global benchmark for how cardholder data is stored, processed, and transmitted.
+
+While your system may not be storing full PAN/CVV (as cards are issued via a licensed third party), you may still:
+
+- Display partial card data
+- Transmit data during card creation, top-up, or spend
+- Log metadata (e.g. last 4 digits, BIN, MCC)
+- Proxy card information through your frontend or backend
+
+**Your PCI responsibilities (as a card distributor or integrator):**
+
+| Area | Minimum Required |
+|---|---|
+| PAN handling | Never store or transmit full PAN/CVV unencrypted |
+| Logging | No PAN/CVV in logs or plaintext |
+| Transport | Enforce HTTPS with TLS 1.2+ |
+| Access Control | Role-based controls and encryption at rest |
+| Key Management | Rotate secrets and API keys frequently |
+| System Monitoring | Audit access to card-related APIs and UIs |
+| Staff Training | Annual PCI awareness training for devs and support |
+
+## Card scheme rules (Visa, Mastercard, etc.)
+
+Your issuing partner is bound by Visa and Mastercard scheme rules, and so are you indirectly.
+
+**Key expectations:**
+
+| Area | Rule |
+|---|---|
+| BIN Usage | BIN must align with use case: prepaid, debit, consumer/corporate |
+| MCC Blocking | Certain MCCs (6051, 7995, 4829) require explicit control |
+| Refund Handling | Refunds must not be routed in a way that creates AML risk |
+| Chargeback Handling | Must respond to disputes within scheme SLA (typically 30 days) |
+| Cross-Border Transactions | Must inform users of FX and apply correct markup |
+| Sanctions & Jurisdiction | Cannot issue to or support users from embargoed countries |
+| Scheme Reporting | Volume, dispute rate, chargeback ratios must be monitored and reported |
+
+If your platform enables top-up → spend → withdraw, it may fall under stored value or e-money compliance zones, which triggers additional local obligations (e.g., in the EU, UK, or Nigeria).
+
+## Examples of compliance failures
+
+| Case | What Happened | Consequence |
+|---|---|---|
+| Stored PAN in logs | Dev environment captured PAN in console output | PCI breach, potential fine |
+| Unauthorized MCC use | Enabled card for MCC 6051 | Scheme compliance violation |
+| Delayed chargeback response | Failed to respond in 30-day SLA | Merchant debited, issuer penalized |
+| Refund to terminated card | Issued refund to float, no audit trail | Treasury exposure, audit gap |
+
+## Regulatory zones that may apply
+
+Even if you're not directly licensed, your platform must design for:
+
+| Jurisdiction | Risk |
+|---|---|
+| US | Stored value, prepaid compliance (FinCEN) |
+| EU | PSD2 and e-money directive (for float handling) |
+| Nigeria | CBN e-wallet and card issuance circulars |
+| UK | FCA oversight for distribution models |
+| India | RBI rules for prepaid instruments |
+
+You are a regulated surface, even if not a licensed entity. Design like you're regulated.
+
+## Partner due diligence readiness
+
+Issuers, banks, and card processors may request due diligence and audit responses. You must be able to demonstrate:
+
+- Secure card issuance processes
+- KYC enforcement prior to high-risk MCCs
+- Card freeze/terminate workflows
+- Refund reconciliation across wallet/float/card
+- Transparent ledger tracking and transaction matching
+- Chargeback handling playbooks
+
+## Developer & product responsibilities
+
+| Role | Responsibilities |
+|---|---|
+| Engineers | Never log or store PAN/CVV; verify TLS; sign webhooks; monitor access logs |
+| Product Managers | Verify MCC restrictions, spend limits, refund policies, user flow limits |
+| Compliance Officers | Maintain risk registry; monitor chargeback and refund logs |
+| Treasury | Ensure float reconciliation and partner compliance with FX/cross-border rules |
+| Support | Know SLAs for refunds, chargebacks, and reversals |
+
+## Audit checklist (internal readiness)
+
+- TLS 1.2+ enforced on all endpoints
+- No PAN/CVV in logs or response bodies
+- 2FA enabled for all admin/card dashboard access
+- Internal card operations are audit-logged
+- Webhooks signed and verified
+- Refund/chargeback SLAs met 99% of the time
+- KYC enforced before spending on MCC 6051, 7995, 4829
+- Partner card scheme documentation accessible
+- Float exposure reviewed weekly
+- Compliance reviews logged quarterly
+
+## Module 9 knowledge check
+
+### 1. What does PCI-DSS primarily govern?
+
+A. Merchant payouts
+
+B. Card issuance business models
+
+C. Storage and transmission of cardholder data
+
+D. Revenue reporting
+
+**Answer:** C
+
+### 2. What must you never store or log?
+
+A. Merchant name
+
+B. PAN/CVV in plaintext
+
+C. MCC codes
+
+D. BIN metadata
+
+**Answer:** B
+
+### 3. Which MCCs are considered high-risk and require compliance safeguards?
+
+A. 5732 and 5812
+
+B. 7995, 6051, 4829
+
+C. 4411 and 4511
+
+D. 5045, 5065
+
+**Answer:** B

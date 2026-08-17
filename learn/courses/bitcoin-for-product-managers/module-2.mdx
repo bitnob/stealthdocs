@@ -1,0 +1,161 @@
+---
+title: "Module 2: Private keys, public keys, and Bitcoin addresses"
+description: "How keys, signatures, and addresses establish ownership, and what that means for wallet design."
+---
+## 2.1 Introduction
+
+Bitcoin ownership is not stored inside the blockchain. Ownership is based entirely on who can produce valid cryptographic signatures proving they have control of unspent Bitcoin outputs (UTXOs).
+
+The ability to create these signatures depends on private keys.
+
+Understanding private keys, public keys, and addresses, and how they are mathematically linked, is essential for designing, securing, and reasoning about Bitcoin wallets.
+
+## 2.2 What is a private key?
+
+A private key in Bitcoin is simply a random 256-bit number. It is often represented in hexadecimal format, a string of 64 characters (0–9, a–f).
+
+Example private key (in hex):
+
+```
+5d1c8a3b8db78c3ad34cb31b7cc64b99b05f97a2933eecc8a4977d9c21a3e0cc
+```
+
+Key facts:
+
+- Randomly generated.
+- Must be kept secret. Whoever knows it controls the associated Bitcoin.
+- Cannot be feasibly guessed or brute-forced (the keyspace is astronomically large).
+
+In Bitcoin:
+
+- Private key = ownership.
+- If a user loses their private key, they lose access to their Bitcoin permanently.
+- If a private key is exposed to an attacker, the attacker can spend the Bitcoin instantly.
+
+## 2.3 From private key to public key
+
+Using elliptic curve cryptography (specifically the secp256k1 curve), the private key can generate a public key.
+
+The public key is derived through a one-way mathematical function:
+
+- Easy to compute public key from private key.
+- Practically impossible to compute private key from public key.
+
+The public key acts like a "locking mechanism". Bitcoin transactions lock coins to public keys (via scripts).
+
+There are two common formats for public keys:
+
+- Compressed: 33 bytes (starting with 02 or 03)
+- Uncompressed: 65 bytes (rarely used today)
+
+Example compressed public key:
+
+```
+0293e28b78ac2b982e0a392d4d84cf30e52ec6081ccf6e343c8b0f3f2eefa06f7f
+```
+
+## 2.4 From public key to Bitcoin address
+
+To create a Bitcoin address from a public key:
+
+1. For Legacy and SegWit (v0) addresses, hash the public key using SHA-256, then RIPEMD-160. (Taproot skips this step and encodes the public key directly, which is why it uses the newer Bech32m format.)
+2. Add version prefixes depending on the address type (Legacy, SegWit, Taproot).
+3. Encode into a human-readable address format.
+
+Different Bitcoin address types:
+
+| Type | Prefix | Example Format |
+|---|---|---|
+| Legacy (P2PKH) | Starts with 1 | 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa |
+| SegWit (P2SH) | Starts with 3 | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy |
+| Native SegWit (Bech32) | Starts with bc1q | bc1qw508d6qe... |
+| Taproot (Bech32m) | Starts with bc1p | bc1p5cyxnuxmeuwuvkwfem96l5xu6s7kz8mz0w5d3r7c0f3z95zmsxqjqs4kdk |
+
+The address is what the user shares publicly to receive bitcoin. The private key remains secret and enables spending.
+
+**Flow diagram:**
+
+```
+Private Key
+   ↓
+Public Key
+   ↓
+Bitcoin Address
+```
+
+## 2.5 Private keys and seed phrases
+
+Managing raw private keys directly is dangerous and error-prone for users.
+
+Bitcoin wallets usually use a mnemonic seed phrase (based on BIP39 standard) to simplify key management.
+
+- 12 or 24 English words
+- Encodes the random entropy that can derive private keys deterministically
+- Easy for humans to back up securely
+
+Example 12-word seed phrase:
+
+```
+legal winner thank year wave sausage worth useful legal winner thank yellow
+```
+
+From this seed, the wallet can derive:
+
+- Master private keys
+- Public keys
+- Bitcoin addresses
+
+Seed phrases are the root of all control in a Bitcoin wallet.
+
+## 2.6 Critical properties to understand
+
+| Property | Why It Matters |
+|---|---|
+| Private keys must be kept absolutely secret | Losing control means losing Bitcoin. |
+| Public keys are safe to share (only indirectly through addresses) | No risk from sharing addresses. |
+| Addresses are disposable | Users can generate unlimited addresses safely. |
+| Seed phrases must be backed up securely | Loss of seed = permanent loss of bitcoin. |
+| Private keys are never stored on the blockchain | Only public information (addresses, scripts) is visible. |
+
+## 2.7 Product implications for wallet builders
+
+**Backup UX:** The most important product journey is the backup flow. Force users to backup the seed phrase properly during onboarding. Offer reminders and backup verification challenges (e.g., "Enter word 6 of 12").
+
+**Key storage:** Private keys should be encrypted on-device. Never transmit private keys over networks. If cloud backup is offered, encrypt the seed client-side before upload.
+
+**Recovery UX:** Wallet recovery is based entirely on entering the correct seed phrase. There is no server-side recovery unless you build a separate encrypted backup system.
+
+**Security warnings:** Users must be warned:
+
+- Never share their seed phrase.
+- Never enter their seed phrase into any unknown app or website.
+
+**Future-proofing:** Use libraries that allow multiple address formats (Legacy, SegWit, Taproot) from the same key material.
+
+## 2.8 Diagram: Full chain of control
+
+```
+Seed Phrase
+   ↓ (BIP39 decoding)
+Private Key
+   ↓ (Elliptic Curve math)
+Public Key
+   ↓ (Hashing and encoding)
+Bitcoin Address
+   ↓ (Association on blockchain)
+UTXO (Bitcoin funds at address)
+```
+
+## 2.9 PM reflection points
+
+If you are building or managing a Bitcoin wallet product:
+
+- Every product decision around wallet creation, backup, and recovery must respect the sacredness of the private key and seed phrase.
+- Users are not just "creating accounts". They are creating irreversible keys tied to real economic value.
+- Every seed lost is Bitcoin destroyed. Every seed leaked is Bitcoin stolen.
+- UX should guide users to act like custodians of serious money, because they are.
+- Product managers must design with the mentality that "every user is holding their own bank vault," not just "installing another app."
+
+## Module 2 complete
+
+We now have a solid, real understanding of how Bitcoin ownership works (how private keys, public keys, and addresses connect), and why wallets are critical key managers, not simple databases.

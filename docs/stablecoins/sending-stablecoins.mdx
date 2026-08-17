@@ -1,0 +1,74 @@
+---
+title: "Send stablecoins"
+description: "Outbound USDT and USDC to any address on a supported chain: destination validation, a unique reference, and confirmation from the transfer webhook."
+related:
+  - /docs/stablecoins/error-handling-and-failure-scenarios
+  - /docs/stablecoins/internal-wallet-to-wallet-transfers
+---
+
+Outbound transfers go through one endpoint regardless of chain. You name the destination, amount, token, and chain; Bitnob broadcasts, tracks confirmations, and reports the outcome as a webhook.
+
+The minimum send is $1. Sends draw on your balance, checked with [List balances](/api-reference/balances/list-balances), and network fees are deducted from it too.
+
+<Steps>
+  <Step title="Validate the destination">
+    Run [Validate address](/api-reference/addresses/validate-address) on any user-supplied address before submitting. It catches malformed addresses and chain mismatches, the one error class that is unrecoverable after broadcast.
+  </Step>
+  <Step title="Submit the withdrawal">
+    Full schema: [Initiate withdrawal](/api-reference/withdrawals/initiate-withdrawal).
+
+    ```http
+    POST /api/withdrawals
+    ```
+
+    ```json
+    {
+      "to_address": "TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN",
+      "amount": "2000000",
+      "currency": "USDT",
+      "chain": "tron",
+      "reference": "testing_012",
+      "description": "Vendor settlement"
+    }
+    ```
+
+    <ParamField body="to_address" type="string" required>
+      Recipient's on-chain address.
+    </ParamField>
+
+    <ParamField body="amount" type="string" required>
+      Amount in the token's smallest unit, 6 decimals: `"2000000"` is 2 USDT.
+    </ParamField>
+
+    <ParamField body="currency" type="string" required>
+      `USDT` or `USDC`.
+    </ParamField>
+
+    <ParamField body="chain" type="string" required>
+      Network to send over, for example `tron`, `ethereum`, `solana`. Sendable chains per token come from [Supported chains](/api-reference/addresses/supported-chains).
+    </ParamField>
+
+    <ParamField body="reference" type="string" required>
+      Your unique identifier, and the idempotency key: the same reference never sends twice.
+    </ParamField>
+
+    <ParamField body="description" type="string">
+      Free-text note for your records.
+    </ParamField>
+
+    The response returns the transfer in a pending state with fees visible in `centFees`. Pending is expected: broadcasting and confirmation happen asynchronously.
+  </Step>
+  <Step title="Confirm from the webhook">
+    `transfer.success` fires once the chain's confirmation threshold is met; `transfer.failed` if the transfer is rejected, reverted, or times out, with held funds returned to your balance. Act on the events rather than polling; [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a reference if you need to re-check one. See [Receive stablecoin webhooks](/docs/stablecoins/webhooks) for payloads and verification.
+  </Step>
+</Steps>
+
+## Sending on stellar
+
+Forward any memo the destination gives you exactly as provided; exchanges routinely require one, and a missing memo strands the funds at the destination's operations desk. Details under [Initiate withdrawal](/api-reference/withdrawals/initiate-withdrawal).
+
+## Keep fees legible
+
+Fees are dynamic per chain and visible per send in `centFees`. Two habits keep users happy: prefer low-fee chains, such as Tron or Polygon, for small amounts, and show the arithmetic in your UI: sending $1.00, network fee $0.01, recipient gets $0.99.
+
+For transfers between wallets on your own Bitnob account, skip the chain entirely: [internal transfers](/docs/stablecoins/internal-wallet-to-wallet-transfers) settle instantly with no gas.

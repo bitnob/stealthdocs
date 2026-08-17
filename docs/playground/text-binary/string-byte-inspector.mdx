@@ -1,0 +1,36 @@
+---
+title: "String byte inspector"
+description: "Characters, Unicode code points, and UTF-8 bytes shown side by side, for debugging length limits and encoding bugs."
+---
+
+import { StringByteInspector } from "/snippets/playground/text-binary.jsx";
+
+<StringByteInspector />
+
+This breaks a string into its three different lengths, which are easy to confuse and which cause real bugs when they disagree.
+
+| Measure | `👋 Hi` |
+|---|---|
+| UTF-16 code units (JavaScript `.length`) | 5 |
+| Unicode code points (actual characters) | 4 |
+| UTF-8 bytes (what you transmit) | 7 |
+
+## Why three numbers
+
+**JavaScript `.length` counts UTF-16 code units.** Characters outside the basic plane, including most emoji, are stored as two units (a surrogate pair), so `.length` overcounts them. `"👋".length` is 2.
+
+**Code points count real characters.** `[..."👋"].length` is 1, which is what a user would call one character.
+
+**Bytes are what cross the wire** and what a byte-limited database column measures.
+
+## The bugs this causes
+
+- Truncating at a UTF-16 offset can split a surrogate pair and produce an unpaired half, which renders as `�`.
+- A `VARCHAR(20)` that counts bytes rejects a 20-character string containing any accent or emoji.
+- A signature computed over one encoding will not verify against another. See [request signing](/api-reference/authentication/authentication).
+
+```javascript
+"👋".length;                              // 2  (UTF-16 units)
+[..."👋"].length;                         // 1  (code points)
+new TextEncoder().encode("👋").length;    // 4  (UTF-8 bytes)
+```

@@ -1,0 +1,89 @@
+---
+title: "Validate a beneficiary"
+description: "Beneficiary details are the leading cause of failed payouts. Resolve the destination country's requirements, bank codes, and account name before you initialize."
+related:
+  - /docs/payouts/error-handling
+  - /docs/payouts/corridor-specific-behavior
+---
+
+The local bank or mobile money operator is the first party that validates an account number, and by then your payout is already in flight. Failed delivery is the most common payout failure, and every case of it is avoidable with three lookups before you initialize.
+
+This guide assumes you can already make signed requests; see [Authentication](/api-reference/authentication/authentication) if not.
+
+<Steps>
+  <Step title="Confirm the destination is supported">
+
+```http
+GET {BASE_URL}/api/payouts/supported-countries
+```
+
+[Supported countries](/api-reference/payouts/supported-countries) returns the live country and channel matrix for your account. Read it at runtime rather than hardcoding: corridors are added and paused without notice.
+
+Then fetch the exact beneficiary fields the country needs:
+
+```http
+GET {BASE_URL}/api/payouts/supported-countries/NG
+```
+
+[Country requirements](/api-reference/payouts/country-requirements) returns the corridor's `destination_types` and, for each one, the field schema your `beneficiary` object must match. This is the authoritative source, including the per-country quirks like Australia's `bsb_number` or India's `IFSCode` documented in [Send a SWIFT payout](/docs/payouts/swift-payout).
+
+  </Step>
+  <Step title="Get valid institution codes">
+
+```http
+GET {BASE_URL}/api/payouts/banks/NG
+```
+
+[Banks by country](/api-reference/payouts/banks-by-country) returns bank names and codes for bank destinations, and mobile money providers for mobile money destinations. Never let users type a bank code by hand; present this list.
+
+Check the corridor's limits while you are here, so you can reject an out-of-range amount before quoting:
+
+```http
+GET {BASE_URL}/api/payouts/limits?country=NG&currency=NGN
+```
+
+  </Step>
+  <Step title="Resolve the account">
+
+[Account lookup](/api-reference/payouts/account-lookup) confirms the account exists and returns the name it resolves to.
+
+```http
+# Bank account, Nigeria
+GET {BASE_URL}/api/payouts/account-lookup?country=NG&account_number=0123456789&bank_code=058
+
+# Mobile money, Ghana (MTN)
+GET {BASE_URL}/api/payouts/account-lookup?country=GH&type=mobile_money&bank_code=MTN&account_number=233246838933
+```
+
+For mobile money, pass `type=mobile_money`, use the provider as `bank_code`, and give the phone number in international format as `account_number`.
+
+```json
+{
+  "success": true,
+  "message": "Beneficiary lookup completed",
+  "data": {
+    "account_name": "ESTHER AIDOO",
+    "account_number": "233246838933",
+    "bank_code": "",
+    "bank_name": "",
+    "country": "GH",
+    "is_verified": true
+  }
+}
+```
+
+Proceed only when `is_verified` is `true`, and show `account_name` to whoever is entering the details so they can confirm it is the person they mean. Mobile money lookups may return `bank_code` and `bank_name` empty; that is normal.
+
+  </Step>
+</Steps>
+
+## What this prevents
+
+| Skipped check | What goes wrong |
+|---|---|
+| Country requirements | Initialize is rejected with `INVALID_BENEFICIARY_DATA`, or worse, accepted with fields the rail later refuses. |
+| Bank list | A stale or mistyped bank code fails at the rail, after funding. |
+| Account lookup | The payout reaches `PROCESSING`, then fails at delivery, the slowest and most expensive place to fail. |
+| Limits | The quote is rejected with `AMOUNT_OUTSIDE_LIMITS` after the user has already committed to an amount in your UI. |
+
+Once the beneficiary resolves, continue with [Send your first payout](/docs/payouts/send-your-first-payout) or go straight to [Create quote](/api-reference/payouts/create-quote).

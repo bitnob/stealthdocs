@@ -1,0 +1,156 @@
+---
+title: "Module 8: Managing card limits"
+description: "The limit types available on a card, how to enforce them, and how schemes treat them."
+---
+## Learning objectives
+
+- Understand the different types of limits that can be applied to virtual cards
+- Learn how to set, enforce, and monitor these limits via API or configuration
+- Know how card schemes and issuers treat limits from a compliance standpoint
+- Design user experiences that clearly explain limits without causing friction
+- Use limits as tools for budget control, security, and tiered product offerings
+
+## Why card limits matter
+
+Virtual cards offer a flexible, programmable experience, but without limits, they become unpredictable and open to abuse.
+
+Card limits serve multiple critical roles:
+
+| Function | Why It Matters |
+|---|---|
+| Risk Control | Prevent over-spending, fraud, and abuse |
+| User Experience | Avoid failed payments due to unexpected caps |
+| Compliance | Satisfy issuer and regulatory expectations |
+| Budget Management | Enable businesses and individuals to spend within boundaries |
+| Revenue Modeling | Create account tiers based on allowable spend capacity |
+
+Without limits, you may find users draining float, triggering fraud systems, or facing chargeback risks.
+
+## Types of card limits
+
+| Limit Type | Description |
+|---|---|
+| Per Transaction Limit | Maximum amount allowed per transaction (e.g., $500) |
+| Daily Limit | Total spending allowed in 24 hours |
+| Monthly Limit | Cumulative spend limit per billing cycle |
+| Balance Cap | Maximum amount a card can hold (e.g., $50,000) |
+| Top-up Limit | Maximum funds added per top-up (e.g., $2,500) |
+| Velocity Controls | Restrict how many transactions can occur in a short time (e.g., 3 per minute) |
+
+Each of these can be enforced at the:
+
+- Platform level (your rules)
+- Card processor level (scheme rules)
+- Issuer level (compliance rules)
+
+## Where limits live in the system
+
+Depending on your integration design:
+
+- Some platforms set limits per card at creation
+- Others allow dynamic updates via an API (e.g., `PATCH /cards/:id/limits`)
+- In more advanced systems, limits are managed at the card user or wallet level instead of per card
+
+Always check what your issuing partner or API layer supports.
+
+## Design patterns for card limits
+
+Here are four common approaches you can adopt based on your product model:
+
+1. Fixed Limits per Tier
+
+2. Basic Plan → \$500/month
+
+   Pro Plan → \$2,000/month
+
+   Business → \$10,000/month
+
+3. **Pros:** Simple to implement
+
+4. **Cons:** Less flexible for power users
+
+5. Dynamic Budget Limits
+
+6. Assign a limit per card based on external input, e.g.:
+
+7. Monthly payout
+
+   Expense report
+
+   Saved amount in wallet
+
+8. This works well for budgeting and financial wellness products.
+
+9. User-Adjustable Limits
+
+10. Let users define their own daily or monthly limits through the UI.
+
+11. **Pros:** More control and customization
+
+12. **Cons:** Needs fraud safeguards and enforcement
+
+13. Real-Time Control via API
+
+14. Allow your backend to modify limits based on behavior, e.g.:
+
+15. Tighten limits after decline
+
+   Expand limits after successful spending history
+
+   Reset limits daily via job scheduler
+
+16. This offers the most automation, but is also the most complex to monitor.
+
+## Example API (illustrative)
+
+```json
+{
+  "cardId": "abc123",
+  "dailyLimit": 1000,
+  "transactionLimit": 500,
+  "balanceCap": 2000
+}
+```
+
+This structure may vary across platforms, but the goal is the same: define operational boundaries for the card.
+
+## UI recommendations
+
+| Element | Description |
+|---|---|
+| Limit progress bar | Show how close the user is to their daily/monthly cap |
+| Clear error message | “You’ve reached your daily limit of $500” |
+| Settings panel | Let users view or adjust their limits (if allowed) |
+| Explanation modal | Clarify why a payment failed due to a limit rule |
+| Tier upgrades | Allow users to unlock higher limits with verification or subscription |
+
+Good UX around limits builds confidence, especially in financial tools. Bad UX creates confusion and support burden.
+
+## Monitoring and alerts
+
+Internally, you should monitor:
+
+- Cards nearing their limits
+- Sudden usage spikes
+- Declines due to velocity rules
+- Platform float exposure from under-limited cards
+
+Set alerts or logs to review usage patterns and adjust rules as needed.
+
+## When to apply limits programmatically
+
+| Event | Action |
+|---|---|
+| User requests card | Apply default limits per tier |
+| User upgrades plan | Increase allowed monthly spend |
+| User has multiple declines | Decrease limit or freeze card |
+| Large top-up occurs | Trigger review if it exceeds threshold |
+| First successful spend | Allow graduated increase in limit after trust is built |
+
+## Recap
+
+- Limits are essential for safety, compliance, and user trust
+- Apply transaction, daily, and balance limits per card or user
+- Monitor usage to avoid silent failures and fraud risks
+- Use limits to offer differentiated plans and embedded finance models
+- Clearly explain limits in your app, silence causes confusion

@@ -1,0 +1,159 @@
+---
+title: "Module 15: Bitcoin security operations (SecOps) for companies"
+description: "Security operations for companies holding bitcoin: key protection, signing pipelines, and disaster recovery."
+---
+## 15.1 Introduction
+
+- Fraud detection,
+- Password resets,
+- Firewalls,
+- KYC.
+
+In Bitcoin, security means:
+
+- Protecting private keys at all costs,
+- Protecting transaction construction and broadcasting pipelines,
+- Surviving physical, network, and legal attacks,
+- Planning for disaster recovery under worst-case scenarios.
+
+If your Bitcoin platform fails at security once, there is no rollback, no undo, no bailouts. Bitcoin demands a level of security culture that most companies are not used to.
+
+This module will teach how to build real-world Bitcoin SecOps.
+
+## 15.2 Core Bitcoin security principles
+
+| Principle | Explanation |
+|---|---|
+| Keys = Bitcoin | Whoever controls private keys controls the Bitcoin. No recovery possible if lost or stolen. |
+| Decentralization of Risk | Single points of failure must be eliminated at all critical layers. |
+| Irreversible Loss | No authority (not Bitnob, not Bitcoin itself) can restore stolen or lost Bitcoin. |
+| Cold Storage is Sacred | Long-term funds must be isolated from online risks completely. |
+| Every Operational Step Must Be Auditable | Human mistakes, social engineering, and collusion risks must be minimized through process, not just technology. |
+
+## 15.3 Hot wallet vs cold storage security
+
+| Type | Key Characteristics |
+|---|---|
+| Hot Wallet | Live keys for immediate transaction signing. Accessible for real-time operations. Risky. Must be minimized. |
+| Cold Storage | Offline keys. No internet exposure. Used for long-term reserves and periodic hot wallet replenishments. Highly protected. |
+
+**Best practice: Asset allocation.** Keep \< 5% of bitcoin assets in hot wallets. Keep \> 95% of bitcoin assets in cold storage secured by multisig.
+
+## 15.4 Treasury security layers
+
+**Seed and key generation:**
+
+- Generate seeds offline on secure hardware (e.g., airgapped laptops, hardware wallets).
+- Use strong random entropy sources (dice rolls, hardware RNGs).
+
+**Cold wallet architecture:**
+
+- Multisig wallets (e.g., 2-of-3, 3-of-5 setups).
+- Distribute keys geographically and among independent operators.
+- No single device or person can move funds alone.
+
+**Hot wallet controls:**
+
+- Daily spend limits enforced programmatically.
+- Emergency "freeze" switch to disable hot wallet in case of breach.
+- Immediate audit logs for all hot wallet transactions.
+
+**Signing ceremony policies:**
+
+- Predefined, auditable procedures for moving funds from cold storage.
+- Multiple signers required in person (geographically distributed if possible).
+- Signed approvals logged securely, witnesses documented.
+
+**Disaster recovery:**
+
+- Secure backups of seeds, keys, and operational manuals stored separately.
+- Documented recovery steps for loss of signers, devices, or infrastructure.
+
+## 15.5 Key management best practices
+
+| Practice | Description |
+|---|---|
+| Use Hardware Wallets | Never store private keys on general-purpose laptops or phones. |
+| Multisig Everywhere | No single device or person should have full signing authority. |
+| Encrypt Sensitive Backups | Store backups (encrypted seed phrases, wallet descriptors) securely offline. |
+| Access Control Layers | Only authorized individuals can interact with production Bitcoin systems. |
+| Hardware Security Modules (HSMs) | For professional-grade security, use certified HSMs for hot wallet operations. |
+
+## 15.6 Staff security culture
+
+Even with the best technical systems, human failure is the biggest risk.
+
+**Best staff practices:**
+
+- Background checks for all operations staff.
+- Strict role separation (developers vs deployers vs signers vs auditors).
+- Security awareness training (phishing resistance, device hygiene, insider threat awareness).
+- Regular mandatory vacations for treasury operators (to detect embezzlement risk, inspired by banking practices).
+- No bring-your-own-device (BYOD) policies for treasury-related operations.
+
+## 15.7 Incident response playbooks
+
+| Scenario | Response |
+|---|---|
+| Hot Wallet Compromise | Immediate key rotation. Freeze new outgoing transactions. Move all accessible funds to emergency cold storage. |
+| Private Key Loss (Single Key in Multisig) | Rotate the key by creating a new multisig wallet and moving funds securely. |
+| Internal Security Breach | Lockdown all treasury operations. Perform full audit. Involve external security firms if necessary. |
+| Exchange Partner Failure (Liquidity Risk) | Activate alternative liquidity providers. Adjust user withdrawal expectations if necessary. |
+
+**Practice makes perfect:** You must simulate these incidents regularly, real drills, not just documentation.
+
+## 15.8 Regular security audits
+
+At a minimum:
+
+- Internal audits of bitcoin balances vs internal ledger balances weekly.
+- External security audits of custody systems annually.
+- Code audits for critical wallet and transaction broadcasting libraries.
+- Penetration testing of all APIs exposed to the internet.
+
+Optional but ideal:
+
+- Bug bounty programs (properly scoped to avoid abuse).
+- Formal Proof-of-Reserves attestation for user-facing companies.
+
+## 15.9 Legal and insurance considerations
+
+If you manage significant Bitcoin for others:
+
+- Evaluate Bitcoin-specific insurance policies (rare, expensive, but possible at large scale).
+- Consult legal teams on disaster recovery fiduciary duties.
+- Document formal custody responsibilities clearly (in Terms of Service and operational manuals).
+
+Understand that in most jurisdictions, losing user Bitcoin without best-effort security can trigger legal liability even without regulatory licensing.
+
+## 15.10 PM and product reflection points
+
+If you are a PM building Bitcoin features:
+
+- Every product feature that touches Bitcoin movement must go through security review.
+- Every new API that touches Bitcoin operations must assume malicious attack scenarios.
+- Every user-facing backup or recovery process must assume device loss or theft.
+- Every internal operation must be auditable, reviewable, non-repudiable.
+
+**Building vaults, not just apps:** In Bitcoin, you are not just building software. You are building vaults. Treat every feature like you are adding a vault door, not a mobile app button.
+
+## Module 15 complete
+
+You now understand real-world Bitcoin Security Operations (SecOps):
+
+- Key generation and management
+- Hot vs cold wallet architecture
+- Treasury signing ceremonies
+- Staff security culture
+- Incident response planning
+- Security audits and operational resilience
+
+Without this level of discipline, Bitcoin products eventually collapse. With this level of discipline, Bitcoin products become trusted institutions.
+
+## Quick recap
+
+You are now ready to:
+
+- Build serious Bitcoin user experiences [Module 14](/learn/courses/bitcoin-for-product-managers/module-14)
+- Run serious Bitcoin treasury and liquidity operations [Module 13](/learn/courses/bitcoin-for-product-managers/module-13)
+- Secure Bitcoin infrastructure at the operational level [Module 15](/learn/courses/bitcoin-for-product-managers/module-15)

@@ -1,0 +1,112 @@
+---
+title: "Support manual for integrator teams"
+description: "Customer questions, resolution templates, and support practices for teams running trading in their own product."
+---
+This manual is designed for integrator teams who are using Bitnob’s Trading API and want to support their own end customers. It includes an overview of how trading works, common customer questions, resolution templates, and best practices for integrating customer-facing support.
+
+## What your customers are doing
+
+Your end users may:
+
+1. Buy bitcoin using USDT
+2. Sell bitcoin to receive USDT
+3. Swap naira (NGN) for USDT, USDC, or Bitcoin, and cash out back to naira
+4. See real-time rates and confirm quotes
+5. Experience quote expirations or failed trades
+6. Receive funds in their wallets after trade execution
+
+As an integrator, you are their trading platform. You are responsible for presenting accurate pricing, managing quote expiry, handling errors gracefully, and explaining trade outcomes clearly.
+
+## What you need to know as a platform
+
+- Bitnob provides the infrastructure and guarantees trade execution integrity
+- You control: quote display, confirmation UX, wallet UI, and reference mapping
+- You will receive webhooks for every trade.completed and trade.failed event
+- You are responsible for balance management and user-facing messaging
+
+## Common end-User questions and how to answer them
+
+1. A. “Why did my trade fail?”
+
+   Possible Causes:
+
+- The quote expired before confirmation
+- You didn’t have enough balance
+- Your app didn’t submit a valid reference or quote ID
+
+   Recommended Answer:
+
+   > “We tried to execute your trade, but the rate had already expired or your balance was too low. Please refresh the quote and try again.”
+
+2. B. “Why didn’t I get the amount I expected?”
+
+   Possible Causes:
+
+- The rate changed before execution (if quote was not locked)
+- A spread or fee was applied by your platform
+
+   Recommended Answer:
+
+   > “We executed your trade at the most recent rate. If you want to lock a rate in the future, confirm your trade within about 10 seconds of quote generation.”
+
+3. C. “Where is my Bitcoin/USDT/naira?”
+
+   Resolution Checklist:
+
+- Confirm trade status using /api/trading/orders/:id
+- Verify webhook was received (trade.completed)
+- Show wallet transaction history or balance update in your UI
+
+   Recommended Answer:
+
+   > “Your trade completed successfully. The funds were credited to your wallet. Please check your balance or wallet history.”
+
+4. D. “Why do quotes expire so quickly?”
+
+Recommended Answer:
+
+> “To ensure fair pricing, quotes are valid for only about 10 seconds. This protects both you and the market from price manipulation and delay-based trading errors.”
+
+## Support tools you should provide in your app
+
+The reads behind these screens are [Get Orders](/api-reference/trading/list-orders) for history and [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference) for a single trade.
+
+- Trade history screen with reference, status, input, and output
+- Wallet balance UI with clear timestamps
+- Expiry countdown on trade quotes
+- Quote refresh button
+- Clear success/failure messages after trade execution
+
+## Recommended messaging templates
+
+**Success message**
+
+> “Trade successful. You converted \$100 into 225,000 sats. Funds have been credited to your Bitcoin wallet.”
+
+**Expired quote**
+
+> “This quote has expired. Please refresh to get the latest price.”
+
+**Failed trade**
+
+> “Your trade could not be completed. Please ensure you have enough balance and confirm trades before the quote expires.”
+
+**Incomplete funds**
+
+> “If you didn’t receive funds, please check your trade status or contact support with your reference ID.”
+
+## Trade flow reminders for support and product
+
+- All trades must use a unique reference
+- Use quoteId to lock a rate and prevent price fluctuation
+- Never allow users to confirm a trade after expiresAt
+- Rely on trade.completed webhook to confirm success
+- Reconcile trade outcomes with wallet crediting in your app
+
+## When to contact Bitnob
+
+Contact Bitnob if:
+
+- Webhooks are not arriving despite valid configuration
+- Trades are failing repeatedly with valid quotes and sufficient balance
+- Your platform cannot reconcile wallet balances post-trade

@@ -1,0 +1,227 @@
+---
+title: "Fatal mistakes to avoid"
+description: "The wallet design errors that have sunk real Bitcoin projects, and what to do instead."
+---
+## Introduction
+
+Building Bitcoin wallets is challenging. History is full of failed or compromised wallet projects because teams made mistakes they didn’t even know were deadly at the time.
+
+This section compiles real-world mistakes seen across the Bitcoin ecosystem so that your team can avoid costly technical, product, and security failures.
+
+These lessons come from analyzing:
+
+- Public wallet disasters (e.g., Mycelium key leakage, Bitcoin Gold 51% attacks)
+- Bitcoin core dev warnings
+- Industry operational mistakes from startups and custody providers
+
+## Common fatal mistakes (and how to avoid them)
+
+1. **Mishandling private keys and seeds**
+
+   **Mistake:**
+
+   - Exposing private keys to server-side infrastructure.
+   - Transmitting seeds or keys over insecure channels.
+   - Storing private keys unencrypted on devices.
+
+   **Why it's deadly:**
+
+   - If a private key leaks once, the Bitcoin is gone forever.
+   - Attackers prioritize stealing keys over anything else.
+
+   **Prevention:**
+
+   - Keys and seeds must never leave the user's device.
+   - Always encrypt keys at rest with strong algorithms (e.g., AES-256-GCM).
+   - Use secure key derivation functions (e.g., PBKDF2, Argon2id) for encryption passwords.
+   - Never log or expose raw private keys even during debugging.
+
+2. **Hardcoding fee rates or transaction size assumptions**
+
+   **Mistake:**
+
+   - Assuming low Bitcoin fees will last forever.
+   - Hardcoding static fees (e.g., always sending at 5 sats/vByte).
+
+   **Why it's deadly:**
+
+   - During fee spikes, your users' transactions will get stuck for days.
+   - Wallet will appear broken or unreliable.
+
+   **Prevention:**
+
+   - Always dynamically fetch real-time fee estimates from Bitnob or your own mempool monitors.
+   - Offer multiple confirmation speed options: Fast, Normal, Economical.
+   - Support Replace-by-Fee (RBF) transaction upgrades.
+
+3. **Poor UTXO management**
+
+   **Mistake:**
+
+   - Letting wallets accumulate hundreds of tiny UTXOs ("wallet bloat").
+   - Spending unnecessary UTXOs in single transactions.
+
+   **Why it's deadly:**
+
+   - Bloated wallets cost users massive fees later when trying to spend.
+   - Some users will be locked out of practical spending during congestion.
+
+   **Prevention:**
+
+   - Implement UTXO consolidation policies during low-fee periods.
+   - Minimize dust creation.
+   - Plan for UTXO selection strategies even if hidden from users at MVP stage.
+
+4. **Address reuse and privacy leaks**
+
+   **Mistake:**
+
+   - Allowing the same Bitcoin address to be used multiple times.
+   - Sending change outputs to the same address users receive bitcoin to.
+
+   **Why it's deadly:**
+
+   - Breaks user privacy permanently.
+   - Makes users vulnerable to on-chain surveillance and financial profiling.
+
+   **Prevention:**
+
+   - Implement HD wallet best practices (new external address per receive, new internal address per change).
+   - Automatically rotate addresses after each payment.
+   - Use BDK or similar libraries that handle address chains properly.
+
+5. **Incomplete backup and recovery flows**
+
+   **Mistake:**
+
+   - Allowing users to create wallets without forcing backup immediately.
+   - Failing to verify backups.
+   - Not offering encrypted optional cloud backup for recovery convenience.
+
+   **Why it's deadly:**
+
+   - Users will lose access to funds if they lose devices.
+   - Without backups, recovery is impossible, and users will blame the wallet provider.
+
+   **Prevention:**
+
+   - Enforce full backup (BIP39 seed phrase) during onboarding.
+   - Verify backup by requiring seed re-entry (random words challenge).
+   - Educate users aggressively about risks.
+
+6. **Overtrusting third-party libraries**
+
+   **Mistake:**
+
+   - Using cryptography libraries without review or security audits.
+   - Relying blindly on closed-source or poorly maintained SDKs.
+
+   **Why it's deadly:**
+
+   - Wallet security depends entirely on cryptographic operations.
+   - Bugs in libraries could lead to catastrophic losses.
+
+   **Prevention:**
+
+   - Use battle-tested libraries like bitcoinjs-lib, BDK, Noble crypto libraries.
+   - Review library update history and open-source community activity.
+   - Fork and control critical dependencies if possible.
+
+7. **Weak or missing webhook security**
+
+   **Mistake:**
+
+   - Accepting webhook calls without verifying authenticity.
+   - Blindly trusting incoming data from Bitnob or any other blockchain gateway.
+
+   **Why it's deadly:**
+
+   - Attackers can spoof fake deposit confirmations.
+   - Users' balances and wallet logic can be corrupted.
+
+   **Prevention:**
+
+   - Authenticate all webhook requests (e.g., HMAC signatures).
+   - Validate transaction IDs on-chain before reflecting balances.
+   - Use replay attack protections (unique request IDs, timestamps).
+
+8. **Ignoring mobile platform security**
+
+   **Mistake:**
+
+   - Assuming iOS/Android devices are fully secure by default.
+   - Failing to harden the wallet app against root/jailbreak scenarios.
+
+   **Why it's deadly:**
+
+   - Mobile devices can be compromised through malware, bad apps, outdated OS versions.
+
+   **Prevention:**
+
+   - Detect rooted or jailbroken devices and warn/block users.
+   - Encrypt local storage.
+   - Use secure enclaves or Keychain/Keystore where possible for sensitive key storage.
+
+9. **No upgrade path for future features**
+
+   **Mistake:**
+
+   - Hardcoding assumptions about address types (e.g., only P2PKH).
+   - Not modularizing wallet engine for Taproot, Silent Payments, or Lightning expansion.
+
+   **Why it's deadly:**
+
+   - Wallet becomes obsolete as Bitcoin protocol evolves.
+   - Rewrites are expensive and dangerous under pressure.
+
+   **Prevention:**
+
+   - Abstract key, address, and transaction logic.
+   - Plan upgradeable architecture from day one.
+
+10. **Overcomplicating the MVP**
+
+   **Mistake:**
+
+   - Trying to build multi-chain, cross-platform, DeFi wallets in v1.
+   - Overloading users with technical options too early.
+
+   **Why it's deadly:**
+
+   - Misses core market fit.
+   - Launch delays lead to financial failure.
+
+   **Prevention:**
+
+   Start simple:
+
+   - Bitcoin only
+   - SegWit/Taproot only
+   - Basic receive/send flows
+   - Backup flows mandatory
+   - Clean UX
+
+   Evolve features after initial user adoption and validation.
+
+## Closing perspective
+
+Bitcoin wallet development is high-stakes engineering.
+
+- Small mistakes (one bad line of code) can lead to permanent loss of user funds.
+- Small UX oversights (bad fee management, backup friction) can cause permanent user churn.
+- Small security gaps (poor webhook handling, weak app encryption) can cause trust destruction.
+
+**Key principle:** Bitcoin rewards engineering excellence and punishes carelessness.
+
+If your team commits to security-first, user-first, modular architecture, you will build a Bitcoin wallet product that lasts, and deserves user trust.
+
+### Developer and architect final checklist
+
+- Never touch or transmit private keys off-device.
+- Never reuse Bitcoin addresses.
+- Always rotate change addresses.
+- Always fetch dynamic fees and offer flexible options.
+- Force backup at onboarding.
+- Authenticate all webhooks and external data.
+- Harden app security (encryption, device integrity checks).
+- Plan modular architecture for future Bitcoin upgrades.

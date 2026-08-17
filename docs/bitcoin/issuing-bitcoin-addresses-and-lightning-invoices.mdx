@@ -1,0 +1,189 @@
+---
+title: "Issue addresses and Lightning invoices"
+description: "On-chain addresses and Lightning invoices: how to issue them, receive payment notifications, and handle confirmations and balances."
+related:
+  - /docs/bitcoin/confirmations-and-webhook-events
+  - /docs/bitcoin/lnurl-and-lightning-addresses
+  - /docs/bitcoin/send-bitcoin
+  - /learn/playbooks/bitcoin/address-and-privacy-best-practices
+---
+Your application can issue both on-chain Bitcoin addresses and Lightning invoices to help customers receive BTC quickly and reliably. In this subsection, you’ll learn how these addresses are generated, how Bitnob notifies you of incoming payments, and the recommended way to handle confirmations and user balances.
+
+## On-chain addresses
+
+### What they are
+
+An on-chain address is a standard Bitcoin address on the main blockchain. When a user wants to receive BTC, you can generate a new address via the Bitnob API and display it to the user. Once the user sends BTC to that address, Bitnob listens for the transaction and fires a webhook event (deposit.success) once the transaction is detected.
+
+### Generating addresses
+
+When creating an address, you can specify:
+
+| Field | Definition |
+|---|---|
+| chain | The blockchain network for the address (e.g. `bitcoin`). |
+| label | A human-readable label to help you identify the address in your records. |
+| reference | A unique reference string to track this address request (e.g. `BTC_ADDRE_REF`). |
+
+```bash
+POST /api/addresses
+```
+
+```json
+{
+  "chain": "bitcoin",
+  "label": "home",
+  "reference": "BTC_ADDRE_REF",
+  "customer_email": "mose@gmail.com"
+}
+```
+
+### Avoiding address reuse
+
+For privacy and good security hygiene, we strongly recommend generating a new address whenever you or your users want to receive BTC. This prevents multiple payments from appearing on the same address, making it harder for third parties to chain-analyze your transactions.
+
+If payments still arrive on an old address, Bitnob will still fire the incoming BTC webhook. However, re-using addresses can create confusion and undermine user privacy.
+
+### Webhook event: deposit.success
+
+When BTC arrives, Bitnob sends a webhook with at least one confirmation. You’ll receive an event payload similar to:
+
+```json
+{
+  "data": {
+    "address": "bc1qy44gptm5lc50ggpsv7zzd6mj65ex5vjhxf9m6s",
+    "amount": "10000",
+    "chain": "bitcoin",
+    "currency": "BTC",
+    "fee": "0",
+    "hash": "5d0118bf2ecff0cecdf488f6e2479b9e7ab038f996895bfcfe80743ac39e1ef6",
+    "reference": "RCV_BTC_cd2f1a432f40",
+    "timestamp": "2026-05-15T21:52:04Z",
+    "transaction_id": "371d95f9-d525-4a15-8b27-669f47a4cb4d"
+  },
+  "event": "deposit.success",
+  "event_id": "c250441d-5d22-42e7-8958-5bb3ddc4a404"
+}
+```
+
+### Confirmations
+
+While you may receive a notification with as little as 1 confirmation, **we recommend waiting for at least 3 confirmations** before crediting a user’s account in your system.
+
+This helps guard against potential chain reorganizations. You can also re-query the transaction endpoint to see the current number of confirmations.
+
+## Lightning invoices
+
+### Why Lightning
+
+Lightning invoices allow near-instant BTC payments on top of Bitcoin’s second-layer protocol. They’re ideal for tipping, micropayments, or any scenario where you want quick finality without waiting for on-chain confirmations.
+
+### Creating a Lightning invoice
+
+Similar to on-chain addresses, you generate a Lightning invoice via the Bitnob API. The invoice is a BOLT11 string that starts with ln. This is what you display or provide to the payer.
+
+```bash
+POST /api/lightning/invoices
+```
+
+```json
+{
+  "customer_id": "3257cdc0-f55b-46a5-85e5-74f57003a3f9",
+  "amount": 1,
+  "description": "Payment for order",
+  "expiry": 3600,
+  "reference": "LTG_REF"
+}
+```
+
+<Note>
+  The response includes a paymentRequest field (the BOLT11 invoice) which typically looks like:
+  lnbc1500n1psjkltkpp55q5g2eltp56jzuk9300p404w5qfrac0mr77qde633htcvvgyheqsdp92fjk...
+</Note>
+
+### Displaying the invoice
+
+We recommend two user-interface options:
+
+QR Code: Let users scan the invoice quickly with their mobile wallets.
+
+Copy Invoice: Provide an easy “Copy” button so they can paste it into a Lightning wallet.
+
+### Receiving payment
+
+Once the payer sends sats to this invoice, Bitnob checks the Lightning network. When the payment is confirmed, you’ll receive a webhook notification (e.g., transfer.success) along with relevant info.
+
+```json
+{
+  "data": {
+    "amount": "3000",
+    "chain": "lightning",
+    "currency": "BTC",
+    "fee": "0",
+    "invoice": "lnbc30u1p4q0ycapp52sm243augg9uatfjumh6a032sh476468rxfedvdg425cupg7jchqdp82pshjgr5dusyymrfde4jq4mpd3kx2apq24ek2uscqzpuxqrwzqsp5w55j885l7kt9pka26cpsws0qauav3kaktafcngzhhu2t5ygkt5js9qxpqysgqpehna9zm79c0pkk2qkdu5kqtk657xu7und3mknsj4ejpjv9rupc3p8r7nt77ntlcv36779307wuk4d0cag4m2f0j058g567stj5ugyqp0mz8u7",
+    "reference": "5ac65838-6166-4e98-b360-6747f53a4fa4",
+    "timestamp": "2026-05-15T21:43:10Z",
+    "transaction_id": "e212c8ba-16ce-46a3-8548-9fc4fc1a6484"
+  },
+  "event": "transfer.success",
+  "event_id": "d22a304f-6b19-4371-a91b-b7ef08a1fbad"
+}
+```
+
+### LNURL and Lightning addresses
+
+Beyond basic BOLT11 invoices, Bitnob also supports:
+
+LNURL: A more user-friendly way for payers to fetch an invoice from you.
+
+Lightning Addresses: Email-style addresses (like john@lightning.example) that automatically generate an invoice behind the scenes.
+
+These methods simplify the user experience, letting them pay to a static handle rather than copying a BOLT11 invoice.
+
+## Safety and best practices
+
+1. Unique Addresses/Invoices:
+
+   Issue a fresh address or invoice each time you expect new funds. This ensures better privacy and easier bookkeeping.
+
+2. Labeling and Email:
+
+   Attach a label or email to every address/invoice you create. This helps you track which user or scenario the funds are meant for.
+
+3. Confirmation Threshold:
+
+   For on-chain BTC, wait 3 confirmations or more before crediting user balances. Lightning payments are effectively instant once the invoice is paid, so no block confirmations are required.
+
+4. Webhook Handling:
+
+   Ensure your webhook endpoint is idempotent. If Bitnob retries or you receive the same event, don’t double-credit the user. Store a reference to track which transaction has already been processed.
+
+5. Address Reuse:
+
+   It’s still possible to receive BTC on older addresses, and we’ll notify you if that happens. However, generating new addresses for each incoming transaction is strongly advised.
+
+6. Taproot and SegWit:
+
+Bitnob supports Taproot addresses if you choose addressType: 'taproot'. This can yield lower fees and potentially improved privacy on the network. Use it if your customers want the latest Bitcoin features.
+
+## Example flows
+
+### On-chain payment to a SegWit address
+
+1. Your app requests a new address from Bitnob, specifying "segwit".
+2. You display that address (bc1q...) to the customer.
+3. Customer sends BTC from an external wallet.
+4. Bitnob detects the payment and sends a deposit.success webhook with confirmations: 1.
+5. Your system checks if there are at least 3 confirmations before crediting the user.
+
+### Lightning payment for tipping
+
+1. User wants to receive a 15,000 sat tip quickly.
+2. You create a Lightning invoice for 15,000 sats and display a QR code.
+3. The payer scans and sends with a Lightning wallet.
+4. Bitnob triggers transfer.success webhook once the payment is settled.
+5. You instantly credit the user in your app.
+
+Issuing on-chain addresses and Lightning invoices through Bitnob allows your customers to receive BTC in their preferred way.
+
+With each invoice or address labeled properly, you can correlate incoming payments to the correct user. Always enforce good security hygiene (avoid address reuse, wait for confirmations on on-chain, handle Lightning webhooks idempotently) to maintain trust and reliability in your service.

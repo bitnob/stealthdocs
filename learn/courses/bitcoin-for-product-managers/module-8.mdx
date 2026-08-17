@@ -1,0 +1,179 @@
+---
+title: "Module 8: Wallet product architecture mapping"
+description: "A component-by-component mapping of protocol mechanics onto real wallet architecture."
+---
+## 8.1 Introduction
+
+Now that you understand how Bitcoin works
+keys, addresses, UTXOs, transactions, blocks, confirmations, and security
+we can map these concepts into actual wallet product architecture.
+
+This module shows how to design wallet products properly by directly linking Bitcoin internals to clean application structure.
+
+Good Bitcoin wallets are designed to:
+
+- Securely manage private keys
+- Efficiently manage addresses and UTXOs
+- Build and broadcast transactions reliably
+- Monitor blockchain activity accurately
+- Handle backup, recovery, and upgradeability gracefully
+
+Poorly structured wallets lead to lost funds, user confusion, and unscalable products.
+
+## 8.2 The five core components of a Bitcoin wallet product
+
+| Component | Purpose |
+|---|---|
+| Key Management Engine | Handles generation, storage, and encryption of private keys. |
+| Address Management Module | Derives and rotates public addresses from private keys. |
+| UTXO and Blockchain Monitor | Tracks which coins (UTXOs) the wallet controls. |
+| Transaction Builder and Broadcaster | Builds, signs, and sends Bitcoin transactions. |
+| User Experience Layer (UI/UX) | Displays balances, transactions, confirmations, backup flows to the user. |
+
+## 8.3 Mapping product features to Bitcoin internals
+
+| Product Feature | Maps to Bitcoin Primitive |
+|---|---|
+| Backup Seed Phrase | Root private key storage (BIP39) |
+| Receive bitcoin | Deriving and exposing a fresh public address |
+| Show Wallet Balance | Summing detected UTXOs |
+| Send bitcoin | Building transaction: select inputs (UTXOs), create outputs, calculate fee, sign |
+| Fee Control (Fast, Normal, Economy) | Fee rate per byte selection at transaction building time |
+| Confirmations Tracking | Block inclusion and depth monitoring of broadcast transactions |
+| Privacy Features (Address Rotation) | Prevent address reuse by deriving new addresses each time |
+| Security Settings (PIN, Biometrics) | Protect local key storage and signing access |
+
+## 8.4 High-level wallet architecture diagram
+
+```
++-------------------------------------------------------------+
+|                         Wallet App                          |
+|                                                             |
+|   +----------------+       +------------------------------+ |
+|   |  Key Manager    |<----->|  Address Manager             | |
+|   | (Handles Seed,   |       | (Derives Addrs)              | |
+|   |  Encryption)    |       +-----------------------------+ |
+|   +----------------+                                        |
+|          |                                                    |
+|          v (Signing)                                          |
+|   +----------------+       +------------------------------+ |
+|   | Transaction     |<----->| Fee Estimator               | |
+|   | Builder         |       | (Gets Fee Rates)             | |
+|   | (Selects UTXOs, |       +-----------------------------+ |
+|   |  Creates TX)    |                                        |
+|   +----------------+                                        |
+|          |                                                    |
+|          v (Broadcast)                                        |
+|   +----------------+       +------------------------------+ |
+|   | UTXO Tracker    |<----->|  Blockchain API (e.g., Bitnob)| |
+|   | (Watches Addrs, |       | (Gets Blocks, Mempool)       | |
+|   |  Calculates Bal)|       +-----------------------------+ |
+|   +----------------+                                        |
+|          |                                                    |
+|          v (Display Data)                                     |
+|   +----------------+       +------------------------------+ |
+|   | UX/UI Layer     |<----->| Notification Engine          | |
+|   | (Shows Balance, |       | (Alerts User)                | |
+|   |  History, Status)|       +-----------------------------+ |
+|   +----------------+                                        |
+|                                                             |
++-------------------------------------------------------------+
+```
+
+## 8.5 Internal module responsibilities
+
+**Key manager:**
+
+- Generate seed phrase and derive master keys.
+- Encrypt and securely store keys on-device.
+- Provide signing capability without leaking raw keys.
+
+**Address manager:**
+
+- Derive new external (receiving) addresses.
+- Derive internal (change) addresses.
+- Track address usage to rotate after payment detection.
+
+**UTXO tracker:**
+
+- Watch blockchain addresses via RPC or APIs.
+- Track confirmed and unconfirmed UTXOs.
+- Calculate wallet balance by summing active UTXOs.
+
+**Transaction builder:**
+
+- Select inputs (UTXOs) intelligently.
+- Build outputs (recipient + change).
+- Estimate and apply optimal fees.
+- Sign transaction locally.
+
+**Blockchain API layer:**
+
+- Send address watch requests.
+- Broadcast transactions.
+- Fetch mempool status and block confirmations.
+
+**User interface (UI/UX):**
+
+- Show balances and transaction history.
+- Guide users through receiving and sending flows.
+- Warn users about backup and security risks.
+- Manage PINs, biometrics, app timeouts.
+
+## 8.6 Mapping blockchain behavior to wallet UX
+
+| Blockchain Behaviour | Wallet Ui Behaviour |
+|---|---|
+| Transaction enters mempool (0 confirmations) | Show transaction as "Pending" or "Unconfirmed" |
+| Transaction confirmed in 1 block | Show transaction as "1 Confirmation" |
+| Transaction reaches 6 confirmations | Mark transaction as "Finalized" or "Confirmed" |
+| Transaction dropped from mempool (e.g., reorg) | Update transaction as "Dropped" or "Resubmit?" |
+| Fee market spike detected | Notify user about high fee environment |
+
+## 8.7 Scalability considerations
+
+Wallets designed properly can:
+
+- Support thousands of addresses without slowdown.
+- Track thousands of UTXOs efficiently.
+- Survive fee market congestion by adapting fees dynamically.
+- Handle Bitcoin protocol upgrades like Taproot, Lightning, Silent Payments modularly.
+
+Scalability at the wallet level comes not from adding more servers
+but from architecting user key management and blockchain monitoring correctly from the start.
+
+## 8.8 PM reflection points
+
+When defining wallet products:
+
+- Every user-facing feature must map cleanly back to Bitcoin structures.
+- No feature should contradict the user's cryptographic control over funds.
+- Balance display, transaction lists, confirmations. All must reflect real blockchain data, not marketing illusions.
+- Backup flows must protect the seed.
+- Privacy flows must rotate addresses automatically.
+
+When your product design respects the Bitcoin model,
+your wallet will work naturally, reliably, and securely
+even under network stress, even across Bitcoin upgrades, even as user adoption scales.
+
+Building good Bitcoin wallets is not about inventing new systems. It is about faithfully surfacing Bitcoin’s true structures through secure, usable interfaces.
+
+## 8.9 Summary of module 8
+
+A serious Bitcoin wallet product must map:
+
+- Key management → Seed phrases, private keys
+- Address management → Derivation, rotation
+- UTXO management → Balances, transaction building
+- Transaction building → Sending bitcoin securely
+- Blockchain monitoring → Real-time transaction status
+- UX design → Teaching users trustless financial control
+
+Poor mapping leads to broken wallets.
+Clear, faithful mapping leads to robust, scalable Bitcoin products.
+
+## Module 8 complete
+
+You now understand how real Bitcoin wallet apps must be architected
+mapping every feature back to Bitcoin’s true foundations,
+building products that will survive growth, fee spikes, Bitcoin upgrades, and user mistakes.

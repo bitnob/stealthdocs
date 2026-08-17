@@ -1,0 +1,178 @@
+---
+title: "Webhooks"
+description: "Event payloads for stablecoin address activity, plus signature verification and retry behaviour."
+---
+Learn how to listen for stablecoin events that happen on your account.
+
+A webhook is a URL on your server where we send payloads for transaction events. For example, if you implement webhooks, we will immediately notify your server with a `deposit.success` event once a stablecoin deposit is confirmed on-chain. Whenever you receive a webhook notification from us, return a `200 OK` to avoid resending the same event again from our server.
+
+## Verifying events
+
+Verifying that these events come from Bitnob is necessary to avoid creating transactions due to a fraudulent event.
+
+To verify events, validate the **x-bitnob-signature** header sent with the event. The HMAC SHA512 signature is the event payload signed with your **secret key.**
+
+### Notification retries
+
+When posting notifications, we expect to receive a 200 response code from you. If the response code is not 200, we retry sending the event 3 times after the first failure.
+
+This way, whenever you experience downtime on your end, your updates will still be sent.
+
+***Don't rely on webhooks entirely***
+
+<Note>
+  We recommend that you set up a service to always query transactions, in the event that webhooks keep failing.
+</Note>
+
+### Testing webhooks
+
+Since notifications must always be available on a publicly accessible URL, you are likely to run into issues while starting to build your application in a local environment. You can get around this by using a tool like [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/)
+
+Create a tunnel, and update the new webhook URL setting on your dashboard. Only do this in your test environment to avoid leaking data to the public.
+
+```javascript
+const crypto = require('crypto');
+const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
+// Using Express
+app.post("/webhook_url", function(req, res) {
+  //validate event
+  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
+  if (hash == req.headers['x-bitnob-signature']) {
+  // Retrieve the request's body
+  const event = req.body;
+  // Do something with event  
+  }
+  res.send(200);
+});
+```
+
+## Source IPs
+
+If your firewall restricts inbound traffic, allow requests from the addresses below so our events can reach your endpoint.
+
+| Ip Address | Use |
+|---|---|
+| 18.171.51.218 | Webhook delivery |
+| 13.134.154.133 | Webhook delivery |
+
+These addresses can change. We announce changes ahead of time, but an allowlist is not a substitute for verifying the **x-bitnob-signature** header. Signature verification is the check that stays correct even if our infrastructure moves.
+
+<Warning>
+  **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
+</Warning>
+
+```nginx
+location /webhook_url {
+  allow 18.171.51.218;
+  allow 13.134.154.133;
+  deny  all;
+}
+```
+
+### Webhook
+
+Stablecoin webhooks are fired when a customer sends or receives stablecoin.
+
+### Deposit stablecoin success
+
+This webhook is fired when a stablecoin deposit is successfully confirmed on the blockchain.
+
+<ResponseField name="event" type="string">
+  The webhook event type indicating a successful stablecoin deposit. In this case, it is always 'deposit.success'.
+</ResponseField>
+
+<ResponseField name="address" type="string">
+  The receiving wallet address where the deposit was sent. This belongs to the user or your system.
+</ResponseField>
+
+<ResponseField name="amount" type="string">
+  The deposit amount represented as a string in the smallest unit of the currency (e.g., '9000000' for 9 USDT).
+</ResponseField>
+
+<ResponseField name="chain" type="string">
+  The blockchain network where the deposit occurred (e.g., 'tron', 'bsc', 'ethereum').
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  The currency received in the deposit, such as 'USDT', 'USDC', etc.
+</ResponseField>
+
+<ResponseField name="fee" type="string">
+  The fee amount associated with the deposit, typically '0' for incoming payments.
+</ResponseField>
+
+<ResponseField name="hash" type="string">
+  The blockchain transaction hash that uniquely identifies the deposit. Can be used to verify the transaction on a blockchain explorer.
+</ResponseField>
+
+<ResponseField name="reference" type="string">
+  A unique reference generated for the deposit transaction. Useful for reconciling deposits and tracking them across logs or your system.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  The ISO 8601 timestamp of when the deposit was recorded, indicating when the transaction was detected on the blockchain.
+
+  ```json
+  {
+    "event": "deposit.success",
+    "data": {
+      "address": "Cev6GkmDnwSY3PvwhwBofwv65FrwcU1RxvF9Zt9aTJq4",
+      "amount": "9000000",
+      "chain": "tron",
+      "currency": "USDT",
+      "fee": "0",
+      "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
+      "reference": "RCV_SBLNC_cc309ba8c361",
+      "timestamp": "2025-12-12T20:38:23Z"
+    }
+  }
+  ```
+</ResponseField>
+
+### Transfer stablecoin success
+
+This webhook is fired when a stablecoin transfer is successfully completed on the blockchain.
+
+<Note>
+  The response shares the same payload structure as **Deposit Stablecoin Success**. Refer to the **Deposit Stablecoin Success** section for field explanations.
+</Note>
+
+```json
+{
+  "event": "transfer.success",
+  "data": {
+    "address": "TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN",
+    "amount": "2000000",
+    "chain": "tron",
+    "currency": "USDT",
+    "fee": "1000000",
+    "hash": "4ae4308579587370accbd31dbfaebf3a97c8cfc7f68e2128ddec840349cafc60",
+    "reference": "SND_SBLNC_80c7895d89e9",
+    "timestamp": "2025-12-12T20:30:18Z"
+  }
+}
+```
+
+### Transfer stablecoin failed
+
+This webhook is fired when a stablecoin transfer fails due to an error such as insufficient funds, invalid address, or network issues.
+
+<Note>
+  The response shares the same payload structure as **Deposit Stablecoin Success**. Refer to the **Deposit Stablecoin Success** section for field explanations.
+</Note>
+
+```json
+{
+  "event": "transfer.failed",
+  "data": {
+    "address": "TKVy2qjGyfxhPMvkeA8AEhv5XvpzLxGA5W",
+    "amount": "2000000",
+    "chain": "tron",
+    "currency": "USDT",
+    "fee": "0",
+    "hash": "",
+    "reference": "your-transfer-reference",
+    "timestamp": "2025-12-12T20:30:00Z"
+  }
+}
+```

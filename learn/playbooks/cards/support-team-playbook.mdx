@@ -1,0 +1,197 @@
+---
+title: "Virtual card support team playbook"
+description: "Diagnostic flows, standard responses, and escalation policy for teams supporting card users."
+---
+This document is a complete knowledge base for supporting users of the Bitnob virtual card infrastructure. It includes diagnostic flows, standard responses, backend context, and escalation policies. It assumes you are supporting a product where developers have integrated Bitnob’s virtual card APIs, and you need to assist users when something goes wrong.
+
+## Role of support in virtual card products
+
+Support teams are not just responding to complaints. They are responsible for:
+
+- Ensuring trust in financial products
+- Explaining card behavior in clear and accurate language
+- Tracing transactional issues across lifecycle states
+- Flagging systemic problems to engineering or ops
+- Acting as the first line of fraud and dispute defense
+- Helping both internal product teams and end users understand what's happening
+
+Support success depends on deep product understanding and consistent access to API logs, webhook events, and transaction states.
+
+## Virtual card lifecycle
+
+All cards go through a lifecycle:
+
+- Created → Default state after successful issuance
+- Funded → After a successful top-up
+- Active → Can be used for transactions
+- Frozen → Temporarily disabled, either manually or automatically
+- Terminated → Permanently closed due to system triggers or manual action
+
+Card lifecycle issues account for over 50% of all user-facing problems. Always start by confirming the current card status.
+
+## Common support cases and recipes
+
+Below are structured support "recipes" to guide decision-making and communication.
+
+### Case 1: Transaction declined
+
+Start from the [decline webhook](/api-reference/virtual-cards/webhooks#virtual-card-declines) or the [transaction record](/api-reference/cards/get-single-card-transaction). Both carry the decline reason.
+
+**Symptoms:**
+
+- Card failed at checkout
+- User reports "Insufficient funds" or no clear error
+
+**Support checklist:**
+
+- Check card status, is it active?
+- Confirm available balance (including FX margin)
+- Retrieve latest webhook virtualcard.transaction.declined
+- Review reason field, is it "MCC blocked", "Card not active", etc.?
+- Check if merchant falls under restricted MCC (money transfer, crypto, etc.)
+- Inspect retry history, how many attempts failed?
+
+**Response template:**
+
+> The transaction failed because the card was either inactive, had insufficient funds, or attempted a payment with a blocked merchant type. Please verify the merchant, ensure the card is active, and confirm the amount including any applicable foreign exchange fees.
+
+**Escalate if:**
+
+- Decline reason is unclear or shows `null`
+- User reports transaction succeeded at merchant but no debit is logged
+- Webhook didn’t fire after merchant confirmation
+
+### Case 2: User sees unexpected \$1 or small transaction
+
+**Symptoms:**
+
+- Unexplained \$1 deduction or reversal
+- User confused by charge with no merchant name
+
+**Support checklist:**
+
+- Retrieve transaction webhook (`debit`, `reversed`)
+- Check if merchant is Apple, Facebook, PayPal, Spotify, etc.
+- Confirm status was `reversed`, not settled
+- Check timestamps, pre-auths usually reverse in 2–14 days
+
+**Response template:**
+
+> This was a temporary authorization hold by the merchant to verify your card is valid. No actual charge occurred, and the funds will be released automatically, typically within 2–14 business days depending on the merchant.
+
+### Case 3: Refund not reflected
+
+**Symptoms:**
+
+- User claims a refund was issued but no credit seen
+- Merchant says "we refunded" but no trace in user’s account
+
+**Support checklist:**
+
+- Search for virtualcard.transaction.refund or transaction.reversed webhook for card
+- Check if card is still active. If not, refund goes to master account or float
+- Review amount and timestamp
+- Match merchant narrative or reference
+
+**Response template:**
+
+> The refund has been successfully processed. Since the card is no longer active, the funds have been routed back to your master wallet. If you don’t see it there, please allow up to 3 additional business days and contact support again.
+
+**Escalate if:**
+
+- Refund event was never logged
+- Merchant shows refund cleared but Bitnob has no record
+- Settlement delay exceeds 14 business days
+
+### Case 4: Card automatically frozen or terminated
+
+**Symptoms:**
+
+- User reports card status changed without action
+- Can no longer transact
+
+**Support checklist:**
+
+- Confirm card state via card fetch endpoint
+- Review transaction history, are there 3 or more failed transactions?
+- Look for suspicious refund → freeze scenarios
+- Review system log or webhook: `transaction.declined.frozen` or `declined.terminated`
+
+**Triggers:**
+
+- Decline-rule violations accrue escalating fees on each occurrence
+- 3rd decline-rule violation = permanent termination
+- Refund received on a card that didn’t do the original spend = freeze
+
+**Response template:**
+
+> Your card was frozen (or terminated) due to multiple failed transactions or system-detected refund behavior. This is a protective measure. You can unfreeze the card (if still allowed) or create a new one if it has been terminated.
+
+**Escalate if:**
+
+- Freeze/termination reason is unclear or mismatch with logs
+- Customer insists card was never used or attempted multiple times
+
+### Case 5: Top-up completed, but card not working
+
+**Symptoms:**
+
+- User tops up card but transactions still decline
+- Available balance looks sufficient
+
+**Support checklist:**
+
+- Confirm `topup.success` webhook received
+- Re-fetch card, is it active?
+- Look at spend attempt webhooks. What is the decline reason?
+- Check currency match or FX surcharge triggers
+
+**Response template:**
+
+> The card has been funded, but may still be inactive or restricted for certain merchant types. Please confirm that the card is in active status and the merchant you're using supports this card type.
+
+**Escalate if:**
+
+- Top-up succeeded but card balance isn’t updated
+- Webhook mismatch (top-up success but no credit)
+
+## Tools and data support should have
+
+Support agents must have access to the following for every ticket. The underlying reads are [Get Card](/api-reference/cards/get-card) for status and balance, [Card Transactions](/api-reference/cards/list-card-transactions-by-card) for activity, [Get Card Transaction](/api-reference/cards/get-single-card-transaction) for a single record, and [Get Card Details](/api-reference/cards/get-secure-card-details) for sensitive card data:
+
+| Item | Source |
+|---|---|
+| Card ID | User → Cards list |
+| Card Status | Card fetch endpoint |
+| Transaction history | List transactions by `cardId` |
+| Webhook logs | Internal log service or monitoring tool |
+| Decline reason codes | Webhook payload or transaction metadata |
+| Refund status | Webhook or ledger |
+
+Additionally, they should have:
+
+- Full search by `reference`, `cardId`, `userId`, `webhookId`
+- Visibility into terminated vs frozen reason codes
+- Date-based filters to trace refund flows or disputes
+
+## Escalation criteria
+
+| Condition | Escalate to |
+|---|---|
+| No webhook received after confirmed card action | Engineering or Infra |
+| Refund logged but never credited | Treasury or Settlements |
+| Webhook payload missing key fields | API engineering |
+| Decline pattern across multiple users | Fraud or Risk Team |
+| Merchant blocked without explanation | Compliance or BIN sponsor |
+
+Include full `cardId`, `reference`, timestamps, and webhook event bodies when escalating.
+
+## Training materials
+
+Support team members should regularly train on:
+
+- Reading and decoding webhook payloads
+- Using Postman to simulate card calls
+- Explaining card lifecycle clearly in user language
+- Understanding BIN and MCC behavior
+- PCI and data-handling compliance for support staff

@@ -1,0 +1,128 @@
+---
+title: "Module 9: Onboarding, KYC/KYB, and compliance in payout systems"
+description: "Onboarding and KYC/KYB that satisfies AML obligations without destroying conversion."
+---
+## Introduction
+
+- Regulatory compliance
+- Fraud prevention
+- Liquidity protection
+
+User experience efficiency.
+
+Every payout product must operate within national and international financial regulations, particularly around anti-money laundering (AML), counter-terrorism financing (CTF), and sanctions compliance.
+
+Product managers must design onboarding and compliance flows that are:
+
+- Legally sufficient
+- Operationally practical
+
+User experience acceptable.
+
+Ignoring or mishandling this area results in regulatory penalties, frozen liquidity, loss of banking relationships, or platform shutdowns.
+
+### Understanding KYC and KYB
+
+| Term | Definition |
+|---|---|
+| KYC (Know Your Customer) | Collecting and verifying personal identity information from individual users. |
+| KYB (Know Your Business) | Collecting and verifying legal and ownership information about business entities. |
+
+### Core elements of a KYC program for individuals
+
+Full legal name
+
+Date of birth
+
+Government-issued ID verification (passport, national ID, driver's license)
+
+Proof of address (utility bill, bank statement)
+
+Biometric verification (optional but recommended)
+
+Sanctions list screening (OFAC, UN, EU, local lists)
+
+### Core elements of a KYB program for businesses
+
+Legal entity name
+
+Business registration documents (certificate of incorporation, licenses)
+
+Ownership structure and beneficial owners (ultimate beneficial ownership checks)
+
+Business address verification
+
+Sanctions and politically exposed persons (PEP) screening on directors and owners
+
+Bank account ownership verification for payouts
+
+### Regulatory expectations in payout products
+
+Identify and verify users before or during payout initiation.
+
+Monitor transactions for suspicious patterns after onboarding.
+
+Maintain auditable logs of identity verification and payout transaction flows.
+
+Report suspicious activity to appropriate regulatory authorities where required.
+
+Implement tiered limits based on level of KYC/KYB completed (e.g., low-KYC users can only withdraw small amounts).
+
+### Best practices for building onboarding flows
+
+| Practice | Reason |
+|---|---|
+| Tiered KYC | Allow light KYC users small limits to onboard quickly, request deeper KYC as usage grows. |
+| Early Screening | Screen beneficiaries and senders during signup and before first transaction to avoid post-funding compliance blocks. |
+| Automated Document Verification | Integrate providers that can scan and validate IDs and documents automatically to reduce manual workload. |
+| Reverification Triggers | Initiate re-KYC for suspicious behavior, account changes, or after a set time period (e.g., annually). |
+| Clear Privacy Communication | Explain how user data will be stored, protected, and shared. Trust is critical in financial products. |
+
+### Handling payout-Specific compliance scenarios
+
+| Scenario | Best Practice |
+|---|---|
+| Payout to Sanctioned Jurisdiction | Block payout before asset funding if possible, auto-refund if necessary. |
+| Beneficiary Fails KYC Mid-Process | Hold funds securely, notify user, request resolution steps. |
+| Structuring (multiple small payouts to avoid limits) | Flag for internal review, suspend further payouts until reviewed. |
+| Cross-border FX Controls | Partner with regulated entities and build payout corridor restrictions into product settings. |
+
+### Integrating compliance checks into the product flow
+
+Conduct initial KYC/KYB at user registration or first payout initiation.
+
+Conduct real-time sanctions and PEP checks at each payout initiation.
+
+Monitor payout patterns dynamically for suspicious activity indicators (e.g., rapid multiple payouts, payouts just below reporting thresholds).
+
+Design frictionless pathways for users to submit additional information during onboarding or upon compliance trigger events.
+
+### Examples of tiered KYC systems
+
+| Tier | Kyc Requirements | Limits |
+|---|---|---|
+| Tier 0 | Email, phone verification | $100 daily payout limit |
+| Tier 1 | Government ID, selfie verification | $2,000 daily payout lim |
+| Tier 2 | Proof of address, source of funds declaration | Custom high limits subject to approval |
+
+## PM action checklist
+
+Define minimum KYC/KYB standards for your users based on local regulations and risk appetite.
+
+Select and integrate compliance tools (ID verification, sanctions screening, PEP screening).
+
+Design onboarding flows that minimize drop-off while capturing required information.
+
+Build operational processes for handling flagged users and delayed payouts.
+
+Ensure audit logs are generated for every onboarding and payout event.
+
+## Closing reflection
+
+In payout systems, compliance is not just a legal requirement. It is a core enabler of financial trust, liquidity access, and long-term survival.
+
+A great payout product is not one that ignores compliance. It is one that makes compliance invisible to legitimate users and unbearable for bad actors.
+
+In the next module, we will address
+
+ KPIs and Metrics for Measuring Payout Product Success.

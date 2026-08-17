@@ -1,0 +1,163 @@
+---
+title: "Module 13: Card operations and support playbook"
+description: "What a card support team needs: internal data, tooling, and escalation paths."
+---
+## Learning objectives
+
+- Understand the core responsibilities of a card operations and support team
+- Know what data should be available internally for fast debugging
+- Learn how to build the minimum viable internal tools for card support
+- Handle escalations involving failed top-ups, transaction declines, and refunds
+- Set up monitoring and logging that reduces dependency on engineers
+
+## Why operations and support matter
+
+Even if your product is seamless, card systems are external-facing by nature:
+
+- Users interact with merchants, not just your app
+- Declines may be caused by MCCs, issuers, processors, or the merchant’s bank
+- Refunds and disputes can take weeks
+- Fraud rules may be triggered even with normal behavior
+
+A user doesn’t care who’s responsible, they only care if their money works.
+
+If your team can’t:
+
+- Diagnose a failed payment
+- Explain a cross-border fee
+- Reconcile a reversal
+- Locate a refund
+
+. You will lose trust fast.
+
+## The core responsibilities of card ops and support teams
+
+| Function | Description |
+|---|---|
+| Transaction debugging | Analyze failures, declines, and duplicate charges |
+| Lifecycle tracking | Know when and why a card was frozen or terminated |
+| User education | Explain fees, timelines, refund paths clearly |
+| Escalation management | Route high-risk or technical issues to the right internal owners |
+| Policy enforcement | Ensure limits, refund rules, and dispute flows are respected |
+| Platform feedback loop | Surface merchant behavior trends to product or compliance teams |
+
+## The minimum internal tooling you need
+
+You don’t need a full custom CRM or risk engine to start. But you must have the following:
+
+1. **Card lookup by user**
+
+   **Input:** `user_id`, email, or reference
+
+   **Output:** list of cards, current state (active, frozen, terminated), last transaction, balance
+
+2. **Transaction explorer**
+
+   **Input:** `transactionId`, `cardId`, or merchant name
+
+   **Output:**
+
+   - Status: approved, declined, reversed
+   - Amount
+   - Merchant
+   - Timestamp
+   - Decline reason
+   - Webhook delivery log
+   - Balance before/after
+
+3. **Event log for lifecycle changes**
+
+   - Shows who triggered freeze, unfreeze, or termination
+   - Records auto-term rules vs. manual admin actions
+   - Includes timestamp and triggering reason (e.g., "4 failed transactions")
+
+4. **Refund tracker**
+
+   - Links refunds to original transaction
+   - Tracks whether refund went to card or platform float
+   - Expected arrival time
+   - Source: merchant, reversal, or dispute
+
+5. **Webhook viewer / log**
+
+   - See if event was sent, received, retried
+   - Body and headers for signature verification
+   - Success/failure responses from your system
+
+## Support workflow templates
+
+### Common issue: Declined transaction
+
+**Checklist:**
+
+- Is the card active?
+- Was there sufficient balance?
+- What was the decline reason?
+- Was the MCC restricted?
+- Was this a retry or a new attempt?
+- Was a termination or freeze triggered?
+
+**Response Guidance:** Give the exact reason. Offer next step (top-up, retry, contact support).
+
+### Common issue: Refund not received
+
+**Checklist:**
+
+- Is this a refund or reversal?
+- Was the card active or terminated at the time?
+- Did a webhook for `transaction.refund` or `transaction.terminated.refund` fire?
+- Was the refund credited to card or platform wallet?
+
+**Response Guidance:** Set expectation on time (“Refunds typically take 2–14 business days.”). Show a traceable reference if available.
+
+### Common issue: Frozen or terminated card
+
+**Checklist:**
+
+- Who triggered the action?
+- Was it a system rule (velocity, fraud)?
+- Was the user notified?
+- Were there pending funds or refunds?
+
+**Response Guidance:** Clarify reason. Offer path to new card if needed.
+
+## Escalation protocol
+
+Some issues require escalation beyond the support team:
+
+| Issue | Escalate to |
+|---|---|
+| Merchant blocking or MCC issues | Product or compliance team |
+| System-level decline without user action | Engineering |
+| Repeated chargeback risk | Risk team or legal |
+| Refunds not arriving after SLA | Card processor or issuer partner |
+
+Create clear SLAs for escalations. Route to email groups or shared Slack channels, not individuals.
+
+## Logging and monitoring recommendations
+
+| Log | Purpose |
+|---|---|
+| Card lifecycle changes | Reconcile user complaints |
+| Decline spikes | Detect fraud, merchant misbehavior |
+| Refund delay tracker | Hold merchants accountable |
+| Support dashboard usage | Track ops performance and response time |
+
+Ensure this data is accessible by non-engineers. Build dashboards in tools like Retool, Supabase, or your admin panel.
+
+## Team readiness checklist
+
+- Support agents can search by user, card, or transaction
+- Your team has internal documentation for each card state
+- Webhook logs are visible and searchable
+- Refund workflows are documented end to end
+- There’s a clear escalation matrix for each issue category
+- All internal tools are accessible with role-based permissioning
+
+## Recap
+
+- Support and ops teams are the safety net of your card product
+- They need clear data, structured logs, and permissioned tooling
+- Templates for common issues reduce time-to-resolution
+- Escalation policies prevent chaos when real issues arise
+- Your internal readiness directly impacts user trust and external credibility

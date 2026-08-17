@@ -1,0 +1,338 @@
+---
+title: "Virtual card fraud & compliance playbook"
+description: "Real fraud patterns from emerging markets, with the detection, response, and control policies that answer them."
+---
+This section provides a high-trust guide for identifying, mitigating, and responding to fraud attempts in virtual card products. It draws from actual fraud patterns across emerging markets and global card infrastructure. It also outlines internal control policies, escalation workflows, and engineering safeguards to support compliant and resilient operations.
+
+## Overview: Why virtual cards attract fraud
+
+Virtual cards are inherently attractive to malicious actors for several reasons:
+
+- Instant issuance and low onboarding friction
+- Difficult-to-trace prepaid balances
+- Lack of 3D Secure or OTP in some schemes
+- Weak KYC practices at scale
+- Integration with crypto → pseudo-anonymity
+- Delayed detection (e.g., refund abuse, chargebacks)
+
+These conditions require constant monitoring, clear enforcement policies, and engineered guardrails.
+
+## Common types of card fraud
+
+### 2.1 Refund abuse
+
+**Behavior:** User tops up a card, uses it to pay, requests a refund from the merchant, receives the refund, then attempts to withdraw or reverse the top-up via internal or external payment methods.
+
+**Red flags:**
+
+- Multiple refunds to terminated cards
+- Refunds that don’t match any spend event
+- High refund velocity per user
+- Refund-to-top-up ratio \> 50%
+- Unusually fast refund → withdrawal behavior
+
+**Preventive measures:**
+
+- Require successful transaction before refund credit
+- Freeze cards receiving unmatched refunds
+- Set refund velocity limits
+- Match merchant refund IDs to spend references
+
+### 2.2 Card cycling & load testing abuse
+
+**Behavior:** User creates and terminates multiple cards in short time intervals to test card limits, explore MCC behavior, or hide spend history.
+
+**Red flags:**
+
+- Multiple cards created in quick succession within 24 hours, then abandoned or queued for termination
+- No successful spend but several declined attempts
+- Consistent use of test merchants (e.g., TikTok, Facebook Ads)
+- Cards issued under multiple email/phone aliases from same IP/device
+
+**Preventive measures:**
+
+- Limit max active cards per user
+- Enforce cooldown periods after card termination
+- Flag behavior with too many unsuccessful spend attempts
+- Use device fingerprinting to detect account duplication
+
+### 2.3 Chargeback fraud
+
+**Behavior:** User makes a legitimate purchase, then falsely disputes it with the issuer, aiming to keep the goods and recover funds via chargeback.
+
+**Red flags:**
+
+- User history shows multiple chargebacks across merchants
+- Chargebacks for recurring digital subscriptions
+- Chargebacks with same merchant narrative repeatedly
+- Chargebacks filed shortly after spend without contacting support
+
+**Preventive measures:**
+
+- Require pre-authorization logging and webhook trail
+- Integrate with dispute management tools to gather evidence
+- Blacklist high-risk MCCs (dating, crypto, gambling)
+- Track chargeback rate per user + per merchant
+
+### 2.4 Cross-account float laundering
+
+**Behavior:** Users use multiple card accounts to create top-up + refund loops in order to simulate transaction volume and move value across wallets or jurisdictions.
+
+**Red flags:**
+
+- Refunds processed to different account than spender
+- High cross-user referral activity followed by top-ups
+- IP/location mismatch between top-up, spend, and refund
+- Overlapping identifiers (phone, IP, device) across accounts
+
+**Preventive measures:**
+
+- Disable refund if spend did not originate from same user
+- Block or investigate refund → top-up loops
+- Monitor float flow graphs for cyclic patterns
+- Use graph-based detection for device/IP clustering
+
+### 2.5 Compromised merchant testing
+
+**Behavior:** Fraudsters test stolen card credentials (often virtual) at vulnerable or compromised merchants to validate usable cards for larger schemes.
+
+**Red flags:**
+
+- Transactions to test merchants like Apple, TikTok, gift card vendors
+- Declined attempts with MCC 6012, 6051, 7995 (financial institution; quasi-cash/FX/crypto; gambling/betting)
+- Activity from known compromised merchant clusters
+- Frequent pre-auth reversals from same device
+
+**Preventive measures:**
+
+- Limit spend to known, verified MCCs
+- Monitor webhook volume from same merchant ID
+- Delay first card spend after creation if suspicious
+- Use third-party MCC fraud scoring
+
+### 2.6 Collusion with merchants
+
+**Behavior:** Merchants collaborate with users to process fake transactions and refund them, simulating volume or laundering funds.
+
+**Red flags:**
+
+- High refund volume from a single merchant
+- Repeated small top-ups followed by full refunds
+- No reversal webhooks from the same merchant (non-standard behavior)
+- Card usage exclusively limited to a single MCC or merchant
+
+**Preventive measures:**
+
+- Monitor refund-to-settlement ratio per merchant
+- Onboard merchants with due diligence
+- Use reversal logic + evidence trail to validate activity
+- Set merchant risk scoring based on velocity and refund behavior
+
+## Operational safeguards
+
+| Control | Description |
+|---|---|
+| Decline-Rule Enforcement | Escalating fees per decline-rule violation; permanent termination on the 3rd violation |
+| Refund Validation Engine | Require matching transaction ID before refund is credited |
+| KYC-Tiered Limits | Cap top-up or spend per card/user based on identity verification |
+| Webhook Integrity Logging | Verify every webhook is received and logged with signature |
+| Velocity Rules | Daily cap on number of top-ups, card creation, refunds, and spends per user |
+| Referral Anomaly Detection | Detect if referred users are recycling funds or duplicating behavior |
+
+## Engineering integration: Risk layer hooks
+
+- Risk scoring endpoint on card creation, top-up, and spend
+- Device fingerprint collected at card issuance
+- IP geolocation mismatch scoring
+- Silent ML flags passed to webhook handler for downstream routing
+- Audit trail for each declined, frozen, or refunded transaction
+
+Freeze a suspect card immediately with [Update Card Status](/api-reference/cards/freeze-or-unfreeze), cap exposure with [Update Spending Limits](/api-reference/cards/update-spend-limits), and route on the [decline webhooks](/api-reference/virtual-cards/webhooks#virtual-card-declines)
+
+## Compliance policies
+
+- PCI DSS: PAN/CVV must never be logged or displayed post-issuance
+- A card cannot be terminated within 24 hours of creation.
+- Refunds and chargebacks must retain full ledger trail for audit
+- Recordkeeping: Keep transaction logs for at least 5 years (jurisdiction-specific)
+- Card BIN use must adhere to scheme restrictions (e.g., no crypto for certain BINs)
+- Always respect issuing partner rules (some restrict gambling, betting, etc.)
+
+## Fraud investigation & escalation framework
+
+### Triage flow
+
+1. **Classify:** refund abuse, chargeback, laundering, collusion
+2. **Retrieve:** `cardId`, `userId`, `cardUserReference`, webhook log, spend/refund trace
+3. **Lock:** freeze card or float if active
+4. **Review:** device, IP, wallet, merchant pattern
+5. **Resolve:** confirm fraud, initiate reversal or block
+6. **Report:** log case with risk team and compliance
+
+### Escalation triggers
+
+- Refund volume exceeds 10% of top-ups per user in 24h
+- More than 5 failed attempts on new card
+- Chargebacks on same user across multiple cards
+- Card issued to IP flagged for device duplication
+
+## Internal fraud analytics dashboards (recommended)
+
+- Refund volume by card status
+- MCC breakdown for top fraud events
+- BIN usage + risk categorization
+- Chargeback and reversal heatmap
+- Referral behavior graph with float movement
+- First-time spend vs long-term usage correlation
+
+## Fraud investigation workflows & case examples
+
+This section includes:
+
+- End-to-end walkthroughs of real-world fraud scenarios
+- Decision tree-style checklists
+- Templates for incident write-ups
+- Escalation protocols
+
+### Case 1: Refund abuse on terminated card
+
+**Incident summary:**
+
+- User tops up \$300
+- Spends \$290 on Aliexpress
+- Requests termination of the card 15 minutes later (which takes effect after the 24-hour lock)
+- Two days later, Aliexpress processes a \$290 refund
+- Funds are routed to master float
+- User contacts support asking where their refund is
+
+**Investigation steps:**
+
+| Step | Action |
+|---|---|
+| 1 | Fetch original card details and status (terminated) |
+| 2 | Check if virtualcard.transaction.refund or terminated.refund webhook exists |
+| 3 | Confirm refund was routed to company master float |
+| 4 | Trace reference ID to ledger: confirm posting date |
+| 5 | Match refund timestamp to original top-up time |
+
+**Resolution:**
+
+- Credit user wallet from float manually
+- Flag user if this pattern is repeated
+- Record case in exception ledger with: `cardId`, `refundAmount`, `originalSpendRef`, `terminationTime`
+
+### Case 2: Chargeback loop across multiple cards
+
+**Incident summary:**
+
+- User has 3 terminated cards
+- All cards used to pay Facebook Ads in small amounts (\$10–\$30)
+- Over 2 weeks, user files disputes for all transactions
+- Processor initiates chargebacks
+- Facebook provides no counter-evidence
+
+**Investigation steps:**
+
+| Step | Action |
+|---|---|
+| 1 | Fetch all transactions tied to userId across cards |
+| 2 | Identify merchant patterns: all MCC 7311 (advertising) |
+| 3 | Match timing between top-up → spend → dispute |
+| 4 | Check device/IP: identical across cards |
+| 5 | Confirm same business use case for all ads |
+| 6 | Review chat logs or user messages for prior complaints |
+
+**Resolution:**
+
+- Block user from issuing new cards
+- Blacklist device fingerprint
+- Log chargeback costs and adjust float accordingly
+- Notify issuer of abuse pattern (especially if repeated across other users)
+
+### Case 3: Unmatched refund from third-party merchant
+
+**Incident summary:**
+
+- Card receives \$100 refund
+- No spend exists for the amount or from the same merchant
+- Refund is credited to card automatically
+- Same user attempts withdrawal 10 minutes later
+
+**Investigation steps:**
+
+| Step | Action |
+|---|---|
+| 1 | Check refund webhook: transaction.refund |
+| 2 | Search for matching spend with same reference or narrative, none found |
+| 3 | Check card creation date vs refund date, large time gap |
+| 4 | Review withdrawal request: matches refund amount |
+| 5 | Trace card top-up history: no matching inflow |
+
+**Resolution:**
+
+- Freeze card immediately
+- Flag refund as orphaned
+- Check if merchant system is compromised (collusion or refund error)
+- Report case to processor if it involves scheme-level merchant ID
+
+### Investigation checklist (all cases)
+
+Use this flow for every fraud review:
+
+#### A. Transaction matching
+
+- Was there a successful spend before refund?
+- Does the merchant ID match?
+- Did the user file a chargeback or receive auto-refund?
+- Is the refund amount consistent?
+
+#### B. Card lifecycle audit
+
+- What was the card status during spend/refund?
+- Was the card terminated before refund was issued?
+- Were there suspicious declines before the event?
+
+#### C. User behavior analysis
+
+- How many cards has the user created?
+- Are there shared IPs or devices across accounts?
+- Does user exhibit high refund, chargeback, or termination velocity?
+- Has the user used blocked MCCs?
+
+#### D. Network patterns
+
+- Does the same merchant show up in other user fraud patterns?
+- Are similar chargeback narratives clustered by geography or currency?
+- Has this BIN shown high-risk ratios in other providers?
+
+### Response protocol
+
+| Situation | Action |
+|---|---|
+| Suspicious refund > $100 | Freeze card, initiate full transaction audit |
+| Refund without matching spend | Lock card, escalate to processor |
+| 3+ chargebacks by same user | Block user, alert BIN sponsor |
+| Refund-to-topup ratio > 70% | Flag account for laundering review |
+| Merchant collusion suspected | Suspend merchant access or MCC, report to compliance officer |
+
+## Tools every fraud analyst should use
+
+- Card fetch endpoint
+- Transaction list by `cardId` or `userId`
+- Webhook logs with timestamps and signatures
+- Device fingerprinting (external or custom)
+- IP geolocation database
+- Internal ledger system for float tracking
+- Velocity rule alerting
+- Manual reversal & ledger post tool
+- BIN risk score database (if available)
+
+## Final notes for training
+
+Fraud is a dynamic adversary. Tools and tactics evolve. Train your teams to:
+
+- Prioritize explanation before escalation
+- Investigate user behavior, not just transactions
+- Think in graphs, not lists. Fraud rarely happens in isolation
+- Combine engineering signals with financial insight
+- Maintain clean audit trails of decisions

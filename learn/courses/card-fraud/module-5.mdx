@@ -1,0 +1,159 @@
+---
+title: "Module 5: Refund, reversal, and chargeback abuse"
+description: "How refunds, reversals, and chargebacks get abused, and the controls that close the gaps."
+---
+## Purpose
+
+This module focuses on how refunds, reversals, and chargebacks are exploited in virtual card systems. We will detail how these flows work, how fraud occurs within them, and what preventative or investigatory controls your teams should implement.
+
+This is essential training for:
+
+- Treasury and float management teams
+- Fraud and compliance analysts
+- Support teams handling transaction inquiries
+- Engineers implementing refund/reversal/chargeback logic
+- Legal or audit stakeholders investigating loss events
+
+## Definitions
+
+| Term | Meaning |
+|---|---|
+| Refund | Initiated by a merchant after a transaction is settled; funds are returned to the card or float. |
+| Reversal | Occurs before settlement, often within 24h; authorizations are voided, no funds are moved. |
+| Chargeback | A dispute initiated by the cardholder or issuer after the transaction has settled. The funds are forcibly reversed. |
+
+## How each works internally
+
+### Refund flow
+
+1. User spends \$200 at a merchant.
+2. Merchant initiates a refund (days later).
+3. Processor pushes funds back to Bitnob.
+4. Bitnob credits:
+
+- Card (if active), or
+- Master account (if card is frozen or terminated)
+
+### Reversal flow
+
+1. User makes a purchase.
+2. Authorization is placed, but no settlement.
+3. Merchant cancels or fails to complete the order.
+4. Bitnob receives a reversal webhook.
+5. Authorization hold is lifted; funds are restored.
+
+### Chargeback flow
+
+1. User disputes a charge (e.g. fraud or failed service).
+2. Bitnob notifies the processor and requests reversal.
+3. If valid, processor debits the merchant and credits Bitnob.
+4. Cardholder receives funds (or master wallet is credited).
+5. Processor charges a penalty fee for the dispute.
+
+## Common abuse patterns
+
+### 1. Refund abuse
+
+Fraudsters create multiple cards, spend and terminate them, and receive refunds that flow back to their wallets.
+
+**Example:**
+
+- Create card, top up \$100
+- Spend \$90
+- Terminate card
+- Merchant refunds \$90
+- Refund lands in float; fraudster demands payout
+
+### 2. Reversal exploits
+
+- Use cards to “test” platforms that issue reversals instead of declines
+- Appear inactive (no real spend) but cycle balances rapidly
+
+**Pattern:** Rapid top-up → spend → reversal → repeat. Can indicate laundering or collusion with merchants.
+
+### 3. Chargeback fraud
+
+User makes a legitimate purchase, then disputes the charge weeks later claiming fraud.
+
+**High-risk signals:**
+
+- Frequent disputes from same user across multiple cards
+- Chargebacks against high-risk MCCs (ads, gaming, etc.)
+- No prior complaint through support before dispute
+
+## Controls & detection strategies
+
+| Area | Control |
+|---|---|
+| Refund Mapping | Require matching spend reference before refund is accepted |
+| Terminated Cards | Always credit refunds to float, never to terminated cards |
+| Chargeback Thresholds | Auto-flag users with >2 chargebacks/month |
+| Reversal Anomaly Detection | If reversal:top-up ratio > 0.3, flag as laundering |
+| MCC Risk Rules | Block refunds from high-risk MCCs if no matching spend |
+
+## Refund & chargeback SLA guidelines
+
+| Action | Sla |
+|---|---|
+| Refund Processing | Post to card or float within 2 business days of webhook |
+| Reversal Hold Release | Immediate upon webhook confirmation |
+| Chargeback Dispute Window | Typically 30 days to respond; varies by scheme |
+| Manual Refund Escalation | 24 hours for treasury investigation |
+| Refund to Terminated Card Escalation | Flag and route to compliance within 1 hour |
+
+## Logging & audit best practices
+
+- Log original spend reference and webhook reference in all refund records
+- Maintain ledger integrity across top-up → spend → refund path
+- Store MCC, merchant, BIN, IP, and device for each reversal or chargeback
+- Flag multiple refunds to same card in short succession
+- Track “refund value ” by user weekly
+
+## Support team checklist
+
+| Step | Action |
+|---|---|
+| 1. | Confirm if refund or chargeback exists in webhook logs |
+| 2. | Pull spend reference and match value + merchants |
+| 3. | Check card status: active, frozen, or terminated |
+| 4. | Confirm refund landing (card vs float) |
+| 5. | Escalate if refund mismatches spend, no matching spend exists, or card has suspicious lifecycle |
+| 6. | Document with refundRef, cardId, userId, merchant, amount, and status |
+
+## Module 5 knowledge check
+
+### 1. Which of the following is true about reversals?
+
+A. They occur after settlement
+
+B. They involve merchant disputes
+
+C. They occur before settlement and release the hold
+
+D. They trigger chargeback fees
+
+**Correct answer:** C
+
+### 2. What should happen when a refund is issued to a terminated card?
+
+A. It’s automatically lost
+
+B. It must be credited to user wallet
+
+C. It should be rejected
+
+D. It must be credited to float and logged
+
+**Correct answer:** D
+
+### 3. A user has 3 chargebacks in one week across 3 cards. What should happen?
+
+A. Lock account, investigate
+
+B. Issue new cards
+
+C. Accept the chargebacks without action
+
+D. Credit user with float balance
+
+**Correct answer:** A

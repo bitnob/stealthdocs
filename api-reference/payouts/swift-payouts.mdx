@@ -1,0 +1,485 @@
+---
+title: "SWIFT payouts"
+description: "Request fields, supported currencies, and beneficiary requirements for wire payouts sent over SWIFT."
+---
+
+Cross-border payouts use the `swift` destination type when the destination country and currency have no local corridor such as ACH, SEPA, domestic GBP, or mobile money. It is the fallback wire rail for USD, EUR, HKD, and similar currencies into most countries.
+
+SWIFT uses the same three-step sequence as every other corridor. Beneficiary details go on initialize, not on the quote.
+
+| Step | Endpoint |
+|---|---|
+| 1. Quote | `POST /api/payouts/quotes` |
+| 2. Initialize | `POST /api/payouts/:quoteId/initialize` |
+| 3. Finalize | `POST /api/payouts/:quoteId/finalize` |
+
+<Note>
+  SWIFT is not a separate endpoint. Quote, initialize, and finalize all return the same `data.payout` envelope used for bank, mobile money, ACH, and SEPA corridors. The only difference is `destination_type: "swift"` on the initialize beneficiary, plus the SWIFT-specific fields `swift_code`, `remittance_purpose`, and the discriminated `sender` variant. This page covers only what is SWIFT-specific; the endpoint pages above carry the full per-field reference.
+</Note>
+
+## Step 1: create quote
+
+The quote describes currency, amount, and destination country, and has the same shape used for every payout corridor.
+
+<Warning>
+  The quote body takes no `beneficiary_info` and no `destination_type`. Both belong on initialize. Sending them here is the most common SWIFT integration mistake.
+</Warning>
+
+```json
+{
+  "from_asset": "USDC",
+  "to_currency": "USD",
+  "source": "offchain",
+  "amount": "1500.00",
+  "country": "GB",
+  "payment_reason": "vendor payment",
+  "reference": "INV-2026-04-16-001"
+}
+```
+
+```json
+{
+  "success": true,
+  "message": "Quote created successfully",
+  "data": {
+    "payout": {
+      "id": "019f2f15-8da6-718c-95f3-ede937fca369",
+      "quote_id": "QT2_21015630",
+      "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+      "status": "QUOTE",
+      "source": "OFFCHAIN",
+      "from_asset": "USDC",
+      "to_currency": "USD",
+      "sat_amount": "2372683",
+      "btc_amount": "0.02372683",
+      "cent_amount": "150000",
+      "amount": "1503.006012",
+      "settlement_amount": "1500",
+      "cent_fees": "0",
+      "fees": "0",
+      "exchange_rate": {
+        "rate": "1",
+        "btc_rate": "63346.25",
+        "currency": "usd",
+        "effective_rate": "0.998000000015968"
+      },
+      "trip": {
+        "quote_at": "2026-07-04T21:42:49.510096096Z"
+      },
+      "reference": "q-swift-1783201368618",
+      "country": "GB",
+      "expires_at": "2026-07-04T21:58:49.510113277Z",
+      "created_at": "2026-07-04T21:42:49.511783062Z",
+      "updated_at": "2026-07-04T21:42:49.511783062Z"
+    }
+  },
+  "timestamp": "2026-07-04T21:42:49.519222985Z"
+}
+```
+
+## Step 2: initialize (the SWIFT payload)
+
+The SWIFT beneficiary lives inside the top-level `beneficiary` object on `POST /api/payouts/:quoteId/initialize`. All API fields are **lowercase snake_case**; the adapter normalises them to the downstream provider's format.
+
+### Top-level fields
+
+1. `beneficiary` (object, required)
+
+   SWIFT payload: see the three tables below. Validated against the corridor's field schema for (country, destination_type=swift).
+
+2. `reference` (string, optional)
+
+   Client-set idempotency / tracking reference. Overrides or supplements the quote's reference.
+
+3. `payment_reason` (string, optional)
+
+   Short reason code for the payment (free text at this level).
+
+4. `callback_url` (string, optional)
+
+   Per-payout webhook URL override.
+
+5. `customer_id` (string, optional)
+
+   Optional link to a persisted customer record.
+
+6. `client_meta_data` (string, optional)
+
+   Arbitrary client metadata string.
+
+### `beneficiary`: core SWIFT fields
+
+1. `destination_type` (string, required)
+
+   Set to 'swift' (lowercase). Selects the SWIFT wire rail.
+
+2. `country` (string, required)
+
+   ISO 3166-1 alpha-2 of the destination account. Must match the country on the quote.
+
+3. `account_name` (string, required)
+
+   Full name of the recipient (e.g. 'John Doe').
+
+4. `account_number` (string, required)
+
+   Recipient's account number, or IBAN if the destination country uses IBAN.
+
+5. `swift_code` (string, required)
+
+   Recipient bank's SWIFT code.
+
+6. `bank_name` (string, required)
+
+   Display name of the destination bank.
+
+7. `bank_address` (string, required)
+
+   Street address of the destination bank branch.
+
+8. `bank_city` (string, required)
+
+   City of the destination bank branch.
+
+9. `bank_post_code` (string, required)
+
+   Postal / ZIP code of the destination bank branch.
+
+10. `bank_country` (string, required)
+
+    ISO 3166-1 alpha-2 of the destination bank's country.
+
+11. `remittance_purpose` (string, required)
+
+    Lowercase snake_case value from the remittance purposes enum (see reference below).
+
+12. `beneficiary` (object, required)
+
+    Recipient's physical address (nested object: see table below).
+
+13. `sender` (object, required)
+
+    Sender identity, discriminated by `type` ('business' or 'individual'). See table below.
+
+### `beneficiary.beneficiary`: recipient address
+
+1. `country` (string, required)
+
+   ISO 3166-1 alpha-2 of the recipient.
+
+2. `city` (string, required)
+
+   City.
+
+3. `post_code` (string, required)
+
+   Postal / ZIP code.
+
+4. `address` (string, required)
+
+   Street address.
+
+<Note>
+  **RW and SG only:** Rwanda (`RW`) and Singapore (`SG`) additionally require `type` on the nested beneficiary, one of `"business"` or `"individual"`. No other SWIFT-supporting country requires this.
+</Note>
+
+### `beneficiary.sender`: payer identity
+
+1. `type` (string, required)
+
+   'business' or 'individual' (case-insensitive, normalised server-side).
+
+2. `account_name` (string, required)
+
+   Legal name of the sender (same name-validation rules as recipient account_name).
+
+3. `country` (string, required)
+
+   Sender's ISO 3166-1 alpha-2 country code.
+
+4. `city` (string, required)
+
+   Sender's city.
+
+5. `address` (string, required)
+
+   Sender's street address.
+
+6. `post_code` (string, required)
+
+   Sender's postal code.
+
+7. `registration_number` (string, conditional)
+
+   Business registration / tax ID, 2–30 chars. REQUIRED when type='business'; ignored for individuals.
+
+8. `date_of_birth` (string, conditional)
+
+   YYYY-MM-DD. REQUIRED when type='individual'.
+
+9. `country_of_birth` (string, conditional)
+
+   ISO 3166-1 alpha-2. REQUIRED when type='individual'.
+
+```json
+{
+  "quote_id": "QT_100005",
+  "payment_reason": "salary",
+  "callback_url": "https://example.com/webhooks/payouts",
+  "reference": "PAYOUT_CZ2160208170341400930203",
+  "beneficiary": {
+    "destination_type": "swift",
+    "country": "GB",
+    "account_name": "John Doe",
+    "account_number": "GB29NWBK60161331926819",
+    "swift_code": "DEUTDEFF",
+    "bank_name": "Deutsche Bank AG",
+    "bank_address": "41 Lothbury",
+    "bank_city": "London",
+    "bank_post_code": "EC2V 8AH",
+    "bank_country": "GB",
+    "remittance_purpose": "salary_payment",
+    "beneficiary": {
+      "country": "GB",
+      "city": "London",
+      "post_code": "E14 5AB",
+      "address": "10 Canary Wharf"
+    },
+    "sender": {
+      "type": "business",
+      "account_name": "Acme Holdings LTD",
+      "country": "US",
+      "city": "Wilmington",
+      "address": "1209 Orange St",
+      "post_code": "19801",
+      "registration_number": "12-3456789"
+    }
+  }
+}
+```
+
+```json
+{
+  "success": true,
+  "message": "Payout initialized successfully",
+  "data": {
+    "payout": {
+      "id": "019f2f15-8da6-718c-95f3-ede937fca369",
+      "quote_id": "QT2_21015630",
+      "company_id": "",
+      "status": "INITIATED",
+      "source": "SOURCE_UNSET",
+      "from_asset": "USDC",
+      "to_currency": "USD",
+      "sat_amount": "2372683",
+      "btc_amount": "0.023727",
+      "amount": "1503.006012",
+      "settlement_amount": "1500.000000",
+      "cent_fees": "0",
+      "fees": "0.000000",
+      "exchange_rate": {
+        "rate": "1.000000",
+        "btc_rate": "63346.250000",
+        "currency": "",
+        "effective_rate": "0.998000000015968"
+      },
+      "beneficiary": {
+        "account_name": "John Doe",
+        "account_number": "GB29NWBK60161331926819",
+        "bank_address": "41 Lothbury",
+        "bank_city": "London",
+        "bank_country": "GB",
+        "bank_name": "Deutsche Bank AG",
+        "bank_post_code": "EC2V 8AH",
+        "beneficiary": {
+          "address": "10 Canary Wharf",
+          "city": "London",
+          "country": "GB",
+          "post_code": "E14 5AB"
+        },
+        "country": "GB",
+        "destination_type": "swift",
+        "remittance_purpose": "salary_payment",
+        "sender": {
+          "account_name": "Acme Holdings LTD",
+          "address": "1209 Orange St",
+          "city": "Wilmington",
+          "country": "US",
+          "post_code": "19801",
+          "registration_number": "12-3456789",
+          "type": "business"
+        },
+        "swift_code": "DEUTDEFF"
+      },
+      "payment_reason": "salary",
+      "reference": "PAYOUT-swift-1783201369618",
+      "country": "",
+      "expires_at": "2026-07-04T21:58:49Z",
+      "created_at": null,
+      "updated_at": null
+    },
+    "data": null
+  },
+  "timestamp": "2026-07-04T21:42:49.731143945Z"
+}
+```
+
+### Country-specific extras
+
+A handful of countries add required fields beyond the core SWIFT schema. The corridor config at `GET /api/payouts/supported-countries/:country` is the source of truth.
+
+<ParamField body="bsb_number" type="string" required>
+  Australia only. 6-digit BSB code, pattern `^\d{6}$`. The corridor placeholder shows `062-000`, but dashes are not accepted. Strip them and send `062000`.
+</ParamField>
+
+<ParamField body="IFSCode" type="string" required>
+  India only. 11-char IFSC code, pattern `^[A-Z]{4}0[A-Z0-9]{6}$`. The key is camelCase `IFSCode`, unlike every other field in the payload. Sending `ifs_code` or `ifsc_code` fails validation.
+</ParamField>
+
+<ParamField body="swift_code" type="string">
+  Hong Kong applies a stricter pattern than the global BIC regex: `^[A-Za-z]{4}HK[A-Za-z0-9]{2}([A-Za-z0-9]{3})?$`. Characters 5 and 6 are pinned to literal `HK`, and matching is case-insensitive.
+</ParamField>
+
+<ParamField body="beneficiary.type" type="string" required>
+  Rwanda and Singapore only. Either `business` or `individual`, set on the nested beneficiary object.
+</ParamField>
+
+```
+family_support           education
+gift_and_donation        medical_treatment
+maintenance_expenses     travel
+small_value_remittance   liberalized_remittance
+construction_expenses    hotel_accommodation
+advertising_expenses     advisory_fees
+business_insurance       insurance_claims
+delivery_fees            exported_goods
+service_charges          loan_payment
+office_expenses          property_purchase
+property_rental          royalty_fees
+shares_investment        fund_investment
+tax_payment              transportation_fees
+utility_bills            personal_transfer
+salary_payment           computer_services
+reward_payment           influencer_payment
+other_fees               other
+```
+
+## Step 3: finalize
+
+No body. Commit the debit and release the payment to the SWIFT rail.
+
+<Note>
+  **Empty body:** Any body you send on Finalize is ignored. The server only reads the `:quoteId` from the path.
+</Note>
+
+```http
+POST /api/payouts/:quoteId/finalize
+```
+
+```json
+{
+  "success": true,
+  "message": "Payout finalized successfully",
+  "data": {
+    "payout": {
+      "id": "6a4df726-c408-4ecb-be5c-df92eb88d25d",
+      "quote_id": "QT_100005",
+      "company_id": "1bc7caba-08b9-49ff-a911-2a8fb570cbb9",
+      "status": "PENDING",
+      "source": "OFFCHAIN",
+      "from_asset": "USDC",
+      "to_currency": "USD",
+      "sat_amount": "1968244",
+      "btc_amount": "0.01968244",
+      "cent_amount": "150000",
+      "amount": "1500",
+      "settlement_amount": "1500",
+      "cent_fees": "0",
+      "fees": "0",
+      "exchange_rate": {
+        "rate": "1",
+        "btc_rate": "76210.05",
+        "currency": "usd"
+      },
+      "beneficiary": {
+        "account_name": "John Doe",
+        "account_number": "GB29NWBK60161331926819",
+        "bank_address": "41 Lothbury",
+        "bank_city": "London",
+        "bank_country": "GB",
+        "bank_name": "Deutsche Bank AG",
+        "bank_post_code": "EC2V 8AH",
+        "beneficiary": {
+          "address": "10 Canary Wharf",
+          "city": "London",
+          "country": "GB",
+          "post_code": "E14 5AB"
+        },
+        "country": "GB",
+        "destination_type": "swift",
+        "remittance_purpose": "salary_payment",
+        "sender": {
+          "account_name": "Acme Holdings LTD",
+          "address": "1209 Orange St",
+          "city": "Wilmington",
+          "country": "US",
+          "post_code": "19801",
+          "registration_number": "12-3456789",
+          "type": "business"
+        },
+        "swift_code": "DEUTDEFF"
+      },
+      "trip": {
+        "quote_at": "2026-04-18T12:16:55.868787720Z",
+        "initialized_at": "2026-04-18T12:17:53.307136432Z"
+      },
+      "payment_reason": "salary",
+      "reference": "PAYOUT_CZ2160208170341400930203",
+      "callback_url": "https://example.com/webhooks/payouts",
+      "country": "GB",
+      "expires_at": "2026-04-18T12:32:55.868800Z",
+      "created_at": "2026-04-18T12:16:55.871666Z",
+      "updated_at": "2026-04-18T12:19:17.138160979Z"
+    }
+  },
+  "timestamp": "2026-04-18T12:19:17.145493888Z"
+}
+```
+
+## Discovering SWIFT-enabled countries
+
+Before building a SWIFT payload, fetch the corridor config for the destination country and look for `destination_types` containing `"swift"`. The returned schema for that destination type is the source of truth for that country's required fields.
+
+```http
+GET /api/payouts/supported-countries/GB
+```
+
+```json
+{
+  "currency": "USD",
+  "destination_types": ["swift"],
+  "limits": { "min_amount": "1", "max_amount": "2000000" }
+}
+```
+
+## Validation failures
+
+| Http | Code | Cause |
+|---|---|---|
+| 400 | VALIDATION_ERROR | The body is invalid, a required field is missing, a beneficiary field fails its regex / length, or the amount is below the corridor minimum / above the maximum. The `detail` names the failing field. |
+| 401 | UNAUTHORIZED | Missing or invalid HMAC signature / credentials. |
+| 404 | NOT_FOUND | The `quote_id` in the path doesn't exist: create a quote first, and re-quote if it has expired. |
+| 422 | INSUFFICIENT_FUNDS | Company wallet can't cover the payout when source is `offchain`. |
+
+### Common pitfalls
+
+1. **Beneficiary on the quote.** It doesn't go there. Quote has no `beneficiary_info`, no `destination_type`. Both live on Initialize.
+2. **Casing on enums.** API is **lowercase** snake_case for `destination_type`, `remittance_purpose`, `sender.type`. The adapter uppercases them before dispatch: send lowercase.
+3. **Casing on SWIFT/BIC.** Must be uppercase (`DEUTDEFF`, not `deutdeff`). Length is exactly 8 or 11.
+4. **Three address blocks.** `bank_*` = destination bank; nested `beneficiary.*` = recipient's physical address; `sender.*` = payer's address. All three are independent.
+5. **Finalize body.** There is none. Sending a body is ignored.
+6. **`country` appears twice.** Once at the top of beneficiary (corridor lookup key), once nested inside `beneficiary.beneficiary.country` (recipient's country, often the same value).
+7. **Sender variant mismatch.** `type: "individual"` with `registration_number` → `registration_number` is silently ignored. `type: "business"` without `registration_number` → validation fails.
+8. **Name format.** `account_name` / `sender.account_name` must have ≥2 space-separated parts, each ≥2 chars. No `Mr`/`Mrs`/`Dr`. No single-letter-plus-dot. `J. Doe` rejects; `John Doe` passes.
+9. **`IFSCode` is the one camelCase field.** Every other SWIFT field is snake_case; India's IFSC is literally `IFSCode`. Sending `ifs_code` / `ifsc_code` silently fails as "missing required field".
+10. **AU BSB has no dashes.** Placeholder shows `062-000`; regex `^\d{6}$` rejects the dash. Submit as `062000`.

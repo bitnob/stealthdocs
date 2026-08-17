@@ -1,0 +1,132 @@
+---
+title: "LNURL and Lightning addresses"
+description: "LNURL links and email-style Lightning addresses let customers send and withdraw sats without copying invoices."
+related:
+  - /docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices
+  - /docs/bitcoin/confirmations-and-webhook-events
+---
+Bitnob supports LNURL and Lightning addresses to make Lightning Network usage more user-friendly. By integrating these flows, you can issue LNURL links for customers, enable them to receive or withdraw sats, and let them pay or be paid with email-style addresses (like alice@company.com).
+
+## What is LNURL?
+
+LNURL is a set of open protocols that layer on top of Bitcoin’s Lightning Network. They aim to simplify workflows like receiving and paying with Lightning. LNURL can operate in two major directions:
+
+LNURL-Pay: Customer pays a static link that auto-fetches the invoice.
+
+LNURL-Withdraw: Customer scans a link to claim funds from a service.
+
+Instead of manually generating an invoice for each transaction, LNURL allows a user’s wallet to request one on the fly. This makes recurring or unpredictable payments simpler because the user only has to scan a single QR or link once.
+
+## Common LNURL use cases
+
+1. Tipping: A content creator shares an LNURL to receive tips from fans instantly.
+2. Withdraw: A user can withdraw earnings from a platform by scanning or clicking an LNURL that spawns an invoice behind the scenes.
+3. Static Donations: Similar to tipping, but used for ongoing donation flows.
+
+## Lightning addresses
+
+Lightning addresses provide an even simpler approach: users have an “email-like” identifier (e.g., joe@company.com). When someone wants to send them sats, they type or paste that address into a Lightning wallet that supports LNURL behind the scenes, automatically retrieving an invoice.
+
+Receive: The payer’s wallet queries joe@company.com, obtains the invoice, and completes the payment.
+
+Send: Similarly, you can pay another user’s Lightning address by letting your system generate the appropriate LNURL flow under the hood.
+
+## Why Lightning addresses?
+
+Familiar experience: Email or username style format.
+
+Great for real-time micropayments or user handles.
+
+No manual copying of BOLT11 invoice strings.
+
+## LNURL + Bitnob integration
+
+With Bitnob, you can:
+
+1. Issue LNURLs to customers (for receiving or withdrawal flows).
+2. Issue or manage Lightning addresses for each user.
+3. Use the same underlying Lightning accounts you already have in Bitnob.
+4. Listen for LNURL or address-based payments via webhooks.
+
+### LNURL setup flows
+
+#### LNURL-Pay
+
+1. User sees a static QR or link (the LNURL).
+2. Their wallet decodes the LNURL, fetches the invoice, and pays.
+3. Payment arrives in the user’s custodial or non-custodial wallet, and Bitnob sends a transfer.success webhook.
+
+#### LNURL-Withdraw
+
+1. Your app shows a user an LNURL code that references your “custody.”
+2. The user’s wallet scans it, and Bitnob receives a request to provide an invoice.
+3. Payment flows from your side (e.g., a payout) to the user’s LN wallet.
+
+#### Lightning address setup
+
+1. You assign an address to each user (e.g., username@yourdomain.com).
+2. This domain or subdomain is LNURL-enabled with the help of Bitnob’s API or your own LNURL server.
+3. When someone pays username@yourdomain.com, Bitnob automatically generates an invoice and forwards the payment to that user’s wallet.
+
+## Creating LNURLs and Lightning addresses via API
+
+1. Register your domain or subdomain for LNURL with Bitnob.
+2. Issue LNURL (Pay or Withdraw) by calling endpoints that create an LNURL link plus any constraints (amount range, comment?).
+3. Lightning Address: If you prefer address-based flows, pass user information to Bitnob’s API to provision name@yourdomain.com. You can also implement your own LNURL server but use Bitnob’s underlying Node.
+
+### Key fields to note
+
+| Field | Definition |
+|---|---|
+| Callback URLs | LNURL relies on endpoints that return invoice data upon request. |
+| Min/Max Sats | LNURL-Pay can define ranges. |
+| Expiry | LNURL or invoice expires after a certain time for security. |
+| Reference IDs | For each LNURL or lightning address creation, store references to track user identity and handle webhooks properly. |
+
+## Handling payment notifications
+
+Whenever a LNURL-based or Lightning address-based payment arrives:
+
+Webhook: You receive an event like transfer.success from Bitnob, containing the paid invoice details.
+
+Idempotency: As always, mark the payment as processed in your DB using a unique reference.
+
+Optional Extra Steps: If the LNURL was for a withdrawal, you can automatically finalize the user’s request. If it was a LNURL pay link, you can credit them once confirmed.
+
+## Security and best practices
+
+1. Use unique addresses/LNURLs: Assign a new address or LNURL per user to keep transactions separate.
+2. Validate domain ownership: If you run your own LNURL domain.
+3. Set Sane Limits: LNURL withdraw flows can specify maximum amounts to avoid large accidental payouts.
+4. Track usage: Track each LNURL’s usage so a user can’t keep re-withdrawing if your logic only expects one usage.
+5. Handle Rate Limits: LNURL-compatible wallets might re-poll your callback. Include some caching or a short TTL.
+
+## Edge cases
+
+User scans LNURL but never completes: Their wallet might time out or show an error. LNURL sees no invoice request, so no funds move.
+
+Underpay: LNURL flows typically define an exact invoice. Underpayment is less common unless your system supports flexible amounts.
+
+Lightning Address DNS issues: If your domain is offline or misconfigured, payers can’t retrieve an invoice. Provide fallback (like a direct LNURL link).
+
+## FAQ
+
+Q:Do I need a separate Lightning node to issue LNURL?
+
+A:
+
+Bitnob can handle LN node operations. You just need an account, or you can integrate your own LN node behind LNURL if you want full control.
+
+Q: Can LNURL/Lightning addresses be used on mobile?
+
+A:
+
+Yes. Most Lightning wallets support scanning LNURL QR codes or typing in an address, so the user never handles a raw invoice.
+
+Q:What about LNURL or Lightning addresses for stablecoins?
+
+A:
+
+LNURL and addresses are specifically for Bitcoin’s Lightning. For stablecoin flows, use the stablecoin endpoints and references in the docs.
+
+With LNURL and Lightning addresses, you can drastically improve your user’s payment experience, no more copying long BOLT11 invoices or manual invoice generation. Everything happens dynamically, behind easy-to-share links or email-style addresses.

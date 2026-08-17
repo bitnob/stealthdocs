@@ -1,0 +1,30 @@
+---
+title: "ASCII binary converter"
+description: "Text to 8-bit binary and back, showing the bit pattern behind each character."
+---
+
+import { AsciiBinaryConverter } from "/snippets/playground/text-binary.jsx";
+
+<AsciiBinaryConverter />
+
+Every character is stored as a number, and every number is stored as bits. This converter shows that bottom layer directly: each byte as eight binary digits.
+
+```
+H        e        l        l        o
+01001000 01100101 01101100 01101100 01101111
+```
+
+## Reading the pattern
+
+ASCII was designed so the bit patterns are systematic. Uppercase `A` is `01000001` (65) and lowercase `a` is `01100001` (97): the only difference is bit 5. That is why converting case can be done by flipping a single bit.
+
+| Character | Decimal | Binary |
+|---|---|---|
+| `0` | 48 | 01100000 |
+| `A` | 65 | 01000001 |
+| `a` | 97 | 01100001 |
+| space | 32 | 00100000 |
+
+## Beyond ASCII
+
+ASCII only defines 128 characters, all one byte. Anything outside that range is UTF-8 and takes multiple bytes, so a single character can become 16, 24, or 32 bits. To see how a specific string breaks down, use the [string byte inspector](/docs/playground/text-binary/string-byte-inspector).

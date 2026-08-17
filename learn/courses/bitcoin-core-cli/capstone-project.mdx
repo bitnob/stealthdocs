@@ -1,0 +1,121 @@
+---
+title: "Capstone project: Bitcoin Core CLI automation"
+description: "A capstone CLI tool that runs a node, manages wallets and UTXOs, and broadcasts signed transactions end to end."
+---
+## Goal
+
+This project tests your ability to:
+
+- Operate and script around a Bitcoin Core node
+- Manage wallets and UTXOs
+- Create, sign, and broadcast raw transactions
+- Work entirely from the command line or via a scripting language
+
+## Project specification
+
+Your tool (Bash, Python, or any CLI language) should do the following:
+
+## Start a Bitcoin node in regtest mode
+
+Check if bitcoind is already running. If not, start it with:
+
+```bash
+bitcoind -regtest -daemon
+```
+
+## Generate 101 blocks
+
+Create a wallet and a miner address:
+
+```bash
+bitcoin-cli -regtest createwallet "capstone"
+
+MINER_ADDR=$(bitcoin-cli -regtest getnewaddress)
+```
+
+Mine 101 blocks to unlock coinbase outputs:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 101 $MINER_ADDR
+```
+
+## Send bitcoin to 2 new addresses
+
+Generate two new recipient addresses:
+
+```bash
+ADDR1=$(bitcoin-cli -regtest getnewaddress "recipient1")
+
+ADDR2=$(bitcoin-cli -regtest getnewaddress "recipient2")
+```
+
+Send 0.25 BTC to each:
+
+```bash
+TXID=$(bitcoin-cli -regtest sendmany "" "{\\"$ADDR1\\":0.25,\\"$ADDR2\\":0.25}")
+```
+
+## Confirm the transaction
+
+Mine 1 block:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 1 $MINER_ADDR
+```
+
+## Output full raw transaction
+
+Retrieve and decode the transaction:
+
+```bash
+RAWTX=$(bitcoin-cli -regtest getrawtransaction $TXID)
+
+bitcoin-cli -regtest decoderawtransaction $RAWTX
+```
+
+## Success criteria
+
+Your tool must:
+
+- Be runnable from a single command or script
+- Wallet balance before and after TX
+- The full transaction hex
+- The decoded transaction JSON
+- Handle errors gracefully (e.g. wallet already exists)
+- Bonus
+
+Add logging and cleanup:
+
+- Create a log file with all steps and timestamps
+- Allow user to reset the regtest chain (stop, clear, restart)
+- Example
+
+Capstone Start: Initializing Regtest Node...
+
+Node running
+
+Wallet 'capstone' created
+
+Mined 101 blocks
+
+Sending 0.25 BTC to two new addresses
+
+TXID: a6c1f...89
+
+Mined confirmation block
+
+🔍 Raw Transaction:
+
+```bash
+02000000...
+```
+
+🔍 Decoded Transaction:
+
+```json
+{
+  "txid": "...",
+  "vout": [...],
+  ...
+}
+```

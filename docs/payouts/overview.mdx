@@ -1,0 +1,64 @@
+---
+title: "Overview"
+sidebarTitle: "Overview"
+description: "The Payouts API sends money to bank accounts, mobile money wallets, and cash pickup locations, funded from bitcoin, stablecoins, or a fiat balance."
+---
+
+One integration reaches every country Bitnob supports. You fund each payout in the asset you hold, the recipient is paid in their local currency over the local rail, and Bitnob handles everything in between: it holds the liquidity, performs the conversion, clears the transaction with the local regulator, and disburses to the beneficiary. You call three endpoints.
+
+## When to use it
+
+Payouts fits payroll, vendor disbursement, affiliate payments, refunds, and remittance, which is any case where you need to pay someone in a currency and country where you hold no bank account.
+
+It is not a card rail and not a wallet-to-wallet transfer. If you need to pay a card, see [Card issuing](/docs/card-issuing/overview). If you need to move value between Bitnob balances, see [Trading](/docs/trading/overview).
+
+## How a payout works
+
+<Steps>
+  <Step title="Request a quote">
+    Call [Create quote](/api-reference/payouts/create-quote) with the destination country, currency, and amount. You get back a quote ID, the exact amount to fund, the FX rate, and an expiry timestamp.
+  </Step>
+  <Step title="Initialize against the quote">
+    Call [Initialize payout](/api-reference/payouts/initialize-payout) with the quote ID and the beneficiary details. Bitnob returns a funding address for onchain payouts, or readies a balance debit for offchain, depending on your [settlement model](/docs/payouts/settlement-models).
+  </Step>
+  <Step title="Finalize and track">
+    Call [Finalize payout](/api-reference/payouts/finalize-payout) to commit it. Track the outcome with [webhooks](/api-reference/payouts/webhooks) or by polling [Get payout](/api-reference/payouts/get-payout).
+  </Step>
+</Steps>
+
+A quote expires after minutes, at the `expires_at` timestamp it carries. If it expires before you fund it, request a new one. See [The payout lifecycle](/docs/payouts/payouts-lifecycle) for every state a payout passes through.
+
+## Funding sources
+
+| Source | Notes |
+|---|---|
+| Bitcoin (BTC) | On-chain or over Lightning. Converted at the quoted rate. |
+| USDT, USDC | On the chains listed by [Supported chains](/api-reference/addresses/supported-chains). |
+| Fiat balance | Where a local currency balance is available to you. Check with [List balances](/api-reference/balances/list-balances). |
+
+## Destination channels
+
+| Channel | Notes |
+|---|---|
+| Bank account | Direct credit over the local rail, such as NIP in Nigeria or SEPA in the EU. |
+| Mobile money wallet | M-Pesa, MTN Mobile Money, Orange Money, and others, by country. |
+| Cash pickup | Where a local partner network is available. |
+
+Availability differs by country. Call [Supported countries](/api-reference/payouts/supported-countries) for the live matrix and [Country requirements](/api-reference/payouts/country-requirements) for the fields a given destination needs. Do not hardcode either.
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="The payout lifecycle" icon="timeline" href="/docs/payouts/payouts-lifecycle">
+    Every state a payout passes through and what moves it forward.
+  </Card>
+  <Card title="How payouts settle" icon="wallet" href="/docs/payouts/settlement-models">
+    Pre-fund a balance, or fund each payout on the fly.
+  </Card>
+  <Card title="Send your first payout" icon="rocket" href="/docs/payouts/send-your-first-payout">
+    A worked example from quote to settlement.
+  </Card>
+  <Card title="Supported currencies and rails" icon="globe" href="/docs/payouts/supported-currencies">
+    Countries, currencies, and the rail behind each one.
+  </Card>
+</Columns>

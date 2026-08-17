@@ -1,0 +1,67 @@
+---
+title: "Receive trade webhooks"
+description: "Two events carry every trade outcome: trade.completed and trade.failed. Act on them, not on the synchronous order response."
+related:
+  - /docs/trading/statuses-and-webhook-events
+  - /docs/trading/error-handling-patterns
+---
+
+The order response returns immediately, but the outcome arrives as a webhook. Update balances and mark trades settled on `trade.completed`; surface and route failures on `trade.failed`.
+
+| Event | Fires when | Act on it |
+|---|---|---|
+| `trade.completed` | The trade executed and settled. | Credit your ledger, show success. |
+| `trade.failed` | The trade failed: quote expiry, balance, or system error. | Unlock any UI hold, show the reason, offer a re-quote. |
+
+Deliveries are HTTPS POSTs signed with the `x-bitnob-signature` header; verify before acting, exactly as for [stablecoin webhooks](/docs/stablecoins/webhooks). Handlers must be idempotent, since duplicates happen; de-duplicate on `event_id`.
+
+## Payloads
+
+<CodeGroup>
+
+```json trade.completed
+{
+  "event": "trade.completed",
+  "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+  "data": {
+    "tradeId": "trd_0a9eab21",
+    "reference": "trade_order_4837",
+    "from": "usdt",
+    "to": "bitcoin",
+    "inputAmount": 10000,
+    "outputAmount": 225000,
+    "rate": 2250,
+    "walletId": "wallet_btc_3488",
+    "status": "completed",
+    "timestamp": "2025-05-16T10:13:45Z"
+  }
+}
+```
+
+```json trade.failed
+{
+  "event": "trade.failed",
+  "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+  "data": {
+    "tradeId": null,
+    "reference": "trade_order_4837",
+    "from": "bitcoin",
+    "to": "usdt",
+    "inputAmount": 500000,
+    "reason": "Quote expired",
+    "status": "failed",
+    "timestamp": "2025-05-16T10:16:22Z"
+  }
+}
+```
+
+</CodeGroup>
+
+`reference` is your join key back to the order you submitted; `reason` on failures carries the cause, for example `Quote expired` or `Insufficient balance`.
+
+## Handler checklist
+
+- Match `reference` against your ledger before mutating anything.
+- Log every event with delivery timestamp and processing outcome.
+- Reconcile on a schedule against [List orders](/api-reference/trading/list-orders), so a missed delivery never strands a trade as pending.
+- Alert internally when `trade.failed` volume spikes; a burst usually means a systemic cause, not user error.

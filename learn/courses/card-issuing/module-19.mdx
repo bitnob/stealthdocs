@@ -1,0 +1,139 @@
+---
+title: "Module 19: BINs – identification, validation, and strategic use"
+description: "Card number anatomy: BIN structure, the Luhn check, and what merchants infer from both."
+---
+## Learning objectives
+
+- Know how to identify and inspect real BINs from card numbers
+- Understand how the rest of a card number is constructed (beyond the BIN)
+- Use the Luhn algorithm to validate card numbers and detect fakes
+- Understand how merchants and fraud systems use BIN metadata
+- Explore tools and APIs to analyze BINs and detect patterns in your own card program
+
+## What is a BIN, really?
+
+A Bank Identification Number (BIN), now officially called an Issuer Identification Number (IIN), refers to the first 6 to 8 digits of a card number. It’s a public-facing prefix that identifies:
+
+- The issuing institution (bank or fintech)
+- The brand (Visa, Mastercard, Verve, etc.)
+- The country of issuance
+- The type of card (debit, prepaid, credit)
+- Possibly even funding method (commercial vs. consumer)
+
+## Card number structure
+
+Card numbers (typically 16 digits) follow a structured format:
+
+`[ BIN ] [ Account Number ] [ Check Digit ]`
+
+| Part | Length | Description |
+|---|---|---|
+| BIN/INN /IIN | 6–8 digits | Identifies issuer, brand, geography, etc. |
+| Account number | Variable | Unique per user |
+| Check digit | 1 digit | Validates entire number using the Luhn algorithm |
+
+## Real-world BIN examples
+
+| Card Number | Bin | Card Brand | Region | Type |
+|---|---|---|---|---|
+| 5078 14XX XXXX XXXX | 507814 | Verve | Nigeria | Prepaid |
+| 5363 07XX XXXX XXXX | 536307 | Mastercard | Nigeria | Prepaid |
+| 4147 09XX XXXX XXXX | 414709 | Visa | U.S. | Debit |
+| 4571 02XX XXXX XXXX | 457102 | Visa | Europe | Credit |
+| 5284 12XX XXXX XXXX | 528412 | Mastercard | Kenya | Debit |
+
+**Try it yourself:** You can paste a BIN into a lookup service (e.g. binlist.net, binlookup.io) to explore metadata.
+
+## BIN lookup tools
+
+Use these tools during development, support, or fraud analysis:
+
+- [https://binlist.net](https://binlist.net)
+- [https://lookup.binlist.io](https://lookup.binlist.io)
+- [https://bincheck.io](https://bincheck.io)
+
+These return metadata like:
+
+- Scheme (Visa, Mastercard, etc.)
+- Country
+- Card type (debit, prepaid, credit)
+- Issuer name
+- Currency
+- Brand classification (consumer, commercial)
+
+## Why merchants and gateways use BINs
+
+When a user enters a card number:
+
+- The merchant gateway reads the BIN immediately
+- It determines if the card is acceptable for that use case
+- The UI may update in real-time (“We don’t accept this card”)
+
+**Common use cases:**
+
+- Block high-fraud BINs (e.g., some prepaid cards)
+- Limit cards from restricted geographies
+- Estimate FX or cross-border fees
+- Customize 3D Secure and risk scoring
+
+## Math behind card number validation: the Luhn algorithm
+
+All valid card numbers must pass the Luhn algorithm, which is a checksum formula.
+
+This is used to detect invalid or mistyped card numbers, not to verify funds or status.
+
+### Luhn algorithm (simplified steps)
+
+Given a 16-digit number:
+
+1. Starting from the right, double every second digit
+2. If doubling results in a number \>9, subtract 9 from it
+3. Sum all the digits
+4. If the total modulo 10 is 0, the number is valid
+
+### Python example
+
+```python
+def luhn_check(card_number):
+    digits = [int(x) for x in str(card_number)]
+    # Double every second digit from the right
+    for i in range(len(digits) - 2, -1, -2):
+        doubled = digits[i] * 2
+        # If doubling results in a number > 9, subtract 9
+        digits[i] = doubled if doubled < 10 else doubled - 9
+    # Sum all digits and check if the total modulo 10 is 0
+    return sum(digits) % 10 == 0
+
+# Test cases
+print(luhn_check("4147091234567894"))  # True
+print(luhn_check("4147091234567892"))  # False
+```
+
+## Why you should care about BINs as a product builder
+
+| Use Case | What the Bin Enables |
+|---|---|
+| Show card branding and currency | Display “Visa USD” or “Verve NGN” correctly |
+| Predict merchant compatibility | Warn users when a card might be rejected |
+| Detect geographic limits | Some BINs are local only; some are dual-route |
+| Track fraud behavior | Some BINs see higher test/fraud attempts |
+| Improve support | Explaining why a merchant rejected the card can depend on BIN metadata |
+
+## Advanced use: BIN tagging in your system
+
+Track card behavior by BIN in your database:
+
+- Create a BIN registry internally with metadata
+- Group transactions and declines by BIN
+- Trigger rules: “If BIN = `507814` and merchant = foreign → pre-warn user”
+- Identify high-performing vs. high-risk BINs
+
+This allows you to A/B test with multiple issuing partners or detect ecosystem trends faster than relying on webhooks alone.
+
+## Recap
+
+- The BIN is the entry point to understanding and validating any card
+- BINs reveal branding, geography, type, and issuer
+- They determine merchant compatibility and network routing behavior
+- You can use BIN analysis to improve user messaging, fraud detection, and UX
+- All card numbers must pass the Luhn algorithm for basic structural validity

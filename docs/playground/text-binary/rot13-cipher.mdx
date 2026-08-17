@@ -1,0 +1,37 @@
+---
+title: "ROT13 cipher"
+description: "ROT13 rotates each letter 13 places through the alphabet. Applying it twice returns the original text."
+---
+
+import { Rot13Cipher } from "/snippets/playground/text-binary.jsx";
+
+<Rot13Cipher />
+
+ROT13 shifts every letter 13 positions: `A` becomes `N`, `N` becomes `A`. Because the alphabet has 26 letters, applying it twice restores the original, so one function both encodes and decodes.
+
+Digits, punctuation, and spacing are left untouched.
+
+## What it is actually for
+
+ROT13 provides no security whatsoever and is trivially reversed by anyone. It was never meant to. Its real use is hiding text from casual reading: spoilers, puzzle answers, or the punchline of a joke on a forum.
+
+<Warning>
+  ROT13 is not encryption. It has no key. Never use it to protect anything.
+</Warning>
+
+## Implementing it
+
+```javascript
+const rot13 = (s) =>
+  s.replace(/[a-z]/gi, (c) => {
+    const base = c <= "Z" ? 65 : 97;
+    return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);
+  });
+```
+
+```python
+import codecs
+codecs.encode("Hello", "rot13")
+```
+
+The related ROT47 rotates across a wider range of printable ASCII, so it scrambles punctuation and digits too. It is equally insecure.

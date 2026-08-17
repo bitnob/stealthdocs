@@ -1,0 +1,41 @@
+---
+title: "JSON to CSV"
+description: "Spreadsheets and bulk upload templates expect rows, not nested objects. Convert an array of JSON objects to CSV with nested fields flattened."
+---
+
+import { JsonToCsv } from "/snippets/playground/json-tools.jsx";
+
+<JsonToCsv />
+
+Finance and operations teams usually want a spreadsheet, not a JSON array. This converts a list of records into CSV, taking the union of every key so rows with missing fields still line up under the right columns.
+
+## How nesting is handled
+
+CSV is flat, so nested structures have to be flattened somehow:
+
+- Nested objects become dotted column names, so `{"beneficiary":{"bank":"GTB"}}` becomes a `beneficiary.bank` column.
+- Arrays stay as JSON strings inside a single cell, because their length varies per row.
+
+## Escaping
+
+Any value containing the delimiter, a quote, or a newline is wrapped in double quotes, and embedded quotes are doubled, per RFC 4180. That keeps the file safe to open in Excel, Sheets, or Numbers.
+
+## Converting in code
+
+```bash
+# jq: header row, then one row per record
+jq -r '(.[0] | keys_unsorted), (.[] | [.[]]) | @csv' payouts.json
+```
+
+```python
+import csv, json
+rows = json.load(open("payouts.json"))
+with open("payouts.csv", "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+    writer.writeheader()
+    writer.writerows(rows)
+```
+
+<Tip>
+  For bulk payouts, build your CSV from the API's own field names so the upload template and your reconciliation export stay in sync. See [Send payouts in bulk](/docs/payouts/mass-payouts).
+</Tip>

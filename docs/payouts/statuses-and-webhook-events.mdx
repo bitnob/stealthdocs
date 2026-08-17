@@ -1,0 +1,50 @@
+---
+title: "Statuses and webhook events"
+description: "The payout record status vocabulary and the webhook event vocabulary are different. This page lists both, side by side, with the mapping between them."
+related:
+  - /docs/payouts/webhook-payout
+  - /docs/payouts/error-handling
+---
+
+Payouts expose two vocabularies that are easy to conflate:
+
+- The **record status**: uppercase, returned by [Get payout](/api-reference/payouts/get-payout) as `status`.
+- The **webhook event**: dotted lowercase names, delivered to your callback URL, whose `data.status` field carries a lowercase event outcome.
+
+Check the `event` field to decide how to handle a webhook, never `data.status`.
+
+## Record statuses
+
+| Status | Meaning |
+|---|---|
+| `QUOTE` | Quote created, not yet initialized. |
+| `INITIATED` | Initialized against the quote with a beneficiary, offchain funding. Nothing debited yet. |
+| `PENDING_ADDRESS_DEPOSIT` | Initialized, onchain funding. Waiting for you to pay the returned `address`. |
+| `PROCESSING` | Funded. The fiat leg is underway on the local rail. |
+| `COMPLETED` | Funds delivered to the beneficiary. The only success state. |
+| `FAILED` | The fiat leg could not be completed. |
+
+## Webhook events
+
+| Event | Fires when | Terminal |
+|---|---|---|
+| `payouts.initialized` | The payout is initialized against a quote and accepted for processing. | No |
+| `payouts.processing` | The settlement rail picks the payout up. | No |
+| `payouts.withdrawal.success` | Funds are delivered to the beneficiary. | Yes |
+| `payouts.withdrawal.expired` | The quote expired before funding arrived. Nothing settled. | Yes |
+
+These four are the complete catalogue. A failed payout emits no event; detect `FAILED` by polling [Get payout](/api-reference/payouts/get-payout). Payload shapes for each event are on [Receive payout webhooks](/docs/payouts/webhook-payout).
+
+## `data.status` inside a webhook
+
+The `data.status` field inside a webhook payload is the lowercase event outcome, one of `initiated`, `processing`, `success`, or `expired`. It is not the record status vocabulary above, even where the words look similar.
+
+## How the two line up
+
+| Record status | Event you may receive at that point |
+|---|---|
+| `QUOTE` | none |
+| `INITIATED`, `PENDING_ADDRESS_DEPOSIT` | `payouts.initialized`, and `payouts.withdrawal.expired` if never funded |
+| `PROCESSING` | `payouts.processing` |
+| `COMPLETED` | `payouts.withdrawal.success` |
+| `FAILED` | none, poll |

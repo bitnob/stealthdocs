@@ -1,0 +1,143 @@
+---
+title: "Security and compliance reminders for non-custodial Bitcoin wallet builders"
+description: "What still falls on you when building non-custodial wallets on Bitnob: data protection, disclosures, and licensing."
+---
+As a company building on Bitnob infrastructure, you must still plan carefully around:
+
+- User data protection (privacy laws like GDPR, CCPA)
+- Transparency and risk disclosures
+- Infrastructure security
+- Optional licensing issues depending on jurisdiction
+- Mitigating legal misunderstandings about "custody"
+
+This section will help you avoid costly mistakes, unexpected legal challenges, or operational vulnerabilities.
+
+## User data privacy and compliance (GDPR, CCPA)
+
+Even if you do not custody funds, you likely still collect and process:
+
+- Email addresses
+- Device identifiers
+- IP addresses
+- Contact information
+- Backup metadata (e.g., cloud backups, notification preferences)
+
+Laws like GDPR (Europe) and CCPA (California) apply to you if you touch user personal data.
+
+**Checklist for wallet builders:**
+
+- Implement clear Privacy Policies explaining what user data you collect and why.
+- Minimize data collection: collect only what you truly need for app functionality.
+- Offer user data deletion and export mechanisms.
+- Use anonymized or pseudonymized data where possible (especially for usage analytics).
+- Store minimal server logs: avoid tying blockchain addresses to IP addresses unless absolutely necessary.
+
+**Tip: Local-first design**
+
+Where possible, prefer local-first design: user wallets, transaction history, balances stored on-device, not on centralized servers.
+
+This aligns both with Bitcoin ethos and with modern privacy laws.
+
+## Clear custody disclaimers
+
+Non-custodial wallets must clearly explain to users:
+
+- That they control their own funds.
+- That if they lose their seed phrase, you cannot recover their funds.
+- That your company has no access to their Bitcoin.
+
+Add explicit language in your Terms of Service and onboarding screens.
+
+**Example language:**
+
+"You are solely responsible for securing your Bitcoin. [Company Name] cannot access, recover, or manage your private keys. Loss of your recovery phrase or password may result in permanent loss of your Bitcoin."
+
+This protects both your users and your company legally.
+
+## Regulatory licensing considerations
+
+In most jurisdictions, operating a pure non-custodial wallet does not require a financial license.
+
+However:
+
+- Some regulators do not fully understand the difference between custodial vs non-custodial services.
+- If you combine your wallet with custodial services (e.g., on-ramps, off-ramps, swaps), then licensing obligations might apply.
+
+**Checklist:**
+
+- Document clearly that you do not hold private keys.
+- If offering additional services (e.g., buying/selling Bitcoin), consider licensing, partnering with licensed providers, or disclaiming clearly.
+- Monitor regulatory developments in your operational jurisdictions, especially if operating in Africa, Europe, or the United States.
+
+**Special notes for Africa**
+
+Many African countries have unclear or evolving Bitcoin regulations. Even if Bitcoin is not banned, offering "financial services" might trigger licensing. Consult legal advisors early.
+
+## Infrastructure security
+
+Even in non-custodial wallets, your backend infrastructure (APIs, webhook handlers, mobile apps) must be hardened against:
+
+- Webhook injection attacks
+- Replay attacks
+- Unauthorized API access
+- Denial of service attacks
+- Data tampering
+
+**Best practices:**
+
+- Authenticate all incoming Bitnob webhooks using signatures.
+- Rate limit your API endpoints (especially send functions).
+- Use HMAC or JWT for internal API authentication.
+- Encrypt data at rest and in transit (TLS 1.3).
+- Implement secure logging practices. Never log sensitive data.
+
+Security breaches that leak even metadata (e.g., transaction history, addresses) can cause privacy risks for users.
+
+## Financial crime compliance
+
+Even though your wallet is non-custodial, consider optional compliance measures if operating at scale:
+
+- Offer users privacy tips to protect themselves from transaction tracking.
+- Monitor public blocklists (e.g., OFAC) if offering optional services like on-ramp, swaps, Lightning bridge.
+- Educate users against using wallets for illicit purposes: include basic warnings in Terms of Use.
+
+You are not legally responsible for user actions if you are purely non-custodial, but building trust and good-faith operations improves your brand reputation long term.
+
+## Key management and recovery policies
+
+You must design policies for:
+
+- What happens if users lose access to their devices
+- How users are educated about recovery phrases
+- Whether you offer cloud backups (optional) and how they are secured (end-to-end encryption only)
+
+Never design systems where:
+
+- Company employees can access users' keys.
+- Password resets recover Bitcoin access directly without seed phrase verification.
+
+Non-custodial means no backdoors, for security, legal, and ethical reasons.
+
+## Transparency with users
+
+Best-in-class wallets:
+
+- Open-source their critical cryptographic code or at least wallet logic libraries.
+- Publish clear, readable Terms of Service and Privacy Policy.
+- Educate users with simple, non-technical explanations during onboarding.
+
+This builds trust and aligns your wallet with Bitcoin’s decentralization values.
+
+## Final developer and founder checklist
+
+- Publish Privacy Policy and Terms of Service.
+- Make custody boundaries clear to users.
+- Harden all backend endpoints (authentication, rate limiting).
+- Minimize and encrypt all user data collected.
+- Plan for optional regulatory exposure if offering fiat services later.
+- Educate users: backups, phishing, security hygiene.
+- Be transparent in your architecture, custody model, and company practices.
+
+Building non-custodial Bitcoin wallets is a major technical accomplishment, but ensuring security, privacy, compliance, and user trust is equally critical if you want the product to succeed at scale.
+
+Bitcoin enables freedom, but freedom without careful design invites chaos. Building responsibly is the true Bitcoin way.

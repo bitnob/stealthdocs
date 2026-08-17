@@ -1,0 +1,227 @@
+---
+title: "Webhooks and event handling"
+description: "Receive Bitnob events, verify the signature, respond fast, tolerate redelivery, and reconcile when an event never arrives."
+---
+
+A webhook is an HTTP request we send to your server when something changes. You do not poll for a deposit; we tell you when it confirms.
+
+Webhooks carry the outcome of every asynchronous flow, so they are the record your system should trust. The API response says we accepted an action. The webhook says what happened.
+
+This guide covers how to build a handler that survives redelivery, bad payloads, slow downstream services, and missed events.
+
+## What an event looks like
+
+```json
+{
+    "event": "transfer.success",
+    "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+    "data": {
+        "address": "TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN",
+        "amount": "2000000",
+        "chain": "tron",
+        "currency": "USDT",
+        "fee": "1000000",
+        "hash": "4ae4308579587370accbd31dbfaebf3a97c8cfc7f68e2128ddec840349cafc60",
+        "reference": "SND_SBLNC_80c7895d89e9",
+        "timestamp": "2025-12-12T20:30:18Z",
+        "transaction_id": "3ac20197-f0c7-4553-ac32-9ead17c7f0a9"
+    }
+}
+```
+
+Every event carries an `event` name, an `event_id`, and a `data` object holding the `reference` you supplied.
+
+Each product documents its own events:
+
+<Columns cols={2}>
+  <Card title="Deposits and addresses" icon="location-dot" href="/api-reference/addresses/webhooks">
+    `deposit.success`, `transfer.success`, `transfer.failed`.
+  </Card>
+  <Card title="Payouts" icon="money-bill-transfer" href="/api-reference/payouts/webhooks">
+    `payouts.initialized`, `payouts.processing`, `payouts.withdrawal.success`.
+  </Card>
+  <Card title="Withdrawals" icon="arrow-up-from-bracket" href="/api-reference/withdrawal/webhooks">
+    Withdrawal lifecycle events.
+  </Card>
+  <Card title="Virtual cards" icon="credit-card" href="/api-reference/virtual-cards/webhooks">
+    Card creation, top-up, and transaction events.
+  </Card>
+</Columns>
+
+## Verify every event
+
+Verify the signature before you read the payload. Without this check, anyone who learns your endpoint URL can post a fake deposit to it.
+
+We sign each event with HMAC-SHA512 over the request body, keyed by your secret, and send the result in the `x-bitnob-signature` header.
+
+Two rules make the check correct:
+
+- Sign the **raw request body**, not a re-serialized object. Re-serializing can change key order or whitespace, and the signature will not match.
+- Compare with a **timing-safe** function, not `==`.
+
+```javascript
+const crypto = require("crypto");
+
+app.post(
+  "/webhooks/bitnob",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    const expected = crypto
+      .createHmac("sha512", process.env.BITNOB_WEBHOOK_SECRET)
+      .update(req.body)
+      .digest("hex");
+
+    const received = req.headers["x-bitnob-signature"] || "";
+
+    const valid =
+      expected.length === received.length &&
+      crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(received));
+
+    if (!valid) {
+      return res.status(401).send("invalid signature");
+    }
+
+    const event = JSON.parse(req.body.toString());
+    enqueue(event);
+    res.status(200).send("ok");
+  }
+);
+```
+
+<Warning>
+  Fail closed. If the signature does not match, discard the request. Do not log the payload as though it were genuine.
+</Warning>
+
+### Restrict inbound traffic
+
+If your firewall filters inbound traffic, allow our delivery addresses:
+
+| IP address | Use |
+|---|---|
+| 18.171.51.218 | Webhook delivery |
+| 13.134.154.133 | Webhook delivery |
+
+These addresses can change, and we announce changes in advance.
+
+<Warning>
+  An IP allowlist is not a security boundary. Any host can send a request from an allowlisted address. Verify the signature on every event, whether or not you filter by IP.
+</Warning>
+
+### Use HTTPS
+
+Your webhook URL must use `https://`. Do not accept events over plain HTTP.
+
+## Respond fast, process later
+
+Return `200` as soon as the signature is valid. Do the real work afterwards.
+
+A handler that writes to a database, calls a third-party service, and sends an email before responding will eventually exceed our timeout. We then treat the delivery as failed and send the event again, even though you processed it.
+
+```javascript
+app.post("/webhooks/bitnob", express.raw({ type: "application/json" }), (req, res) => {
+  if (!verifySignature(req)) {
+    return res.status(401).send("invalid signature");
+  }
+  queue.add("bitnob-event", JSON.parse(req.body.toString()));
+  res.status(200).send("ok");
+});
+```
+
+Any durable queue works: BullMQ or BeeQueue on Node.js, Sidekiq on Ruby, Celery on Python, or Redis Streams and Kafka at higher volume.
+
+## Retry behaviour
+
+We expect a `200`. If we do not get one, we send the event again **3 times after the first failure**.
+
+A delivery counts as failed when:
+
+- Your endpoint is unreachable or times out.
+- Your server returns any status other than `200`.
+
+<Warning>
+  Retries are finite. After the final attempt we stop. An endpoint that is down for an extended period will miss events permanently, so you also need reconciliation.
+</Warning>
+
+## Make your handler idempotent
+
+Redelivery means your handler will see the same event more than once. Processing it twice sends a second payout or credits a user twice.
+
+Check the reference before you act, and record it after.
+
+```python
+from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/webhooks/bitnob', methods=['POST'])
+def webhook_handler():
+    if not verify_signature(request):
+        return 'invalid signature', 401
+
+    payload = request.get_json()
+    reference = payload['data']['reference']
+
+    if already_processed(reference):
+        return 'ok', 200
+
+    handle_event(payload['event'], payload['data'])
+    mark_as_processed(reference)
+
+    return 'ok', 200
+```
+
+[Idempotency and references](/docs/getting-started/api-best-practices/idempotency-and-reference-integrity) covers the locking needed when several workers run at once.
+
+### Store what you receive
+
+| id | reference | event | status | received_at |
+|---|---|---|---|---|
+| evt_001 | `SND_SBLNC_80c7895d89e9` | transfer.success | processed | 2026-04-08T14:20:11Z |
+
+Store the event name, the reference, the full payload, the delivery attempt, and the processing result. This table answers most support questions without a call to us.
+
+![Webhook Retry Behavior](/images/webhook-flowchart.png)
+
+## Reconcile what never arrives
+
+Signature verification and idempotency handle the events you receive. Neither helps with an event you never got.
+
+Run a scheduled job that lists recent transactions and compares them against your own records. Anything we report as complete and you still hold as pending is a missed delivery.
+
+Use [Get all transactions](/api-reference/transactions/list-transactions) for the sweep, and [Get transaction by id or reference](/api-reference/transactions/get-transaction-by-id) to resolve a single record.
+
+<Note>
+  Do not rely on webhooks alone. Reconciliation is what makes a payments integration correct rather than usually correct.
+</Note>
+
+## Test locally
+
+<Steps>
+  <Step title="Expose your local server">
+    Run a tunnel, such as `ngrok http 3000`, and set the public URL as your webhook URL in the dashboard.
+  </Step>
+  <Step title="Trigger a real event">
+    In sandbox, simulate a deposit. See [Test in sandbox](/docs/getting-started/api-best-practices/simulating-flows-and-testing-in-sandbox).
+  </Step>
+  <Step title="Force a failure">
+    Return `500` from your handler and watch the retries arrive.
+  </Step>
+  <Step title="Force a duplicate">
+    Process the same event twice and confirm that the second attempt changes nothing.
+  </Step>
+</Steps>
+
+Use the dashboard webhook log to inspect payloads, delivery status, and retry attempts while you test.
+
+## Checklist
+
+1. Verify the signature on every event, and fail closed.
+2. Return `200` before you process.
+3. Check the reference before you act.
+4. Store every event you receive.
+5. Reconcile on a schedule.
+6. Serve the endpoint over HTTPS.
+
+## Next
+
+Continue to [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries) for the status codes and retry rules shared by every endpoint.

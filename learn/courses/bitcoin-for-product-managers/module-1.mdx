@@ -1,0 +1,139 @@
+---
+title: "Module 1: What Bitcoin really is"
+description: "What Bitcoin is at the protocol level, and why that definition constrains every product decision that follows."
+---
+## Introduction
+
+Bitcoin is not an app.
+
+Bitcoin is not a bank.
+
+Bitcoin is not a company.
+
+Bitcoin is not stored in files on your computer or inside your wallet app.
+
+Bitcoin is a global, decentralized ledger of who controls what, secured by mathematics, cryptography, and economic incentives.
+
+This understanding is the foundation of everything else.
+
+**Further reading:** Consider reading the [Bitcoin Whitepaper](https://bitcoin.org/bitcoin.pdf) for the original technical description.
+
+## 1.1 Bitcoin as a ledger, not an account system
+
+Bitcoin is fundamentally a distributed public ledger:
+
+- A global database of unspent transaction outputs (UTXOs).
+- Everyone can verify every movement of bitcoin from the beginning of time.
+
+There are no balances stored anywhere in Bitcoin. Instead, balances are calculated by summing up UTXOs associated with Bitcoin addresses.
+
+**Analogy:** Imagine a public notebook where:
+
+- Every time someone sends money, they cross out previous amounts and write new ones.
+- The notebook only shows the leftover pieces (UTXOs) that haven't yet been spent.
+- Your "balance" is just the total of the pieces you control.
+
+## 1.2 The Bitcoin ledger is built on blocks
+
+The Bitcoin ledger is divided into blocks:
+
+- Every 10 minutes (on average), a new block is created.
+- A block contains a batch of validated transactions.
+- Blocks are chained together cryptographically (hence the term "blockchain").
+- Each block confirms the validity of previous transactions and extends the history forward.
+
+**Important: Trust model.** Bitcoin’s trust model is not based on trust in any company. It is based on trusting the open mathematical verification of every block and transaction.
+
+## 1.3 Bitcoin is a broadcast, not a direct payment system
+
+When a user sends bitcoin:
+
+- They create a transaction that says "I want to move these coins."
+- They broadcast this transaction to the Bitcoin peer-to-peer network.
+- Miners include valid transactions in blocks.
+- Once included in a block, the transaction becomes part of Bitcoin’s permanent history.
+
+There is no direct link between sender and receiver.
+
+Both rely on the network propagating and confirming the transaction.
+
+## 1.4 Bitcoin’s security assumptions
+
+Bitcoin's security depends on:
+
+- Proof-of-Work Mining: making it costly to rewrite history.
+- Decentralization: no single party controls transaction verification.
+- Economic Incentives: rational actors (miners, nodes) prefer following the rules because it's more profitable.
+
+No central server or authority guarantees Bitcoin's correctness. It is maintained by the collective agreement of thousands of independent nodes verifying rules independently.
+
+## 1.5 Implications for Bitcoin wallets
+
+Understanding that Bitcoin is a global ledger of UTXOs in blocks has several critical implications for wallet product design:
+
+| Principle | Wallet Impact |
+|---|---|
+| No account balances exist in Bitcoin | Wallets must scan and sum UTXOs associated with user addresses. |
+| Transactions are probabilistic until confirmed | Wallets must explain transaction status: unconfirmed, confirming, confirmed. |
+| Addresses are public, private keys control spend | Wallets must protect private keys while exposing public addresses. |
+| No reversal once a transaction is confirmed | Wallets must warn users before sending. UX must explain finality. |
+
+## 1.6 Practical product reflections
+
+If you are building a Bitcoin wallet:
+
+- You are not "creating an account" for the user like a bank would.
+- You are helping them create a keypair that gives them control over certain UTXOs recorded on the Bitcoin network.
+- You are not "storing Bitcoin" in the app.
+- You are storing secret information (the private key) that allows users to control Bitcoin stored on the global Bitcoin ledger.
+
+Your app is a control panel for keys and transactions interacting with bitcoin, not a container for the Bitcoin itself.
+
+## 1.7 Diagram: What Bitcoin is (vs wallet app)
+
+```
++--------------------------------------------+
+|                                            |
+|       Bitcoin Global Ledger (Blockchain)   |
+|                                            |
+|    [ Address A : 0.5 BTC UTXO ]             |
+|    [ Address B : 1.2 BTC UTXO ]             |
+|    [ Address C : 0.05 BTC UTXO ]            |
+|    ...                                      |
+|                                            |
++--------------------------------------------+
+          ^
+          |
+          | (Interacts via Network)
+          |
+          v
++--------------------------------------------+
+|                                            |
+|               Wallet App                   |
+|                                            |
+| - Holds Private Keys                       |
+| - Derives Addresses                        |
+| - Detects UTXOs                            |
+| - Builds and Signs Transactions            |
+| - Broadcasts via Bitnob RPC                |
+| - Never "stores Bitcoin" itself            |
+|                                            |
++--------------------------------------------+
+```
+
+## Summary of module 1
+
+Bitcoin is:
+
+- A decentralized public ledger of UTXOs.
+- Extended through blocks and mining.
+- Verified independently by thousands of nodes.
+- Not controlled by any one person, company, or app.
+
+Wallets:
+
+- Help users manage private keys.
+- Detect and spend UTXOs.
+- Must respect Bitcoin's trustless security model.
+
+Understanding Bitcoin’s nature as a global ledger of unspent outputs is essential before building serious wallet products.

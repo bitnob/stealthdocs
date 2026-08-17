@@ -1,0 +1,115 @@
+---
+title: "Putting it all together"
+description: "A step-by-step blueprint for assembling a working non-custodial wallet from Bitnob RPC and libraries like BDK."
+---
+## Goal
+
+This section shows step-by-step how you can build a fully operational Bitcoin non-custodial wallet using Bitnob’s RPC infrastructure and open Bitcoin libraries like BDK.
+
+We will integrate all previous sections into one coherent system architecture.
+
+You should come out of this section with a clear map to:
+
+- Build a secure self-custody wallet.
+- Handle address generation, transaction monitoring, fee strategies, UTXO management.
+- Prepare for future Bitcoin upgrades (Taproot, Silent Payments, Lightning).
+- Scale cleanly without reinventing your backend.
+
+## Step-by-step practical workflow
+
+1. **Wallet and key generation**
+
+   Client-side (on the user's device):
+
+   - Generate a BIP39 seed phrase (12 or 24 words).
+   - Derive master private key (BIP32 HD Wallets).
+   - Derive public keys.
+   - Generate first Bitcoin addresses (external chain and internal chain for change addresses).
+
+   Use libraries like:
+
+   - BDK (Bitcoin Development Kit)
+   - bitcoinjs-lib
+   - Noble Bitcoin
+
+   <Info>
+     Keys never leave the user’s device. Private keys are never sent to your server or to Bitnob.
+   </Info>
+
+2. **Display wallet dashboard**
+
+   Query the blockchain using Bitnob APIs:
+
+   - /address/balance
+   - /address/transactions
+
+   Update balance, transaction history, and pending confirmations in the UI.
+
+3. **Receiving bitcoin**
+
+   - Derive a fresh external address.
+   - Show QR code + plain text Bitcoin address.
+   - When the address is used:
+     - Derive the next address.
+     - Rotate automatically.
+   - Register addresses with Bitnob’s address watch API for real-time webhook notifications.
+   - When Bitnob detects a transaction:
+     - Send a webhook to your backend.
+     - Update user’s pending balance.
+     - Confirm balance after 1–3 confirmations.
+
+4. **Sending bitcoin**
+
+   - Fetch available UTXOs (modeled internally or queried).
+   - Estimate optimal transaction fees using Bitnob’s /fees/estimate.
+   - Build transaction:
+     - Select UTXOs (smart coin selection).
+     - Create outputs.
+     - Create change outputs (new internal address).
+   - Sign transaction locally.
+   - Push signed transaction via Bitnob’s /transaction/broadcast.
+   - If needed:
+     - Mark transaction as RBF-replaceable (for fee bumping later).
+
+5. **Handling fees**
+
+   - Always offer users 3 fee tiers: Fast, Normal, Economy.
+   - Allow Replace-by-Fee (RBF) if transaction gets stuck.
+   - Monitor mempool conditions to adapt fee suggestions dynamically.
+
+6. **Handling confirmations**
+
+   Update user interface:
+
+   - Pending after 0 confirmations.
+   - Confirmed after 1–3 confirmations.
+   - Final after 6 confirmations (optional).
+
+7. **Wallet scaling best practices**
+
+   - Consolidate small UTXOs during low-fee periods.
+   - Rotate addresses aggressively for privacy.
+   - Plan for Taproot (P2TR) address adoption.
+   - Build architecture modularly for Silent Payments, Lightning, Miniscript.
+
+## Key modules in your codebase
+
+| Module | Responsibility |
+|---|---|
+| Key Management | BIP39 seed generation, BIP32 HD wallet derivation, encryption. |
+| Address Derivation | External and internal chain derivation, address rotation logic. |
+| Transaction Builder | UTXO selection, fee estimation, building and signing transactions. |
+| Blockchain Interface | Bitnob API integration for broadcasting, querying, monitoring. |
+| Webhooks Handler | Receiving payment detection, updating transaction states. |
+| Mempool Monitor (Optional) | Tracking fee markets and transaction delays dynamically. |
+
+## Final developer tips
+
+- Seed management is sacred. Encrypt, protect, never expose.
+- Change management is critical. Always return change to new internal addresses.
+- Batching and consolidation matter, reduce long-term wallet fees.
+- Address privacy matters, never reuse addresses.
+- Plan for upgrades. Taproot, Lightning, Silent Payments, and Miniscript.
+- User education is part of the product, backup, fees, confirmations, stuck transactions.
+
+The best Bitcoin wallets aren't just code. They are carefully engineered user trust systems.

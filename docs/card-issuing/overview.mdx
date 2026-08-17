@@ -1,0 +1,71 @@
+---
+title: "Overview"
+description: "Prepaid USD virtual Visa cards over the API: issuance, funding from your Bitnob balance, and the full lifecycle of freeze, unfreeze, terminate, and monitor."
+---
+
+The card issuing API creates USD-denominated virtual Visa cards on demand, backed by regulated card issuers. Cards are prepaid: you fund them from your Bitnob balance (BTC, USDT, USDC, or NGN, converted internally), and the cardholder spends online anywhere Visa is accepted, or in store via Apple or Google Wallet tap-to-pay.
+
+Bitnob is the technology and distribution layer. Licensed issuing banks and Visa programme managers handle issuance, onboarding, and merchant settlement, so you integrate one API without managing Visa relationships or card compliance yourself.
+
+![Virtual card](/images/virtualCard.svg)
+
+## When to use it
+
+| You are building | Cards let you |
+|---|---|
+| A fintech or crypto app | Let users spend wallet or stablecoin balance anywhere Visa works. |
+| Payroll or remittance | Deliver spendable cards instead of bank deposits. |
+| Corporate spend control | Issue per-employee or per-department cards with spend limits. |
+| Programmatic disbursement | Auto-issue a funded card per payout, campaign, or event. |
+
+Cards are online-first and restricted by design: no ATM withdrawals, USD only, and no 3DS yet. That trade keeps fraud low and issuance instant.
+
+## How it works
+
+<Steps>
+  <Step title="Create a card">
+    One call to [Create card](/api-reference/cards/create-card-embedded-customer) issues the card and creates the customer together. Pass `customer_id` instead for an existing customer. The card number, CVV, and expiry are available as soon as the card goes `active`.
+  </Step>
+  <Step title="Fund it">
+    Load USD value from your balance with [Fund or withdraw balance](/api-reference/cards/fund-or-withdraw-balance). Bitnob converts BTC, USDT, USDC, or NGN internally; you never need to hold USD.
+  </Step>
+  <Step title="Spend and monitor">
+    The cardholder pays online or via tap-to-pay. Every authorisation, settlement, refund, and decline reaches you as a [webhook event](/docs/card-issuing/webhooks) and in the [transaction history](/api-reference/cards/list-card-transactions-by-card).
+  </Step>
+  <Step title="Control the lifecycle">
+    [Freeze or unfreeze](/api-reference/cards/freeze-or-unfreeze) in real time, [terminate](/api-reference/cards/terminate-card) permanently, and cap exposure with [spend limits](/api-reference/cards/update-spend-limits).
+  </Step>
+</Steps>
+
+## The funding model
+
+| Topic | Detail |
+|---|---|
+| Currency | USD only |
+| Funding assets | USDT (TRC20, ERC20), USDC, BTC, NGN |
+| FX | Handled internally at funding time |
+| Balance model | Prepaid; no overdraft or credit |
+| Amounts | Integers in micro-units: 1 USD = 1,000,000 |
+
+Fees for creation, funding, cross-border use, and declines are on [Fees and decline rules](/docs/card-issuing/card-fees).
+
+## Where to go next
+
+<Columns cols={2}>
+  <Card title="Issue your first card" icon="rocket" href="/docs/card-issuing/issue-your-first-card">
+    The full lifecycle in one pass: create, fund, spend, react to webhooks.
+  </Card>
+  <Card title="How card issuance works" icon="lightbulb" href="/docs/card-issuing/card-issuance">
+    What happens between your API call and an active card.
+  </Card>
+  <Card title="Webhook events" icon="bolt" href="/docs/card-issuing/webhooks">
+    All 27 card events and the payload each carries.
+  </Card>
+  <Card title="Fees and decline rules" icon="receipt" href="/docs/card-issuing/card-fees">
+    The fee schedule, and the decline policy that can terminate a card.
+  </Card>
+</Columns>
+
+<Note>
+  Bitnob is not a licensed card issuer. Cards are issued by regulated partner banks and Visa programme managers; Bitnob provides the platform and API access.
+</Note>

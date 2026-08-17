@@ -1,0 +1,156 @@
+---
+title: "Module 7: Freezing, unfreezing, and terminating cards"
+description: "Card status flows: freeze, unfreeze, and termination, and the user experience to design around each."
+---
+## Learning objectives
+
+- Understand the lifecycle states of a virtual card
+- Learn what causes transitions between active, frozen, and terminated states
+- Know how to implement these operations through your backend and API
+- Design a clear user experience around lifecycle events
+- Handle edge cases and system-triggered freezes or terminations confidently
+
+## Card lifecycle: a quick review
+
+| State | Description |
+|---|---|
+| Active | The card is operational and can be used for payments. |
+| Frozen | Temporarily suspended; cannot be used or funded. |
+| Terminated | Permanently deactivated; no longer usable or recoverable. |
+
+Cards may transition between these states due to:
+
+- User actions (e.g., tapping “freeze” in your UI)
+- Risk systems detecting anomalies
+- Automatic rules defined by the processor or issuing bank
+
+## Freezing a card
+
+What Freezing Means
+
+Freezing a virtual card disables all spend activity temporarily, but preserves the card and its balance. It is typically used:
+
+- To protect against fraud or unauthorized activity
+- As a user-triggered pause during suspicious activity
+- To prevent further failed transactions
+- While conducting internal reviews or KYC validation
+
+Frozen cards:
+
+- Cannot be used for payments
+- Cannot be topped up
+- Remain visible in the user’s dashboard
+- Can be unfrozen (if permitted by platform or rules)
+
+Both freeze and unfreeze go through [Update Card Status](/api-reference/cards/freeze-or-unfreeze).
+
+```json
+POST /api/cards/:cardId/status
+
+{
+  "status": "frozen"
+}
+```
+
+## Unfreezing a card
+
+Unfreezing restores a card to its active state, allowing it to be used again.
+
+Unfreezing should be:
+
+- Controlled by user action (with optional PIN or biometric confirmation)
+- Logged internally with timestamp and initiator
+- Denied if the card is already in a terminated state
+
+```json
+POST /api/cards/:cardId/status
+
+{
+  "status": "active"
+}
+```
+
+Only active or frozen cards can transition. Terminated cards are final.
+
+## Terminating a card
+
+What Termination Means
+
+Termination is a permanent deactivation. Once a card is terminated, it:
+
+- Cannot be used for any further transactions
+- Cannot be unfrozen
+- Will not accept new top-ups
+- May still receive pending refunds or reversals
+
+Termination is typically triggered by:
+
+| Reason | Example |
+|---|---|
+| User request | User closes the card from the app |
+| Fraud detection | System flags suspicious activity, followed by escalation |
+| Repeated declines | Card exceeds decline thresholds |
+| Compliance action | KYC expired, identity unverifiable |
+| Operational expiry | Card expired or balance exhausted and unused |
+
+Automatic Termination Rules (Example)
+
+| Condition | Result |
+|---|---|
+| Card has ≥1 successful transaction and then 4 consecutive declines | Card is terminated |
+| Card has no successful transactions and gets 3 declines | Card is terminated |
+| Frozen card continues to receive failed attempts | May be escalated to termination |
+
+Your backend should track decline history and enforce these limits, or respond to Bitnob webhooks accordingly.
+
+Refunds on Terminated Cards If a terminated card receives a refund:
+
+- The funds are credited to your platform’s float or master wallet
+- Users must be notified via your support or automated system
+- A webhook (`virtualcard.transaction.terminated.refund`) will fire with the amount and card details
+
+Cards may still receive reversals or refunds even after termination, depending on merchant behavior.
+
+Withdrawal Behavior Before and After Lifecycle Changes Some platforms support ATM withdrawals or cash-out via virtual cards. If this applies:
+
+- Frozen cards cannot be used for withdrawal
+- Terminated cards must maintain a minimum balance (e.g. \$1) prior to closure
+- Residual balance may be refunded or forfeited based on policy
+
+## Webhooks to monitor
+
+| Event | Description |
+|---|---|
+| `virtualcard.transaction.declined.frozen` | Spend declined due to freeze |
+| `virtualcard.transaction.declined.terminated` | Final failed attempt led to termination |
+| `virtualcard.transaction.terminated.refund` | Refund processed after termination |
+| `virtualcard.withdrawal.failed` | Withdrawal attempt failed (often due to status) |
+
+Always notify your support team or alerting system when these webhooks are received.
+
+## UI and product design guidelines
+
+| State | What to Show |
+|---|---|
+| Active | Green status, “Top up” and “Freeze” buttons |
+| Frozen | Yellow warning, disabled buttons, “Unfreeze” CTA |
+| Terminated | Greyed-out card, final balance, “Create new card” option |
+| System-triggered change | Explain clearly what happened and why (e.g., "Card terminated after 4 failed payments") |
+
+Never hide cards or delete terminated cards from the user’s view. Always display a history for trust and support.
+
+## Developer considerations
+
+- Log all lifecycle transitions (who triggered them and when)
+- Deny any transactions or API calls for terminated cards
+- Ensure top-up logic validates the current card status
+- Build idempotency and timestamp-based reconciliation to handle race conditions
+- If cards are terminated in a batch or via automated logic, enqueue for notification and refund processing
+
+## Recap
+
+- Cards exist in one of three states: Active, Frozen, or Terminated
+- Freezing is temporary and reversible; termination is permanent
+- Platform rules and card processors define when cards are auto-terminated
+- Refunds after termination are redirected to your platform wallet
+- User-facing and admin-facing tools should always reflect the true state

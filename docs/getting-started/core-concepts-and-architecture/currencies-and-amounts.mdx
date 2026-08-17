@@ -1,0 +1,130 @@
+---
+title: "Currencies and amounts"
+description: "Why the API uses integer base units, how to store and display them, and where precision is most often lost."
+related:
+  - /docs/getting-started/api-best-practices/idempotency-and-reference-integrity
+  - /docs/getting-started/api-best-practices/errors-and-retries
+---
+
+The Bitnob API represents every amount as an integer in the smallest unit of its currency. One BTC is 100,000,000 satoshis. One USDT is 1,000,000 base units. One NGN is 100 kobo.
+
+This page explains why, and what it means for how you store, convert, and display value.
+
+## Why integers
+
+A decimal number stored as a floating-point value is an approximation. `0.1 + 0.2` does not equal `0.3` in most languages, and the error compounds across a ledger.
+
+```javascript
+0.1 + 0.2;
+// 0.30000000000000004
+```
+
+An integer count of the smallest unit has no such error. `10 + 20` is exactly `30` kobo, every time, in every language.
+
+The rule is short:
+
+<Warning>
+  Never hold a monetary amount in a float or a double. Hold an integer count of the smallest unit, and convert only for display.
+</Warning>
+
+## The units
+
+| Currency | Smallest unit | Multiplier |
+|---|---|---|
+| BTC | satoshi | 100,000,000 |
+| USDT | base unit | 1,000,000 |
+| USDC | base unit | 1,000,000 |
+| NGN | kobo | 100 |
+| USD | cent | 100 |
+
+Token decimals are a property of the token, not of the chain. USDT uses 6 decimals on both Tron and Ethereum, but many ERC-20 tokens use 18. Read the value from configuration rather than assuming it.
+
+<Note>
+  Keep the multiplier for each asset in one place in your code. A multiplier hard-coded at three call sites will eventually disagree with itself.
+</Note>
+
+## Convert at the edges only
+
+Keep every internal calculation in the smallest unit. Convert to a human-readable string at the last possible moment, in the display layer.
+
+```javascript
+const balanceKobo = 50_000;
+
+// Internal arithmetic stays in kobo.
+const feeKobo = 250;
+const netKobo = balanceKobo - feeKobo;
+
+// Convert once, at display time.
+format(netKobo); // "₦497.50"
+```
+
+The same rule applies on the way in. Parse a user's input into the smallest unit immediately, then never touch the decimal form again.
+
+## Display
+
+Two habits prevent most user confusion:
+
+- Label the currency every time. `500` is ambiguous. `₦500.00` and `0.005 BTC` are not.
+- Round only for display, and keep the stored value exact. A balance of 99,987,600 satoshis can display as `0.9999 BTC`. It must still be stored as 99,987,600.
+
+Never round a stored amount to match what you showed. The display is a view of the value, not the value.
+
+## Exchange rates
+
+A conversion has two parts: a rate, and the moment it applied. Record both.
+
+<Steps>
+  <Step title="Get a quote">
+    Request a rate through [Get exchange rate](/api-reference/exchange-rates/get-single-pair-rate), [Convert amount](/api-reference/exchange-rates/convert-amount), or a product quote.
+  </Step>
+  <Step title="Store the rate with the transaction">
+    Save the rate, the timestamp, and the quote identifier alongside your record.
+  </Step>
+  <Step title="Apply it in the smallest unit">
+    Multiply integers. Convert to a decimal form only if you must.
+  </Step>
+  <Step title="Use a decimal library if you must divide">
+    Use `decimal.js` or `big.js` on JavaScript, the `decimal` module on Python, or `BigDecimal` on Java. Never a float.
+  </Step>
+</Steps>
+
+Storing the rate is what lets you answer a dispute months later. Without it, you can show what a user received but not why.
+
+## Fees
+
+The amount a recipient gets is not the amount you sent. Network fees, chain gas, and service fees all reduce it.
+
+Decide explicitly which side pays, then make that visible:
+
+- Show the fee as its own line, not folded into the total.
+- Show the amount the recipient will actually receive.
+- Store both the gross amount and the fee, not just the net.
+
+Payout quotes give you this directly. `amount` is what leaves your balance, `settlement_amount` is what arrives, and `exchange_rate.effective_rate` is the rate after fees. Show users the effective rate.
+
+## Multi-currency records
+
+If you hold more than one currency, keep each balance in its own field with its own unit. Do not store a single number and a currency code that varies by row, because the smallest unit differs per currency and the arithmetic will silently mix scales.
+
+Tie the legs of a conversion together with a shared reference, so that a single transaction reads as one event rather than two unrelated rows.
+
+## Test the edges
+
+Precision bugs hide at the extremes. Cover these cases:
+
+| Case | What it catches |
+|---|---|
+| 1 satoshi, 1 kobo | Truncation to zero |
+| Amounts near your maximum | Integer overflow |
+| A value that rounds up across a boundary, such as 0.99995 | Display and storage disagreeing |
+| A token with 18 decimals | A hard-coded 6-decimal assumption |
+| A locale that formats with a comma decimal separator | Parsing failures on user input |
+
+## Summary
+
+1. Store integers in the smallest unit.
+2. Calculate in that unit.
+3. Convert and round only for display.
+4. Store the rate and the time with every conversion.
+5. Read token decimals from configuration.
+6. Test the smallest and largest amounts you support.

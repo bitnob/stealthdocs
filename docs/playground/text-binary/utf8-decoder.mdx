@@ -1,0 +1,32 @@
+---
+title: "UTF-8 decoder"
+description: "UTF-8 byte sequences turned back into readable text, for debugging encoding problems in payloads and logs."
+---
+
+import { Utf8Tool } from "/snippets/playground/text-binary.jsx";
+
+<Utf8Tool mode="decode" />
+
+Paste a byte sequence and read the text it represents. This is the tool for working out what went wrong when a payload arrives as garbled characters.
+
+## Diagnosing mojibake
+
+If text arrives looking like `â‚¦500` instead of `₦500`, the bytes were correct UTF-8 but something decoded them as Latin-1. The classic signatures:
+
+| You see | Actual character | What happened |
+|---|---|---|
+| `Ã©` | `é` | UTF-8 read as Latin-1 |
+| `â‚¬` | `€` | UTF-8 read as Latin-1 |
+| `�` | anything | Bytes were not valid UTF-8 |
+
+The fix is almost never to re-encode the text. It is to correct the decoding step: set `charset=utf-8` on the response, the database connection, and the file reader.
+
+## Decoding in code
+
+```javascript
+new TextDecoder("utf-8").decode(new Uint8Array(bytes));
+```
+
+```python
+bytes(byte_list).decode("utf-8")
+```

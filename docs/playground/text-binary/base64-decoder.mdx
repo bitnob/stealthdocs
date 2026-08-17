@@ -1,0 +1,36 @@
+---
+title: "Base64 decoder"
+description: "Base64 decoding back to readable text, accepting both standard and URL-safe input with or without padding."
+---
+
+import { Base64Tool } from "/snippets/playground/text-binary.jsx";
+
+<Base64Tool mode="decode" />
+
+Decoding accepts both the standard alphabet (`+`, `/`) and the URL-safe alphabet (`-`, `_`), with or without `=` padding, so you can paste a JWT segment or an API payload directly.
+
+## Reading a JWT
+
+A JWT is three URL-safe Base64 segments separated by dots: header, payload, and signature. Decoding the first two shows you the claims.
+
+```
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+└──── header ────┘ └──── payload ────┘ └──────── signature ────────┘
+```
+
+Decode the header and payload here. The signature is raw bytes and will not render as text.
+
+<Warning>
+  Decoding a JWT does not verify it. The signature is what proves the token is authentic and unmodified, and checking it requires the signing key. Never trust claims from a decoded token you have not verified.
+</Warning>
+
+## Decoding in code
+
+```javascript
+Buffer.from(encoded, "base64").toString("utf8");   // handles both alphabets
+```
+
+```python
+import base64
+base64.urlsafe_b64decode(encoded + "==").decode()  # tolerate missing padding
+```

@@ -1,0 +1,124 @@
+---
+title: "Module 10: KPIs and metrics for measuring payout product success"
+description: "The metrics that show whether a payout product is reliable, efficient, liquid, and trusted."
+---
+## Introduction
+
+- Financial throughput
+- Transaction reliability
+- Operational efficiency
+- Liquidity health
+
+User trust indicators.
+
+Product managers must define, track, and act on the right metrics, not just report after the fact.
+
+You cannot improve what you do not measure. And in money movement, what you fail to measure eventually breaks under scale.
+
+### Core categories of KPIs for payout products
+
+| Category | Focus |
+|---|---|
+| Volume Metrics | How much value and how many payouts are moving through the system |
+| Success Metrics | How reliably payouts complete end-to-end. |
+| Time Metrics | How fast payouts move from funding to settlement. |
+| Liquidity Metrics | How efficiently liquidity is managed and deployed. |
+| Error and Recovery Metrics | How well the system detects and recovers from failures |
+| User Trust Metrics | How users experience payout success, delays, and transparency. |
+
+### Key volume metrics
+
+| Metric | Why It Matters |
+|---|---|
+| Total Payout Value (USD equivalent) | Measures financial throughput and system scale. |
+| Total Number of Payouts | Indicates platform activity beyond just value concentration |
+| Unique Payout Recipients | Measures reach and payout distribution, not just few large users |
+| Asset Type Distribution (BTC, USDT, fiat) | Helps monitor funding source preferences and infrastructure needs. |
+
+### Key success metrics
+
+| Metric | Why It Matters |
+|---|---|
+| Payout Success Rate (%) | Core reliability metric; tracks successful completions vs initiated payouts |
+| Payout First-Attempt Success Rate (%) | Measures reliability without retries; more stringent. |
+| Funding Conversion Rate (%) | Tracks how many requested quotes actually result in funded payouts. |
+| Webhook Delivery Success Rate (%) | Ensures external systems are updated properly and timely |
+
+### Key time metrics
+
+| Metric | Why It Matters |
+|---|---|
+| Average Time-to-Funding-Confirmation | Measures how quickly users fund after receiving quotes. |
+| Average Time-to-Payout-Processing Start | Tracks internal operational responsiveness after funding. |
+| Average Time-to-Final-Settlement | Tracks full user experience from initiation to completion. |
+| SLA Adherence Rate (%) | Measures how often you meet corridor-specific payout time promises. |
+
+### Key liquidity metrics
+
+| Metric | Why It Matters |
+|---|---|
+| Liquidity Buffer Ratio | (Available Liquidity) / (Average Daily Payout Volume); signals liquidity health. |
+| Treasury Replenishment Lag | Time between buffer breach and liquidity top-up; lower is better. |
+| Liquidity Shortage Incident Count | How often payouts are delayed due to insufficient liquidity. |
+
+### Key error and recovery metrics
+
+| Metric | Why It Matters |
+|---|---|
+| Quote Expiry Rate | Measures how often users fail to fund quotes before expiry; indicates UX or volatility issues |
+| Payout Retry Rate | Measures how often payouts require retries; signals payout rail reliability issues |
+| Mean Time to Recovery (MTTR) | Measures how fast failed payouts are detected, corrected, and communicated |
+
+### Key user trust metrics
+
+| Metric | Why It Matters |
+|---|---|
+| User Reported Success Perception (%) | Tracks how many users felt their payout experience was successful. |
+| User Support Ticket Rate (per 1,000 payouts) | Measures friction and reliability from the user's perspective |
+| Refund Incident Rate | Measures payouts requiring refunds, signaling potential user trust erosion |
+
+### How to set targets for payout KPIs
+
+| Area | Example Target |
+|---|---|
+| Payout Success Rate | > 98% within first attempt. |
+| Funding Conversion Rate | > 85% of quotes lead to funded payouts. |
+| Average Time-to-Funding-Confirmation | \< 15 minutes for 80% of payouts. |
+| SLA Adherence | > 95% of payouts settled within promised corridor-specific SLA. |
+| Liquidity Buffer Ratio | Maintain at least 2x daily average payout volume in liquidity |
+| Webhook Success Rate | > 99% webhook delivery confirmation within 60 seconds. |
+
+### What your payout dashboard should display
+
+At a minimum, your internal payout dashboard should display:
+
+- Real-time payout success and failure counts.
+- Average time-to-settlement by corridor and funding type.
+- Liquidity buffer warnings per corridor.
+- Current quote expiry rates.
+- Outstanding webhook delivery failure counts.
+- Active payout rail incident alerts.
+
+Dashboards are not just for ops teams. Product teams must monitor them daily to catch early signals of system degradation.
+
+## PM action checklist
+
+Define your platform’s payout lifecycle KPIs before launch.
+
+Build real-time monitoring dashboards tied to Trip and webhook data.
+
+Review payout metrics weekly with engineering, treasury, and operations teams.
+
+Adjust operational SLAs and user communication based on real observed performance.
+
+Set up automated alerts for critical metric breaches (e.g., liquidity buffer warnings, payout SLA failures).
+
+## Closing reflection
+
+A payout product without strong, continuously monitored metrics is not a financial platform. It is an unmanaged liability.
+
+Mastering payout KPIs is not an optional sophistication. It is how you build trust, operational scale, and financial survival over time.
+
+In the next module, we will address
+
+ Advanced Topics: Circular Economies, Regional Differences.

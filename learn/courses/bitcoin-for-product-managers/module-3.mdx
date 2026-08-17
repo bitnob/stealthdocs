@@ -1,0 +1,155 @@
+---
+title: "Module 3: Understanding UTXOs"
+description: "The UTXO model explained for product teams, and why it shapes balances, fees, and transaction design."
+---
+## 3.1 Introduction
+
+Instead, Bitcoin is made up of individual pieces of value called UTXOs. Unspent Transaction Outputs.
+
+Understanding UTXOs is essential for properly designing, building, and reasoning about Bitcoin wallets.
+
+## 3.2 What is a UTXO?
+
+A UTXO is a piece of bitcoin that:
+
+- Has been sent to a Bitcoin address.
+- Has not yet been spent.
+- Is ready to be used as input to a future transaction.
+
+Every time someone sends bitcoin, they are spending old UTXOs and creating new UTXOs.
+
+The blockchain is essentially a database of all unspent outputs.
+
+**Key insight:** Bitcoin is not a balance ledger. Bitcoin is a collection of spendable digital coins (UTXOs) linked to addresses.
+
+## 3.3 Example: UTXOs in action
+
+Suppose:
+
+- Ali receives 0.5 BTC from Dapo.
+- Later, Ali receives 1.0 BTC from Kwame.
+
+Ali’s wallet now controls:
+
+- UTXO1: 0.5 BTC
+- UTXO2: 1.0 BTC
+
+His "balance" (what the wallet app shows) is:
+
+0.5 BTC + 1.0 BTC = 1.5 BTC
+
+But behind the scenes, it is two separate pieces.
+
+If Ali wants to send 0.8 BTC to Dapo:
+
+- His wallet must choose UTXOs to spend.
+- Likely, the wallet will spend UTXO2 (1.0 BTC) fully.
+- Create an output sending 0.8 BTC to Dapo.
+- Return the leftover 0.2 BTC back to Ali as change.
+
+Thus, a new UTXO is created for Ali for the change.
+
+## 3.4 Visual diagram: UTXO flow
+
+```
+[ UTXO1: 0.5 BTC ]  ---> (unused)
+
+[ UTXO2: 1.0 BTC ]  ---> (spent)
+
+→ Transaction:
+   - Input: UTXO2 (1.0 BTC)
+   - Output 1: 0.8 BTC → Dapo
+   - Output 2: 0.2 BTC → Ali (change)
+
+Resulting UTXOs:
+
+[ Dapo's new UTXO: 0.8 BTC ]
+
+[ Ali's new UTXO: 0.2 BTC ]
+```
+
+## 3.5 Important properties of UTXOs
+
+| Property | Why It Matters |
+|---|---|
+| UTXOs are indivisible | You must spend the entire UTXO at once, no partial spending. |
+| UTXO selection determines fees | More UTXOs used → bigger transaction size → higher network fee. |
+| UTXOs are tied to addresses | Wallets must track which addresses own which UTXOs. |
+| UTXO reuse can hurt privacy | Spending many UTXOs together can reveal associations on-chain. |
+| Dust UTXOs | Tiny UTXOs that cost more in fees to spend than they are worth are problematic. |
+
+## 3.6 Wallet responsibilities with UTXOs
+
+A Bitcoin wallet must:
+
+- Keep track of all UTXOs controlled by the user's private keys.
+- Select appropriate UTXOs when building a transaction (smart coin selection).
+- Handle change outputs carefully to maintain privacy and efficiency.
+- Consolidate small UTXOs when network fees are low.
+- Warn users or sweep dust when necessary.
+
+<Note>
+  Even a simple "send" button click involves complex UTXO selection behind the scenes.
+</Note>
+
+## 3.7 UTXO selection strategies
+
+Wallets must often choose which UTXOs to use when sending bitcoin.
+
+Different strategies impact:
+
+- Transaction fees
+- Privacy
+- UX performance
+
+Common strategies:
+
+| Strategy | Description |
+|---|---|
+| Largest First | Spend the biggest UTXOs first (smaller transaction size). |
+| Smallest First | Spend smaller UTXOs first (to clean up wallet bloat). |
+| Randomized | Select randomly to improve privacy. |
+| Privacy-Preserving | Choose UTXOs to minimize linking user activities. |
+
+Well-designed wallets adapt strategies based on transaction size, urgency, and user preferences.
+
+## 3.8 Dust and wallet bloat
+
+Dust = very small UTXOs that cost more to spend than they are worth.
+
+**Example:** A UTXO of 200 satoshis. If it costs 400 satoshis in fees to spend, it is dust.
+
+Wallets must:
+
+- Avoid creating dust outputs.
+- Consolidate dust during periods of low network fees.
+- Warn users when transactions would produce dust.
+
+**Wallet bloat:** Accumulating hundreds or thousands of tiny UTXOs leads to:
+
+- Expensive transactions.
+- Slower wallet performance.
+- Difficulty moving funds quickly.
+
+## 3.9 PM reflection points
+
+If you are managing a Bitcoin wallet product:
+
+- Always remember that users' "balances" are not simple numbers. They are collections of UTXOs.
+- Wallet apps must hide UTXO complexity, but handle it carefully behind the scenes.
+- Smart UTXO management improves:
+  - Fee efficiency
+  - Privacy
+  - Long-term wallet usability
+- Backup flows must protect all keys necessary to spend future UTXOs.
+- Change addresses must be rotated automatically to protect privacy.
+
+**Core idea:** Every Bitcoin transaction a user makes is a negotiation with the past. Selecting UTXOs to build the future.
+
+## 3.10 Summary of module 3
+
+- Bitcoin’s data model is a system of UTXOs, not account balances.
+- UTXOs are indivisible chunks of bitcoin locked to addresses.
+- Transactions consume old UTXOs and create new UTXOs.
+- Wallets are responsible for tracking, selecting, and managing UTXOs intelligently.
+- Poor UTXO management leads to high fees, privacy loss, and poor user experience.

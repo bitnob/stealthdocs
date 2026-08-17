@@ -1,0 +1,226 @@
+---
+title: "Module 4: Building a full payout lifecycle: Quotes, funding, processing, completion"
+description: "The full payout lifecycle stage by stage, with the failure points at each one."
+---
+## Introduction
+
+You cannot manage what you do not understand. As a PM building payout products, especially Bitcoin- or stablecoin-powered payouts, you must know the full transaction lifecycle intimately.
+
+You must know:
+
+- What happens at each stage
+- What can fail or delay at each stage
+- How your systems and users are impacted at each stage
+
+How to detect and recover from issues before users notice.
+
+In this module, we break down the full payout lifecycle.
+
+### The five major phases of a payout
+
+| Stage | Description |
+|---|---|
+| 1 | Quote Requested |
+| 2 | Payout Initiated |
+| 3 | Funding Confirmed |
+| 4 | Fiat Payout Processing |
+| 5 | Completion (Success, Failure, or Expiry) |
+
+Each stage updates the Trip object internally, and triggers specific webhook events externally to your systems.
+
+## Phase 1: Quote requested
+
+The user (or your system) requests a quote for a payout:
+
+- Source asset (BTC, USDT)
+- Destination currency (NGN, GHS, KES, etc.)
+
+Amount to deliver.
+
+The platform responds with:
+
+- Funding amount required
+- Expiry timestamp (payment window)
+- Locked FX rate
+
+Quote ID.
+
+Key Risks at this Stage:
+
+If user delays funding, quote expires.
+
+FX volatility exposure if you hold quotes too long.
+
+Best Practices:
+
+Display funding expiry clearly to user.
+
+Encourage fast action to avoid expired quotes.
+
+## Phase 2: Payout initiated
+
+User accepts the quote and initiates a payout request:
+
+- Provides beneficiary details (bank account, mobile wallet)
+- Provides reference ID (optional, for tracking)
+
+System returns:
+
+- Payment address (or Lightning invoice)
+- Trip ID for lifecycle tracking
+
+Payment instructions.
+
+Key Risks at this Stage:
+
+Incorrect beneficiary details entered by user.
+
+Payment address confusion (wrong chain, wrong invoice).
+
+Best Practices:
+
+Validate beneficiary formats before initiation.
+
+Auto-select correct blockchain chain if stablecoins are used.
+
+## Phase 3: Funding confirmed
+
+User sends payment to the funding address:
+
+Blockchain or Lightning network detects transaction (assetReceivedAt).
+
+Wait for enough confirmations to consider payment secure (assetConfirmedAt).
+
+Only after full confirmation does fiat payout processing start.
+
+Key Risks at this Stage:
+
+Underpayment (user sends less than required).
+
+Overpayment (user sends more than required).
+
+Payment delayed by network congestion (e.g., Bitcoin mempool backlog).
+
+Payment received after quote expiry.
+
+Best Practices:
+
+Build alerts if funding confirmation lags beyond expected time.
+
+Allow partial payout (adjusted delivery) if underpayment occurs.
+
+Auto-credit excess funds or manage via internal balance.
+
+## Phase 4: Fiat payout processing
+
+After funding is confirmed:
+
+Platform initiates fiat payout to beneficiary:
+
+- Bank account
+- Mobile money wallet
+- Cash pickup agent
+
+Fiat settlement systems have their own speeds:
+
+- Nigeria NIP, minutes
+- UK Faster Payments, minutes
+- SEPA, hours to next day
+- Cash pickup
+
+Key Risks at this Stage:
+
+Bank rejects payout (wrong account number, compliance block).
+
+Mobile money systems down or delayed.
+
+Liquidity shortages on fiat side.
+
+System downtime.
+
+Best Practices:
+
+Track payout processing latency internally per corridor.
+
+Provide user notifications at "payout started" phase.
+
+Build automatic retries for transient payout failures.
+
+## Phase 5: Completion
+
+The payout either:
+
+Succeeds. Funds arrive at beneficiary.
+
+Fails. Payout rejected, refunded, or requires manual resolution.
+
+Expires, funding not received in time.
+
+At this stage:
+
+Webhook events are triggered:
+
+- payout.transfer.success
+- payout.transfer.failed
+
+Trip object records completionTime and calculates timeToFinish.
+
+Key Risks at this Stage:
+
+Silent payout failures if monitoring is weak.
+
+SLA breaches if payouts take longer than expected.
+
+Customer trust erosion if not communicated properly.
+
+Best Practices:
+
+Confirm success explicitly to users.
+
+Proactively contact users if failures occur.
+
+Monitor average timeToFinish per payout corridor and product.
+
+## Full payout flow visualization
+
+![Wallet-Funded](/images/payou-flow.svg)
+
+## Practical example
+
+Imagine you are building a dashboard for internal ops monitoring.
+
+Design views that allow your team to see:
+
+All Trip IDs currently stuck in "awaiting funding confirmation."
+
+All payouts taking longer than 15 minutes at "processing" stage.
+
+All payouts where beneficiary rejection rates spike above 2% in a corridor.
+
+You are not just building product features.
+
+You are building operational control centers.Design views that allow your team to see:
+
+## PM action checklist (end of module 3)
+
+Map every payout through the five-phase lifecycle.
+
+Define internal monitoring points at each transition.
+
+Build webhook handlers that can reconstruct full payout journeys using Trip IDs.
+
+Design user communication to align with real lifecycle phases.
+
+Set operational SLA targets per phase and per payout corridor.
+
+## Closing reflection
+
+Payout products do not live at the surface of APIs.
+
+They live inside the invisible flows of funding, confirmation, settlement, and finality.
+
+Master the lifecycle.
+
+Master the payout.
+
+In the next module, we will dive into error handling in money movement products.

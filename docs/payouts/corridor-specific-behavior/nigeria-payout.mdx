@@ -1,0 +1,137 @@
+---
+title: "Nigeria"
+description: "Rails, beneficiary fields, cut-off times, and failure modes specific to NGN payouts."
+related:
+  - /docs/payouts/corridor-specific-behavior
+  - /docs/payouts/validate-a-beneficiary
+---
+## 1. Overview
+
+Nigeria is one of world’s most advanced digital payment markets, but it remains bank-account led, not mobile-money led.
+
+The dominant settlement infrastructure is:
+
+NIP (NIBSS Instant Payments). Fast, interbank settlement rail used across virtually all major Nigerian banks.
+
+Mobile money services like Opay, Palmpay, Moniepoint, and Paga exist, but their infrastructure still mimics the banking model , using account numbers derived from user phone numbers (10 digits).
+
+## 2. Settlement methods available
+
+| Method | Description |
+|---|---|
+| NIP Instant Bank Transfers | Primary payout rail. Settlement typically within seconds. Covers almost all banks in Nigeria. |
+| Digital Wallet Payouts (Opay, Palmpay, Moniepoint, Paga) | Wallet services operating account number systems mapped to phone numbers; treated like bank accounts inside NIP. |
+
+<Note>
+  Mobile money in Nigeria is not dominant like in Kenya or Ghana.
+</Note>
+
+Bank accounts dominate digital payments volume and frequency.
+
+## 3. Beneficiary validation standards
+
+Beneficiary detail validation is critical to avoid payout failures. Resolve the account name before paying with [Account Lookup](/api-reference/payouts/account-lookup), and pull valid institution codes from [Get Banks](/api-reference/payouts/banks-by-country).
+
+| Type | Validation Process |
+|---|---|
+| Bank Accounts | 10-digit NUBAN account number + Bank code lookup via NIP Name Enquiry API. |
+| Wallet Accounts (Opay, Palmpay, Moniepoint, Paga) | 10-digit wallet account number derived from user's phone number (e.g., 8048498308); validation via same NIP Name Enquiry process, different institution code. |
+
+<Warning>
+  Always perform a real-time Name Enquiry before allowing the user to proceed with payout confirmation.
+</Warning>
+
+## Best practices for name enquiry and validation
+
+Confirm account existence before proceeding.
+
+Display retrieved account name to user for confirmation.
+
+Block payout if retrieved name and user-entered name mismatch substantially
+
+Validate institution codes dynamically (wallets like Opay, Palmpay have their own NIP codes, not bank codes).
+
+## 4. Tiered account structures and impact on payouts
+
+Nigeria’s payment ecosystem uses tiered accounts. The amounts Bitnob will accept for the corridor come from [Get Limits](/api-reference/payouts/payout-limits):
+
+| Tier Type | Description |
+|---|---|
+| Tier 1 (Basic Accounts) | Limited KYC; typically ₦50,000 per transaction max, ₦300,000 balance limit. |
+| Tier 2 (Medium KYC Accounts) | Higher limits; ₦200,000–₦500,000 transaction limits common. |
+| Tier 3 (Fully KYCed Accounts) | Unlimited or very high transaction limits. |
+
+Impact on Payouts:
+
+If a payout exceeds the receiver's allowable **per transaction or maximum balance limit,** the transfer **may be instantly rejected** or **reversed manually by the receiving institution.**
+
+Instant Reversals: Some banks immediately reject and reverse the funds back to the sender.
+
+Product Requirement:
+
+Monitor reversal events actively after payout initiation.
+
+Surface payout pending/reversal status clearly to the user if applicable.
+
+## 5. Payout timing expectations
+
+| Phase | Expected Time |
+|---|---|
+| Funding Confirmation (Bitcoin/Stablecoin) | \<15 minutes (dependent on network conditions). |
+| NIP Payout Processing | Seconds to 5 minutes for most transactions. |
+| Beneficiary Account Receipt | Immediate upon successful NIP settlement (seconds typical). |
+| Reversal Timing (if applicable) | Instant or within 24 hours depending on receiving institution. |
+
+## 6. Common failure modes
+
+| Failure Mode | Description | Reponse Strategy |
+|---|---|---|
+| Invalid Account Number | Wrong number format or non-existent account. | Validate during Name Enquiry. Block pre-payout. |
+| Name Mismatch | Significant mismatch between user input and retrieved name. | Block or force reconfirmation before proceeding. |
+| Tier Limit Exceeded | Payout amount exceeds receiver's account tier limit. | Educate users at payout creation. Monitor for reversals. |
+| Receiving Bank Downtime | Rare but possible. Certain banks experience maintenance windows at odd hours. | Monitor NIP switch error codes. Retry if allowed. |
+| Payment Timeout (No Response) | NIP response timeout, very rare. | Retry transaction within safe timeout window. |
+
+## 7. Liquidity management considerations
+
+Liquidity in NGN must be actively maintained, especially during political periods where FX volatility can spike.
+
+NGN float should always cover at least 2–3x daily average payout volume.
+
+USD to NGN conversion rates can move dramatically: build volatility buffers inside funding quotes where relevant.
+
+Prefer multiple banking relationships for liquidity redundancy (especially with Tier 1 and Tier 2 banks).
+
+## 8. Operational best practices for Nigeria corridor
+
+| Area | Recommendation |
+|---|---|
+| Validation | Always validate account number and retrieve name before allowing payout. |
+| Error Handling | Track real-time NIP error codes and automate retries where safe. |
+| Reversal Monitoring | Integrate webhook or polling systems to detect reversals fast. |
+| Tier Awareness | Flag large payouts and advise users to confirm receiver account tier where possible. |
+| Payout Splitting | For large payouts, automate splitting if transaction limits require it (e.g., >₦5 million). |
+| Downtime Alerts | Monitor known banking maintenance windows (often at midnight – 6am) and notify ops in advance. |
+
+## Quick reference table
+
+| Field | Value |
+|---|---|
+| Primary Rail | NIP (Instant Bank Transfers) |
+| Mobile Wallet Rails | Opay, Palmpay, Moniepoint, Paga (mapped like banks) |
+| Standard Account Number Format | 10 digits (bank and wallet accounts) |
+| SLA (Normal Conditions) | 98% payouts under 5 minutes |
+| Main Risks | Tiered account limits, reversal management, downtime on rare occasions |
+| Reversal Timing | Instant (auto) or manual (within 24 hours) |
+| Recommended Liquidity Buffer | 2–3x daily payout volume |
+
+Nigeria is a high-volume, fast-paced payout corridor where bank transfers dominate digital transactions.
+
+Building payout systems for Nigeria means:
+
+- Mastering real-time validation,
+- Designing for account tier realities,
+- Actively monitoring reversals,
+- Protecting user trust even during edge-case liquidity or banking downtimes.
+
+A resilient Nigeria payout product is not one that works only under ideal conditions. It is one that anticipates, detects, and recovers from real-world operational stress predictably and transparently.

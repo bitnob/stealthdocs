@@ -1,0 +1,110 @@
+---
+title: "Trading revenue reporting manual"
+description: "Data structures, reconciliation practice, and report formats for tracking trading revenue."
+---
+This manual is designed to help integrator finance teams accurately track, calculate, and report revenue generated through Bitnob’s Trading API. It includes guidance on data structures, revenue models, reconciliation practices, and reporting formats.
+
+## Revenue sources
+
+Integrators can generate revenue from trading by:
+
+- Applying a spread between Bitnob’s quoted rate and the user-facing rate
+- Charging a flat or percentage-based execution fee on trades
+- Offering fixed-rate trades while executing on variable backend pricing
+
+This manual focuses on capturing revenue from both spread and fee-based models.
+
+## Key terms
+
+| Term | Meaning |
+|---|---|
+| rate | Exchange rate provided by Bitnob (e.g., sats per cent) |
+| inputAmount | Amount the user traded (in cents or sats) |
+| outputAmount | Amount the user received (in sats or cents) |
+| bitnobOutput | Actual amount Bitnob would have returned at quoted rate |
+| spreadEarned | Difference between bitnobOutput and what the user received |
+| feeCharged | Platform-defined fee added to trade, if applicable |
+
+## Revenue calculation methods
+
+A. Spread-Based Revenue
+
+Formula: spreadEarned = bitnobOutput - userOutput
+
+Unit: Output asset (sats or cents)
+
+Use when:
+
+- You fetch a quote from Bitnob
+- Show a slightly different (less favorable) rate to the user
+- Execute at the original Bitnob quote
+- B. Fee-Based Revenue
+- Formula: feeCharged = percentageFee * inputAmount
+- Unit: Input asset (sats or cents)
+
+Use when:
+
+- You display and deduct a transparent fee (e.g., “1% execution fee”)
+- The full quote rate is passed through to the user
+
+C. Combined Model Record both spread and fee independently.
+
+## Data you must store per trade
+
+Every field below is returned by [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference).
+
+| Field | Purpose |
+|---|---|
+| reference | Unique ID for tracking |
+| tradeId | Bitnob’s ID for the trade |
+| from | Source asset (usdt, usdc, btc, or ngn) |
+| to | Target asset |
+| inputAmount | User’s original trade input |
+| outputAmount | What user received |
+| rate | Bitnob quoted rate used |
+| bitnobOutput | What user would have received at pure rate |
+| feeCharged | Explicit fee charged to the user (if any) |
+| spreadEarned | Calculated backend profit |
+| timestamp | ISO timestamp of trade |
+
+## Recommended ledger format
+
+Track trades in a financial ledger or database table:
+
+| Reference | Inputamount | Outputamount | Rate | Bitnoboutput | Feecharged | Spreadearned | Timestamp |
+|---|---|---|---|---|---|---|---|
+| trade_123 | 10000 | 222500 | 2250 | 225000 | 0 | 2500 | 2025-05-16 |
+
+All crypto values should be in base units (sats or cents), not floats. NGN values are recorded in whole naira (major units).
+
+## Sample monthly report template
+
+| Date | Trades | Volume (usdt) | Volume (btc) | Volume (ngn) | Revenue (fee) | Revenue (spread) | Total Revenue |
+|---|---|---|---|---|---|---|---|
+| May 2025 | 1,204 | $230,400 | 1.32 BTC | ₦12,500,000 | $920.00 | $1,440.00 | $2,360.00 |
+
+## Reconciliation practices
+
+Reconcile revenue daily or weekly using trade logs from [Get Orders](/api-reference/trading/list-orders)
+
+Compare wallet balances before and after trade execution
+
+Match outputAmount + spreadEarned + feeCharged against Bitnob quote data
+
+Review webhook logs to confirm trade completion before counting revenue Ensure reference IDs are unique and mapped to internal user accounts
+
+## Tax and regulatory notes
+
+Treat earned spread and fees as revenue per local accounting rules
+
+Maintain transaction-level records for all earnings
+
+If required by jurisdiction, report asset conversions as capital gains/losses
+
+## When to contact Bitnob finance/Ops
+
+Mismatch between Bitnob wallet balances and internal ledger
+
+Unexpected rate fluctuations or misquoted trades
+
+Delayed webhook resulting in uncertain trade status

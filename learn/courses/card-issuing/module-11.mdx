@@ -1,0 +1,136 @@
+---
+title: "Module 11: Refunds, reversals, and chargebacks"
+description: "Refunds, reversals, and chargebacks: what triggers each, and how to track and reconcile them."
+---
+## Learning objectives
+
+- Understand the difference between a refund, a reversal, and a chargeback
+- Know what triggers each event and what happens to card balances
+- Learn how to respond to these events in product and operations
+- Track and reconcile refunds across lifecycle states (active, frozen, terminated)
+- Build trust with users by explaining outcomes clearly and consistently
+
+## Why this matters
+
+These three events are among the most misunderstood aspects of card systems, even by product managers and support teams. When a transaction is reversed or refunded and the user doesn’t see the expected balance update or gets confused by delays, trust breaks.
+
+Your job is to prevent that by:
+
+- Knowing what each term means
+- Tracking them reliably in your systems
+- Communicating outcomes transparently to users
+
+1. Reversals
+
+   What is it?
+
+   A reversal occurs when a transaction is authorized but then canceled before settlement. It’s as if the payment was never finalized.
+
+   Trigger examples:
+
+- Merchant cancels an order right after authorization
+- Hotel or travel booking holds funds but releases without charging
+- System error or duplication detected at merchant processor
+
+   Impact on card balance:
+
+- The hold is released
+- The balance returns to what it was before the attempted transaction
+- No actual money was transferred
+- **Webhook:** virtualcard.transaction.reversed
+
+   **UX tip:** Show as "Canceled before completion" with no amount deducted.
+
+2. Refunds
+
+   What is it? A refund happens after a transaction has settled. It’s initiated by the merchant to return money to the cardholder.
+
+   Trigger examples:
+
+- Returned goods
+- Subscription canceled after billing
+- Service not delivered as promised
+
+   Impact on card balance:
+
+- Refund amount is credited back to the card
+- If the card is still active, user can spend it again
+- If the card is terminated, funds may go to your platform float or treasury
+- **Webhook:** virtualcard.transaction.refund
+- **Timing:** 2 to 14 business days (varies by merchant and region)
+
+3. Chargebacks
+
+What is it? A chargeback is a formal dispute process initiated by the cardholder. It reverses the transaction after it settles, but requires investigation and justification.
+
+Trigger examples:
+
+- User claims fraud or unauthorized transaction
+- Goods not received
+- Incorrect or duplicate billing
+- Subscription not canceled as promised
+
+Impact on balance and operations:
+
+- Funds are clawed back from merchant
+- Investigation by issuer, may involve documentation
+- Your platform may be charged a dispute fee
+- Excessive chargebacks may lead to compliance risk or program review
+- Webhook (if supported): virtualcard.transaction.chargeback.initiated/...resolved
+
+Important: Not all platforms expose chargeback APIs. You may need to monitor via support systems or processor dashboards.
+
+## Refund vs. reversal vs. chargeback (summary table)
+
+| Type | Trigger | Status | Who Initiates | Funds Moved? | Reversible? |
+|---|---|---|---|---|---|
+| Reversal | Canceled before settlement | Canceled | Merchant/system | No | N/A |
+| Refund | Payment settled, then reversed | Refunded | Merchant | Yes | No |
+| Chargeback | Dispute filed post-settlement | Under investigation → refund | User/platform → Issuer | Yes | Sometimes (after review) |
+
+## Handling refunds on terminated cards
+
+Refunds can still be processed to a card after it has been terminated. What happens then?
+
+- The funds are redirected to your platform master wallet or float
+- You are responsible for notifying the user or returning the funds
+- A webhook will include the reason, `cardId`, and amount
+
+**Webhook:** `virtualcard.transaction.terminated.refund`
+
+## Product design guidelines
+
+| Scenario | What to Show in App |
+|---|---|
+| Refund on active card | “$25 refunded from Amazon. Your balance has been updated.” |
+| Reversal | “Your $40 booking at Airbnb was canceled. No charge applied.” |
+| Chargeback filed | “We’re reviewing your dispute. You may receive a refund if resolved in your favor.” |
+| Refund after termination | “You received a refund on a closed card. We’ve credited your wallet.” |
+
+Never leave users wondering why a refund hasn’t arrived: give timelines, status, and context.
+
+## Internal best practices
+
+- Track all `reference` and `transactionId` fields across these events
+- Log time between original transaction and refund or dispute
+- Build a dashboard view for ops/support to reconcile transaction chains
+- Use webhook timestamps to monitor merchant behavior patterns (slow refunds, frequent reversals)
+
+## Dispute handling and policies
+
+If your product allows users to initiate chargebacks:
+
+- Provide a structured dispute form
+- Require relevant evidence (e.g., screenshots, emails)
+- Set response SLA (e.g., "We’ll update you within 3 business days")
+- Communicate clearly when the chargeback is accepted, rejected, or pending
+
+Chargebacks have cost implications and must be monitored to prevent merchant risk flags.
+
+## Recap
+
+- Reversals happen before settlement; refunds happen after
+- Chargebacks involve formal disputes and operational overhead
+- Terminated cards can still receive refunds, which are rerouted
+- You must build clarity around these events in both product and support flows
+- Trust and operational maturity come from handling these events proactively

@@ -1,0 +1,116 @@
+---
+title: "Receive stablecoin webhooks"
+description: "Three events carry all stablecoin money movement: deposit.success, transfer.success, and transfer.failed. Verify the signature, act on the event, and keep a polling backstop."
+related:
+  - /docs/stablecoins/error-handling-and-failure-scenarios
+  - /docs/getting-started/api-best-practices/webhook-best-practices
+---
+
+Stablecoin activity reaches your server as three events, delivered as HTTPS POSTs to the webhook URL configured on your dashboard:
+
+| Event | Fires when | Act on it |
+|---|---|---|
+| `deposit.success` | An incoming deposit passed its confirmation threshold and the balance was credited. | Credit the user. |
+| `transfer.success` | An outbound send confirmed on-chain. | Mark the transfer delivered. |
+| `transfer.failed` | An outbound send was rejected, reverted, or timed out; held funds returned to your balance. | Unlock the funds in your ledger, surface the failure. |
+
+Never credit or debit on anything earlier than these events. A transaction visible on-chain is not yet final, and an accepted API call is not yet a completed send.
+
+## Verify every delivery
+
+Each request carries an `x-bitnob-signature` header: HMAC-SHA512 of the raw body, keyed with your webhook secret. Verify against the raw bytes, compare in constant time, and reject mismatches.
+
+```javascript
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
+
+const secret = process.env.BITNOB_WEBHOOK_SECRET;
+
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-bitnob-signature'] || '';
+  const expected = crypto.createHmac('sha512', secret).update(req.body).digest('hex');
+
+  const valid =
+    expected.length === signature.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+
+  if (!valid) return res.status(400).send('Invalid signature');
+
+  const event = JSON.parse(req.body.toString('utf-8'));
+  // route on event.event, de-duplicate on event.event_id
+  res.status(200).send();
+});
+```
+
+Reference implementations and the published [Source IPs](/api-reference/addresses/webhooks#source-ips) are under [Verifying events](/api-reference/addresses/webhooks#verifying-events). Treat any IP allowlist as a second layer; the signature is the check that counts.
+
+## The payloads
+
+All three events share one `data` shape. `amount` is in the token's smallest unit, 6 decimals; `hash` is the on-chain transaction; `reference` joins the event to your records.
+
+<CodeGroup>
+
+```json deposit.success
+{
+  "event": "deposit.success",
+  "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+  "data": {
+    "address": "Cev6GkmDnwSY3PvwhwBofwv65FrwcU1RxvF9Zt9aTJq4",
+    "amount": "9000000",
+    "chain": "tron",
+    "currency": "USDT",
+    "fee": "0",
+    "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
+    "reference": "RCV_SBLNC_cc309ba8c361",
+    "timestamp": "2025-12-12T20:38:23Z"
+  }
+}
+```
+
+```json transfer.success
+{
+  "event": "transfer.success",
+  "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+  "data": {
+    "address": "TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN",
+    "amount": "2000000",
+    "chain": "tron",
+    "currency": "USDT",
+    "fee": "1000000",
+    "hash": "4ae4308579587370accbd31dbfaebf3a97c8cfc7f68e2128ddec840349cafc60",
+    "reference": "SND_SBLNC_80c7895d89e9",
+    "timestamp": "2025-12-12T20:30:18Z"
+  }
+}
+```
+
+```json transfer.failed
+{
+  "event": "transfer.failed",
+  "event_id": "944a4089-6065-49ca-8f43-fb10f15c59e6",
+  "data": {
+    "address": "TKVy2qjGyfxhPMvkeA8AEhv5XvpzLxGA5W",
+    "amount": "2000000",
+    "chain": "tron",
+    "currency": "USDT",
+    "fee": "0",
+    "hash": "",
+    "reference": "your-transfer-reference",
+    "timestamp": "2025-12-12T20:30:00Z"
+  }
+}
+```
+
+</CodeGroup>
+
+Field-by-field documentation lives under the [deposit](/api-reference/addresses/webhooks#webhook) and [transfer](/api-reference/withdrawal/webhooks#webhook) webhook references. Lightning receipts arrive separately as `btc.lightning.received.success`.
+
+## Delivery semantics
+
+- Return `200` quickly; non-200 responses are retried 3 times after the first failure.
+- Retries mean duplicates: de-duplicate on `event_id`.
+- Endpoints must be HTTPS and respond within 5 seconds; process asynchronously.
+- Keep the backstop: sweep [List transactions](/api-reference/transactions/list-transactions) on a schedule so a missed delivery never becomes a wrong balance. [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a single reference.
+
+While developing locally, tunnel with a tool like [ngrok](https://ngrok.com/) and point your test-environment webhook URL at it; never a production one.

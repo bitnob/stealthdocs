@@ -1,0 +1,33 @@
+---
+title: "UTF-8 encoder"
+description: "UTF-8 byte inspection: see exactly how many bytes a string occupies and where multi-byte characters fall."
+---
+
+import { Utf8Tool } from "/snippets/playground/text-binary.jsx";
+
+<Utf8Tool mode="encode" />
+
+UTF-8 encodes each character as one to four bytes. ASCII characters take one byte, so for plain English text the byte count matches the character count. Accented letters, non-Latin scripts, and emoji take more.
+
+| Character | Bytes | Why |
+|---|---|---|
+| `A` | 1 | ASCII |
+| `é` | 2 | Latin-1 supplement |
+| `₦` | 3 | Currency symbol |
+| `😀` | 4 | Outside the basic plane |
+
+## Why the distinction matters
+
+**Byte-length limits.** A database column declared `VARCHAR(20)` may count bytes, not characters, so a 20-character string with accents can overflow it.
+
+**Request signing.** [HMAC signatures](/api-reference/authentication/authentication) are computed over bytes. Your signature only matches if you sign the same encoding of the same string. This is why signing the exact serialized body matters, rather than re-serializing it.
+
+**Truncation.** Cutting a string at a byte offset can split a multi-byte character in half and produce invalid UTF-8. Always truncate on character boundaries.
+
+```javascript
+new TextEncoder().encode("₦500").length;  // 6 bytes, 4 characters
+```
+
+```python
+len("₦500".encode("utf-8"))  # 6
+```

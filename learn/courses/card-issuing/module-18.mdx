@@ -1,0 +1,171 @@
+---
+title: "Module 18: Understanding the full value chain of virtual cards"
+description: "Every player in the card value chain, and where cost, compliance, and margin sit."
+---
+## Learning objectives
+
+- Understand the complete lifecycle and ecosystem of a virtual card
+- Identify all the players involved: from issuer to cardholder
+- Know how value, cost, and compliance move through the card stack
+- Clarify where your product sits, and how to work with or around each layer
+- Gain the language and perspective to engage issuers, processors, and partners with confidence
+
+## Why this matters
+
+Many teams try to build card products without truly understanding how the infrastructure is stitched together. This creates:
+
+- Misaligned expectations (e.g., “Why can’t I support crypto merchants?”)
+- Integration delays (“We didn’t realize we needed KYC at this layer”)
+- Business model mismatches (“We didn’t know where the fees actually go”)
+- Risk and compliance gaps
+
+Understanding the value chain gives you the clarity to build confidently, or to explain why you can’t build a certain feature (yet).
+
+## The full card ecosystem: High-level view
+
+At the highest level, a virtual card product connects:
+
+User (Cardholder) ↓ Frontend or App (Your Product) ↓ API Layer (Bitnob, Marqeta, or your integration) ↓ Card Processor ↓ Card Issuer (licensed bank or fintech) ↓ Card Network (Visa, Mastercard, Verve) ↓ Merchant + Acquirer
+
+Let’s walk through each part and what role it plays.
+
+### 1. The cardholder
+
+This is your user, the person or business trying to spend. Your job is to manage:
+
+- Identity (KYC, verification)
+- UX (card controls, balances, top-ups)
+- Support and dispute handling
+- Limits, terms of service, and legal ownership
+
+The cardholder does not interact directly with most of the other entities.
+
+### 2. The product layer (you)
+
+This is where you sit, as the issuer of experience, not the issuer of the card.
+
+Your product is responsible for:
+
+- UX: Creating, funding, freezing, and showing the card
+- Policy: Who can get a card, what fees are charged
+- API integration: Top-ups, transaction logs, webhook handling
+- Customer education, marketing, and positioning
+
+You may be white-labeled under a licensed issuer, but you own the user relationship.
+
+### 3. The API layer or issuance platform
+
+Examples: Bitnob, Marqeta, Lithic, Union54, Interswitch APIs, card modules from global processors.
+
+This layer handles:
+
+- Card creation and management
+- Abstracting compliance requirements from you
+- Routing funding to the correct issuer accounts
+- Communicating with processors and card networks
+- Delivering webhooks and real-time status
+
+They bridge your app with the licensed infrastructure, letting you focus on product, not compliance.
+
+### 4. The card processor
+
+Examples: Galileo, Interswitch, Qolo, Marqeta (also acts as issuer), Thales, FIS.
+
+The processor does the heavy lifting of:
+
+- Managing card state and lifecycle
+- Performing authorization checks
+- Routing requests to networks (Visa, Mastercard)
+- Calculating spend limits, validating merchant categories
+- Recording transaction history
+
+They are the transaction execution layer.
+
+### 5. The card issuer
+
+This is a licensed bank or regulated financial institution that is authorized to issue Visa or Mastercard products.
+
+Their responsibilities include:
+
+- Holding and managing the cardholder’s funds
+- Owning the BIN range (the first 6–8 digits of the card number)
+- Ensuring compliance with scheme rules and local regulation
+- Reporting to regulators and being audited
+- Handling chargebacks and network disputes
+
+You cannot issue cards directly unless you are an issuer or operating under one.
+
+### 6. The card network
+
+Visa, Mastercard, Verve, UnionPay, etc.
+
+Their role is to:
+
+- Connect issuers to acquiring banks
+- Route transaction authorizations across borders
+- Enforce global rules (like MCC bans, FX charges, chargeback resolution)
+- Govern BIN assignments, interchange fees, and settlement standards
+
+They are the backbone of global card interoperability.
+
+### 7. The acquirer and merchant
+
+On the other end of every transaction is a merchant (e.g., Netflix) and their acquiring bank (e.g., a U.S. acquirer).
+
+This layer:
+
+- Accepts the card
+- Charges the transaction amount
+- Settles with the merchant after authorization
+- May introduce FX fees, MCC metadata, or fraud triggers
+
+You don’t control this layer, but it heavily impacts how your cards are used and how users experience your product.
+
+## How value flows
+
+Every dollar spent through your card goes through this chain:
+
+`Cardholder → You → API → Processor → Issuer → Network → Merchant → Acquirer`
+
+Every dollar also incurs cost and revenue at different stages:
+
+| Stakeholder | How They Earn |
+|---|---|
+| You | Top-up fees, card fees,FX markup, subscription fees |
+| API Layer | Per-card or per-transaction platform fees |
+| Processor | Authorization fee, card management fee |
+| Issuer | Interchange, dispute fees, float interest |
+| Network | Cross-border fee, scheme fee, dispute fees |
+| Merchant | Revenue (but pays acquirer fees, network fees) |
+
+## Where you have control
+
+| Area | Can You Control It? |
+|---|---|
+| Card lifecycle (active, frozen, terminated) | Yes |
+| Who gets a card | Yes |
+| How funds get onto the card | Yes |
+| Merchant approval/decline | No |
+| Cross-border fees | Not directly |
+| MCC restrictions | Sometimes (issuer-enforced) |
+| Refund/refund timing | No, but you can track and inform |
+| Issuer choice | Not unless you’re a platform provider |
+
+## Risks across the value chain
+
+| Risk | Where It Originates |
+|---|---|
+| Declines for valid users | Merchant acquirer, issuer, or MCC rules |
+| FX and cross-border surprise charges | Card network routing |
+| Refunds delayed or lost | Merchant/acquirer side |
+| Chargeback loss | Issuer and network |
+| Fraud patterns | Cardholder behavior, your product setup |
+
+You must build resilience and education into your product, even when you don’t control the problem.
+
+## Recap
+
+- Virtual card products depend on a multi-layered value chain: user → product → API → processor → issuer → network → merchant
+- Knowing where you fit helps you design better, communicate better, and troubleshoot smarter
+- Cost and control are unevenly distributed, but responsibility for the user experience always falls on you
+- Learn to operate within this chain confidently, and your card product will outperform 90% of others in your space

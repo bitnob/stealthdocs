@@ -1,0 +1,136 @@
+---
+title: "Send bitcoin on-chain or over Lightning"
+description: "Outbound BTC from a single wallet balance, on-chain or over Lightning, with the API calls in order."
+---
+
+In this tutorial you send BTC from your Bitnob account to any valid destination: a traditional on-chain address, or a Lightning invoice. Both draw on the same BTC wallet, so you do not manage separate balances or move funds between wallets to pick a rail.
+
+This flow suits a withdrawal feature, a payout system that pays to Bitcoin wallets, or merchant rails that accept both destination types.
+
+## Prerequisites
+
+- A verified Bitnob account.
+- API credentials, and a working signed request. See [Quickstart](/docs/getting-started/quickstart).
+- BTC in your Bitnob wallet, funded on-chain or over Lightning.
+- A destination: a BTC address or a BOLT11 invoice.
+
+Bitnob creates the BTC wallet for you. You do not need to create one manually.
+
+## The two rails
+
+| | On-chain | Lightning |
+|---|---|---|
+| Settles in | Roughly 10 to 60 minutes, depending on congestion and fee rate | Seconds |
+| Destination | A Bitcoin address | A BOLT11 invoice |
+| Best for | Larger amounts, where a wait is acceptable | Small amounts, tipping, checkout |
+| Endpoint | [Initiate withdrawal](/api-reference/withdrawals/initiate-withdrawal) | [Send payment](/api-reference/lightning/send-payment) |
+
+Funds come from the same wallet either way.
+
+<Steps>
+  <Step title="Collect the input">
+    From your interface or backend, gather the amount, the destination, and your own reference for tracking. The destination format decides the rail: an address means on-chain, a string beginning `lnbc` means Lightning.
+
+    Validate the destination before you call the API. A malformed address is the most common cause of a failed send, and it is cheaper to catch client-side.
+  </Step>
+
+  <Step title="Send on-chain">
+    ```bash
+    POST /api/withdrawals
+    ```
+
+    ```json
+    {
+      "to_address": "bc1qp22hg0aj99npxxcsjqg3rxafm8nspa9nc3fjy7",
+      "amount": "0.00001",
+      "currency": "BTC",
+      "chain": "bitcoin",
+      "reference": "GNT_Ty12334z",
+      "description": "Withdrawal for user 4821"
+    }
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `to_address` | The recipient's address on the specified chain. |
+    | `amount` | The amount to send, in the base unit of the currency. |
+    | `currency` | The asset to send, for example `BTC`. |
+    | `chain` | The network to send on, for example `bitcoin`. |
+    | `reference` | Your unique reference, used for tracking and idempotency. |
+    | `description` | Optional note describing the transfer. |
+
+    The response confirms the withdrawal was accepted, not that it confirmed on-chain. Wait for the `transfer.success` webhook before telling the user it is done.
+  </Step>
+
+  <Step title="Or send over Lightning">
+    ```bash
+    POST /api/lightning/pay
+    ```
+
+    ```json
+    {
+      "reference": "LT_PT25000900130010051104509",
+      "request": "lnbc1m1p5ml78tpp5k78p0c37dx2x3mzjvatvz2lnaazg856yv7rv66876x48fs799yxqdqu2pshjmt9de6zqen0wgsx7unyv4eq"
+    }
+    ```
+
+    | Field | Description |
+    |---|---|
+    | `reference` | Your unique idempotency key. Prevents a duplicate payment if the request is retried. |
+    | `request` | The full BOLT11 invoice from the recipient. It already carries the destination, amount, and expiry. |
+
+    ```json
+    {
+      "success": true,
+      "message": "Lightning payment sent successfully",
+      "data": {
+        "id": "4b89cdf8-7590-4428-84b4-a55b4767ceb4",
+        "payment_hash": "c0d32a2f7ad0179a130f0b2763c6dc9dc1a7c2d88fc60a17f55e001855086b8d",
+        "preimage": "bb42592046aec0d595c0d5e6d5021dec98909fb218bb0de2e41be2411be16414",
+        "amount_sat": 1,
+        "fee_sat": 20,
+        "status": "paid"
+      }
+    }
+    ```
+
+    Because the invoice carries the amount, you do not pass one. If the invoice is valid and the node is reachable, the payment completes and is confirmed in the response. `preimage` is the cryptographic proof of payment: store it.
+
+    <Tip>
+      To read an invoice before paying it, for example to show the user the amount and fee, call [Decode BOLT11](/api-reference/lightning/decode-bolt11) or [Preview payment](/api-reference/lightning/preview-payment).
+    </Tip>
+  </Step>
+
+  <Step title="Confirm the outcome">
+    On success you get a transaction id and your `reference` back, and the wallet balance updates. Resolve either identifier later with [Get transaction by id or reference](/api-reference/transactions/get-transaction-by-id), and check the balance with [Get balances](/api-reference/balances/list-balances).
+
+    Record the reference and the returned transaction id against the user in your own database. If you are moving user funds, log the destination too, for audit.
+  </Step>
+</Steps>
+
+## When it fails
+
+| Cause | What to do |
+|---|---|
+| Insufficient funds | The wallet must cover the amount and the network fee. Check the balance before sending. |
+| Invalid address or invoice | Validate the format before calling the API. |
+| Invoice expired or already paid | Lightning invoices are time-bound and single-use. Request a fresh one. |
+
+Handle all outcome messaging through webhooks rather than the synchronous response, and make the handler idempotent. See [Confirmations and webhook events](/docs/bitcoin/confirmations-and-webhook-events).
+
+## Next
+
+<Columns cols={2}>
+  <Card title="Confirmations and webhook events" icon="clock" href="/docs/bitcoin/confirmations-and-webhook-events">
+    When a payment is safe to treat as final.
+  </Card>
+  <Card title="Fees and confirmation strategy" icon="gauge-high" href="/docs/bitcoin/fee-market-and-transaction-strategies">
+    Choosing a fee rate, and rescuing a stuck transaction.
+  </Card>
+  <Card title="Issue addresses and invoices" icon="qrcode" href="/docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices">
+    The inbound direction.
+  </Card>
+  <Card title="Custody models" icon="key" href="/docs/bitcoin/custody-models">
+    Who holds the keys, and what that changes.
+  </Card>
+</Columns>

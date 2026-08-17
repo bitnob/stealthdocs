@@ -1,0 +1,138 @@
+---
+title: "Changelog"
+description: "Dated entries for API changes, new products, and documentation updates."
+---
+
+<Update label="August 9, 2026" tags={["New"]}>
+  ## Virtual Accounts API
+
+  Virtual accounts are dedicated Nigerian bank account numbers issued against one of your customers. Deposits credit your NGN balance, which Get Balances already returns.
+
+  | Operation | Endpoint |
+  | --- | --- |
+  | Create an account | `POST /api/virtual-accounts` |
+  | List accounts | `GET /api/virtual-accounts` |
+  | Get one account | `GET /api/virtual-accounts/:id` |
+  | List transactions | `GET /api/virtual-accounts/:id/transactions` |
+  | Update the alias | `PATCH /api/virtual-accounts/:id` |
+  | Simulate a deposit (sandbox) | `POST /api/virtual-accounts/:id/simulate-deposit` |
+
+  Two requirements before you call create:
+
+  - The customer must already carry a BVN, meaning an `id_type` of `bvn`, plus date of birth and contact details.
+  - `reference` acts as the idempotency key, so reuse it when you retry.
+</Update>
+
+<Update label="July 23, 2026" tags={["New"]}>
+  ## Webhook source IPs published
+
+  The webhook reference pages for addresses, virtual cards, payouts, withdrawals, and beneficiaries now list the addresses Bitnob sends webhooks from, `18.171.51.218` and `13.134.154.133`, with an nginx allow and deny example on each page.
+
+  These addresses can change. Treat the allowlist as a network convenience rather than a security boundary, and verify the `x-bitnob-signature` header on every event.
+</Update>
+
+<Update label="July 20, 2026" tags={["Fix"]}>
+  ## Payout webhooks reference
+
+  The events emitted across the payout flow of quote, initialize, and finalize are now documented.
+
+  | Event | Meaning |
+  | --- | --- |
+  | `payouts.initialized` | The payout was accepted and is queued. |
+  | `payouts.processing` | The settlement rail picked up the payout. This is an in-flight update, not a terminal state. |
+  | `payouts.withdrawal.success` | Funds were delivered. Wait for this before crediting the recipient. |
+  | `payouts.withdrawal.expired` | The payout was not completed in time. |
+
+  Two things to note when you handle these events:
+
+  - Each event carries the payout record itself, so field names match the payouts API response, including `quote_id`, `settlement_amount`, `from_asset`, and the nested `beneficiary` object. This replaces the legacy `payout.transfer.*` shape.
+  - `data.status` is the event outcome in lower case, one of `initiated`, `processing`, `success`, or `expired`. It is not the payout record's upper case lifecycle status returned by Get Payout, so branch on the `event` field.
+</Update>
+
+<Update label="July 15, 2026" tags={["New"]}>
+  ## Interactive API playground
+
+  Supported API reference sections now include a Try it out panel that sends real, HMAC-signed requests and shows the live response.
+
+  - As you fill in the path, query, and body fields, the panel builds a syntax-highlighted cURL command you can copy and run as is.
+  - For POST, PUT, and PATCH endpoints, a Raw body tab accepts your own JSON payload. The exact bytes you paste are signed and sent verbatim, and they persist across page refreshes.
+  - You enter your API credentials once. Timestamps, nonces, and signatures are generated on each run.
+</Update>
+
+<Update label="July 15, 2026" tags={["New"]}>
+  ## Page assistance menu
+
+  API reference pages now carry a Page Assistance menu with four actions.
+
+  | Action | What it does |
+  | --- | --- |
+  | Open in Claude | Launches Claude with a prompt to read the current page. |
+  | Open in ChatGPT | Launches ChatGPT with the same prompt. |
+  | Copy for LLM | Copies the page as clean Markdown. |
+  | View as Markdown | Opens the raw Markdown source in a new tab. |
+
+  Every action operates on the whole page.
+</Update>
+
+<Update label="June 12, 2026" tags={["New"]}>
+  ## Stablecoin webhooks reference
+
+  New stablecoin webhook pages under the Addresses and Withdrawal sections document the `deposit.success`, `transfer.success`, and `transfer.failed` events.
+
+  Each page covers signature verification with HMAC SHA512 through the `x-bitnob-signature` header, notification retries, local testing, and the full payload field reference with sample payloads.
+</Update>
+
+<Update label="May 19, 2026" tags={["Fix"]}>
+  ## Card webhooks v2
+
+  Every outbound virtual card webhook moved to a new payload shape.
+
+  | Before | After |
+  | --- | --- |
+  | `virtualcard.topup.complete` | `virtualcard.topup.completed` |
+  | `virtualcard.created.complete` | `virtualcard.created.completed` |
+  | `virtualcard.withdrawal.complete` | `virtualcard.withdrawal.completed` |
+  | snake_case JSON keys | camelCase keys, such as `cardId`, `companyId`, and `createdStatus` |
+  | Float amounts | Integers in micro-units, where 1 USD is 1,000,000, with a sibling `displayAmount` float on transaction events |
+  | Envelope of `eventId`, `event`, and `data` | Same fields plus `companyId` |
+  | No merchant context | Transaction events add `transactionType`, `merchantName`, `merchantMcc`, `merchantCountry`, and `timestamp` |
+
+  Cross-border transactions emit two variants, `cross_border_pending` for the company wallet fee debit and `cross_border_settled` for the card balance principal debit. Both are `transactionType` values, which stay snake_case. Contactless and refund events also fire with several `transactionType` values under one `event` string, so branch on `event` first and then on `transactionType`.
+</Update>
+
+<Update label="February 28, 2026" tags={["New"]}>
+  ## Card Issuing API v2 beta
+
+  New card creation endpoints are available, with support for physical cards, custom BIN ranges, and 3D Secure.
+</Update>
+
+<Update label="January 30, 2026" tags={["New"]}>
+  ## Virtual Cards API v2
+
+  The Virtual Cards API is now resource-oriented.
+
+  | Before | After |
+  | --- | --- |
+  | `/api/virtualcards/*` | `/api/cards` and `/api/customers` namespaces |
+  | Implicit card context | Explicit `:cardId` and `:customerId` path parameters |
+  | Operations spread across routes | Card operations under `/api/cards/:cardId/*` |
+
+  New endpoints cover extended card details, spending limit controls, and customer cards lookup.
+</Update>
+
+<Update label="January 30, 2026" tags={["Breaking"]}>
+  ## Legacy Virtual Cards endpoints removed
+
+  Everything under `/api/virtualcards` is no longer supported. Card operations require an explicit `cardId` path parameter instead of implicit context, and the user-based model is replaced by a customer-centric model keyed on `customerId`.
+
+  | Old endpoint | New endpoint |
+  | --- | --- |
+  | `POST /api/virtualcards/create` | `POST /api/cards` |
+  | `POST /api/virtualcards/topup` | `POST /api/cards/:cardId/fund` |
+  | `POST /api/virtualcards/withdraw` | `POST /api/cards/:cardId/withdraw` |
+  | `POST /api/virtualcards/freeze` | `POST /api/cards/:cardId/freeze` |
+  | `POST /api/virtualcards/unfreeze` | `POST /api/cards/:cardId/unfreeze` |
+  | `POST /api/virtualcards/terminate` | `POST /api/cards/:cardId/terminate` |
+
+  Update your integration to the new namespaces before upgrading.
+</Update>

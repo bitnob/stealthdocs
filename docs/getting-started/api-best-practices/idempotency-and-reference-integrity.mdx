@@ -1,0 +1,164 @@
+---
+title: "Idempotency and references"
+description: "References, deduplication on both sides, and safe retries, so that no request moves money twice."
+---
+
+A reference is a unique string you attach to an action that moves money. It is your idempotency key. If the same request reaches us twice with the same reference, we execute it once.
+
+Retries are normal. Networks time out, workers restart, and users press Send twice. Without a reference, each of those repeats a payout. With one, each repeat is harmless.
+
+This guide covers how to design references and how to deduplicate on your side.
+
+## Where duplicates come from
+
+Four causes produce almost every duplicate:
+
+| Cause | What happens |
+|---|---|
+| Request timeout | Your call times out after we accepted it. You retry, not knowing the first attempt succeeded. |
+| Webhook retry | Your endpoint fails or is slow, so we send the event again. |
+| User action | The user submits a form twice, or reloads mid-request. |
+| Queue redelivery | A worker crashes after processing and before acknowledging, so the job runs again. |
+
+None of these are faults in your code. They are properties of distributed systems, and the reference is the defence against all four.
+
+## Design a reference
+
+Make references unique, stable, and readable.
+
+```json
+{
+  "reference": "payout_20260408_a41f9c"
+}
+```
+
+Follow four rules:
+
+1. Generate the reference **before** the first attempt, and store it with the intent.
+2. Include a type prefix, such as `payout_`, `trade_`, or `card_`.
+3. Include enough entropy to avoid collision, such as a date and a short random suffix.
+4. Reuse the same reference for every retry of the same business action.
+
+<Warning>
+  Never generate a new reference on retry. A new reference is a new action, and it will execute a second time.
+</Warning>
+
+A bare timestamp such as `1689731218712` or a bare UUID satisfies uniqueness but tells you nothing in a log. A readable prefix pays for itself during an incident.
+
+## Deduplicate on your side
+
+We enforce the reference. You still need your own check, because your system also processes each event.
+
+Record the reference before you act, and check it before you act again.
+
+```javascript
+if (await db.isProcessed(reference)) {
+  return res.status(200).send("already processed");
+}
+
+await processTransaction(reference);
+await db.markAsProcessed(reference);
+res.status(200).send("ok");
+```
+
+Put this check in three places:
+
+- Your webhook handler.
+- Your user-facing send or payment endpoint.
+- Your asynchronous job processors.
+
+### Store references in a dedicated table
+
+| id | reference | status | source | created_at |
+|---|---|---|---|---|
+| 1 | `payout_20260408_a41f9c` | processed | api | 2026-04-08 12:22:03 |
+| 2 | `trade_20260408_77b210` | failed | job-worker | 2026-04-08 12:23:10 |
+
+A dedicated table gives you a fast uniqueness check, an audit trail, and the data behind a replay tool.
+
+### Lock across concurrent workers
+
+A check followed by a write is not atomic. If two workers run the check at the same moment, both pass it.
+
+Take a lock, either in your database:
+
+```sql
+BEGIN;
+
+SELECT * FROM idempotency_keys
+WHERE reference = 'payout_20260408_a41f9c'
+FOR UPDATE;
+
+-- Insert the row if it does not exist, then process.
+
+COMMIT;
+```
+
+Or in Redis:
+
+```redis
+SET processed:payout_20260408_a41f9c true NX EX 86400
+```
+
+`SET ... NX` succeeds only if the key is absent. Treat a failed `SET` as "another worker owns this reference".
+
+## Where references appear
+
+Send a reference on every endpoint that moves value:
+
+- [Initialize payout](/api-reference/payouts/initialize-payout)
+- [Create withdrawal](/api-reference/withdrawals/initiate-withdrawal)
+- [Submit order](/api-reference/trading/submit-order)
+- [Fund or withdraw card balance](/api-reference/cards/fund-or-withdraw-balance)
+
+The reference comes back on the object and on the webhook event. That is what lets you match our record to yours.
+
+## Handle a duplicate response
+
+If you resubmit a reference that already exists, we do not execute it again. Read the response rather than treating it as a failure.
+
+A `409` means the action already exists. Fetch it by reference and continue as though your request succeeded. See [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries).
+
+## Worked example
+
+A user requests a payout. Your service does the following:
+
+<Steps>
+  <Step title="Create and store the reference">
+    Generate `payout_20260408_a41f9c` and write it to your database with status `pending`.
+  </Step>
+  <Step title="Submit the payout">
+    Call [Initialize payout](/api-reference/payouts/initialize-payout) with that reference. The call times out.
+  </Step>
+  <Step title="Retry with the same reference">
+    Submit the identical request. We recognise the reference and return the original result. Nothing executes twice.
+  </Step>
+  <Step title="Receive the webhook">
+    We send `payouts.withdrawal.success` carrying the same reference. Your handler checks the reference, finds it unprocessed, and marks the payout delivered.
+  </Step>
+  <Step title="Receive the webhook again">
+    A retried delivery arrives. Your handler finds the reference already processed and returns `200` without acting.
+  </Step>
+</Steps>
+
+## Avoid these patterns
+
+**Not storing the reference.** If you cannot search your logs by reference, you cannot answer a support question, and neither can we.
+
+**Generating references inside a retry loop.** Each attempt then becomes a separate payout.
+
+**Treating every request as new.** Any system that assumes each call is unique will duplicate money movement under retry.
+
+## Summary
+
+| Practice | What it gives you |
+|---|---|
+| One reference per business action | Exactly-once execution |
+| Reference generated before the first attempt | Safe retry after a timeout |
+| Reference stored and indexed | Traceability and support visibility |
+| Lock around the check and the write | Safety across concurrent workers |
+| Same check in the webhook handler | Safety against redelivery |
+
+## Next
+
+Continue to [Webhooks and event handling](/docs/getting-started/api-best-practices/webhook-best-practices), which covers how to receive and verify the events that carry your references back.

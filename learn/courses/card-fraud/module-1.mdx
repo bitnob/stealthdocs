@@ -1,0 +1,112 @@
+---
+title: "Module 1: Introduction to virtual card fraud"
+description: "Why virtual cards attract fraud, the main attack vectors, and how attackers pick their targets."
+---
+## Learning objectives
+
+- Explain why virtual card products are especially vulnerable to certain types of fraud
+- Identify the core fraud vectors affecting card-based payment systems
+- Understand how attackers think and where they exploit systemic weaknesses
+- Prepare to map card fraud risks to lifecycle stages
+
+## Why fraud targets virtual cards
+
+Virtual cards are highly programmable, fast to issue, and often backed by prepaid or crypto-derived float. These features enable flexibility for users, but also open up risk surfaces for bad actors.
+
+### Characteristics that attract fraud
+
+| Feature | Why It’s Exploitable |
+|---|---|
+| Instant issuance | Attackers can create many cards quickly and anonymously |
+| Prepaid model | Fraudsters can top up and cash out without external bank oversight |
+| No 3DS or OTP in some use cases | Easier to test stolen credentials |
+| Crypto to fiat top-ups | Adds a pseudo-anonymity layer and FX arbitrage risks |
+| Merchant refunds and chargebacks | Used to simulate cash return without goods being returned |
+| Weak KYC tier enforcement | Multiple personas and devices go undetected |
+
+## Fraud categories in virtual card infrastructure
+
+| Category | Summary |
+|---|---|
+| Refund Abuse | Users exploit refund timing, especially to terminated cards |
+| Chargeback Fraud | Users dispute legitimate charges after receiving goods/services |
+| Merchant Collusion | Fake transactions and refunds processed via known merchants |
+| Card Cycling | Users create, spend, and destroy cards to hide patterns |
+| Velocity Abuse | High-frequency transactions or rapid card usage designed to exploit system delays |
+| Float Laundering | Using top-ups, refunds, and withdrawals across accounts to shift value in untraceable ways |
+| MCC Exploitation | Testing transactions against blocked or high-risk merchant categories |
+
+## How real fraudsters think
+
+Fraudsters behave like performance marketers or engineers, they test, iterate, and exploit feedback loops.
+
+**Typical mindset:**
+
+- “How many cards can I create before the system flags me?”
+- “What merchant categories are not blocked?”
+- “Can I refund to a terminated card and withdraw?”
+- “What happens if I use a friend's card to test patterns?”
+
+Fraud is rarely one-time. It’s iterative and adaptive. What worked yesterday won’t work today, and what works today might be blocked tomorrow.
+
+## Example attack paths
+
+| Path | Description |
+|---|---|
+| Top-up → Spend → Refund → Terminate | Quick value movement back to float or user wallet |
+| Create 5 cards → All fail 3x → Auto-terminate | Stress-testing limits of decline threshold rules |
+| Spend from Card A → Refund to Card B | Exploiting missing refund matching validation |
+| Withdraw after refund with old CVV | Attempting to bypass withdrawal rules post-failure |
+| High refund + chargeback to same MCC | Testing how well you manage merchant risk enforcement |
+
+## Prevention philosophy
+
+Good fraud defense requires:
+
+**Visibility:** Can you see the pattern across users, cards, and merchants?
+
+**Context:** Can you match a refund to the original transaction?
+
+**Memory:** Can you track behavior over time and terminate repeat patterns?
+
+**Speed:** Can you respond faster than the fraudster adapts?
+
+The system doesn’t need to be perfect. It just needs to make fraud expensive and time-consuming.
+
+## Quick knowledge check
+
+### 1. Why are refunds on terminated cards a red flag?
+
+A. They help users recover unused funds
+
+B. They often have no matching spend and can be exploited for laundering
+
+C. Terminated cards should still process all refunds
+
+D. All refunds are automatically flagged as fraudulent
+
+**Correct answer:** B
+
+### 2. What is one of the most common velocity fraud patterns?
+
+A. A refund issued 7 days after spend
+
+B. Card usage restricted to single MCC
+
+C. Rapid card creation, top-up, and refund in 10–15 minutes
+
+D. Spending below \$10
+
+**Correct answer:** C
+
+### 3. What should always be validated when issuing a refund?
+
+A. Currency
+
+B. FX spread
+
+C. Existence of a matching spend transaction
+
+D. Cardholder’s email address
+
+**Correct answer:** C

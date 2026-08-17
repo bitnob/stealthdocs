@@ -1,0 +1,138 @@
+---
+title: "Module 1: What virtual cards actually are"
+description: "Where virtual cards sit in the card ecosystem, and how they differ from physical and tokenized cards."
+---
+## Learning objectives
+
+- Define virtual cards in the context of global payment systems
+- Understand where they sit in the card ecosystem
+- Distinguish between physical, virtual, and tokenized cards
+- Recognize the business and technical reasons to use them
+- Explain where they’re commonly used and how they’re issued
+
+## What is a virtual card?
+
+A virtual card is a payment card that exists entirely in software.
+
+Just like a physical debit or credit card, it has:
+
+| Component | Example |
+|---|---|
+| PAN (Primary Account Number) | 5078 1234 5678 9010 |
+| Expiry Date | 12/27 |
+| CVV | 345 |
+| Cardholder Name | N. Okoye or your business name |
+
+But unlike a physical card, you won’t receive anything in the mail. It’s created and delivered digitally, usually through:
+
+- APIs,
+- Wallet apps,
+- Banking apps,
+- B2B platforms.
+
+It is used mainly for **online payments** (websites, in-app checkouts, subscriptions, and e-commerce), often called **card-not-present** (CNP) transactions.
+
+Any licensed card issuer, like a bank or fintech company, can issue virtual cards, if they’re connected to a card scheme.
+
+Virtual cards today are issued on:
+
+- Visa, global reach, most common
+- Mastercard, also global, widely used for corporate and prepaid solutions
+- Verve, dominant in Nigeria and West Africa, issued by Interswitch
+- UnionPay, dominant in China and growing globally
+- Discover, AmEx, and local scheme integrations
+
+Even some closed-loop systems (e.g. PayPal, Apple, Google) issue card-like virtual instruments for use inside specific ecosystems.
+
+So the concept of a virtual card is not brand-specific. It’s an industry-standard abstraction over a payment credential that happens to be non-physical.
+
+## How virtual cards fit into the card ecosystem
+
+There are three types of payment cards:
+
+| Type | Description | Use |
+|---|---|---|
+| Physical Card | Plastic card with chip, magstripe, or NFC | ATM , POS , online |
+| Virtual Card | Digitally issued card with no physical form | Online/CNP use only |
+| Tokenized Card | A version of a card stored in a secure element (e.g. Apple Pay) | Contactless, in-app, dynamic tokens |
+
+Virtual cards are great for:
+
+- Online purchases
+- Digital onboarding
+- Budgeting and spend control
+- Issuing at scale
+
+They are not ideal for:
+
+- In-store purchases (unless tokenized into Apple/Google Pay)
+- ATM withdrawals (unless explicitly supported)
+
+## Where are virtual cards used?
+
+| Use Case | Description |
+|---|---|
+| Subscriptions | One card per service: easy to cancel or track spending |
+| Marketing Budgets | Create a card per ad platform (e.g. Meta, TikTok, Google Ads) |
+| Freelancer Payouts | Give remote workers a card instead of bank payout |
+| Travel & Expense | Teams use per-person virtual cards with limits |
+| Online Shopping | Safer than exposing a full physical card for every transaction |
+| App Stores | Used to verify identity or make small purchases during onboarding |
+
+## Why virtual cards are useful
+
+1. **Security**
+
+   - Each card can be frozen or terminated instantly
+   - Cards can be restricted by category (e.g., block betting, crypto)
+   - Merchants never store your main account number
+   - Reduced risk of skimming or POS compromise
+
+2. **Control**
+
+   - Per-card limits
+   - Category-specific usage
+   - Short-lived cards
+   - Full visibility and transaction history via API
+
+3. **Programmability**
+
+   - Cards can be created or destroyed by software
+   - You can issue cards dynamically: for each campaign, project, department
+   - You can run experiments without financial or operational friction
+
+## How virtual cards are created
+
+Behind the scenes, when you issue a virtual card:
+
+- A request goes to a card issuer’s system
+- They reserve a unique PAN (card number), expiry, CVV
+- The card is created in a card processing system (e.g. Marqeta, Galileo, Interswitch)
+- It becomes active and ready to use
+- The system (API, app, etc.) securely returns the card details to the user or platform
+
+Most of this happens in under 5 seconds.
+
+## Limitations of virtual cards
+
+| Limitation | Explanation |
+|---|---|
+| Not usable at ATMs | Most virtual cards do not support cash withdrawal unless specifically enabled |
+| No POS access | Cannot be swiped or tapped in stores unless tokenized into a wallet |
+| Not all merchants accept CNP | Some services require 3D Secure or other KYC-linked verification |
+| May incur cross-border fees | Even for USD transactions if settled outside the U.S. or card region |
+| Susceptible to merchant MCC blocks | Gambling, crypto, or P2P sites may be declined based on issuer policy |
+
+## Recap: Key takeaways
+
+- A virtual card is a digitally issued payment card designed for online use
+- It's issued by a licensed issuer under a card scheme (Visa, Mastercard, Verve, etc.)
+- It has all the components of a physical card, but lives only in software
+- You can program how and when it’s used: limits, lifecycle, spending patterns
+- It's ideal for modern, API-first financial products, and replacing clunky manual processes
+
+## Exercise
+
+Write down 3 real use cases where **virtual cards would save your team time or money**, and what kind of control you'd want (per-user, per-department, per-merchant, etc.)
+
+Then think: would you want to **build this into your product**, or **offer it as a service?**

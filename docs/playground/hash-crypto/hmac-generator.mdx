@@ -1,0 +1,95 @@
+---
+title: "HMAC generator"
+description: "HMAC signatures prove a message came from someone holding the secret key. Generate and verify HMAC-SHA256 signatures locally, including the exact scheme Bitnob API v2 uses."
+---
+
+import { HmacGenerator } from "/snippets/playground/hash-crypto.jsx";
+
+Hash-based message authentication codes (HMAC) provide both data integrity and authenticity: only a holder of the secret key can produce a valid signature, and any change to the message invalidates it. Bitnob API v2 signs every request with HMAC-SHA256, see [Authentication](/api-reference/authentication/authentication) for the full scheme.
+
+<HmacGenerator />
+
+## Generate an HMAC-SHA256 signature
+
+Pick your tool and run it locally. All three produce the same hex-encoded output for the same key and message.
+
+<CodeGroup>
+
+```bash openssl
+echo -n 'message-to-sign' | openssl dgst -sha256 -hmac 'your-secret-key'
+```
+
+```javascript Node.js
+const crypto = require("crypto");
+
+const signature = crypto
+  .createHmac("sha256", "your-secret-key")
+  .update("message-to-sign")
+  .digest("hex");
+
+console.log(signature);
+```
+
+```python Python
+import hmac, hashlib
+
+signature = hmac.new(
+    b"your-secret-key",
+    b"message-to-sign",
+    hashlib.sha256,
+).hexdigest()
+
+print(signature)
+```
+
+</CodeGroup>
+
+## Sign a Bitnob API v2 request
+
+Bitnob's canonical message is `CLIENT_ID:TIMESTAMP:NONCE:PAYLOAD`, signed with your client secret:
+
+```bash
+CLIENT_ID="your-client-id"
+CLIENT_SECRET="your-client-secret"
+TIMESTAMP=$(date +%s)
+NONCE=$(openssl rand -hex 16)
+PAYLOAD='{"amount":100}'   # empty string for GET requests
+
+STRING_TO_SIGN="$CLIENT_ID:$TIMESTAMP:$NONCE:$PAYLOAD"
+SIGNATURE=$(echo -n "$STRING_TO_SIGN" | openssl dgst -sha256 -hmac "$CLIENT_SECRET" | awk '{print $2}')
+
+echo "X-Auth-Client:    $CLIENT_ID"
+echo "X-Auth-Timestamp: $TIMESTAMP"
+echo "X-Auth-Nonce:     $NONCE"
+echo "X-Auth-Signature: $SIGNATURE"
+```
+
+Sign the exact bytes you send. If your HTTP client re-serializes the JSON body (reorders keys, changes whitespace), the signature will not match: send the same string you signed.
+
+## Verify a webhook signature
+
+Bitnob signs webhook deliveries with the `x-bitnob-signature` header. Recompute the HMAC over the raw request body and compare in constant time:
+
+```javascript
+const crypto = require("crypto");
+
+function verifyWebhook(rawBody, signatureHeader, secret) {
+  const expected = crypto
+    .createHmac("sha512", secret)
+    .update(rawBody)
+    .digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected, "hex"),
+    Buffer.from(signatureHeader, "hex"),
+  );
+}
+```
+
+See [Verifying events](/api-reference/addresses/webhooks#verifying-events) for the full webhook reference.
+
+## Security practices
+
+- Keep secret keys confidential and server-side.
+- Use strong, random secret keys.
+- Prefer HMAC-SHA256 or stronger over HMAC-SHA1.
+- Compare signatures with a constant-time function, never `==`.

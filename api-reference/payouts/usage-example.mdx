@@ -1,0 +1,324 @@
+---
+title: "Payouts API integration guide"
+description: "A worked payout integration in order: signed request, quote, initialise, finalise, and webhook confirmation."
+---
+This guide walks you through everything needed to send a payout, from authenticating your first request to confirming that funds have reached your beneficiary.
+
+A payout delivers local fiat (e.g. NGN, KES, GHS) to a beneficiary's bank or mobile-money account, funded from crypto. You create payouts through a simple, quote-based flow.
+
+```json
+{
+  "amount": "50000"
+}
+```
+
+## Before you begin
+
+You will need:
+
+| What | Where to Get It |
+|---|---|
+| Base URL (live) | https://api.bitnob.com |
+| Base URL (sandbox) | Provided with your account: use it for testing. |
+| Client ID | From your dashboard, under API keys. |
+| Client Secret | Shown once when you generate your API key: store it securely. |
+
+### Test in sandbox first
+
+Always test end-to-end in sandbox first. Sandbox lets you complete a full payout (including funding) without moving real money. Then switch the base URL to `https://api.bitnob.com` and your live API keys for production.
+
+Throughout this guide, `{BASE_URL}` stands for your environment's base URL, `https://api.bitnob.com` for live, or your sandbox URL for testing.
+
+```bash
+# Base URLs
+BASE_URL_LIVE="https://api.bitnob.com"
+BASE_URL_SANDBOX="<your-sandbox-url>"     # provided with your account
+
+# API credentials — from your dashboard, under API keys
+CLIENT_ID="<your-client-id>"
+CLIENT_SECRET="<your-client-secret>"      # shown once — store it securely
+```
+
+## Authentication
+
+Every API request is authenticated with an HMAC-SHA256 signature. You sign each request with your Client Secret and send four headers. Signatures are time-limited, so requests can't be replayed.
+
+### Required headers
+
+| Header | Value |
+|---|---|
+| X-Auth-Client | Your Client ID |
+| X-Auth-Timestamp | Current Unix time, in seconds |
+| X-Auth-Nonce | A unique random value per request (a UUID works well) |
+| X-Auth-Signature | HMAC-SHA256 signature (hex-encoded): see below |
+
+```http
+X-Auth-Client:    <your-client-id>
+X-Auth-Timestamp: 1751452800
+X-Auth-Nonce:     3f9a1c2e-7b90-4d21-9e5a-2c8f6b1d0a4e
+X-Auth-Signature: 9c1f4b2e8a7d6c5f0e3b1a9d8c7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f
+```
+
+## How to build the signature
+
+Build the payload string by joining four parts with colons, then sign it with your Client Secret using HMAC-SHA256 and hex-encode the result.
+
+REQUEST_BODY is the exact raw JSON body you send. For requests with no body (e.g. `GET`, or the finalize call), use an empty string.
+
+<Warning>
+  Sign the body byte-for-byte as it is sent. If you re-serialize or reformat the JSON after signing, the signature will not match.
+</Warning>
+
+```
+payload = CLIENT_ID + ":" + TIMESTAMP + ":" + NONCE + ":" + REQUEST_BODY
+signature = HMAC-SHA256(CLIENT_SECRET, payload)   →  hex
+```
+
+## Common auth errors
+
+| Problem | Fix |
+|---|---|
+| Invalid signature | Confirm the Client Secret and that the signed body exactly matches the sent body. |
+| Timestamp outside acceptable range | Sync your clock; send the timestamp in seconds, not milliseconds. |
+| 401 Unauthorized | A header is missing or the signature is wrong. |
+| 403 Forbidden | Authenticated, but your key lacks permission for this action. |
+
+```bash
+CLIENT_ID="your_client_id"
+CLIENT_SECRET="your_client_secret"
+TIMESTAMP=$(date +%s)
+NONCE=$(uuidgen)
+REQUEST_BODY='{"from_asset":"BTC","to_currency":"NGN","source":"offchain","country":"NG","settlement_amount":"50000","reference":"ref-123"}'
+
+PAYLOAD="${CLIENT_ID}:${TIMESTAMP}:${NONCE}:${REQUEST_BODY}"
+SIGNATURE=$(printf '%s' "$PAYLOAD" | openssl dgst -sha256 -hmac "$CLIENT_SECRET" -hex | awk '{print $2}')
+
+curl -X POST "${BASE_URL}/api/payouts/quotes" \
+  -H "Content-Type: application/json" \
+  -H "X-Auth-Client: ${CLIENT_ID}" \
+  -H "X-Auth-Timestamp: ${TIMESTAMP}" \
+  -H "X-Auth-Nonce: ${NONCE}" \
+  -H "X-Auth-Signature: ${SIGNATURE}" \
+  -d "$REQUEST_BODY"
+```
+
+## Understanding funding: offchain vs onchain
+
+When you create a quote you choose a source, which decides where the funds come from:
+
+| Source | Meaning |
+|---|---|
+| offchain | Your Bitnob account balance is charged directly. No external deposit. The balance must cover the payout. |
+| onchain | You send a crypto deposit to a generated address to fund the payout. The deposit can be BTC (on-chain), Lightning, or stablecoins. |
+
+Everything else in the flow is identical; only the funding step differs.
+
+```javascript
+const crypto = require("crypto");
+
+function signedHeaders(clientId, clientSecret, body = "") {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const nonce = crypto.randomUUID();
+  const payload = `${clientId}:${timestamp}:${nonce}:${body}`;
+  const signature = crypto
+    .createHmac("sha256", clientSecret)
+    .update(payload)
+    .digest("hex");
+
+  return {
+    "Content-Type": "application/json",
+    "X-Auth-Client": clientId,
+    "X-Auth-Timestamp": timestamp,
+    "X-Auth-Nonce": nonce,
+    "X-Auth-Signature": signature,
+  };
+}
+```
+
+## Reference lookups (recommended first)
+
+Use these read-only calls to build a valid request. They help you pick a supported country, the exact beneficiary fields it needs, valid bank codes, and transaction limits.
+
+Verify a beneficiary account before paying it. The lookup returns the resolved account name.
+
+```json
+// Invalid signature — secret wrong or body re-serialized after signing
+{ "error": { "code": "INVALID_SIGNATURE", "message": "Invalid signature" } }
+
+// Timestamp outside acceptable range — clock skew (use seconds, not ms)
+{ "error": { "code": "TIMESTAMP_OUT_OF_RANGE", "message": "Timestamp outside acceptable range" } }
+
+// 401 Unauthorized — a header is missing or the signature is wrong
+{ "error": { "code": "UNAUTHORIZED", "message": "Authentication required" } }
+
+// 403 Forbidden — key lacks permission for this action
+{ "error": { "code": "FORBIDDEN", "message": "Not permitted for this action" } }
+```
+
+## Step 1: create a quote
+
+Locks in the exchange rate and fees for your payout. The response returns a `quote_id`, the rate, fees, and an expiry. Quotes expire, continue promptly.
+
+| Field | Required | Notes |
+|---|---|---|
+| from_asset | Required | The crypto asset funding the payout, e.g. BTC, USDT. |
+| to_currency | Required | Fiat the beneficiary receives, e.g. NGN. |
+| source | Required | offchain (charge balance) or onchain (crypto deposit). |
+| country | Required | Destination country code, e.g. NG. |
+| settlement_amount | One of | Amount the beneficiary should receive, in to_currency. |
+| amount | One of | Alternatively, the amount in from_asset. Provide one side. |
+| payment_reason | Optional | Shown for your records. |
+| reference | Optional | Your own unique reference: use it to make retries safe and to look the payout up later. |
+
+```json
+// offchain — charge your Bitnob balance directly (no deposit)
+{
+  "source": "offchain"
+}
+
+// onchain — fund with a crypto deposit (BTC, Lightning, stablecoins)
+{
+  "source": "onchain",
+  "chain": "TRON"
+}
+```
+
+## Step 2: add the beneficiary (initialize)
+
+Attach the recipient's details to the quote. The exact `beneficiary` fields depend on the country (see Reference Lookups).
+
+callback_url is where we'll notify your system of status changes. Recommended.
+
+customer_id (optional) links the payout to a customer in your account.
+
+```http
+GET {BASE_URL}/api/payouts/supported-countries          # countries you can pay out to
+GET {BASE_URL}/api/payouts/supported-countries/NG       # required beneficiary fields for Nigeria
+GET {BASE_URL}/api/payouts/banks/NG                      # bank names + codes for Nigeria
+GET {BASE_URL}/api/payouts/limits?country=NG&currency=NGN
+
+# Verify a beneficiary account
+GET {BASE_URL}/api/payouts/account-lookup?country=NG&account_number=0123456789&bank_code=058
+```
+
+## Step 3: finalize (approve and submit)
+
+Approves the payout and submits it for processing. No request body: remember to sign with an empty body string.
+
+For `offchain` payouts, your account balance is charged at this step.
+
+```http
+POST {BASE_URL}/api/payouts/quotes
+Content-Type: application/json
+```
+
+## Step 4: fund the payout
+
+**offchain**: nothing to do. Your balance was charged at finalize, and the payout proceeds automatically to settlement.
+
+**onchain**: send a crypto deposit to the address / instruction returned from the previous step. You can fund it with BTC (on-chain), Lightning, or stablecoins. Once the deposit confirms, settlement proceeds.
+
+<Tip>
+  **Sandbox tip (onchain):** you can't broadcast a real deposit in sandbox, so simulate it with `POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits` and a body of `{ "amount": "50000" }`.
+</Tip>
+
+```json
+{
+  "from_asset": "BTC",
+  "to_currency": "NGN",
+  "source": "offchain",
+  "country": "NG",
+  "settlement_amount": "50000",
+  "payment_reason": "Invoice payment",
+  "reference": "your-unique-ref-123"
+}
+```
+
+## Step 5: track to completion
+
+We settle the fiat to the beneficiary and update the payout status. Track it by polling, or (preferred) by receiving webhooks at your `callback_url`.
+
+```http
+POST {BASE_URL}/api/payouts/{quoteId}/initialize
+Content-Type: application/json
+```
+
+## Payout statuses
+
+A payout moves through these states:
+
+| Status | Meaning |
+|---|---|
+| pending | Created and awaiting funding. |
+| processing | Funded; settlement to the beneficiary is in progress. |
+| completed | Funds delivered to the beneficiary. |
+| failed | The payout could not be completed. |
+
+Treat completed as the only success state. Always confirm final status via a status lookup or webhook: don't assume success from the finalize response alone.
+
+```json
+{
+  "beneficiary": {
+    "account_number": "0123456789",
+    "bank_code": "058",
+    "account_name": "Jane Doe"
+  },
+  "reference": "your-unique-ref-123",
+  "payment_reason": "Invoice payment",
+  "callback_url": "https://your-app.example.com/webhooks/payout"
+}
+```
+
+## Full worked example (offchain)
+
+The sequence on the right assumes a signed-request helper that sets the `X-Auth-*` headers for each call. It creates a quote, attaches the beneficiary, finalizes, and tracks by `reference`, reusing one reference throughout.
+
+```http
+POST {BASE_URL}/api/payouts/{quoteId}/finalize
+```
+
+## Webhooks
+
+If you set `callback_url` when initializing, we send a notification to that URL whenever the payout's status changes. Best practices:
+
+Respond quickly with a `2xx`. Do heavy processing asynchronously.
+
+Be idempotent. The same event may be delivered more than once.
+
+Use your `reference` to reconcile events against your own records.
+
+## Error handling
+
+Errors use standard HTTP status codes with a consistent JSON body. Include the `request_id` from the response when contacting support, it helps us trace the exact request.
+
+| Status | Meaning |
+|---|---|
+| 400 | Invalid request: check the message and field details. |
+| 401 | Authentication failed (missing/invalid signature or headers). |
+| 403 | Authenticated but not permitted for this action. |
+| 429 | Rate limited: slow down and retry with backoff. |
+| 5xx | Temporary issue on our side: retry with backoff. |
+
+```http
+# Sandbox only — simulate an onchain deposit
+POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits
+Content-Type: application/json
+```
+
+## Go-live checklist
+
+Completed a full sandbox payout end-to-end (completed status observed).
+
+Signature generation verified for both bodied and empty-body requests.
+
+Store your reference for every payout and reconcile via lookups/webhooks.
+
+Handle pending → processing → completed / failed in your system.
+
+Client Secret stored securely (never in client-side code or version control).
+
+Switched Base URL and API keys from sandbox to live.
+
+## Support
+
+Include the `request_id` from the failing response and your payout `reference` when reaching out. Reach your Bitnob integration contact or the support channel provided with your account.

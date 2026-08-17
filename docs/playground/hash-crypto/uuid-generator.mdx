@@ -1,0 +1,35 @@
+---
+title: "UUID generator"
+description: "UUID v4 identifiers for idempotency keys, references, and nonces, generated locally from a cryptographically secure random source."
+---
+
+import { UuidGenerator } from "/snippets/playground/hash-crypto.jsx";
+
+<UuidGenerator />
+
+A UUID v4 is 122 random bits formatted as 36 characters. Collisions are so unlikely you can treat generated values as unique without coordinating between services.
+
+## Where these are useful in an integration
+
+- **Idempotency keys.** Every mutating Bitnob endpoint accepts a client-generated key so a retried request cannot create a duplicate. See [Idempotency and references](/docs/getting-started/api-best-practices/idempotency-and-reference-integrity).
+- **References.** Your own transaction reference, echoed back on webhooks for reconciliation.
+- **Nonces.** [Request signing](/api-reference/authentication/authentication) needs a unique value per request.
+
+## Generating them in code
+
+```javascript
+crypto.randomUUID();
+```
+
+```python
+import uuid
+str(uuid.uuid4())
+```
+
+```bash
+uuidgen | tr 'A-Z' 'a-z'
+```
+
+<Tip>
+  For idempotency keys, a composite key such as `withdrawal-cust12345-001` is often better than a bare UUID: it is derived from the operation, so a retry after a crash regenerates the same key, while a fresh UUID would not.
+</Tip>

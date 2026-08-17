@@ -1,0 +1,191 @@
+---
+title: "Module 4: Anatomy of a Bitcoin transaction"
+description: "Inside a Bitcoin transaction: inputs, outputs, signatures, and fee selection."
+---
+## 4.1 Introduction
+
+a complex series of operations happens behind the scenes.
+
+Bitcoin transactions are cryptographic messages that:
+
+- Prove ownership of funds (by signing with private keys),
+- Specify how funds should be moved (inputs and outputs),
+- Set transaction fees,
+- Get broadcasted to the Bitcoin network for inclusion into a block.
+
+A deep understanding of how Bitcoin transactions work is critical for designing secure, efficient wallet products.
+
+## 4.2 Basic transaction structure
+
+Every Bitcoin transaction consists of:
+
+| Component | Description |
+|---|---|
+| Inputs | References to previous UTXOs the sender controls. |
+| Outputs | New destinations where Bitcoin is being sent (including change back to the sender). |
+| Signatures | Cryptographic proofs that the sender has authority to spend the inputs. |
+| Fee | The difference between total inputs and total outputs. |
+
+## 4.3 Real-world example
+
+Let's say Chinedu in Lagos wants to send bitcoin to Kwame in Accra.
+
+**Background:** Chinedu’s wallet controls two UTXOs:
+
+- UTXO1: 0.4 BTC
+- UTXO2: 0.2 BTC
+
+Chinedu wants to send 0.5 BTC to Kwame.
+
+**Process:**
+
+1. Chinedu’s wallet selects UTXO1 (0.4 BTC) and UTXO2 (0.2 BTC) as inputs.
+2. Builds two outputs:
+   - 0.5 BTC to Kwame’s address.
+   - 0.099 BTC back to a new change address controlled by Chinedu.
+3. Pays 0.001 BTC as transaction fee.
+
+**Visual:**
+
+```
+Inputs:
+- UTXO1: 0.4 BTC
+- UTXO2: 0.2 BTC
+
+Outputs:
+- 0.5 BTC → Kwame
+- 0.099 BTC → Chinedu (change address)
+
+Fee:
+- 0.001 BTC
+```
+
+## 4.4 Inputs explained
+
+Inputs are references to existing unspent outputs.
+
+Each input specifies:
+
+- The transaction ID (txid) of the previous transaction.
+- The output index (which output inside that transaction is being spent).
+- A cryptographic signature proving ownership.
+
+Inputs are how Bitcoin enforces that no one can spend someone else's money, because only someone with the correct private key can produce a valid signature.
+
+## 4.5 Outputs explained
+
+Outputs specify:
+
+- The destination (Bitcoin address).
+- The amount of bitcoin to send.
+- The locking script (usually a public key hash).
+
+Every output becomes a potential UTXO, someone else's "coin" to spend in the future.
+
+A transaction can have:
+
+- One output (simple send),
+- Two outputs (send + change),
+- Multiple outputs (batching transactions to many recipients).
+
+## 4.6 Change output
+
+Because UTXOs are indivisible:
+
+- Chinedu cannot "cut" 0.5 BTC out of 0.6 BTC cleanly.
+- He must consume entire UTXOs (0.4 + 0.2 = 0.6 BTC),
+- Then create a new output returning leftover funds (change) back to himself.
+
+**Important privacy note:** The change output must go to a new internal address, not the same address Chinedu received bitcoin at before. Good wallets handle change addresses automatically to protect privacy.
+
+## 4.7 Transaction fees
+
+In Bitcoin, fees are not explicitly set in the transaction.
+
+They are calculated as:
+
+Fee = Sum of Inputs - Sum of Outputs
+
+In Chinedu’s example:
+
+0.4 + 0.2 = 0.6 BTC (inputs) 0.5 + 0.099 = 0.599 BTC (outputs) Fee = 0.6 - 0.599 = 0.001 BTC
+
+Miners prioritize transactions offering higher fee rates (sats per byte) for inclusion into blocks.
+
+## 4.8 Digital signatures
+
+Each input must be signed by the sender’s private key.
+
+The signature proves that Chinedu owns the UTXOs being spent.
+
+If the signature is invalid, Bitcoin nodes reject the transaction.
+
+Wallets automate signature creation internally, users never manually interact with raw signatures.
+
+## 4.9 Visual diagram: Bitcoin transaction flow
+
+```
++---------------------------------------------------------+
+| Input 1: (Previous TXID, Output Index, Signature)       |
+| Input 2: (Previous TXID, Output Index, Signature)       |
+|                                                         |
+| → Output 1: 0.5 BTC to Kwame's address                  |
+| → Output 2: 0.099 BTC to Chinedu's new change address   |
+|                                                         |
+| Fee: 0.001 BTC (Implicit: Inputs - Outputs)             |
++---------------------------------------------------------+
+```
+
+## 4.10 Special transaction types
+
+There are more complex transaction types in Bitcoin:
+
+- Multisignature transactions: Require multiple private keys to sign.
+- SegWit transactions: Use segregated witness structure for lower fees.
+- Taproot transactions: Enable more private and flexible scripts.
+- Batch transactions: Multiple recipients in a single transaction.
+
+However, at the fundamental level,
+
+all Bitcoin transactions follow the same basic model: Inputs → Outputs → Fees → Signatures.
+
+## 4.11 PM reflection points
+
+If you are managing a Bitcoin wallet product:
+
+Sending bitcoin is not simply "debit X, credit Y" like a database.
+
+It is about gathering real pieces of bitcoin (UTXOs) and constructing valid signed messages to move them.
+
+Wallets must:
+
+- Manage UTXOs properly.
+- Calculate correct change outputs automatically.
+- Estimate and offer flexible transaction fee options.
+- Sign all inputs securely with private keys on-device.
+
+Poor transaction building leads to:
+
+- High fees,
+- Privacy leaks,
+- Stuck transactions.
+
+A deep understanding of transaction structure improves both UX and user trust.
+
+**Core idea:** When a user clicks "Send," your wallet is negotiating with the entire Bitcoin network: build that negotiation properly.
+
+## 4.12 Summary of module 4
+
+A Bitcoin transaction:
+
+1. Consumes old UTXOs (inputs).
+2. Creates new UTXOs (outputs).
+3. Pays a network fee.
+4. Requires valid cryptographic signatures for each input.
+5. Gets broadcast to the Bitcoin network for validation and inclusion into a block.
+
+Wallets are builders of Bitcoin transactions, not just button clickers. Getting transaction construction right is essential for security, privacy, and usability.
+
+## Module 4 complete
+
+We now have a deep, real understanding of what happens inside a Bitcoin transaction, and why wallet apps must handle UTXO selection, change outputs, fees, and signatures carefully.

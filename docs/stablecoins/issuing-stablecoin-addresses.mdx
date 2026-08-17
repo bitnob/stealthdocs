@@ -1,0 +1,56 @@
+---
+title: "Issue deposit addresses"
+description: "A chain-specific deposit address per user, labelled for reconciliation, plus the one chain where addressing works differently."
+related:
+  - /docs/stablecoins/receiving-stablecoin-deposits
+  - /docs/stablecoins/supported-chains
+---
+
+A deposit address is the entry point for receiving stablecoins: an on-chain address issued against a wallet on your account, specific to one chain. Once a user sends funds to it, Bitnob tracks the transfer, waits out confirmations, and credits your balance.
+
+This guide assumes your [setup](/docs/stablecoins/getting-started-with-stablecoins) is done. The wallet-versus-address model behind it is explained in [How stablecoins work on Bitnob](/docs/stablecoins/key-concepts).
+
+## Generate an address
+
+Full schema: [Generate address](/api-reference/addresses/generate-address).
+
+```http
+POST /api/addresses
+```
+
+<ParamField body="chain" type="string" required>
+  Target blockchain: `tron`, `ethereum`, `solana`, `bsc`, `arbitrum`, `base`, `optimism`, `polygon`, `avalanche`, or `stellar`. Availability differs by environment; see [Supported chains](/docs/stablecoins/supported-chains).
+</ParamField>
+
+<ParamField body="customer_email" type="string" required>
+  The customer this address belongs to. This is what makes deposits attributable.
+</ParamField>
+
+<ParamField body="label" type="string">
+  Human-readable reference, for example `Remittance:Order#9283`. Labels make dashboards, support lookups, and compliance reviews searchable; use them.
+</ParamField>
+
+Issued addresses are listed with [List addresses](/api-reference/addresses/list-addresses) and fetched individually with [Get address by id](/api-reference/addresses/get-address-by-id). Address generation is an internal mapping, so it is instant and free; there is no on-chain transaction.
+
+## Rules that keep reconciliation sane
+
+- **One address per customer per chain.** Shared addresses make attribution guesswork.
+- **Credit on the webhook, not on sight.** A deposit becomes real when `deposit.success` fires, after the chain's confirmation threshold. See [Receive deposits](/docs/stablecoins/receiving-stablecoin-deposits).
+- **Validate any address a user gives you.** For outbound sends, run [Validate address](/api-reference/addresses/validate-address) before submitting; it catches malformed and wrong-chain addresses before they cost anything.
+
+## Stellar: one address, memos attribute
+
+Stellar does not follow the address-per-user model. Your company gets a single shared Stellar address, and incoming funds are attributed by the **memo** field, which is your responsibility:
+
+<Warning>
+  Bitnob does not generate or manage Stellar memos. Assign a unique memo per user or deposit, show it to the sender alongside the address, and map incoming funds by it. Deposits without a memo land on your company account and must be reconciled manually.
+</Warning>
+
+## Worked example
+
+A remittance customer in Ghana wants to receive USDT on Tron:
+
+1. Generate an address with `chain: "tron"`, `customer_email: "customer@example.com"`, `label: "Remittance:Order#9283"`.
+2. Show the address to the customer; they send from any wallet or exchange.
+3. Bitnob detects the transfer, waits out Tron's 19 confirmations, and fires `deposit.success`.
+4. You credit the customer in your app and notify them.

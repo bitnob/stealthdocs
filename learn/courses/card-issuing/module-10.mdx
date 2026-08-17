@@ -1,0 +1,134 @@
+---
+title: "Module 10: Restricted merchant categories (MCCs) and real merchant behavior"
+description: "How merchant category codes drive restrictions, why popular merchants still fail, and what to tell users."
+---
+## Learning objectives
+
+- Understand what MCCs (Merchant Category Codes) are and why they matter
+- Know how card issuers and networks use MCCs to enforce restrictions
+- Learn why even popular global merchants sometimes fail
+- Be able to build better user messages and decline handling
+- Reduce support escalations by proactively communicating MCC-related issues
+
+## What is an MCC?
+
+An MCC (Merchant Category Code) is a four-digit code assigned by card networks (like Visa or Mastercard) that classifies the type of business a merchant operates.
+
+### Examples
+
+| Mcc | Description |
+|---|---|
+| 5815 | Digital streaming services |
+| 7995 | Gambling & online betting |
+| 4829 | Money transfer & remittance |
+| 6211 | Security brokers & investment platforms |
+| 7801 | Government-licensed gambling (US) |
+| 5966 | Telemarketing |
+
+Every time a user makes a card transaction, the merchant’s MCC is sent along with the authorization request.
+
+That MCC is used to:
+
+- Determine risk level
+- Apply fraud rules
+- Enforce regulatory restrictions
+- Log transaction types for internal analytics
+
+## Why are some MCCs blocked?
+
+Card issuers and card processors (like Bitnob’s partners) often enforce MCC restrictions to:
+
+- Comply with licensing and financial regulation
+- Prevent money laundering and card testing
+- Avoid high-risk or high-dispute industries
+- Follow the rules of the card network or issuing bank
+
+These are not personal. They are systemic.
+
+Even if a user has full balance, a card may be declined if:
+
+- The MCC is on a blocklist
+- The merchant has a pattern of refund abuse or dispute volume
+- The card product itself is not approved for that category
+
+## Commonly blocked categories
+
+| Mcc | Description |
+|---|---|
+| 7995 | Gambling, betting, online gaming |
+| 6051 | Crypto, foreign exchange, debt repayment |
+| 7273 | Dating services |
+| 5966 | Telemarketing |
+| 7801 / 7802 | US-based licensed casinos, racing, government lotteries |
+| 4829 | Peer-to-peer money transfer platforms |
+| 6211 | Securities and brokerage payments |
+
+If your user tries to pay at a merchant classified under these MCCs, the transaction will fail automatically, even if the merchant looks reputable (e.g., Binance, Tinder, DraftKings, etc.).
+
+## Why some well-Known merchants fail unexpectedly
+
+Sometimes, users will report:
+
+- “My Facebook Ads payment failed.”
+- “Netflix is declining even though I have balance.”
+- “AliExpress charged me a cross-border fee.”
+
+These often aren’t product bugs. They’re MCC, acquiring bank, or routing issues.
+
+### Real examples
+
+| Merchant | Common Problem |
+|---|---|
+| Facebook Ads | May route through EU acquiring banks, triggering cross-border or FX fees |
+| Netflix | May run recurring billing with expired tokens or soft retries |
+| Shein / Temu | Sometimes use non-U.S. acquirers, leading to cross-border fee or MCC mismatch |
+| Binance | May be classified as 6051 (non-fiat currency), blocked at scheme level |
+| PayPal | May hold payment before release; shows as authorization-reversal in logs |
+
+## Handling merchant-Specific behavior
+
+Build your product to:
+
+- Display failure reason clearly (e.g., “Merchant not supported by card issuer”)
+- Maintain a soft blocklist of merchants known to cause issues
+- Pre-educate users before they try spending on high-risk MCCs
+- Provide links to alternatives when spending fails (e.g., gift card platforms)
+
+## UI and support guidance
+
+| Scenario | User-facing Message |
+|---|---|
+| MCC is blocked | "This merchant type is not supported by your virtual card for regulatory reasons." |
+| Unknown decline | "The merchant declined your payment. This may happen with some international or high-risk platforms." |
+| Known problem merchant | "Payments to this platform are often blocked due to how they route transactions. We recommend trying a different payment method." |
+
+Avoid vague errors like “Transaction failed. Try again later.” Users need clarity, not placeholders.
+
+## How to monitor MCC issues internally
+
+Log and tag every declined transaction by MCC
+
+Build analytics to see:
+
+- Which MCCs are most declined
+- Which merchants trigger auto-termination
+- Which declines occur despite full balance
+- Train support and ops teams to recognize MCC-linked failures
+- Include MCC in your admin dashboard view of each transaction
+
+## Advanced strategy: MCC-aware card routing
+
+Some advanced platforms (especially B2B card issuers) implement MCC-aware logic:
+
+- Create a different card per merchant category
+- Warn users if they’re attempting a restricted transaction
+- Pre-check MCCs based on historical data
+
+This may not be necessary for your first version, but it becomes useful at scale.
+
+## Recap
+
+- MCCs define what kind of merchant the card is interacting with
+- Many common platforms use MCCs that are restricted by default (especially in crypto, gaming, and remittances)
+- You must design for clear user messaging, internal visibility, and policy-driven handling
+- This is one of the top sources of card failures, and misunderstanding it creates support escalations and user frustration

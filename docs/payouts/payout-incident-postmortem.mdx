@@ -1,0 +1,152 @@
+---
+title: "Payout incident postmortem template"
+description: "A copyable postmortem structure for payout incidents: overview, timeline, root cause, impact, actions taken, lessons, remediation, and communication."
+related:
+  - /docs/payouts/error-handling
+  - /docs/payouts/statuses-and-webhook-events
+---
+
+Copy this structure when investigating a payout incident and fill in each section. A worked sample follows the template.
+
+## Template
+
+### 1. Incident overview
+
+| Field | Details |
+|---|---|
+| Incident title | Short descriptive title, e.g. "GHS mobile money payout delays" |
+| Date and time | Start and end time in UTC |
+| Reported by | Person or system that first detected the issue |
+| Severity | Critical / High / Medium / Low |
+| Affected systems | e.g. Payouts API, webhook delivery, settlement engine |
+| Affected customers | Number of users and partners impacted |
+| Initial user impact | What users experienced: delayed payouts, failed webhooks |
+
+### 2. Incident timeline
+
+| Time (UTC) | Event |
+|---|---|
+| HH:MM | Issue first detected by monitoring or user report |
+| HH:MM | Investigation started |
+| HH:MM | Root cause identified |
+| HH:MM | Mitigation applied |
+| HH:MM | Full resolution confirmed |
+
+### 3. Root cause analysis
+
+| Field | Details |
+|---|---|
+| Primary root cause | What directly caused the incident |
+| Contributing factors | What made the impact worse or delayed detection |
+| Detection weaknesses | What should have alerted sooner |
+| Process weaknesses | Manual steps that slowed recovery |
+
+### 4. Impact assessment
+
+| Field | Details |
+|---|---|
+| Failed or delayed payouts | Total count and status breakdown |
+| User impact | Support tickets, complaints, escalations |
+| Financial impact | Refunds, credits, or lost revenue |
+| Regulatory impact | Any compliance implications |
+
+### 5. Immediate actions taken
+
+| Action | Timestamp | Owner |
+|---|---|---|
+| Describe the action taken | HH:MM UTC | Team or person responsible |
+
+### 6. Lessons learned
+
+- What went well during the response?
+- What could have been detected earlier?
+- What process or tooling gaps were exposed?
+
+### 7. Preventative and remediation actions
+
+| Action item | Owner | Deadline |
+|---|---|---|
+| Describe the follow-up action | Team or person | Target date |
+
+### 8. Communication summary
+
+| Audience | Channel | Message sent |
+|---|---|---|
+| Affected users | Email / in-app / SMS | When and what was communicated |
+| Internal teams | Slack / incident channel | When and what was communicated |
+| Partners | Direct email / status page | When and what was communicated |
+
+## Sample: NIP corridor payout delays
+
+### 1. Incident overview
+
+| Field | Details |
+|---|---|
+| Incident title | NIP corridor payout delays, 24 April 2025 |
+| Date and time | 24 April 2025, 12:30 to 15:45 UTC |
+| Reported by | Treasury ops monitor |
+| Severity | High |
+| Affected systems | NIP payouts, webhook delivery |
+| Affected customers | 143 users, 2 enterprise partners |
+| Initial user impact | Payouts delayed beyond the 30-minute SLA; increased support volume |
+
+### 2. Incident timeline
+
+| Time (UTC) | Event |
+|---|---|
+| 12:30 | Liquidity monitor flagged NGN payout delays. |
+| 12:45 | Webhook delivery failures appeared for NIP payouts. |
+| 13:00 | On-call engineering initiated investigation. |
+| 13:20 | Root cause identified: upstream bank API partial outage. |
+| 13:30 | Treasury switched to backup bank partner manually. |
+| 13:45 | User communications sent. |
+| 14:30 | Manual payout retries began. |
+| 15:45 | All delayed payouts completed. |
+
+### 3. Root cause analysis
+
+| Field | Details |
+|---|---|
+| Primary root cause | Upstream partner bank's NIP API degraded with no automated failover. |
+| Contributing factors | Liquidity buffer was sufficient, but the platform did not auto-switch payout routes. |
+| Detection weaknesses | Webhook failure alert threshold was too lenient, delaying the internal alert. |
+| Process weaknesses | Failover required manual treasury intervention. |
+
+### 4. Impact assessment
+
+| Field | Details |
+|---|---|
+| Failed or delayed payouts | 157 delayed, 0 permanently failed |
+| User impact | 27 support tickets, 3 account manager escalations |
+| Financial impact | $50 in goodwill refunds; no direct loss |
+| Regulatory impact | None |
+
+### 5. Immediate actions taken
+
+| Action | Timestamp | Owner |
+|---|---|---|
+| Manual liquidity reallocation to backup bank | 13:30 UTC | Treasury ops |
+| User notification emails sent | 13:45 UTC | Customer support |
+| Manual webhook replays for delayed payouts | 14:30 UTC | Engineering ops |
+
+### 6. Lessons learned
+
+- A single payout rail per corridor is operationally fragile.
+- Webhook delivery failures should alert faster.
+- Delay-communication templates should be pre-approved, not drafted mid-incident.
+
+### 7. Preventative and remediation actions
+
+| Action item | Owner | Deadline |
+|---|---|---|
+| Auto-failover across multiple NIP bank partners | Engineering + treasury | 15 May 2025 |
+| Lower the webhook failure alert threshold from 5% to 2% | Engineering ops | 2 May 2025 |
+| Pre-approve payout delay notification templates | Customer support | 30 April 2025 |
+
+### 8. Communication summary
+
+| Audience | Channel | Message sent |
+|---|---|---|
+| Affected users | Email and in-app | 14:00 UTC |
+| Internal teams | Slack incident channel | Continuous |
+| Enterprise partners | Direct email report | 17:00 UTC, after closure |

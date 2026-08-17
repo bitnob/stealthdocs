@@ -1,0 +1,205 @@
+---
+title: "Module 6: Spend transactions and monitoring"
+description: "Authorizations, settlements, and the transaction data to store for users and operations."
+---
+## Learning objectives
+
+- Understand how virtual card spend transactions work, including authorizations and settlements
+- Identify the data returned from successful and failed transactions
+- Monitor and store transaction history for user transparency and operational integrity
+- Integrate webhook-based monitoring for real-time updates
+- Handle common transaction scenarios like reversals, refunds, and declines
+
+## What is a spend transaction?
+
+A spend transaction occurs when a virtual card is used to pay for goods or services. This includes:
+
+- Online purchases (e.g., Amazon, Jumia, Shopify)
+- Subscriptions (e.g., Netflix, Spotify, Notion)
+- In-app billing
+- Software tools and services
+
+Every transaction attempt results in either an authorization success or failure. Your system must listen to these outcomes and update the user interface and internal records accordingly.
+
+## The authorization flow
+
+Every virtual card spend follows this basic authorization flow:
+
+1. User enters card details at checkout
+2. Merchant submits an authorization request
+3. Card processor checks:
+
+- Card status (active, frozen, terminated)
+- Available balance
+- Merchant category code (MCC) restrictions
+- Velocity and fraud rules
+
+1. Authorization is approved or declined
+
+2. Bitnob (or your card provider) sends a webhook with the result
+
+3. Your system stores and displays the result
+
+## Successful transactions
+
+When a spend transaction is successful:
+
+- The authorized amount is deducted from the card balance
+- The transaction is recorded in your system
+- A webhook is fired (e.g., virtualcard.transaction.debit )
+- The card remains in its current lifecycle state unless further action is taken
+
+```json
+{
+  "eventId": "06cd8fab-da0b-4c4d-87e8-0a1b2c3d4e5f",
+  "companyId": "<company_uuid>",
+  "event": "virtualcard.transaction.debit",
+  "data": {
+    "cardId": "abc123",
+    "id": "tx_debit_a1b2c3d4e5f6",
+    "companyId": "<company_uuid>",
+    "amount": 49990000,
+    "displayAmount": 49.99,
+    "currency": "usd",
+    "transactionType": "settlement",
+    "reference": "spend_txn_001",
+    "narrative": "Spotify",
+    "timestamp": "2026-05-16T14:22:10Z",
+    "status": "completed",
+    "reason": null,
+    "merchantName": "spotify",
+    "merchantMcc": "5815",
+    "merchantCountry": "se"
+  }
+}
+```
+
+## Declined transactions
+
+A transaction may be declined for a number of reasons. These events will still generate a webhook and must be handled gracefully in the UI.
+
+Common decline reasons include:
+
+- Insufficient funds
+- Card is frozen or terminated
+- Merchant falls under a restricted MCC
+- Too many recent transactions (velocity limit)
+- Processor-level technical errors
+
+```json
+{
+  "eventId": "a0678495-74a5-46e7-9283-a45b6c7d8e9f",
+  "companyId": "<company_uuid>",
+  "event": "virtualcard.transaction.declined",
+  "data": {
+    "cardId": "abc123",
+    "id": "tx_decline_d4e5f7a1b2c3",
+    "companyId": "<company_uuid>",
+    "amount": 200000000,
+    "displayAmount": 200.0,
+    "currency": "usd",
+    "transactionType": "debit",
+    "reference": "decline_ref_0123d456",
+    "narrative": "GOOGLE*ADS",
+    "timestamp": "2026-05-16T12:30:45Z",
+    "status": "declined",
+    "reason": "insufficient_funds",
+    "merchantName": "google_ads",
+    "merchantMcc": "7311",
+    "merchantCountry": "us"
+  }
+}
+```
+
+You should always show a clear explanation in your product: “Your card was declined because the balance was too low.”
+
+## Reversals, refunds, and authorizations
+
+Not all spend-related events result in a completed payment. Your system must track the following:
+
+| Type | Description |
+|---|---|
+| Authorization Reversal | Transaction was approved but canceled before settlement. |
+| Refund | Payment was settled but later refunded by the merchant. |
+| Authorization Failure | Request was rejected before authorization (e.g., bad CVV, unsupported merchant). |
+
+Each has a different webhook and handling logic. These scenarios are especially common in subscription trials, hotel bookings, and digital advertising.
+
+## Transaction webhooks to integrate
+
+| Event | Trigger |
+|---|---|
+| virtualcard.transaction.debit | Approved payment |
+| virtualcard.transaction.declined | Failed payment |
+| virtualcard.transaction.refund | Refund received from merchant |
+| virtualcard.transaction.reversed | Authorization reversed before settlement |
+| virtualcard.transaction.authorization.failed | Authorization rejected by card processor |
+| virtualcard.transaction.crossborder | Cross-border charge detected |
+| virtualcard.transaction.terminated.refund | Refund processed for terminated card |
+
+These events allow you to update balances, send alerts, generate logs, and monitor fraud patterns.
+
+## What to track in your database
+
+Each transaction should be stored with the following fields:
+
+- Transaction ID
+- Card ID
+- User reference (if applicable)
+- Amount
+- Currency
+- Timestamp
+- Status (approved, declined, refunded, reversed )
+- Merchant name and MCC (if available)
+- Failure reason (if applicable)
+
+Your database should allow filtering by user, card, status, and time range.
+
+## User interface recommendations
+
+Your product should provide:
+
+1. A transaction list showing:
+
+- Merchant name or narrative
+- Amount and currency
+- Date and time
+- Status (success, declined, reversed, refunded)
+
+2. A detailed transaction view for support and transparency:
+
+- MCC Fees
+- Status change timeline
+- Original authorization reference
+
+3. A clear and human-readable explanation of failures:
+
+- “This payment was declined because your balance was too low”
+- “This merchant is not supported by your card provider”
+
+## Decline thresholds and automated termination
+
+Bitnob (or the card processor) may automatically terminate a card if it fails repeatedly:
+
+- If a card has one or more successful transactions, it may be terminated after four consecutive declines
+- If a card has never had a successful transaction, it may be terminated after three declines
+- Cards may also be frozen or terminated based on transaction velocity or fraud rules
+
+Track decline counts and terminate cards in sync with your provider's logic.
+
+## Internal monitoring recommendations
+
+For product, ops, and support teams:
+
+- Create alerts for cards with multiple declines in short timeframes
+- Flag suspicious MCCs (e.g., gambling, money transfer)
+- Monitor refunds and reversals against total spend
+- Log all webhook receipts and response statuses
+
+## Recap
+
+- Every card spend triggers a success or failure event
+- You must listen to webhooks, log transactions, and update your user interface
+- Successful transactions deduct balance; failed ones do not
+- Track declines carefully, as they may result in card termination
+- Transparency builds trust: always tell users what happened and why

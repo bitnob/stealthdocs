@@ -1,0 +1,36 @@
+---
+title: "Base32 converter"
+description: "RFC 4648 Base32 encoding and decoding, the alphabet used for TOTP secrets and case-insensitive identifiers."
+---
+
+import { Base32Converter } from "/snippets/playground/text-binary.jsx";
+
+<Base32Converter />
+
+Base32 encodes bytes using 32 characters: `A`-`Z` and `2`-`7`. It is less compact than Base64, expanding data by 60%, but it buys two useful properties: the output is case-insensitive, and it omits the characters people confuse most.
+
+The digits `0`, `1`, and `8` are excluded precisely because they look like `O`, `I`/`l`, and `B`.
+
+## Where it is used
+
+- **TOTP secrets.** Authenticator app seeds are Base32, which is why they can be typed by hand in either case.
+- **Onion addresses.** Tor v3 addresses are Base32.
+- **Human-transcribed identifiers.** Anything that might be read aloud or typed from paper.
+
+## Base32 versus Base64
+
+| | Alphabet | Size overhead | Case sensitive |
+|---|---|---|---|
+| Base32 | 32 chars | +60% | No |
+| Base64 | 64 chars | +33% | Yes |
+
+Choose Base32 when a human will handle the string, and Base64 when only machines will.
+
+```python
+import base64
+base64.b32encode(b"hello").decode()   # NBSWY3DP
+```
+
+```javascript
+// Node has no built-in Base32; use a library such as `hi-base32`
+```

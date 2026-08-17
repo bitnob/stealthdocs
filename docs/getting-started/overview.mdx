@@ -1,0 +1,82 @@
+---
+title: "Introduction"
+description: "Bitnob is a financial infrastructure API for moving money between bitcoin, stablecoins, and local African currencies. This page covers what you can build and where to start."
+---
+<img
+  src="/images/hero.jpg"
+  alt="Bitnob"
+  className="w-full !mt-0 rounded-2xl border border-gray-200 dark:border-white/10"
+/>
+
+Bitnob is a financial infrastructure API. It gives you one integration for bitcoin, stablecoins, and local currency rails across Africa, so you can move money between them without holding accounts or licences in each market.
+
+Every request goes to `https://api.bitnob.com` and is signed with HMAC. Two pages take you from nothing to a working call: get credentials, then sign your first request.
+
+<Columns cols={2}>
+  <Card title="1. Set up your account" icon="key" href="/docs/getting-started/account-setup">
+    Register, issue sandbox credentials, and store them safely.
+  </Card>
+  <Card title="2. Quickstart" icon="bolt" href="/docs/getting-started/quickstart">
+    Sign a request and get a `200` back, in about five minutes.
+  </Card>
+</Columns>
+
+## What you can build
+
+Each product is a separate lane with its own guides and endpoints. Most integrations use two or three.
+
+<Columns cols={2}>
+  <Card title="Bitcoin" icon="bitcoin" href="/docs/bitcoin/overview">
+    On-chain and Lightning wallets. Custodial by default, with non-custodial options.
+  </Card>
+  <Card title="Stablecoins" icon="coins" href="/docs/stablecoins/overview">
+    Issue addresses and move USDT and USDC across multiple chains.
+  </Card>
+  <Card title="Trading" icon="arrow-right-arrow-left" href="/docs/trading/overview">
+    Quote and execute conversions between BTC, USDT, USDC, and NGN.
+  </Card>
+  <Card title="Payouts" icon="money-bill-transfer" href="/docs/payouts/overview">
+    Pay out to bank accounts, mobile money wallets, and cash pickup points.
+  </Card>
+  <Card title="Card issuing" icon="credit-card" href="/docs/card-issuing/overview">
+    Issue and fund USD virtual Visa cards on demand.
+  </Card>
+  <Card title="Virtual accounts" icon="building-columns" href="/docs/virtual-accounts/overview">
+    Give each customer a dedicated Nigerian bank account number for NGN deposits.
+  </Card>
+</Columns>
+
+Running at scale with your own key custody and signing policies? See [Wallet infrastructure](/docs/enterprise/overview), which uses a separate base URL and authentication model.
+
+## A typical integration
+
+Most products follow the same shape, so learning one carries over to the rest.
+
+<Steps>
+  <Step title="Create a customer">
+    Most balances and payment objects belong to a customer, not to your account directly.
+  </Step>
+  <Step title="Fund a balance">
+    Receive bitcoin or stablecoins to an issued address, or take NGN through a virtual account.
+  </Step>
+  <Step title="Quote, then execute">
+    Conversions and payouts are quoted first. A quote is only valid for a limited window.
+  </Step>
+  <Step title="Confirm with a webhook">
+    Money movement settles asynchronously. Treat the webhook as the source of truth, not the API response.
+  </Step>
+</Steps>
+
+## Where to go next
+
+<Columns cols={3}>
+  <Card title="Send your first payout" icon="graduation-cap" href="/docs/payouts/send-your-first-payout">
+    From quote to confirmed delivery, with real requests and responses.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/authentication/authentication">
+    Every endpoint, with request and response schemas.
+  </Card>
+  <Card title="Why we built this" icon="compass" href="/docs/getting-started/about">
+    The problem Bitnob exists to solve.
+  </Card>
+</Columns>

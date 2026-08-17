@@ -1,0 +1,36 @@
+---
+title: "Set up for stablecoins"
+description: "The account, key, and webhook groundwork to complete before issuing addresses or sending tokens, and the environment behaviour to know about."
+---
+
+Before [issuing addresses](/api-reference/addresses/generate-address), [sending tokens](/api-reference/withdrawals/initiate-withdrawal), or listening for events, get the groundwork in place once.
+
+<Steps>
+  <Step title="Create your organization and keys">
+    Create an organization on the Bitnob dashboard and generate API keys, with separate keys for development and production. Keys are managed and revoked from the dashboard; if one leaks, revoke it immediately, since it can move funds. Never call the API from a frontend with a live key.
+  </Step>
+  <Step title="Wire up signed requests">
+    Every request is HMAC-signed; see [Authentication](/api-reference/authentication/authentication) for the scheme and copy-paste signing helpers in Node.js, Go, and Python. Confirm your setup with a [validation request](/api-reference/authentication/usage-examples) before writing product code.
+  </Step>
+  <Step title="Configure your webhook endpoint">
+    Set your webhook URL on the dashboard. `deposit.success`, `transfer.success`, and `transfer.failed` are how your app learns about money movement; polling is the fallback, not the design. See [Receive stablecoin webhooks](/docs/stablecoins/webhooks).
+  </Step>
+  <Step title="Test in sandbox first">
+    Sandbox and production share the same base URL, `https://api.bitnob.com`; your key determines the environment. All stablecoin APIs and webhooks behave identically in both. Fund sandbox deposit addresses from [Circle's testnet faucet](https://faucet.circle.com). Note the [chain availability differences](/docs/stablecoins/supported-chains): `tron`, `bsc`, `arbitrum`, and `plasma` are production-only.
+  </Step>
+</Steps>
+
+## Behaviour worth knowing before you build
+
+**Idempotency.** Every state-changing request takes a unique `reference` you generate per business event. Retrying with the same reference returns the original result instead of repeating the action, so retries after timeouts are safe. Reusing a reference across different actions fails validation.
+
+**Rate limits.** Keys are rate limited, 60 requests per minute by default, with brief bursts tolerated. On `429 Too Many Requests`, back off exponentially. Contact support for enterprise throughput.
+
+**Confirmation-gated crediting.** Deposits credit only after the chain's confirmation threshold, so design UIs around a pending state from the start. The thresholds are on [Supported chains](/docs/stablecoins/supported-chains), and the reasoning is in [How stablecoins work on Bitnob](/docs/stablecoins/key-concepts).
+
+**Minimums.** $1 per deposit and $1 per send; smaller transfers are not processed.
+
+## Next
+
+- [Issue deposit addresses](/docs/stablecoins/issuing-stablecoin-addresses) to start receiving.
+- [Accept USDT and settle in naira](/docs/stablecoins/accept-usdt-and-settle-in-naira) for the full worked flow.

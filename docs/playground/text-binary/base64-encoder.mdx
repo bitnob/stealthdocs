@@ -1,0 +1,39 @@
+---
+title: "Base64 encoder"
+description: "Base64 encoding turns bytes into ASCII-safe text. Encode UTF-8 strings, with a URL-safe variant for query parameters and JWTs."
+---
+
+import { Base64Tool } from "/snippets/playground/text-binary.jsx";
+
+<Base64Tool mode="encode" />
+
+Base64 represents arbitrary bytes using 64 ASCII characters, so binary data can travel through channels that only accept text: JSON string fields, HTTP headers, email bodies, and data URIs.
+
+Encoding grows the payload by roughly 33%: every 3 bytes become 4 characters.
+
+## Standard versus URL-safe
+
+Standard Base64 uses `+` and `/`, both of which have meaning inside a URL. The URL-safe variant substitutes `-` and `_`, and usually drops the `=` padding. JWTs use the URL-safe form.
+
+| | Characters 62 and 63 | Padding |
+|---|---|---|
+| Standard | `+` and `/` | `=` |
+| URL-safe | `-` and `_` | usually omitted |
+
+## Encoding in code
+
+```javascript
+// UTF-8 safe: btoa() alone breaks on non-Latin-1 characters
+const b64 = Buffer.from("héllo", "utf8").toString("base64");
+const urlSafe = Buffer.from("héllo", "utf8").toString("base64url");
+```
+
+```python
+import base64
+base64.b64encode("héllo".encode()).decode()
+base64.urlsafe_b64encode("héllo".encode()).decode()
+```
+
+<Warning>
+  Base64 is an encoding, not encryption. Anyone can decode it instantly. Never use it to hide a secret.
+</Warning>

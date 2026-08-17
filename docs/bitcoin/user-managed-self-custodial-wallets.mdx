@@ -1,0 +1,162 @@
+---
+title: "Build self-custodial wallets"
+description: "Self-custodial wallets where users hold their own keys and Bitnob supplies only blockchain access."
+related:
+  - /docs/bitcoin/custody-models
+  - /learn/playbooks/bitcoin/threat-models-and-security-risks
+---
+Bitnob provides Bitcoin blockchain infrastructure for businesses that want to build fully non-custodial wallets.
+
+## The model
+
+Users generate and control their own private keys.
+
+All transaction signing happens on user devices.
+
+Bitnob provides address monitoring, transaction broadcasting, fee estimation, and blockchain queries.
+
+Bitnob never touches private keys, unsigned transactions, or funds.
+
+## Core concepts
+
+| Concept | Description |
+|---|---|
+| Self-Custody | Users fully control their wallets and private keys. |
+| Bitnob’s Role | Backend Bitcoin infrastructure (broadcasting, fee estimation, monitoring). No keys. No custody. |
+| Signing Transactions | Must happen locally on the user’s device. |
+| Address Types Supported | Legacy (P2PKH), Nested SegWit (P2SH), Native SegWit (P2WPKH), Taproot (P2TR). |
+
+## Developer responsibilities
+
+Generate Bitcoin wallets securely (BIP32, BIP39, BIP44 recommended).
+
+Build full key management and signing flows into your app.
+
+Query balances, broadcast transactions, and monitor addresses using Bitnob APIs.
+
+Never send private keys or seed phrases over the network.
+
+## Recommended development tools
+
+You can use established open-source Bitcoin developer toolkits such as:
+
+| Tool | Description |
+|---|---|
+| BDK (Bitcoin Development Kit) | A modern, production-grade toolkit for building Bitcoin wallets, developed by Spiral (backed by Block, Inc.). Supports key generation, descriptor wallets, transaction building and signing. |
+| bitcoinjs-lib (JavaScript) | Lightweight Bitcoin library for address derivation, transaction signing, etc. |
+| Noble Bitcoin Libraries (JavaScript) | Simple and audited libraries for Bitcoin cryptography. |
+| btcd / lnd libraries (Go) | For backend-heavy Bitcoin apps (more advanced). |
+
+<Tip>
+  BDK is highly recommended if you are building serious mobile or cross-platform Bitcoin wallets. It handles key generation, descriptor wallets, UTXO management, fee calculation, and transaction signing efficiently.
+
+  You can integrate BDK with Bitnob as your backend broadcast and monitoring layer.
+</Tip>
+
+BDK supports languages like:
+
+- Rust (core)
+- Swift (iOS apps)
+- Kotlin (Android apps)
+
+## Key APIs provided by Bitnob
+
+| Action | Method | Endpoint |
+|---|---|---|
+| Watch address | POST | /api/noncustodial/bitcoin/address/watch |
+| Watch multiple addresses | POST | /api/noncustodial/bitcoin/address/watch/bulk |
+| Broadcast signed transaction | POST | /api/noncustodial/bitcoin/transaction/broadcast |
+| Batch broadcast transactions | POST | /api/noncustodial/bitcoin/transaction/batch/broadcast |
+| Estimate fees | GET | /api/noncustodial/bitcoin/fees/estimate |
+| Fetch address balance | GET | /api/noncustodial/bitcoin/address/balance |
+| Fetch address transactions | GET | /api/noncustodial/bitcoin/address/transactions |
+
+## Putting it all together
+
+This section walks through how you can build a real Bitcoin non-custodial wallet using Bitnob RPCs.
+
+1. Step 1: Wallet Generation (Onboarding New User)
+
+   Use BDK (or bitcoinjs-lib) on the client device.
+
+   Generate a new BIP39 seed phrase.
+
+   Derive master private and public keys.
+
+   Generate the first Bitcoin address (SegWit or Taproot recommended).
+
+   Offer the user a backup flow for the seed phrase.
+
+   Example: Mobile app using BDK-Swift (iOS) or BDK-Kotlin (Android). Bitcoin address displayed as QR code.
+
+2. Step 2: Display Wallet Dashboard
+
+   Query address balances using Bitnob API.
+
+   Display recent transaction history from Bitnob.
+
+   Update balances automatically via webhook listening or scheduled polling.
+
+3. Step 3: Receiving bitcoin
+
+   Show fresh address (or rotate automatically after each payment).
+
+   Monitor address with Bitnob's webhook service.
+
+   Detect inbound payments and confirmations.
+
+4. Step 4: Sending bitcoin
+
+   Fetch UTXOs if needed.
+
+   Use BDK or bitcoinjs-lib to build a transaction (inputs, outputs).
+
+   Estimate fees dynamically with Bitnob's fee API.
+
+   Sign transaction locally using the user's private key.
+
+   Push signed transaction to Bitnob /transaction/broadcast.
+
+5. Step 5: Wallet Operations
+
+Periodically rotate addresses to preserve privacy.
+
+Allow users to label transactions internally.
+
+Show mempool status for pending transactions.
+
+Support Replace-By-Fee (RBF) for speeding up transactions later (optional advanced feature).
+
+## Real-World sample implementation outline
+
+| Component | Tools/ Libraries | Purpose |
+|---|---|---|
+| Key Generation | BDK (Swift, Kotlin, Rust) / bitcoinjs-lib | Secure private key and address generation |
+| Transaction Building | BDK, bitcoinjs-lib | Assemble and sign transactions on device |
+| Blockchain Interface | Bitnob APIs | Fetch balances, broadcast transactions, monitor addresses |
+| Webhooks | Bitnob Webhooks | Real-time transaction notifications |
+| Backup & Recovery | Manual seed backup, optional cloud backup (encrypted) | Protect against device loss |
+
+## Key benefits of this model
+
+You control the user experience 100%.
+
+Your users retain their privacy and custody.
+
+You avoid needing to run and maintain Bitcoin full nodes.
+
+You can scale globally with minimal blockchain overhead.
+
+You are ready for advanced Bitcoin features like Taproot, Schnorr signatures, and Miniscript when needed.
+
+## Example full system flow diagram
+
+![Example Full System Flow Diagram](/images/system-flow-diagram.png)
+
+Use BDK or similar libraries for secure wallet building: avoid reinventing cryptography.
+
+Use Bitnob purely for node-level services, blockchain broadcast, monitoring, fee suggestion.
+
+Prioritize user education on backups, security, and transaction confirmations.
+
+Building non-custodial wallets is challenging, but with Bitnob's backend + open-source Bitcoin SDKs like BDK , it becomes achievable even for small teams.

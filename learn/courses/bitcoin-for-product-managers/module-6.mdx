@@ -1,0 +1,190 @@
+---
+title: "Module 6: What a Bitcoin wallet actually does"
+description: "The real job of a wallet: key custody, transaction construction, and state tracking rather than storage."
+---
+## 6.1 Introduction
+
+After understanding Bitcoin's underlying mechanics, private keys, UTXOs, transactions,
+confirmations
+it’s now time to understand the real job of a Bitcoin wallet.
+
+A Bitcoin wallet is not:
+
+- A bank account
+- A file storage system
+- A record of balances
+
+Instead, a Bitcoin wallet is a specialized cryptographic tool whose job is to:
+
+- Manage private keys securely
+- Derive public keys and addresses
+- Detect UTXOs belonging to those keys
+- Build and sign transactions
+- Monitor the blockchain for payments and confirmations
+
+The wallet is the user’s interface to the Bitcoin global ledger, but it does not hold bitcoin inside itself.
+
+## 6.2 Core responsibilities of a Bitcoin wallet
+
+1. Private Key Management
+
+   - Securely generate private keys (often via a mnemonic seed phrase).
+   - Encrypt private keys at rest.
+   - Make private keys available only when signing transactions.
+   - Never leak private keys to the network, servers, or logs.
+
+   **Critical:** If the wallet fails at key management, Bitcoin is lost.
+
+2. Address Derivation and Management
+
+   - Use private keys to derive public keys.
+   - Create Bitcoin addresses based on public keys (Legacy, SegWit, Taproot).
+   - Generate new receiving addresses automatically.
+   - Rotate addresses after use to enhance privacy.
+
+   Wallets must expose addresses, but keep private keys hidden.
+
+3. UTXO Tracking
+
+   - Monitor the Bitcoin blockchain (directly or via APIs like Bitnob).
+   - Identify which UTXOs belong to the wallet’s addresses.
+   - Update wallet balance by summing up all unspent UTXOs.
+   - Mark UTXOs as spent when building new transactions.
+
+   **Key point:** There is no balance stored on the blockchain, the wallet calculates it by tracking UTXOs.
+
+4. Transaction Construction and Signing
+
+   - Select UTXOs as inputs when sending bitcoin.
+   - Create transaction outputs (payment + change).
+   - Calculate and apply network fees.
+   - Sign the transaction locally using the private key.
+   - Ensure the transaction is properly structured and valid.
+
+   Building and signing transactions is the heart of the wallet’s sending capability.
+
+5. Broadcasting and Monitoring Transactions
+
+   - Broadcast signed transactions to the Bitcoin network.
+   - Track transaction status:
+     - Unconfirmed (in mempool)
+     - Confirmed (in blocks)
+     - Replaced (if RBF used)
+   - Update UI to reflect confirmations and finality.
+   - Handle dropped or reorganized transactions gracefully.
+
+   Wallets must connect users to the live Bitcoin network reliably but securely.
+
+## 6.3 Important constraints
+
+| Constraint | Wallet Responsibility |
+|---|---|
+| Bitcoin nodes do not store "accounts" | Wallet must track multiple addresses and UTXOs. |
+| Private keys are the only authority | Wallet must protect them above all else. |
+| Transactions must pay fees | Wallet must calculate and recommend fees smartly. |
+| Blockchain is public | Wallet must use privacy techniques like address rotation. |
+| Confirmations take time | Wallet must guide users through pending → confirmed → finalized states. |
+
+## 6.4 Flowchart: What a Bitcoin wallet really does
+
+```
+User Requests Action (e.g., View Balance, Send)
+
+     ↓
+
+Wallet Derives Necessary Keys and Addresses (from Seed)
+
+     ↓
+
+Wallet Monitors Blockchain (via Bitnob RPC or node)
+
+     ↓
+
+Wallet Tracks UTXOs Owned by User
+
+     ↓
+
+User Initiates Send Bitcoin
+
+     ↓
+
+Wallet Selects UTXOs, Builds Transaction, Signs Locally (with Private Key)
+
+     ↓
+
+Wallet Broadcasts Signed Transaction to Network
+
+     ↓
+
+Wallet Monitors Transaction for Confirmations & Updates UI
+```
+
+## 6.5 Product implications for PMs
+
+Wallet UX must reflect wallet realities:
+
+- Onboarding must center around seed backup, not just "account creation."
+- Balances must update in real time based on UTXOs detected.
+- Transaction history must reflect mempool status, confirmation depth, and reorg risks.
+- Backup, security, privacy must be treated as first-class product features.
+
+Wallets are not simple UI apps.
+Wallets are user interfaces to irreversible cryptographic control over money.
+
+Your app is not a banking app. Your app is a precision cryptographic control system dressed in simple UX.
+
+## 6.6 Real world example
+
+Ifeanyi downloads a Bitcoin wallet app in Abuja.
+When he creates his "account", what actually happens is:
+
+1. His device generates a 12-word seed phrase.
+2. The app derives his master private key from the seed.
+3. The app derives his first few Bitcoin addresses.
+4. The app registers these addresses for monitoring.
+
+When Ifeanyi receives bitcoin:
+
+1. The app detects UTXOs at those addresses.
+2. Adds the UTXOs to his wallet.
+3. Calculates his "balance" by summing UTXO values.
+
+When Ifeanyi sends bitcoin:
+
+1. The app selects his UTXOs.
+2. Builds a transaction.
+3. Signs it using his private key.
+4. Broadcasts it to the Bitcoin network.
+5. Monitors confirmations.
+
+At no point does the app "hold bitcoin" inside itself.
+The app holds keys and state tracking. The Bitcoin always lives on the global Bitcoin ledger.
+
+## 6.7 Common misconceptions to avoid
+
+| Misconception | Reality |
+|---|---|
+| Wallets store Bitcoin | Wallets store keys. Bitcoin lives on the blockchain. |
+| Bitcoin is like a bank account | Bitcoin is a list of UTXOs, controlled via cryptographic proofs. |
+| Transactions are instant | Transactions are broadcast, then confirmed probabilistically. |
+| Lost password can recover wallet | Only the seed phrase can recover a wallet. No seed = Bitcoin lost forever. |
+
+## 6.8 Summary of module 6
+
+Bitcoin wallets:
+
+- Securely manage private keys.
+- Derive and rotate public addresses.
+- Track UTXOs on the Bitcoin network.
+- Build, sign, and broadcast transactions.
+- Monitor blockchain confirmations.
+
+They are critical security tools, not just financial apps.
+The Bitcoin itself remains on the blockchain. Wallets are controllers, not vaults.
+
+Building Bitcoin wallets correctly means respecting the seriousness of these cryptographic and financial foundations at every layer.
+
+## Module 6 complete
+
+You now understand the true role of Bitcoin wallets
+not as databases, not as payment processors, but as cryptographic engines controlling real money through private keys and blockchain interactions.

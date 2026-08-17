@@ -1,0 +1,99 @@
+---
+title: "Receive card webhooks"
+description: "Card events arrive as signed HTTP POSTs. Verify the HMAC-SHA512 signature on the raw body, de-duplicate on eventId, and respond fast."
+related:
+  - /docs/card-issuing/webhooks
+  - /docs/getting-started/api-best-practices/webhook-best-practices
+---
+
+Card events are delivered as HTTP POST requests to the webhook URL you set on your dashboard or per card at creation. Each delivery is signed, retried on failure, and possibly duplicated, so a correct handler does three things: verify, de-duplicate, acknowledge.
+
+| Header | Value |
+|---|---|
+| `Content-Type` | `application/json` |
+| `x-bitnob-signature` | HMAC-SHA512 of the raw body, keyed with your webhook secret |
+
+The payload envelope and the full event catalogue are on [Webhook events](/docs/card-issuing/webhooks).
+
+## Verify the signature
+
+Compute HMAC-SHA512 over the **raw request body** using your webhook secret, and compare it to `x-bitnob-signature` in constant time. Reading the parsed JSON and re-serialising it will not match; verify the exact bytes received.
+
+<CodeGroup>
+
+```python Python (Flask)
+import hmac
+import hashlib
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+
+BITNOB_SECRET = b'your_webhook_secret_here'
+
+def verify_signature(raw_body, signature):
+    expected = hmac.new(BITNOB_SECRET, raw_body, hashlib.sha512).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+@app.route("/webhook", methods=["POST"])
+def handle_webhook():
+    raw_body = request.get_data()
+    signature = request.headers.get("x-bitnob-signature", "")
+
+    if not verify_signature(raw_body, signature):
+        abort(400, "Invalid signature")
+
+    event = request.json
+    print(f"Verified event: {event['event']}")
+    return "", 200
+```
+
+```javascript Node.js (Express)
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
+
+const BITNOB_SECRET = 'your_webhook_secret_here';
+
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const rawBody = req.body;
+  const signature = req.headers['x-bitnob-signature'] || '';
+
+  const expected = crypto
+    .createHmac('sha512', BITNOB_SECRET)
+    .update(rawBody)
+    .digest('hex');
+
+  const valid =
+    expected.length === signature.length &&
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+
+  if (!valid) return res.status(400).send('Invalid signature');
+
+  const event = JSON.parse(rawBody.toString('utf-8'));
+  console.log(`Verified event: ${event.event}`);
+  res.status(200).send();
+});
+
+app.listen(3000);
+```
+
+</CodeGroup>
+
+Reference implementation and secrets guidance: [Verifying events](/api-reference/virtual-cards/webhooks#verifying-events).
+
+## Handle delivery semantics
+
+| Behaviour | What it means for your handler |
+|---|---|
+| Retries | Non-2xx responses are retried up to 3 times with exponential backoff. Return `200` as soon as you have accepted the event; process asynchronously. |
+| Duplicates | Retries reuse the same `eventId`. Persist processed IDs and ignore repeats. |
+| Ordering | Do not assume order. Branch on `event`, then `transactionType`, and reconcile against [card transactions](/api-reference/cards/list-card-transactions-by-card) rather than inferring state from sequence. |
+| New fields | Event names are stable, but new optional fields can appear in `data` without a version bump. Ignore what you do not recognise. |
+
+If your firewall restricts inbound traffic, allowlist the published [Source IPs](/api-reference/virtual-cards/webhooks#source-ips), but only as a second layer: any host can spoof a source address, so the signature is the check that counts. Always use HTTPS, and keep the secret out of client code and repositories.
+
+## Test your endpoint
+
+- Trigger real test events end to end from the sandbox environment.
+- Replay captured payloads with `curl` or Postman against your local handler, signing them with your test secret.
+- Tunnel to localhost with a tool like ngrok while developing, and keep tunnels out of production configuration.

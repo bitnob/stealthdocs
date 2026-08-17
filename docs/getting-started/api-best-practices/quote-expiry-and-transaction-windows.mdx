@@ -1,0 +1,136 @@
+---
+title: "Quote lifecycle and expiry"
+description: "Why quotes expire, what the expiry window protects, and how to handle rate movement without stranding a user mid-payment."
+---
+
+A quote is a price held for a short time. It fixes an exchange rate and an amount so that you and your user both know the terms before any value moves.
+
+Every conversion starts with one: a payout, a trade, or a card funding operation. This page explains why the window exists and how to handle it.
+
+## Why quotes expire
+
+Bitnob quotes a rate it can honour. Between the moment you request a quote and the moment you execute it, the market moves.
+
+The expiry window sets who carries that risk. Inside the window, Bitnob carries it, because it committed to the rate. Outside the window, nobody does, so the quote is dead and you request a new one.
+
+A quote with no expiry would mean an open-ended commitment to a stale price. Any party that could wait would exercise it only when the market moved in their favour.
+
+## What a quote contains
+
+```json
+{
+  "quote_id": "QT2_21015643",
+  "status": "QUOTE",
+  "from_asset": "USDT",
+  "to_currency": "NGN",
+  "amount": "0.724761",
+  "settlement_amount": "1000",
+  "exchange_rate": {
+    "rate": "1382.5294",
+    "effective_rate": "1379.7651915597003702"
+  },
+  "reference": "your-unique-ref-123",
+  "expires_at": "2026-07-04T22:12:36.909609058Z",
+  "created_at": "2026-07-04T21:56:36.911340825Z"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `quote_id` | The identifier you execute against. |
+| `amount` | What leaves your balance. |
+| `settlement_amount` | What the recipient gets. |
+| `exchange_rate.rate` | The headline rate. |
+| `exchange_rate.effective_rate` | The rate after fees. Show this one to users. |
+| `expires_at` | The instant the quote stops being valid. |
+
+<Warning>
+  Read `expires_at` from the response. Do not hard-code a window length, because it varies by product and by corridor.
+</Warning>
+
+## The lifecycle
+
+<Steps>
+  <Step title="Create the quote">
+    Call [Create payout quote](/api-reference/payouts/create-quote) or [Create trading quote](/api-reference/trading/create-quote). The response carries `quote_id` and `expires_at`.
+  </Step>
+  <Step title="Show the terms">
+    Present `settlement_amount` and `effective_rate` to the user, with the time remaining.
+  </Step>
+  <Step title="Execute before expiry">
+    Initialize and finalize the payout against the `quote_id`. See [Initialize payout](/api-reference/payouts/initialize-payout).
+  </Step>
+  <Step title="Confirm from the webhook">
+    Wait for `payouts.withdrawal.success` before you tell the user the money arrived.
+  </Step>
+</Steps>
+
+A quote you never execute simply lapses. It costs nothing and reserves nothing.
+
+## Handling expiry in your product
+
+### Show the remaining time
+
+Users need to know they are on a clock. Derive the countdown from `expires_at`, not from a timer you start locally, because network latency has already consumed part of the window.
+
+```js
+const expiresAt = new Date(quote.expires_at);
+const secondsLeft = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+
+showCountdown(secondsLeft);
+```
+
+### Refuse to execute an expired quote
+
+Check `expires_at` before you submit. Submitting an expired quote returns an error, and the round trip wastes the user's time.
+
+When a quote expires, request a new one and show the new terms. Never present old terms with a new quote behind them.
+
+### Re-quote rather than reuse
+
+Prices move. A quote requested a minute ago is not a discount you can apply now, and the platform will not honour it.
+
+If your interface always converts a fixed amount, you can fetch a quote in advance and refresh it as it approaches expiry:
+
+```javascript
+let quote = await fetchQuote();
+
+setInterval(async () => {
+  if (Date.now() > new Date(quote.expires_at) - 10_000) {
+    quote = await fetchQuote();
+    updateDisplayedTerms(quote);
+  }
+}, 1000);
+```
+
+Refresh slightly before expiry, so the user never sees a dead quote.
+
+### Store the quote with your record
+
+| reference | quote_id | rate | expires_at | status |
+|---|---|---|---|---|
+| `payout_20260408_a41f9c` | QT2_21015643 | 1382.5294 | 2026-07-04T22:12:36Z | pending |
+
+Storing the quote lets you answer the question that follows every pricing dispute: what rate did this user actually see, and when.
+
+## When a payment arrives late or short
+
+On flows where a user sends crypto to fund a quote, the payment can arrive after expiry, or for the wrong amount, or in the wrong asset. These are normal in production, especially on mobile.
+
+Handle each case explicitly:
+
+- Detect the condition from the webhook event rather than from your own timer.
+- Alert your operations team, because most of these need a human decision.
+- Tell the user what happened and what you will do next.
+
+[Payout error handling](/docs/payouts/error-handling) covers expired quotes, underpayment, and delivery rejection case by case.
+
+## Test the window before you ship
+
+Quote expiry is easy to get wrong and hard to notice, because it only appears when a user hesitates.
+
+In sandbox, create a quote, wait for `expires_at` to pass, then try to execute it. Confirm that your interface blocks the attempt and offers a fresh quote. See [Test in sandbox](/docs/getting-started/api-best-practices/simulating-flows-and-testing-in-sandbox).
+
+## Next
+
+Continue to [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries), which covers the status codes an expired quote returns and the retry rules around them.

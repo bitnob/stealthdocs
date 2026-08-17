@@ -1,0 +1,124 @@
+---
+title: "Module 3: Custodial vs dynamic funding models: Core product decisions"
+description: "Custodial balances or dynamic per-transaction funding: the treasury, UX, and risk trade-offs."
+---
+## Introduction
+
+Will users pre-fund and hold balances with your platform (Custodial Wallet Model)?
+
+Or will users fund payouts dynamically, transaction-by-transaction (Dynamic Funding Model)?
+
+Each model creates different:
+
+- Treasury risks
+- User experiences
+- Operational complexities
+- Legal exposures
+
+Scalability characteristics.
+
+Choosing the wrong model for your market or user type can destroy product trust and operational efficiency.
+
+In this module, we will break down the two funding models, their tradeoffs, and how to choose correctly.
+
+## Custodial wallet funding model
+
+In the Custodial Model, users pre-fund an internal wallet balance on your platform.
+
+When they initiate a payout, you deduct directly from their wallet without waiting for a new external payment.
+
+### Flow example: custodial funding
+
+1. User deposits 0.5 BTC into their Bitnob Wallet.
+2. Later, the user initiates a payout of \$100 worth of NGN to a Nigerian bank account.
+3. The system deducts from the preloaded wallet balance instantly.
+4. Payout proceeds immediately.
+
+### Advantages of custodial model
+
+- Faster Payouts: No need to wait for funding confirmation. Transactions execute immediately.
+- Better User Experience: No "pay first, wait" friction at time of action.
+- Internal Liquidity Control: You control user float, enabling batch processing, treasury optimization.
+- Flexible Payment Schedules: Users can automate payouts without needing to manually fund each time.
+
+### Risks and costs of custodial model
+
+- Custody Risk: You hold users' funds. You must secure them perfectly or risk financial and reputational loss.
+- Regulatory Risk: In many jurisdictions, holding customer balances may trigger licensing, reporting, and compliance obligations.
+- Operational Burden: You must monitor wallet balances, prevent double-spends, and manage reconciliation carefully.
+- Fraud Risk: Users may attempt internal fraud if balance tracking is not real-time and accurate.
+
+## Dynamic (on-the-fly) funding model
+
+In the Dynamic Funding Model, users fund each payout individually at the time of action.
+
+There is no wallet balance held by your platform. Each payout is separately funded via Bitcoin, stablecoin, or fiat before execution.
+
+### Flow example: dynamic funding
+
+1. User requests to send \$100 payout to Kenya.
+2. Bitnob generates a payment address and funding amount.
+3. User pays in Bitcoin or USDT.
+4. After payment confirmation, the payout is executed.
+
+### Advantages of dynamic funding model
+
+- No Custody Risk: You do not hold user funds except momentarily during the payout execution phase.
+- Simpler Compliance: Reduces licensing burdens in many jurisdictions compared to full custody models.
+- Operational Simplicity: No wallet balance management, no internal float reconciliation.
+- Faster Go-to-Market: Easier onboarding of new customers without needing regulatory approvals for holding balances.
+
+### Risks and costs of dynamic funding model
+
+- Funding Friction: Users must fund each payout, which can delay time-to-payout compared to wallet-funded instant execution.
+- Volatility Risk: Between user quote generation and funding confirmation, Bitcoin or FX rates may move.
+- Funding Expiry Risk: If users delay or underfund, payout fails or must be adjusted.
+- Confirmation Delays: Bitcoin or blockchain payment confirmations introduce extra time before payout processing can start.
+
+## How to choose between custodial and dynamic funding
+
+| Question | Favor Custodial | Favor Dynamic |
+|---|---|---|
+| Target user wants payouts instantly? | Yes | No |
+| You can manage custody licensing risk? | Yes | No |
+| You want to optimize batch payouts and float management? | Yes | No |
+| You need to onboard customers faster with lighter KYC? | No | Yes |
+| Your operational team can secure internal balances at scale? | Yes | No |
+| You prefer externalized liquidity and lower treasury complexity? | No | Yes |
+
+## Hybrid models (optional)
+
+Some advanced platforms combine both:
+
+- Power users pre-fund wallets for instant payouts.
+- New or low-volume users use dynamic funding per transaction.
+
+This hybrid model optimizes for user flexibility, but is harder to build and secure properly.
+
+## Practical example
+
+A B2B platform serving large merchant clients may prefer a Custodial Model:
+
+Merchants deposit float weekly, and payouts execute instantly when their users request funds.
+
+A consumer-facing mobile app doing cross-border micro-payouts may prefer a Dynamic Model:
+
+Each payout is individually funded via Lightning or stablecoins, minimizing custody complexity.
+
+## PM action checklist (end of module 3)
+
+- Map your user base: Do they expect instant payouts, or can they handle payment-per-payout flows?
+- Audit your regulatory exposure: Can your company legally hold user funds? If not, favor dynamic funding.
+- Model liquidity risk: Custody models require float forecasting, dynamic models require confirmation window management.
+- Decide treasury and ops team readiness: Custody adds major security, monitoring, and reconciliation responsibilities.
+- Consider future growth: If you plan to scale internationally, dynamic models may simplify expansion.
+
+## Closing reflection
+
+Holding user balances is a power and a burden.
+
+Managing dynamic funding flows is a flexibility and a risk.
+
+As a PM, you must design for both user expectations and operational survivability. Make the right funding architecture decision early. It will shape every other system and team you build afterward.
+
+In the next module, we will walk through Building a Full Payout Lifecycle: Quotes, Funding, Processing, Completion.

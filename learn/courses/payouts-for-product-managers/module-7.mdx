@@ -1,0 +1,94 @@
+---
+title: "Module 7: Treasury and liquidity 101 for PMs (without becoming a CFO)"
+description: "Treasury and liquidity fundamentals a payouts PM needs, without becoming a CFO."
+---
+## Introduction
+
+It is a core product feature.
+
+Without sufficient liquidity (Bitcoin, stablecoins, or fiat), payouts will fail, delay, or require painful manual intervention.
+
+As a product manager, you do not need to be a CFO, but you must understand:
+
+- How liquidity buffers affect payout reliability.
+- How different funding models shape treasury needs.
+- How to design payout flows that anticipate and survive liquidity constraints.
+
+## Core treasury concepts you must understand
+
+| Concept | Meaning |
+|---|---|
+| Liquidity | Available spendable assets (BTC, USDT, fiat) to fulfill payouts immediately. |
+| Liquidity Buffer | Excess reserve maintained to absorb unexpected payout surges. |
+| Funding Volatility | Variability in how much funding arrives when users are asked to pre-fund. |
+| Settlement Lag | Delay between user funding and actual fiat payout reaching the beneficiary. |
+| Treasury Risk | Risk of not having enough liquidity available when payouts need to settle. |
+
+## Treasury responsibilities that affect product reliability
+
+- Ensuring sufficient hot wallet balances for Bitcoin-funded payouts.
+- Managing stablecoin liquidity across relevant chains (e.g., USDT TRC20, ERC20).
+- Maintaining fiat balances with payout partners or banks across corridors.
+- Monitoring liquidity flows dynamically in real-time.
+- Forecasting liquidity needs based on usage growth and corridor behavior.
+- Responding to black swan liquidity stress scenarios (market crashes, partner failures).
+
+## How funding models affect treasury risk
+
+| Model | Treasury Impact |
+|---|---|
+| Custodial Wallets | High: you must manage internal float and predict user demand ahead of time. |
+| Dynamic On-the-Fly Funding | Lower: user pays per payout, but you must still buffer for settlement and liquidity delays |
+
+Even in dynamic models, payout liquidity buffers are critical to smooth final delivery after user funding is confirmed.
+
+## Practical examples
+
+**Example 1:** A user funds a payout with bitcoin, but before the Bitcoin transaction confirms, the platform's Naira liquidity buffer depletes due to other payouts. If no Naira is available when confirmation arrives, payout processing is delayed, breaking SLA expectations.
+
+**Example 2:** Stablecoin liquidity (e.g., USDT on Tron) dries up temporarily at a partner exchange. If your payout system relies only on one liquidity provider, payouts stall until replenished.
+
+## Key treasury metrics every PM should track
+
+| Metric | Why It Matters |
+|---|---|
+| Liquidity Buffer Ratio | Measures available reserve vs current daily average payout volume. |
+| Time-to-Settle | Measures time from asset confirmation to fiat delivery |
+| Corridor Liquidity Health | Measures available fiat per payout corridor in real-time. |
+| Funding-to-Payout Ratio | Measures how well funding receipts align with payout execution needs |
+
+## Treasury stress scenarios you must design for
+
+| Scenario | Risk | Mitigation |
+|---|---|---|
+| Sudden Payout Spike | Buffer depleted faster than replenishment. | Maintain minimum liquidity buffers at corridor level. |
+| Partner Bank Downtime | Cannot settle fiat payout even if liquidity exists. | Maintain multi-partner redundancy per corridor. |
+| Blockchain Congestion | Incoming Bitcoin/USDT payments delayed | Communicate clearly to users; build confirmation timeout policies. |
+| FX Rate Crash | Stablecoin/funding asset depegs or local currency volatility | Model volatility buffers inside quotes and settlements. |
+
+## Best practices for managing treasury risk at the product level
+
+- Design payout systems that check available liquidity before confirming payout to users.
+- Include auto-disable triggers for payout corridors that fall below safe liquidity thresholds.
+- Build real-time dashboards for liquidity buffer health, visible to product and operations teams.
+- Implement automated funding top-up systems for Bitcoin hot wallets, stablecoin pools, and fiat corridors.
+- Monitor partner performance and switch routes dynamically if liquidity deteriorates.
+- Collaborate with Treasury and Finance teams weekly on corridor performance and buffer needs.
+
+## PM action checklist
+
+- Map payout liquidity flows end-to-end: user funding, internal processing, external delivery.
+- Set minimum liquidity buffer policies per payout corridor.
+- Design payout initiation checks tied to liquidity availability.
+- Work with operations to simulate liquidity depletion scenarios before go-live.
+- Monitor and report liquidity risk KPIs monthly.
+
+## Closing reflection
+
+Payout products do not just send money.
+
+They hold and release liquidity under dynamic, unpredictable pressure.
+
+Managing liquidity intelligently is not optional. It is the invisible infrastructure that makes payout trust real.
+
+In the next module, we will address Security Principles for Bitcoin and Stablecoin Payouts.

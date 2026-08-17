@@ -1,0 +1,93 @@
+---
+title: "Virtual accounts"
+description: "Dedicated NGN account numbers per customer: what they are, how to issue one against a BVN-verified customer, and the errors that come up on the way."
+related:
+  - /docs/getting-started/core-concepts-and-architecture/currencies-and-amounts
+  - /docs/payouts/send-your-first-payout
+---
+
+A virtual account is a dedicated Nigerian bank account number assigned to one customer. Any payment into it is identified automatically and credited to that customer's [NGN balance](/api-reference/balances/list-balances), which makes it the simplest way to receive naira: give each customer their own account number and stop reconciling transfers by hand.
+
+<Note>
+  NGN must be enabled on your account before any of these calls work; contact Bitnob to switch it on. Without it, every request returns `feature-not-enabled`.
+</Note>
+
+## Issue a virtual account
+
+<Steps>
+  <Step title="Make sure the customer can pass verification">
+    Nigerian regulation requires identity verification behind every naira account. The [customer record](/api-reference/customers/create-customer) must carry `first_name`, `last_name`, `email`, `phone_number`, `date_of_birth` (18 or over), `id_type: "bvn"`, and the 11-digit BVN as `id_number`.
+
+    ```json
+    {
+      "email": "ada@example.com",
+      "customer_type": "individual",
+      "first_name": "Ada",
+      "last_name": "Okafor",
+      "date_of_birth": "1994-03-21",
+      "phone_number": "8012345678",
+      "dial_code": "+234",
+      "id_type": "bvn",
+      "id_number": "12345678901",
+      "country": "NGA"
+    }
+    ```
+
+    The BVN lives on the customer, not on the virtual account request; add it at creation or [patch an existing customer](/api-reference/customers/update-customer).
+
+    <Warning>
+      The name and date of birth must exactly match what is registered against the BVN in the national registry. If either differs, verification fails even when the BVN itself is valid.
+    </Warning>
+  </Step>
+  <Step title="Create the account">
+    Full schema: [Create virtual account](/api-reference/virtual-accounts/create-virtual-account).
+
+    ```http
+    POST /api/virtual-accounts
+    ```
+
+    ```json
+    {
+      "reference": "your-unique-reference",
+      "currency": "NGN",
+      "customer_id": "<customer uuid>",
+      "account_alias": "Optional display name"
+    }
+    ```
+
+    `reference` is your idempotency key. NGN is currently the only supported currency. The response returns the account number the customer can pay into.
+  </Step>
+  <Step title="Test it in sandbox">
+    [`POST /api/virtual-accounts/:id/simulate-deposit`](/api-reference/virtual-accounts/simulate-deposit-sandbox) fakes an inbound transfer so you can exercise the crediting flow without real money. It is rejected in production.
+  </Step>
+</Steps>
+
+## Working with issued accounts
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/virtual-accounts` | List your accounts |
+| GET | `/api/virtual-accounts/:id` | Fetch one |
+| GET | `/api/virtual-accounts/:id/transactions` | Deposits into that account |
+| PATCH | `/api/virtual-accounts/:id/alias` | Change the display name |
+| GET | `/api/virtual-accounts/supported-currencies` | Currently returns NGN |
+
+## When something fails
+
+<AccordionGroup>
+  <Accordion title="feature-not-enabled">
+    NGN is not switched on for your account. Contact Bitnob before retrying anything.
+  </Accordion>
+  <Accordion title="Validation error naming missing customer fields">
+    The customer record is incomplete. The error lists every missing field at once, for example `customer <id> is missing bvn, date_of_birth`, so fix them in one pass. It refers to the **customer record**, not the request you just sent; update the customer and retry.
+  </Accordion>
+  <Accordion title="Verification failure">
+    The BVN did not match the customer's registered name or date of birth. Correct the customer record to match the registry.
+  </Accordion>
+  <Accordion title="Amount out of range">
+    Deposits are limited to ₦500 to ₦10,000,000.
+  </Accordion>
+  <Accordion title="Failed precondition">
+    Insufficient balance for the operation attempted.
+  </Accordion>
+</AccordionGroup>

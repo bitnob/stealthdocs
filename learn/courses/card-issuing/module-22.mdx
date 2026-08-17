@@ -1,0 +1,149 @@
+---
+title: "Module 22: How virtual card programs are really built and operated"
+description: "How card programmes are really built: BIN sponsorship, processors, certification, and go-live."
+---
+## Learning objectives
+
+- Understand how card programs are set up, from BIN sponsorship to network certification
+- Know the relationships between issuers, program managers, processors, and platforms
+- See what goes into getting a card product live: certification, scheme rules, PCI, etc.
+- Learn how revenue is split behind the scenes (interchange, fees, rebates)
+- Understand what banks, scheme partners, and regulators care about, and how to speak their language
+
+## What most builders don’t know
+
+Virtual cards seem simple: create → fund → spend.
+
+But behind every successful card product is a multi-party legal and technical structure:
+
+- Program setup
+- Scheme onboarding
+- Legal approval
+- BIN control
+- Settlement rails
+- Risk management
+- Reconciliation pipelines
+
+This module teaches the invisible work that makes a card system actually run.
+
+## Who actually powers a card program?
+
+Here’s the true anatomy of a virtual card product:
+
+```text
+Cardholder
+  ↓
+Frontend App (You)
+  ↓
+Program Manager
+  ↓
+Card Processor
+  ↓
+Card Issuer (licensed bank)
+  ↓
+Card Network (Visa, Mastercard)
+  ↓
+Merchant & Acquirer
+```
+
+You are not the card program. You’re the product layer. The real power sits with the issuer and the program manager.
+
+## Step-by-Step: How a card program gets built
+
+### 1. BIN sponsorship
+
+- The issuer must allocate a BIN for the card product
+- May take weeks or months of negotiation
+- Network (e.g., Visa) must approve usage type (e.g., prepaid, debit, region)
+
+### 2. Scheme onboarding & compliance
+
+- Issuer and program manager must be registered with Visa, Mastercard, etc.
+- BIN must be mapped to merchant categories, currencies, and usage limits
+- Scheme sets rules on MCCs, cross-border charges, refunds, fraud
+
+### 3. Processor setup
+
+- Processor (e.g., Interswitch, Galileo) maps PAN ranges
+- Connects to real-time authorization network
+- Configures fraud rules, lifecycle logic, limits, top-up channels
+
+### 4. Card issuance policy
+
+- Defines who can get a card
+- Limits: daily spend, total float, FX exposure
+- Tiering: KYC level → card feature access
+- Funding source (wallet, USDT, NGN, etc.)
+
+### 5. Dispute management and chargeback routing
+
+- Platform must define how chargebacks are handled
+- Network requires SLA compliance and evidence submission
+- Frequent chargebacks affect program eligibility
+
+### 6. Reporting and reconciliation
+
+- Daily and monthly reports from processor → program manager → issuer
+- Network fees, interchange earnings, refunds, fraud alerts
+- Float vs. issued balances tracked in real time
+- Settlement files match spend → merchant → clearing amounts
+
+## Who owns what?
+
+| Responsibility | Owner |
+|---|---|
+| Legal ownership of card | Issuer (bank) |
+| Card number generation | Processor |
+| Fraud rule configuration | Program manager + processor |
+| UX, funding, top-ups | You |
+| Disputes and support | Shared (you → processor → issuer) |
+| Scheme compliance | Issuer + network |
+| Marketing and education | You |
+
+## How revenue is split
+
+Let’s say a user tops up \$100 and spends it.
+
+| Actor | Earns from |
+|---|---|
+| You | Top-up fee, FX markup, possible subscription |
+| Processor | Per-transaction and card issuance fee (to issuer or to you) |
+| Issuer | Interchange fee from merchant (e.g., 1.4%) |
+| Card Network | Scheme fee (~0.1–0.2%), FX fee |
+| Merchant | Net revenue after acquiring fees and discounts |
+
+**Note:** Most of the actual "card revenue" (interchange) goes to the issuer, not you.
+
+You earn on:
+
+- FX
+- User fees (top-up, creation, subscription)
+- Rebates (if your volume is high enough to negotiate them)
+
+## Internal KPIs issuers and partners care about
+
+| Kpi | Why It Matters |
+|---|---|
+| Activation-to-spend ratio | Tells if your product drives real usage |
+| Average spend per card | Higher = better interchange and network trust |
+| Fraud rate | Affects scheme reputation and compliance |
+| Decline rate | Too high = user complaints, network alerts |
+| Chargeback ratio | >1% = risk of penalties or removal |
+| Float usage efficiency | Measures how much issued balance is actually spent |
+
+## Questions to ask if you’re partnering with a program manager
+
+- Who controls the BINs and what MCCs are supported?
+- What’s the card classification? (e.g., Visa Commercial Debit Prepaid USD)
+- What’s the typical approval rate across regions or MCCs?
+- How are chargebacks handled and who pays dispute fees?
+- What transaction velocity rules are enforced by default?
+- Can we brand cards, or are they generic under your name?
+
+## Recap
+
+- Behind every card product is a complex stack of regulated, contracted, certified infrastructure
+- Issuers and program managers govern the boundaries. You design within them
+- BINs, schemes, settlement rules, and risk flows shape what’s possible
+- If you want to scale, you need to know the business of card programs, not just the APIs
+- Treat your program as a regulated ecosystem, not a feature

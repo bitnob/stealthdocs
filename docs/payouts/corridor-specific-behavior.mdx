@@ -1,0 +1,41 @@
+---
+title: "Corridor behaviour"
+description: "The same payout request behaves differently by country. Corridor pages document the rails, settlement speeds, reliability patterns, and liquidity considerations for each destination."
+related:
+  - /docs/payouts/validate-a-beneficiary
+  - /docs/payouts/supported-currencies
+---
+
+An identical API call to Lagos and to Nairobi does not produce identical outcomes. Each corridor has its own settlement rails, regulators, liquidity depth, and downtime patterns, and those differences show up as different settlement times and different failure rates.
+
+If you build one global SLA and one global retry policy, the corridor with the slowest rail and the least reliable partner bank sets your reputation. Size each corridor separately.
+
+## What differs by corridor
+
+| Dimension | Why it matters |
+|---|---|
+| Settlement rail | NIP settles in seconds, ACH in days. The rail sets the floor on your SLA. |
+| Regulatory rules | FX controls, mobile money identity requirements, and transfer caps vary by country. |
+| Liquidity | Volatility and available depth differ by currency, which affects buffers and quote stability. |
+| Infrastructure reliability | Partner banks have known downtime windows and known failure patterns. |
+| User expectations | What counts as "slow" differs between a market used to instant transfers and one used to next-day. |
+
+Alerting thresholds have to be per corridor for the same reason. A payout still processing after two minutes is normal in one corridor and an incident in another.
+
+## Corridor pages
+
+<Columns cols={3}>
+  <Card title="Nigeria" icon="flag" href="/docs/payouts/corridor-specific-behavior/nigeria-payout">
+    NGN over NIP.
+  </Card>
+  <Card title="Ghana" icon="flag" href="/docs/payouts/corridor-specific-behavior/ghana-payout">
+    GHS over bank transfer and mobile money.
+  </Card>
+  <Card title="Kenya" icon="flag" href="/docs/payouts/corridor-specific-behavior/kenya-payout">
+    KES over bank transfer and M-Pesa.
+  </Card>
+</Columns>
+
+Each page covers the rails available, typical settlement speed, known reliability patterns, liquidity and FX considerations, and the operational checks worth automating.
+
+For the machine-readable version, call [Supported countries](/api-reference/payouts/supported-countries) and [Country requirements](/api-reference/payouts/country-requirements). The API is the source of truth for what is live and what fields a destination needs; these pages are the operational context around it.

@@ -1,0 +1,522 @@
+---
+title: "Send a SWIFT payout"
+description: "When to reach for the SWIFT rail, which currencies it covers, and what beneficiary detail a wire requires."
+related:
+  - /docs/payouts/supported-currencies
+  - /api-reference/payouts/swift-payouts
+---
+Cross-border payouts use the SWIFT destination type when the destination country or currency has **no local corridor** (no ACH, SEPA, domestic GBP, mobile money, etc.). SWIFT is the fallback wire rail for `USD`, `EUR`, `HKD`, and similar currencies into most countries around the world.
+
+<Note>
+  If [Country requirements](/api-reference/payouts/country-requirements) returns a corridor whose `destination_types` array contains `"swift"`, that country supports SWIFT payouts. SWIFT is typically the only option when the destination currency is not the country's native currency, for example paying USD into the UK or EUR into Switzerland.
+</Note>
+
+## The three-step flow
+
+SWIFT payouts are **three separate HTTP calls**, [SWIFT Payouts](/api-reference/payouts/swift-payouts) in the API reference documents each one. Beneficiary details go on the **initialize** call, not on the quote.
+
+```http
+1. POST /api/payouts/quotes                    → returns { quote_id }
+2. POST /api/payouts/:quoteId/initialize       ← beneficiary lives here
+3. POST /api/payouts/:quoteId/finalize         ← no body
+```
+
+<Warning>
+  A common integration mistake is putting beneficiary or bank details on the quote. The quote body only carries currency, amount, and country. All beneficiary information (SWIFT code, bank address, recipient address, sender identity) goes on the `initialize` call.
+</Warning>
+
+## Step 1: Create the quote
+
+Describes the currency, amount, and destination country. No beneficiary info. Full schema: [SWIFT Step 1 - Quote](/api-reference/payouts/swift-payouts#step-1-create-quote).
+
+```http
+POST /api/payouts/quotes
+Content-Type: application/json
+x-auth-client: <client-id>
+x-auth-signature: <hmac-signature>
+```
+
+### Request body
+
+<ParamField body="from_asset" type="string" required>
+  Source asset being debited. Examples: 'USDC', 'USD', 'BTC', 'USDT'. Alphanumeric, max 10 chars.
+</ParamField>
+
+<ParamField body="to_currency" type="string" required>
+  Destination currency the beneficiary receives. Examples: 'USD', 'EUR', 'GBP', 'HKD'. Alphanumeric, max 10 chars.
+</ParamField>
+
+<ParamField body="source" type="string" required>
+  'offchain' debits your company balance; 'onchain' means the user funds the payout via crypto transfer.
+</ParamField>
+
+<ParamField body="chain" type="string">
+  Required when source = 'onchain'. Values: 'ETHEREUM', 'TRON', 'BTC', etc.
+</ParamField>
+
+<ParamField body="amount" type="string, decimal">
+  Conditionally required. Source-asset amount (e.g. '1500.00'). One of amount / settlement_amount / amount_in_base_units must be provided.
+</ParamField>
+
+<ParamField body="settlement_amount" type="string, decimal">
+  Conditionally required. Destination-currency amount. Use instead of amount when you want to pin the receive side.
+</ParamField>
+
+<ParamField body="amount_in_base_units" type="string, integer">
+  Conditionally required. Source amount in the asset's smallest unit. Alternative to amount.
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  Destination country (ISO 3166-1 alpha-2 or alpha-3).
+</ParamField>
+
+<ParamField body="payment_reason" type="string">
+  Free-text description of the payment.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Client-generated idempotency / tracking key.
+</ParamField>
+
+<ParamField body="client_meta_data" type="string">
+  Arbitrary metadata string for your own bookkeeping.
+</ParamField>
+
+
+### Example request
+
+```json
+{
+  "from_asset": "USDC",
+  "to_currency": "USD",
+  "source": "offchain",
+  "amount": "1500.00",
+  "country": "GB",
+  "payment_reason": "vendor payment",
+  "reference": "INV-2026-04-16-001"
+}
+```
+
+### Example response
+
+```json
+{
+  "success": true,
+  "message": "Quote created successfully",
+  "data": {
+    "quote_id": "qte_01HY2Q...",
+    "from_asset": "USDC",
+    "to_currency": "USD",
+    "amount": "1500.00",
+    "settlement_amount": "1500.00",
+    "rate": "1.0",
+    "fee": "25.00",
+    "expires_at": "2026-04-16T15:10:00Z"
+  },
+  "timestamp": "2026-04-16T15:00:00Z"
+}
+```
+
+## Step 2: Initialize with the SWIFT beneficiary
+
+The initialize call carries the full SWIFT beneficiary payload: see [SWIFT Step 2 - Initialize](/api-reference/payouts/swift-payouts#step-2-initialize-the-swift-payload). The server validates the `beneficiary` object against the corridor schema registered for `(country, destination_type)`.
+
+```http
+POST /api/payouts/:quoteId/initialize
+Content-Type: application/json
+```
+
+### Top-level fields
+
+<ParamField body="beneficiary" type="object" required>
+  The SWIFT beneficiary payload. Validated against the corridor schema for (country, destination_type). Details below.
+</ParamField>
+
+<ParamField body="customer_id" type="uuid">
+  Link the payout to a persisted customer record.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Overrides or supplements the quote's reference.
+</ParamField>
+
+<ParamField body="payment_reason" type="string">
+  Free-text description of the payment.
+</ParamField>
+
+<ParamField body="callback_url" type="string">
+  Per-payout webhook override URL.
+</ParamField>
+
+<ParamField body="client_meta_data" type="string">
+  Arbitrary client metadata.
+</ParamField>
+
+
+<Note>
+  All fields are **snake_case** on the API. Enum values (`destination_type`, `remittance_purpose`, `sender.type`) are **lowercase** on input; the server uppercases them before forwarding to the underlying rail. Sending `SWIFT` also works, since the lookup is case-insensitive, but `swift` / `family_support` / `business` is the canonical form.
+</Note>
+
+## Core SWIFT beneficiary fields
+
+Required on every SWIFT payload, regardless of destination country:
+
+<ParamField body="destination_type" type="string" required>
+  Must be 'swift' (lowercase). Explicitly set this. The server will fall back to 'bank' otherwise.
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  ISO 3166-1 alpha-2 destination country. Must match the quote's country.
+</ParamField>
+
+<ParamField body="account_name" type="string" required>
+  Recipient's name. Must contain ≥2 space-separated parts of ≥2 chars each. Honorifics (Mr/Mrs/Dr) and single-letter-plus-dot (e.g. 'J.') are rejected.
+</ParamField>
+
+<ParamField body="account_number" type="string" required>
+  For IBAN countries (GB, DE, AT, AD, BE, BG, CH, FR, …) the IBAN, regex `^[A-Z0-9]{15,34}$`. For non-IBAN countries (AR, BW, CN, …) a plain account number, 5–34 chars.
+</ParamField>
+
+<ParamField body="swift_code" type="string" required>
+  BIC/SWIFT code. 8 or 11 uppercase chars. Pattern `^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$`. Example: `DEUTDEFF` or `DEUTDEFF500`.
+</ParamField>
+
+<ParamField body="bank_name" type="string" required>
+  Full legal name of the receiving bank. Example: 'Deutsche Bank AG'.
+</ParamField>
+
+<ParamField body="bank_address" type="string" required>
+  Street address of the receiving bank branch.
+</ParamField>
+
+<ParamField body="bank_city" type="string" required>
+  City of the receiving bank branch.
+</ParamField>
+
+<ParamField body="bank_post_code" type="string" required>
+  Postal/ZIP code of the receiving bank.
+</ParamField>
+
+<ParamField body="bank_country" type="string" required>
+  ISO 3166-1 alpha-2 country of the receiving bank.
+</ParamField>
+
+<ParamField body="remittance_purpose" type="string, enum" required>
+  Lowercase snake_case enum value: see the Remittance Purpose section below for the full list.
+</ParamField>
+
+<ParamField body="beneficiary" type="object, nested" required>
+  Physical address of the recipient: see 'Nested beneficiary' below.
+</ParamField>
+
+<ParamField body="sender" type="object, nested" required>
+  Payer identity, discriminated on type. See 'Sender variants' below.
+</ParamField>
+
+
+## The nested `beneficiary`: the recipient's physical address
+
+Separate from the `bank_*` fields. This is the person or company *receiving* the money, not the bank branch.
+
+<ParamField body="country" type="string" required>
+  ISO 3166-1 alpha-2.
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  Recipient's city.
+</ParamField>
+
+<ParamField body="post_code" type="string" required>
+  Recipient's postal/ZIP code.
+</ParamField>
+
+<ParamField body="address" type="string" required>
+  Recipient's street address.
+</ParamField>
+
+<ParamField body="type" type="string">
+  Only required when the destination country is RW (Rwanda) or SG (Singapore). One of 'business' or 'individual'. Every other SWIFT country omits it.
+</ParamField>
+
+
+## The `sender`: payer identity
+
+The payer. Discriminated by `type`. Both variants share a common set of address fields; each variant adds its own.
+
+### Shared fields, both variants
+
+<ParamField body="type" type="string" required>
+  'business' or 'individual' (case-insensitive, normalized server-side).
+</ParamField>
+
+<ParamField body="account_name" type="string" required>
+  Legal name of the sender. Same name-format rules as beneficiary.account_name.
+</ParamField>
+
+<ParamField body="country" type="string" required>
+  ISO 3166-1 alpha-2 country of the sender.
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  Sender's city.
+</ParamField>
+
+<ParamField body="address" type="string" required>
+  Sender's street address.
+</ParamField>
+
+<ParamField body="post_code" type="string" required>
+  Sender's postal/ZIP code.
+</ParamField>
+
+
+### `type: "business"` only
+
+<ParamField body="registration_number" type="string" required>
+  Company registration number. 2–30 characters. Examples: US EIN '12-3456789', UK Companies House '12345678'.
+</ParamField>
+
+
+### `type: "individual"` only
+
+<ParamField body="date_of_birth" type="string" required>
+  Format YYYY-MM-DD (strict regex, no other formats accepted).
+</ParamField>
+
+<ParamField body="country_of_birth" type="string" required>
+  ISO 3166-1 alpha-2 of the sender's country of birth.
+</ParamField>
+
+
+<Warning>
+  A `type: "individual"` sender with a `registration_number` has that field silently dropped. A `type: "business"` sender missing `registration_number` fails validation outright. Always match required fields to the declared variant.
+</Warning>
+
+## Country-specific required fields
+
+A handful of destinations add extra required fields on top of the 12 core SWIFT fields. [`GET /api/payouts/supported-countries/:country`](/api-reference/payouts/country-requirements) is always the source of truth. These are the notable quirks:
+
+| Country | Extra required field | Format and notes |
+|---|---|---|
+| AU (Australia) | `bsb_number` | 6-digit Bank State Branch code, regex `^\d{6}$`. The corridor placeholder shows `062-000` but the regex does not allow dashes, strip them before sending. |
+| IN (India) | `IFSCode` | 11-char IFSC code, regex `^[A-Z]{4}0[A-Z0-9]{6}$`. The key is literally camelCase `IFSCode`, unlike every other snake_case field in the payload. Sending `ifs_code` or `ifsc_code` fails as a missing required field. |
+| HK (Hong Kong) | `swift_code` (different regex) | Regex is `^[A-Za-z]{4}HK[A-Za-z0-9]{2}([A-Za-z0-9]{3})?$`: case-insensitive, and pins the country bits to literal `HK`. All other SWIFT-supporting countries use the global 8/11-char BIC regex. |
+| RW (Rwanda), SG (Singapore) | `beneficiary.type` | Either `business` or `individual`. Required only for these two countries, on the nested beneficiary object. |
+
+## The `remittance_purpose` enum
+
+Lowercase snake_case values. The server uppercases them (`family_support` → `FAMILY_SUPPORT`) when forwarding to SWIFT.
+
+```
+family_support           education                gift_and_donation
+medical_treatment        maintenance_expenses     travel
+small_value_remittance   liberalized_remittance   other
+construction_expenses    hotel_accommodation      advertising_expenses
+advisory_fees            business_insurance       insurance_claims
+delivery_fees            exported_goods           service_charges
+loan_payment             office_expenses          property_purchase
+property_rental          royalty_fees             shares_investment
+fund_investment          tax_payment              transportation_fees
+utility_bills            personal_transfer        salary_payment
+other_fees               computer_services        reward_payment
+influencer_payment
+```
+
+## Step 3: Finalize
+
+No request body. Just the URL. Finalize settles the payout and returns the final `Payout` record: see [SWIFT Step 3 - Finalize](/api-reference/payouts/swift-payouts#step-3-finalize).
+
+```http
+POST /api/payouts/:quoteId/finalize
+```
+
+<Note>
+  Any body you send to finalize is ignored. It uses the state set during initialize.
+</Note>
+
+## Full example: GB destination, business sender
+
+### Step 1: Create the quote
+
+```json
+{
+  "from_asset": "USDC",
+  "to_currency": "USD",
+  "source": "offchain",
+  "amount": "1500.00",
+  "country": "GB",
+  "reference": "INV-2026-04-16-001"
+}
+```
+
+Response → `data.quote_id = "qte_01HY2Q..."`
+
+### Step 2: Initialize with the SWIFT beneficiary
+
+```json
+{
+  "beneficiary": {
+    "destination_type": "swift",
+    "country": "GB",
+    "account_name": "John Doe",
+    "account_number": "GB29NWBK60161331926819",
+    "swift_code": "DEUTDEFF",
+    "bank_name": "Deutsche Bank AG",
+    "bank_address": "41 Lothbury",
+    "bank_city": "London",
+    "bank_post_code": "EC2V 8AH",
+    "bank_country": "GB",
+    "remittance_purpose": "salary_payment",
+    "beneficiary": {
+      "country": "GB",
+      "city": "London",
+      "post_code": "E14 5AB",
+      "address": "10 Canary Wharf"
+    },
+    "sender": {
+      "type": "business",
+      "account_name": "Acme Holdings LTD",
+      "country": "US",
+      "city": "Wilmington",
+      "address": "1209 Orange St",
+      "post_code": "19801",
+      "registration_number": "12-3456789"
+    }
+  },
+  "payment_reason": "salary",
+  "reference": "INV-2026-04-16-001"
+}
+```
+
+### Step 3: Finalize
+
+```http
+POST /api/payouts/qte_01HY2Q.../finalize
+```
+
+## Full example: DE destination (EUR), individual sender
+
+### Step 1: Create the quote
+
+```json
+{
+  "from_asset": "USDC",
+  "to_currency": "EUR",
+  "source": "offchain",
+  "amount": "500.00",
+  "country": "DE"
+}
+```
+
+### Step 2: Initialize
+
+```json
+{
+  "beneficiary": {
+    "destination_type": "swift",
+    "country": "DE",
+    "account_name": "Anna Müller",
+    "account_number": "DE89370400440532013000",
+    "swift_code": "COBADEFFXXX",
+    "bank_name": "Commerzbank AG",
+    "bank_address": "Kaiserplatz",
+    "bank_city": "Frankfurt",
+    "bank_post_code": "60311",
+    "bank_country": "DE",
+    "remittance_purpose": "family_support",
+    "beneficiary": {
+      "country": "DE",
+      "city": "Berlin",
+      "post_code": "10115",
+      "address": "Unter den Linden 77"
+    },
+    "sender": {
+      "type": "individual",
+      "account_name": "Jane Doe",
+      "country": "US",
+      "city": "New York",
+      "address": "350 5th Ave",
+      "post_code": "10118",
+      "date_of_birth": "1985-07-12",
+      "country_of_birth": "US"
+    }
+  }
+}
+```
+
+### Step 3: Finalize
+
+```http
+POST /api/payouts/:quoteId/finalize
+```
+
+## Discover SWIFT support for a country
+
+Before building the payload, fetch the corridor config for the destination country: see [Discovering SWIFT Corridors](/api-reference/payouts/swift-payouts#discovering-swift-enabled-countries) and [Get Country Details](/api-reference/payouts/country-requirements):
+
+```http
+GET /api/payouts/supported-countries/GB
+```
+
+Inspect the `corridors[]` array for entries whose `destination_types` includes `"swift"`:
+
+```json
+{
+  "currency": "USD",
+  "destination_types": ["swift"],
+  "limits": { "min_amount": "1", "max_amount": "2000000" }
+}
+```
+
+The returned `destination_types["swift"]` block carries the exact field schema. **It is the authoritative source** for that country's requirements, including any per-country extras listed in the Country-Specific Extra Fields section above.
+
+## Validation failures
+
+The same codes are documented under [SWIFT Validation Failures](/api-reference/payouts/swift-payouts#validation-failures), and corridor min/max amounts come from [Get Limits](/api-reference/payouts/payout-limits).
+
+| Http | Error Code | Cause |
+|---|---|---|
+| 400 | INVALID_BODY | Request body isn't valid JSON or doesn't match the expected shape at the HTTP parser. |
+| 400 | INVALID_BENEFICIARY_DATA | `country` missing from beneficiary, OR a required SWIFT field is missing / violates its regex / fails min-max length. The error message lists each failing field. |
+| 422 | UNSUPPORTED_CORRIDOR | The (country, destination_type) pair has no schema. For example, SWIFT on a country that doesn't support it. |
+| 422 | AMOUNT_OUTSIDE_LIMITS | Quote amount is below or above the corridor's min/max limits. |
+| 422 | INSUFFICIENT_BALANCE | Company balance can't cover the payout (applies when source = 'offchain'). |
+| 410 | QUOTE_EXPIRED | Quote TTL elapsed before you called initialize or finalize. Fetch a fresh quote and start over. |
+
+## Common pitfalls
+
+<AccordionGroup>
+  <Accordion title="Beneficiary details on the quote">
+    They do not go there. The quote body has no `beneficiary` and no `destination_type`; both live on initialize.
+  </Accordion>
+  <Accordion title="Wrong casing on enums">
+    The API takes lowercase snake_case for `destination_type`, `remittance_purpose`, and `sender.type`. Uppercase is the downstream form; the adapter does the transform. Send `swift` / `family_support` / `business`.
+  </Accordion>
+  <Accordion title="Wrong casing on SWIFT/BIC codes">
+    Must be uppercase: `DEUTDEFF`, not `deutdeff`. Length is exactly 8 or 11 characters.
+  </Accordion>
+  <Accordion title="Conflating the three address blocks">
+    `bank_*` is the destination bank branch, nested `beneficiary.*` is the recipient's physical address, and `sender.*` is the payer's address. All three are independent.
+  </Accordion>
+  <Accordion title="Sending a body to finalize">
+    There is none. Anything you send is silently ignored.
+  </Accordion>
+  <Accordion title="Country appears twice">
+    Once at the top of `beneficiary` as the lookup key for the corridor schema, and once nested inside `beneficiary.country` as the recipient's country. They are often the same value.
+  </Accordion>
+  <Accordion title="Sender variant mismatch">
+    `type: "individual"` with a `registration_number` has the field silently ignored. `type: "business"` without `registration_number` fails validation.
+  </Accordion>
+  <Accordion title="Rejected name format">
+    `account_name` and `sender.account_name` must have at least 2 space-separated parts of at least 2 characters each. No `Mr`/`Mrs`/`Dr`, no single letter plus dot. `J. Doe` is rejected; `John Doe` passes.
+  </Accordion>
+  <Accordion title="IFSCode is the one camelCase field">
+    Every other SWIFT field is snake_case; India's IFSC code field is literally `IFSCode`. Sending `ifs_code` or `ifsc_code` silently fails validation as a missing required field.
+  </Accordion>
+  <Accordion title="AU BSB number has no dashes">
+    The placeholder shows `062-000`, but the regex `^\d{6}$` rejects the dash. Submit `062000`.
+  </Accordion>
+  <Accordion title="API callers must supply sender">
+    Dashboard users get it auto-injected from the authenticated company profile; direct API integrations do not.
+  </Accordion>
+</AccordionGroup>

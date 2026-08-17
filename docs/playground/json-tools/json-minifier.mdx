@@ -1,0 +1,35 @@
+---
+title: "JSON minifier"
+description: "Minification strips every byte that carries no meaning. Compare the original and minified size before sending a payload over the wire."
+---
+
+import { JsonMinifier } from "/snippets/playground/json-tools.jsx";
+
+<JsonMinifier />
+
+Whitespace between tokens is meaningless to a JSON parser, so removing it produces a smaller payload that parses to exactly the same value. For large bulk transfer files, the saving is often 20% to 40%.
+
+## When it matters
+
+- Request and response bodies over slow or metered mobile connections
+- Bulk upload files, where the saving compounds across thousands of rows
+- Values stored in a database column or cache, where size is billed or capped
+
+## Minifying in code
+
+```javascript
+JSON.stringify(JSON.parse(formatted));
+```
+
+```python
+import json
+json.dumps(payload, separators=(",", ":"))
+```
+
+```bash
+jq -c . payload.json
+```
+
+<Warning>
+  Minify before signing, not after. The HMAC signature covers the exact bytes you transmit, so if you sign a formatted body and then minify it, verification fails. See [Authentication](/api-reference/authentication/authentication).
+</Warning>

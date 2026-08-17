@@ -1,0 +1,138 @@
+---
+title: "Module 6: Blocks and blockchain state"
+description: "Block and chain state from the CLI: confirmation depth, re-orgs, and the mempool."
+---
+## Learning objectives
+
+- Read and interpret block and chain data using Bitcoin Core commands
+- Understand chain tips and how re-orgs occur in regtest
+- Track transaction confirmations and understand depth
+- Inspect the mempool for unconfirmed transactions
+
+## Reading block data
+
+After mining blocks in regtest or syncing a mainnet/testnet node, you can inspect block data using several bitcoin-cli commands.
+
+Get the hash of the most recent block:
+
+```bash
+bitcoin-cli -regtest getbestblockhash
+```
+
+Retrieve full block data using the hash:
+
+```bash
+bitcoin-cli -regtest getblock <block_hash>
+```
+
+To get just the header:
+
+```bash
+bitcoin-cli -regtest getblockheader <block_hash>
+```
+
+This includes:
+
+- Height
+- Timestamp
+- Version
+- Merkle root
+- Previous block hash
+- Nonce
+- Chainwork
+
+Get block hash by height:
+
+```bash
+bitcoin-cli -regtest getblockhash <height>
+```
+
+Example:
+
+```bash
+bitcoin-cli -regtest getblock $(bitcoin-cli -regtest getblockhash 1)
+```
+
+## Using getchaintips and understanding chain re-orgs
+
+The command getchaintips returns all known tips of the blockchain:
+
+```bash
+bitcoin-cli -regtest getchaintips
+```
+
+This is useful in regtest when you're simulating chain reorganizations. For example, if you invalidate a block:
+
+```bash
+bitcoin-cli -regtest invalidateblock <block_hash>
+```
+
+Then generate a longer competing chain (replace \<miner_address\> with your mining address):
+
+```bash
+bitcoin-cli -regtest generatetoaddress 2 <miner_address>
+```
+
+Your node will adopt the longer chain tip, causing a re-org. This is how Bitcoin resolves consensus forks.
+
+## Understanding confirmations and depth
+
+A transaction's confirmation count is equal to the number of blocks on top of the block that includes it.
+
+To see how many confirmations a transaction has (replace \<txid\> with an actual transaction ID):
+
+```bash
+bitcoin-cli -regtest gettransaction <txid>
+```
+
+You’ll see:
+
+- confirmations: number of blocks since inclusion
+- blockhash: which block it was mined in
+
+Alternatively, use :
+
+```cURL
+bitcoin-cli -regtest getrawtransaction <txid> true
+```
+
+To simulate confirmations in regtest, simply mine more blocks (replace \<miner_address\> with your mining address):
+
+```cURL
+bitcoin-cli -regtest generatetoaddress 3 <miner_address>
+```
+
+This simulates time passing and increases confirmation depth instantly.
+
+## Inspecting mempool transactions
+
+The mempool holds transactions waiting to be mined. In regtest, it’s typically empty unless you send a transaction before mining.
+
+List all mempool transactions:
+
+```bash
+bitcoin-cli -regtest getrawmempool
+```
+
+Get details of a specific mempool transaction (replace \<txid\> with an actual transaction ID):
+
+```cURL
+bitcoin-cli -regtest getmempoolentry <txid>
+```
+
+This shows:
+
+- Fee
+- Size
+- Ancestor/descendant count
+- Time in pool
+
+You can clear the mempool by restarting the node or by mining a block that confirms the pending transactions.
+
+## Activity
+
+1. Generate five blocks and get the latest block hash
+2. Use getblock and getblockheader ti inspect the block
+3. Send a transaction and observe it in the mempool before mining.
+4. Mine one block and check the transaction’s confirmation count.
+5. Invalidate the block using invalidateblock , then, inspect with getchaintips

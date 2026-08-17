@@ -1,0 +1,183 @@
+---
+title: "Future upgrade readiness"
+description: "Design choices that keep a wallet compatible with where Bitcoin is heading over the next decade."
+---
+Building a Bitcoin wallet today is not just about solving today's problems. It’s about designing for where Bitcoin is going over the next 5 to 10 years.
+
+If you build with flexibility and modularity now, your app will be able to adopt major Bitcoin innovations faster than competitors, offering your users:
+
+- Lower fees
+- Higher privacy
+- Better functionality
+- Stronger financial sovereignty
+
+Forward-looking wallets already plan for features like:
+
+- Taproot adoption
+- Lightning Network integration
+- Miniscript-based smart contracts
+- Silent Payments
+- Future fee market adaptations
+
+Bitnob is building infrastructure to support these upgrades progressively, but how you design your app today will determine how easily you can integrate them later.
+
+## 1. Taproot (P2TR)
+
+### What is Taproot?
+
+Taproot is a Bitcoin protocol upgrade (activated in 2021) that:
+
+- Improves privacy by making all transactions look the same on-chain.
+- Reduces fees for complex scripts (multi-signatures, smart contracts).
+- Enables new types of smart contracts via MAST (Merkelized Abstract Syntax Trees).
+- Enables Schnorr signatures, allowing aggregated and more efficient signature schemes.
+
+### Why Taproot matters for your wallet
+
+- If you only use Legacy or SegWit addresses, users miss out on fee savings and better privacy.
+- If you support Taproot addresses, your wallet will be future-proof and network aligned.
+
+### Taproot adoption best practices
+
+| Best Practice | Reason |
+|---|---|
+| Support generating Taproot addresses `bc1p...` | Prepare users for future wallets and applications. |
+| Allow user-selectable address types | E.g., SegWit or Taproot depending on user choice or receiving conditions. |
+| Update address validation and decoding logic | `bc1p` addresses have slightly different length and structure from `bc1q` SegWit addresses. |
+| Plan UI/UX properly | Distinguish Taproot addresses visually, but without confusing users. |
+
+<Tip>
+  Most Bitcoin wallet libraries like BDK already support Taproot generation and signing. Make sure you upgrade your dependencies.
+</Tip>
+
+## 2. Lightning network integration
+
+### What is Lightning?
+
+The Lightning Network is a Layer 2 solution for Bitcoin that enables:
+
+- Instant payments with near-zero fees.
+- Micropayments at scale.
+- Privacy improvements (payments are off-chain).
+
+It is used heavily today for:
+
+- Cross-border remittances
+- Everyday spending
+- Financial apps that want Bitcoin speed without mainchain delays
+
+### Why Lightning matters for your wallet
+
+- Bitcoin mainchain fees fluctuate and can become expensive.
+- Users demand faster, cheaper payments.
+- Adding Lightning expands your product into micropayments, gaming, remittances, tipping, and financial services.
+
+### Lightning integration pathways
+
+| Integration Level | Strategy |
+|---|---|
+| Phase 1 | Display Lightning invoices inside your app and route payments using external providers (e.g., Strike, OpenNode, Bitnob Lightning APIs). |
+| Phase 2 | Build an integrated Lightning wallet using Breez, LDK, BDK + Lightning modules. |
+| Phase 3 | Operate your own Lightning nodes and channels for routing. |
+
+At MVP level, it is recommended to start with custodial or semi-custodial Lightning integrations.
+
+As you mature, you can transition to full user-managed Lightning wallets.
+
+Bitnob plans to offer future support for easy Lightning settlement endpoints.
+
+## 3. Miniscript and policy-based wallets
+
+### What is Miniscript?
+
+Miniscript is a structured, safe language for describing Bitcoin scripts.
+
+It makes it easier to:
+
+- Create complex spending conditions (e.g., multisig, time locks, recovery options).
+- Analyze script safety.
+- Automate smart contract creation on Bitcoin.
+
+Wallets that integrate Miniscript:
+
+- Will be able to offer more flexible recovery options.
+- Can build conditional multi-signature schemes.
+- Can implement more advanced custody solutions.
+
+### Why Miniscript matters
+
+| Use Case | Example |
+|---|---|
+| Recovery wallets | Funds only recoverable after X days if main key is lost. |
+| Time-locked savings accounts | Bitcoins unlockable after 5 years. |
+| Enterprise multisig | M-of-N company signatures with fallback conditions. |
+| Escrow services | Conditional payments requiring dispute resolution scripts. |
+
+Today, Miniscript support is early, but projects like BDK and Bitcoin Core are moving toward full Miniscript-based wallet scripting engines.
+
+If you modularize your wallet today:
+
+- Key management
+- Transaction building
+- Policy creation
+
+You will be able to plug-in Miniscript support later without a full rewrite.
+
+## 4. Silent payments and PayJoin
+
+As explained earlier:
+
+- Silent Payments allow users to receive Bitcoin payments privately without address reuse or exposure.
+- PayJoin (P2EP) allows two parties to collaborate on a transaction to obscure which outputs are payments vs change.
+
+Both are huge for privacy and user financial safety.
+
+Future-ready wallets should:
+
+- Build address derivation and monitoring layers flexibly.
+- Anticipate more collaborative transaction construction in future UI flows.
+
+## How to future-proof your wallet architecture
+
+| Module | Design Tips |
+|---|---|
+| Key Management | Modularize key generation, storage, and signing separately from address generation logic. |
+| Address Derivation | Support multiple address types cleanly (Legacy, SegWit, Taproot). Allow easy new schemes later. |
+| Transaction Builder | Design flexible UTXO selection, input/output modeling. Anticipate multi-input collaborative transactions. |
+| Broadcast Layer | Separate transaction building from broadcasting. Bitnob can remain your relay layer while building advanced transactions yourself. |
+| Fee Estimation | Make fee estimation pluggable (e.g., allow dynamic updates from Bitnob or custom oracles). |
+| Monitoring Layer | Build address and transaction monitors modularly, allow for blockchain scanning enhancements later. |
+
+## Future roadmap readiness with Bitnob
+
+Bitnob’s infrastructure will progressively expand support for:
+
+- Taproot-native address watching and transaction propagation
+- Lightning endpoints and network bridging
+- Policy-based transaction broadcasting
+- Silent Payment detection layers
+- PayJoin / P2EP collaborative transaction construction
+- UTXO management APIs for smarter backend reconciliation
+
+If you build clean modular non-custodial wallets today, you will be able to plug into these future upgrades smoothly, instead of rewriting critical infrastructure under pressure.
+
+In Bitcoin, change is gradual, then sudden.
+
+Wallets that are built with hardcoded assumptions (e.g., "only Legacy addresses", "only single-signature wallets") will break when:
+
+- Fees spike
+- Privacy expectations increase
+- Complex scripting becomes mainstream
+- Layer 2 scaling becomes essential
+
+Wallets that build modular, forward-compatible systems today will adapt, expand, and lead.
+
+Building for the future is not an extra feature. It is survival.
+
+### Quick developer checklist
+
+- Support Legacy, SegWit, and Taproot addresses from day one.
+- Plan Lightning Network integrations, even if later phases.
+- Use libraries like BDK that already plan for Miniscript and Silent Payments.
+- Keep transaction building, signing, monitoring, and broadcasting modular.
+- Watch Bitnob’s evolving API roadmap for future support layers.

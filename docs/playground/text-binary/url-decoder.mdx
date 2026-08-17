@@ -1,0 +1,37 @@
+---
+title: "URL decoder"
+description: "Percent-decoding for query strings, redirect targets, and logged URLs, including safe handling of double-encoded values."
+---
+
+import { UrlTool } from "/snippets/playground/text-binary.jsx";
+
+<UrlTool mode="decode" />
+
+Turn percent-encoded text back into readable characters. Useful for reading a logged request URL, a redirect target, or a webhook callback parameter.
+
+## Double encoding
+
+A value that passed through two encoding steps shows a doubled percent sign:
+
+```
+%2520  →  %20  →  (space)
+```
+
+Decoding once leaves `%20`. Decode again to get the space. If you find yourself decoding twice routinely, something upstream is encoding an already-encoded value, and that is the real bug: a value encoded twice but decoded once will silently arrive wrong.
+
+## Plus signs
+
+In a query string, `+` historically means a space. In a path segment, `+` is a literal plus. A decoder cannot tell which you meant without knowing the position, so check the result when your input contains one.
+
+## Decoding in code
+
+```javascript
+decodeURIComponent("a%26b");        // "a&b"
+new URL(href).searchParams.get("q"); // decodes automatically
+```
+
+```python
+from urllib.parse import unquote, unquote_plus
+unquote("a%26b")        # "a&b"
+unquote_plus("a+b")     # "a b"
+```

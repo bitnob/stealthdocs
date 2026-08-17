@@ -1,0 +1,35 @@
+---
+title: "Custody models"
+description: "Three ways to hold bitcoin on Bitnob: the default custodial wallet, business-managed custody over managed RPC, and fully self-custodial wallets your users control."
+related:
+  - /docs/bitcoin/send-bitcoin
+  - /docs/bitcoin/user-managed-self-custodial-wallets
+---
+
+Who holds the keys is the first architectural decision in any Bitcoin product, and Bitnob supports all three answers. Everything else in this section follows from which one you pick.
+
+| Model | Keys held by | Bitnob provides | Fits |
+|---|---|---|---|
+| Custodial (default) | Bitnob | The full wallet: balances, on-chain and Lightning send and receive, webhooks. | Most integrations. Zero key management. |
+| Business-managed custody | Your business, on your infrastructure | Node infrastructure over managed RPC: address generation, monitoring, broadcasting, chain queries. | Exchanges, neobanks, treasuries that must control keys. |
+| Self-custodial | Your end users, on their devices | Broadcast, fee estimation, and monitoring APIs; no keys ever leave the device. | Wallet apps competing on sovereignty. |
+
+## Custodial: the default
+
+Every Bitnob account starts with a custodial Bitcoin wallet. Bitnob manages the private keys; you integrate the API for storing, sending on-chain, sending over Lightning, and receiving to any supported address format. If you are not sure which model you need, start here: [Send bitcoin on-chain or over Lightning](/docs/bitcoin/send-bitcoin) works against this wallet with no key management at all.
+
+## Business-managed custody
+
+You generate and store private keys on your own infrastructure; users have accounts inside your application; Bitnob supplies the Bitcoin node layer, so you never run Bitcoin Core yourself. Bitnob cannot access keys and never touches funds; it relays blockchain information and signed transactions.
+
+This is the model behind custodial products you operate: exchanges, crypto neobanks, internal treasuries, payment processors. The endpoint catalogue and integration flow are in [Run business-managed custody](/docs/bitcoin/business-managed-non-custodial-bitcoin-wallets).
+
+## Self-custodial
+
+Keys are generated and held on the user's device; signing happens locally; your backend never sees a private key or seed phrase. Bitnob's role shrinks to infrastructure: broadcasting signed transactions, estimating fees, and watching addresses for activity.
+
+You take on wallet engineering, BIP39 seeds, derivation, coin selection, typically via a toolkit like BDK. The build guide is [Build self-custodial wallets](/docs/bitcoin/user-managed-self-custodial-wallets).
+
+## Address types
+
+All three models speak the same address formats: Legacy (P2PKH), Nested SegWit (P2SH), Native SegWit (P2WPKH, recommended default), and Taproot (P2TR). The cost and privacy trade-offs between them are covered in [UTXO management](/docs/bitcoin/utxo-management-introduction) and [Fees and confirmation strategy](/docs/bitcoin/fee-market-and-transaction-strategies).

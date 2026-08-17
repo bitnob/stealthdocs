@@ -1,0 +1,2374 @@
+{
+  "info": {
+    "_postman_id": "57f0eae5-9ccc-467a-9a22-46bc39b27b06",
+    "name": "Bitnob Wallet Infrastructure API",
+    "description": "# Bitnob Enterprise API\n\nA high-performance Wallet-as-a-Service API for partners and developers:\nnon-custodial wallets, transactions, gas stations, on-chain subscriptions and\nplatform webhooks across multiple chains.\n\n## Authentication\n\nAuthenticate every request with your secret API key in the **X-API-Key**\nrequest header. Keys are scoped to one organization and carry a fixed set of\npermissions; an endpoint returns **403** when the key lacks the required\npermission. Treat the key as a credential \u2014 never expose it in a browser or\nmobile client.\n\n## Request tracing\n\nEvery response carries an **X-Request-Id** header. Log it, and quote it when\ncontacting support \u2014 it identifies the exact request in our systems.\n\n## Rate limits\n\nEvery response carries the current rate-limit state:\n\n- **X-RateLimit-Limit** \u2014 requests permitted in the current window.\n- **X-RateLimit-Remaining** \u2014 requests still available in this window.\n- **X-RateLimit-Reset** \u2014 Unix time (seconds) when the window resets.\n- **X-RateLimit-Scope** \u2014 the scope the limit was applied at.\n\nRead these proactively and slow down before you are throttled. When a limit is\nexceeded the API responds **429** with a **Retry-After** header (seconds to\nwait); retry only after that delay.\n\n## Idempotency\n\nSend an **Idempotency-Key** header (a unique value you generate, e.g. a UUID)\non **POST**, **PATCH** and **DELETE** requests so a network retry never\napplies the same change twice.\n\n- It is **required** on value-moving endpoints (creating transactions,\n  creating addresses, refilling and sponsor-broadcasting gas stations,\n  creating wallets); those return **400 idempotency_key_required** if absent.\n- Keys are retained for **24 hours**.\n- Retrying with the same key replays the original response byte-for-byte and\n  adds an **Idempotent-Replayed: true** header.\n- Reusing a key with a **different request body** is rejected with\n  **409 idempotency_conflict** \u2014 generate a fresh key per distinct operation.\n- Only successful (2xx) responses are stored, so a request that failed can be\n  safely retried with the same key.\n- An Idempotency-Key sent without authentication is rejected with **401**.\n\n## Pagination\n\nList endpoints are cursor-paginated. Parameters:\n\n- **limit** \u2014 page size; bounded by the endpoint maximum.\n- **starting_after** \u2014 return the page after this opaque cursor.\n- **ending_before** \u2014 return the page before this opaque cursor.\n\nSupplying both **starting_after** and **ending_before** is rejected with\n**400 ambiguous_cursor**. Every list response is the same envelope:\n\n    {\n      \"object\": \"list\",\n      \"data\": [ ... ],\n      \"has_more\": true,\n      \"next_cursor\": \"b3JnOjE2ODk...\",\n      \"url\": \"/wallets\"\n    }\n\nWhen **has_more** is true, pass **next_cursor** as **starting_after** to fetch\nthe following page. Cursors are opaque \u2014 do not parse or construct them.\n\n## Errors\n\nEvery error response is the same envelope:\n\n    {\n      \"error\": {\n        \"type\": \"invalid_request_error\",\n        \"code\": \"invalid_cursor\",\n        \"message\": \"starting_after is not a valid cursor\",\n        \"param\": \"starting_after\",\n        \"request_id\": \"req_01HX...\"\n      }\n    }\n\n**type** is the broad category; **code** is a stable, machine-readable\nidentifier \u2014 branch on **code**, show **message** to humans, and **param**\nnames the offending field when applicable.\n\n### Error code catalogue\n\n**invalid_request_error** (HTTP 400) \u2014 the request was malformed or failed\nvalidation: invalid_request, invalid_json, invalid_body, empty_body,\ntrailing_data, type_mismatch, unknown_field, missing_required_field,\ninvalid_id, invalid_cursor, ambiguous_cursor, invalid_expand, invalid_chain,\ninvalid_vault_id, wallet_chain_unknown, invalid_transaction_data,\namount_precision_loss, gas_station_low_balance, body_too_large,\nidempotency_key_required, idempotency_key_invalid, invalid_webhook_id,\nmethod_not_allowed.\n\n**authentication_error** (HTTP 401) \u2014 the request was not authenticated:\nnot_authenticated, auth_required, org_required.\n\n**permission_error** (HTTP 403) \u2014 the request is authenticated but not\npermitted: insufficient_permissions (the API key lacks the required\npermission), ip_not_allowed (the request's source IP is not in the key's IP\nallowlist).\n\n**not_found_error** (HTTP 404) \u2014 the addressed resource does not exist:\nnot_found, route_not_found, asset_not_found, event_not_found,\ngas_station_not_found, subscription_not_found, transaction_not_found,\nvault_not_found, wallet_not_found, address_not_found, webhook_not_found.\n\n**conflict_error** (HTTP 409) \u2014 the request conflicts with current state:\nconflict, idempotency_conflict, wallet_archived.\n\n**rate_limit_error** (HTTP 429) \u2014 too many requests: rate_limit_exceeded.\n\n**api_error** (HTTP 500) \u2014 an unexpected server error: request_error,\ninternal_error.\n\n**service_unavailable_error** (HTTP 503) \u2014 a dependency is unavailable;\nretry after the Retry-After delay: service_unavailable.\n\n## Webhook signature verification\n\nThe platform signs every webhook delivery with HMAC-SHA256 using the signing\nsecret issued when you create the webhook or subscription (and rotated via the\nrotate-secret endpoints \u2014 the plaintext secret is shown only once).\n\nThe signature covers the canonical JSON object below, where **data**,\n**event** and **timestamp** are the corresponding fields of the delivered\npayload and **timestamp** is Unix seconds:\n\n    {\"data\": <data>, \"event\": \"<event>\", \"timestamp\": <unix_seconds>}\n\nThe signed object contains ONLY those three keys \u2014 when verifying, build a\nfresh object from the delivery's data, event and timestamp and exclude the\nsignature field (and any other body fields) from the HMAC input. Serialize the\nkeys in lexical order (data, event, timestamp), matching Go's encoding/json.\nThe signature value is:\n\n    \"sha256=\" + hex( HMAC_SHA256(signing_secret, canonical_json) )\n\n**Platform webhooks** (created via /webhooks) carry this value in the\n**X-Webhook-Signature** response header. **On-chain subscription webhooks**\n(created via /subscriptions) carry it as a **signature** field inside the\ndelivered JSON body \u2014 there is no signature header.\n\nTo verify a delivery: recompute the signature from your stored secret and\ncompare it to the received value with a constant-time comparison. Reject the\ndelivery on mismatch, and reject deliveries whose **timestamp** is older than\nyour tolerance window (a few minutes is typical) to defend against replay.\n\n## Webhook event types\n\n**Platform notification webhooks** (/webhooks) deliver these event types:\nwallet.created, wallet.deleted, wallet.suspended, wallet_address.created,\ntransaction.created, transaction.signed, transaction.broadcasting,\ntransaction.confirmed, transaction.completed, transaction.received,\ntransaction.failed, transaction.cancelled, gas_station.low_balance,\ngas_station.critical_balance, gas_station.auto_refilled, session.created,\napi_key.created, api_key.deleted, policy.violation, kyt.deposit.held,\nkyt.deposit.approved, kyt.deposit.rejected, kyt.deposit.blocked,\nkyt.withdrawal.blocked, kyt.sanctions.match, kyt.alert.escalated,\nkyt.screening.timeout, kyt.screening.requeued, kyt.screening.completed.\n\n**On-chain subscription webhooks** (/subscriptions) deliver these event\ntypes: incoming_native_tx, incoming_token_tx, incoming_nft_transfer,\nincoming_internal_tx, outgoing_native_tx, outgoing_token_tx,\noutgoing_nft_transfer, outgoing_internal_tx, tx_failed, tx_pending,\nconfirmation_threshold_met, confirmation_finalized, contract_deployed,\ncontract_executed, balance_changed.\n\n## Versioning and deprecation\n\nPin the API version with the **API-Version** request header; omit it to take\nthe current default. Additive changes (new endpoints, new optional fields) are\nnot versioned and may appear at any time \u2014 write tolerant clients.\n\nWhen an operation or version is scheduled for removal it is marked\n**deprecated** in this specification, and its responses carry a\n**Deprecation** header plus a **Sunset** header (RFC 8594) giving the date\nafter which it stops functioning. Monitor those headers and migrate before the\nSunset date.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "bitnob-docs"
+  },
+  "item": [
+    {
+      "name": "Assets",
+      "description": "Assets endpoints",
+      "item": [
+        {
+          "name": "Get asset",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/assets/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "assets",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single asset by ID (e.g. ETH, USDC_ETH, BTC)."
+          },
+          "response": []
+        },
+        {
+          "name": "List assets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/assets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "assets"
+              ],
+              "query": [
+                {
+                  "key": "chain",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by chain (e.g. ethereum, bitcoin)."
+                },
+                {
+                  "key": "type",
+                  "value": "native",
+                  "disabled": true,
+                  "description": "Filter by asset type."
+                }
+              ]
+            },
+            "description": "Returns all supported assets. Filterable by chain and type."
+          },
+          "response": []
+        },
+        {
+          "name": "List chains",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/assets/chains",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "assets",
+                "chains"
+              ]
+            },
+            "description": "Returns all supported blockchain networks."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gasstations",
+      "description": "Gasstations endpoints",
+      "item": [
+        {
+          "name": "Get gas station",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gasstations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gasstations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single gas station by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "List gas stations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gasstations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gasstations"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "chain",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by chain (e.g. bitcoin, ethereum, tron)."
+                }
+              ]
+            },
+            "description": "Returns gas stations for the organization. Filterable by chain."
+          },
+          "response": []
+        },
+        {
+          "name": "Create gas station",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gasstations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gasstations"
+              ]
+            },
+            "description": "Creates a new gas station for automated fee management.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auto_refill_enabled\": false,\n  \"chain\": \"ethereum\",\n  \"gas_strategy\": \"standard\",\n  \"name\": \"Ethereum gas station\",\n  \"network\": \"mainnet\",\n  \"refill_amount\": \"0.25\",\n  \"refill_from_wallet_id\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\",\n  \"threshold\": \"0.05\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refill gas station",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": false,
+                "description": "Idempotency key (required)"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gasstations/:id/refill",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gasstations",
+                ":id",
+                "refill"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Transfers funds to refill a gas station. Requires the Idempotency-Key header.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"0.25\",\n  \"source_wallet_id\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sponsor and broadcast external Tron transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": false,
+                "description": "Idempotency key (required)"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gasstations/:id/sponsor-broadcast",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gasstations",
+                ":id",
+                "sponsor-broadcast"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Sponsors and/or broadcasts an externally signed Tron transaction using the selected gas station. Requires the Idempotency-Key header.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"100\",\n  \"asset\": \"USDT\",\n  \"fee_level\": \"medium\",\n  \"from_address\": \"TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE\",\n  \"network\": \"mainnet\",\n  \"signed_tx\": \"0a02...\",\n  \"to_address\": \"TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb\",\n  \"tx_hash\": \"e1f2c3...\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update gas station",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/gasstations/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "gasstations",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Updates a gas station's refill configuration \u2014 threshold, auto-refill toggle, and refill amount. Omitted fields are left unchanged.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"auto_refill_enabled\": false,\n  \"name\": \"string\",\n  \"refill_amount\": \"string\",\n  \"threshold\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meta",
+      "description": "Meta endpoints",
+      "item": [
+        {
+          "name": "Get API key info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "me"
+              ]
+            },
+            "description": "Returns metadata about the authenticated API key including organization and scopes."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rpc",
+      "description": "Rpc endpoints",
+      "item": [
+        {
+          "name": "Execute RPC call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rpc/:chain",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rpc",
+                ":chain"
+              ],
+              "variable": [
+                {
+                  "key": "chain",
+                  "value": "string",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Proxies a JSON-RPC 2.0 call to the specified blockchain node. The request body and response body are passed through verbatim.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": null,\n  \"jsonrpc\": \"string\",\n  \"method\": \"string\",\n  \"params\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "description": "Subscriptions endpoints",
+      "item": [
+        {
+          "name": "Get subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single subscription by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get subscription delivery event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/events/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                "events",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single delivery event by ID. The event must belong to a subscription owned by the caller's organization."
+          },
+          "response": []
+        },
+        {
+          "name": "List subscription delivery events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true,
+                  "description": "Filter by delivery status."
+                },
+                {
+                  "key": "subscription_id",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Narrow the listing to a single subscription."
+                }
+              ]
+            },
+            "description": "Returns a paginated list of on-chain delivery events for this organization across all subscriptions, newest first. Filter to a single subscription with the subscription_id query param."
+          },
+          "response": []
+        },
+        {
+          "name": "List subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "chain",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by chain."
+                },
+                {
+                  "key": "network",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by network (e.g. mainnet, testnet)."
+                },
+                {
+                  "key": "status",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by subscription status."
+                }
+              ]
+            },
+            "description": "Returns a paginated list of subscriptions for the organization. Filterable by chain, network, status."
+          },
+          "response": []
+        },
+        {
+          "name": "Create subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions"
+              ]
+            },
+            "description": "Creates an address subscription to monitor blockchain activity.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\n  \"chain\": \"ethereum\",\n  \"event_type\": \"incoming_token_tx\",\n  \"label\": \"Customer deposit monitor\",\n  \"metadata\": {},\n  \"network\": \"mainnet\",\n  \"webhook_url\": \"https://example.com/webhooks/bitnob\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Retry subscription delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/events/:id/retry",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                "events",
+                ":id",
+                "retry"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Re-queues the specified delivery for another attempt. Org ownership is enforced via the delivery's parent subscription."
+          },
+          "response": []
+        },
+        {
+          "name": "Rotate signing secret",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/:id/rotate-secret",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                ":id",
+                "rotate-secret"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Generates a new HMAC signing secret for this subscription's webhook URL. The new secret is returned once."
+          },
+          "response": []
+        },
+        {
+          "name": "Update subscription",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Partially updates a subscription.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_type\": \"string\",\n  \"webhook_url\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/subscriptions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "subscriptions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Soft-deletes a subscription and removes it from the provider."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "description": "Transactions endpoints",
+      "item": [
+        {
+          "name": "Get transaction",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single transaction by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "List transactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "wallet_id",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by wallet UUID."
+                },
+                {
+                  "key": "status",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by transaction status."
+                },
+                {
+                  "key": "direction",
+                  "value": "inbound",
+                  "disabled": true,
+                  "description": "Filter by direction."
+                },
+                {
+                  "key": "asset",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by asset symbol (e.g. USDT)."
+                },
+                {
+                  "key": "created_at[gte]",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Created at >= this RFC3339 timestamp."
+                },
+                {
+                  "key": "created_at[lte]",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Created at <= this RFC3339 timestamp."
+                }
+              ]
+            },
+            "description": "Returns a paginated list of transactions. Filterable by wallet_id, status, direction, asset, and created_at range."
+          },
+          "response": []
+        },
+        {
+          "name": "Create transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": false,
+                "description": "Idempotency key (required)"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "transactions"
+              ]
+            },
+            "description": "Creates a new transaction. The transaction is automatically signed using your API key credentials and submitted for broadcast. Requires the Idempotency-Key header.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"25.5\",\n  \"asset\": \"USDC\",\n  \"fee_level\": \"medium\",\n  \"gas_station_id\": \"9b2e7a1c-3d4f-4a8b-9c0d-1e2f3a4b5c6d\",\n  \"network\": \"mainnet\",\n  \"note\": \"Invoice 4471 payout\",\n  \"sponsor_gas\": false,\n  \"to_address\": \"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\n  \"wallet_id\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Vaults",
+      "description": "Vaults endpoints",
+      "item": [
+        {
+          "name": "Get vault",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vaults/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vaults",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single vault by ID with wallet count."
+          },
+          "response": []
+        },
+        {
+          "name": "List vaults",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vaults",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vaults"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "vault_type",
+                  "value": "dedicated",
+                  "disabled": true,
+                  "description": "Filter by vault type."
+                },
+                {
+                  "key": "status",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by status."
+                }
+              ]
+            },
+            "description": "Returns vaults for the organization. Filterable by vault_type and status."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Wallets",
+      "description": "Wallets endpoints",
+      "item": [
+        {
+          "name": "Get address",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets/:id/addresses/:addressId",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets",
+                ":id",
+                "addresses",
+                ":addressId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                },
+                {
+                  "key": "addressId",
+                  "value": "string",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single address by ID. The address must belong to the wallet in the path."
+          },
+          "response": []
+        },
+        {
+          "name": "Get wallet",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets",
+                ":id"
+              ],
+              "query": [
+                {
+                  "key": "expand[]",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Expand related resources inline (e.g. addresses)."
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single wallet by ID. Supports expand[]=addresses."
+          },
+          "response": []
+        },
+        {
+          "name": "List addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets/:id/addresses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets",
+                ":id",
+                "addresses"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a paginated list of addresses for a wallet."
+          },
+          "response": []
+        },
+        {
+          "name": "List wallet balances",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets/:id/balances",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets",
+                ":id",
+                "balances"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns all asset balances for a wallet."
+          },
+          "response": []
+        },
+        {
+          "name": "List wallets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "chain",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by chain."
+                },
+                {
+                  "key": "status",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Filter by wallet status."
+                },
+                {
+                  "key": "expand[]",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Expand related resources inline (e.g. addresses)."
+                }
+              ]
+            },
+            "description": "Returns a paginated list of wallets. Supports expand[]=addresses, chain, and status filters."
+          },
+          "response": []
+        },
+        {
+          "name": "Create address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets/:id/addresses",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets",
+                ":id",
+                "addresses"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Derives an address for the wallet. Account-based chains (Ethereum / EVM L2s, Solana, Tron, TON) hold exactly one address per wallet \u2014 repeated calls with an asset_id on the same chain return the existing primary (with `X-Idempotent-Replayed: true`). Bitcoin permits multiple addresses, so each call derives a new one.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address_format\": \"p2wpkh\",\n  \"label\": \"Customer deposits\",\n  \"network\": \"mainnet\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets"
+              ]
+            },
+            "description": "Creates a new wallet inside an existing vault, scoped to the given chain. vault_id is required \u2014 create the vault first, then create wallets under it. The chain's native primary address is auto-provisioned as part of creation; partners do not need a second call. Use POST /wallets/:id/addresses afterwards only for Bitcoin (which permits multiple addresses) \u2014 account-based chains return the same primary on subsequent calls.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chain\": \"ethereum\",\n  \"customer_ref_id\": \"cust_8842\",\n  \"metadata\": {},\n  \"name\": \"Treasury wallet\",\n  \"network\": \"mainnet\",\n  \"vault_id\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\",\n  \"wallet_type\": \"hot\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update wallet",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/wallets/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "wallets",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Updates a wallet's name or metadata. Omitted fields are left unchanged.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metadata\": {},\n  \"name\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "description": "Webhooks endpoints",
+      "item": [
+        {
+          "name": "Get webhook",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single webhook endpoint by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get webhook delivery event",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/events/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "events",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Returns a single delivery event by ID. The event must belong to a webhook owned by the caller's organization."
+          },
+          "response": []
+        },
+        {
+          "name": "List webhook delivery events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/events",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true,
+                  "description": "Filter by delivery status."
+                },
+                {
+                  "key": "webhook_id",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Narrow the listing to a single webhook."
+                }
+              ]
+            },
+            "description": "Returns a paginated list of platform notification deliveries for this organization across all webhook endpoints, newest first. Filter to a single endpoint with the webhook_id query param."
+          },
+          "response": []
+        },
+        {
+          "name": "List webhooks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks"
+              ],
+              "query": [
+                {
+                  "key": "starting_after",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page after this item."
+                },
+                {
+                  "key": "ending_before",
+                  "value": "string",
+                  "disabled": true,
+                  "description": "Opaque cursor; returns the page before this item."
+                },
+                {
+                  "key": "limit",
+                  "value": "0",
+                  "disabled": true,
+                  "description": "Page size; bounded by the endpoint maximum."
+                }
+              ]
+            },
+            "description": "Returns webhook endpoints for the organization."
+          },
+          "response": []
+        },
+        {
+          "name": "Create webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks"
+              ]
+            },
+            "description": "Registers a new webhook endpoint for platform notifications. The signing secret is returned once at creation time; subsequent reads do not include it. Pass event_types to filter to a subset, or omit to receive every event the platform emits.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_types\": [\n    \"string\"\n  ],\n  \"name\": \"Production notifications\",\n  \"url\": \"https://example.com/webhooks/bitnob\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Retry webhook delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/events/:id/retry",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                "events",
+                ":id",
+                "retry"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Re-queues the specified platform notification delivery for another attempt. Org ownership is enforced via the delivery's parent webhook."
+          },
+          "response": []
+        },
+        {
+          "name": "Rotate signing secret",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/:id/rotate-secret",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                ":id",
+                "rotate-secret"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Generates a new signing secret. The new secret is returned once."
+          },
+          "response": []
+        },
+        {
+          "name": "Update webhook",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Updates a webhook endpoint's URL, name, or event-type filter.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_types\": [\n    \"string\"\n  ],\n  \"name\": \"string\",\n  \"url\": \"https://example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete webhook",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "API-Version",
+                "value": "v1",
+                "type": "text",
+                "disabled": true,
+                "description": "API version (defaults to the latest supported version if omitted)."
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "disabled": true,
+                "description": "Idempotency key"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/webhooks/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "webhooks",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Soft-deletes a webhook endpoint."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,277 @@
+---
+title: "Authentication"
+sidebarTitle: "Overview"
+description: "Base URL, HMAC signing scheme, and the headers every Bitnob API request must carry."
+---
+
+Every request goes to `https://api.bitnob.com` and is signed with HMAC-SHA256. There is one authentication mode, and it needs both your `CLIENT_ID` and `CLIENT_SECRET`. Signing binds each request to a timestamp and a nonce, so a captured request cannot be replayed or altered.
+
+## Credentials
+
+<ResponseField name="CLIENT_ID" type="string" required>
+  Your Bitnob client ID, issued when you create an app. Sent as the `X-Auth-Client` header.
+</ResponseField>
+
+<ResponseField name="CLIENT_SECRET" type="string" required>
+  Your Bitnob secret key. Used only to compute the signature, never transmitted.
+</ResponseField>
+
+<Warning>
+  `CLIENT_SECRET` signs requests, so anyone holding it can act as you. Keep it server-side. Never ship it in a mobile app, browser bundle, or public repository.
+</Warning>
+
+Load both from the environment rather than hardcoding them:
+
+<CodeGroup>
+
+```bash macOS / Linux
+export CLIENT_ID=yourClientId
+export CLIENT_SECRET=yourSecretKey
+```
+
+```powershell PowerShell
+$env:CLIENT_ID = "yourClientId"
+$env:CLIENT_SECRET = "yourSecretKey"
+```
+
+```batch Windows CMD
+set CLIENT_ID=yourClientId
+set CLIENT_SECRET=yourSecretKey
+```
+
+```go Go
+import "os"
+
+var (
+	ClientID     = os.Getenv("CLIENT_ID")
+	ClientSecret = os.Getenv("CLIENT_SECRET")
+)
+```
+
+</CodeGroup>
+
+## Required headers
+
+Send all four headers on every request. A request missing any of them is rejected.
+
+| Header | Value | Purpose |
+|---|---|---|
+| `X-Auth-Client` | Your `CLIENT_ID` | Identifies the caller |
+| `X-Auth-Timestamp` | Unix timestamp in seconds | Lets the API reject stale requests |
+| `X-Auth-Nonce` | 16-byte nonce, hex-encoded | Makes each request unique |
+| `X-Auth-Signature` | Hex-encoded HMAC-SHA256 | Proves integrity and authenticity |
+
+## How signing works
+
+<Steps>
+  <Step title="Generate a nonce and timestamp">
+    The nonce is 16 cryptographically random bytes, hex-encoded. The timestamp is the current Unix time in seconds, for example `1719236465`.
+  </Step>
+  <Step title="Build the canonical message">
+    Join four fields with colons, in exactly this order:
+
+    ```text
+    CLIENT_ID:TIMESTAMP:NONCE:PAYLOAD
+    ```
+
+    `PAYLOAD` is the exact request body you send, byte for byte, with no added whitespace or line breaks. For a request with no body, use an empty string.
+  </Step>
+  <Step title="Compute the signature">
+    Take HMAC-SHA256 over the canonical message, keyed with `CLIENT_SECRET`, then hex-encode the raw output.
+
+    ```text
+    stringToSign = CLIENT_ID:TIMESTAMP:NONCE:PAYLOAD
+    raw_hmac     = HMAC_SHA256(stringToSign, CLIENT_SECRET)
+    signature    = HexEncode(raw_hmac)
+    ```
+  </Step>
+  <Step title="Attach the headers">
+    Send the four headers above alongside the request body you signed. Serialize the body once and reuse that exact string for both, or the signature will not match.
+  </Step>
+</Steps>
+
+The API rejects a request if the timestamp falls outside an acceptable window (roughly five minutes), if the nonce has been seen before, or if the computed signature does not match the one you sent.
+
+## Reference implementations
+
+Each function returns the four headers for a given request body.
+
+<CodeGroup>
+
+```js Node.js
+const crypto = require("crypto");
+
+/**
+ * Generate HMAC authentication headers for API requests
+ * @param {string} clientId - Your client ID
+ * @param {string} clientSecret - Your client secret
+ * @param {object|string|null} body - Request body (optional)
+ * @returns {object} Headers object with authentication headers
+ */
+function generateAuthHeaders(clientId, clientSecret, body = null) {
+  if (!clientId || !clientSecret) {
+    throw new Error("CLIENT_ID or CLIENT_SECRET is not provided");
+  }
+
+  // Timestamp in seconds
+  const timestamp = Math.floor(Date.now() / 1000);
+
+  // 16-byte random nonce, hex-encoded
+  const nonce = crypto.randomBytes(16).toString("hex");
+
+  // Payload: stringify body if provided
+  let payload = "";
+  if (body) {
+    payload = typeof body === "string" ? body : JSON.stringify(body);
+  }
+
+  // Build string to sign
+  const stringToSign = `${clientId}:${timestamp}:${nonce}:${payload}`;
+
+  // Generate HMAC-SHA256 signature
+  const signature = crypto.createHmac("sha256", clientSecret).update(stringToSign).digest("hex");
+
+  return {
+    "X-Auth-Client": clientId,
+    "X-Auth-Timestamp": timestamp.toString(),
+    "X-Auth-Nonce": nonce,
+    "X-Auth-Signature": signature,
+  };
+}
+
+module.exports = { generateAuthHeaders };
+```
+
+```go Go
+package auth
+
+import (
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+)
+
+// AuthHeaders contains the HMAC authentication headers
+type AuthHeaders struct {
+	XAuthClient    string
+	XAuthTimestamp string
+	XAuthNonce     string
+	XAuthSignature string
+}
+
+// GenerateAuthHeaders generates HMAC authentication headers for API requests
+func GenerateAuthHeaders(clientID, clientSecret string, body interface{}) (*AuthHeaders, error) {
+	if clientID == "" || clientSecret == "" {
+		return nil, errors.New("CLIENT_ID or CLIENT_SECRET is not provided")
+	}
+
+	// Timestamp in seconds
+	timestamp := time.Now().Unix()
+
+	// 16-byte random nonce, hex-encoded
+	nonceBytes := make([]byte, 16)
+	_, err := rand.Read(nonceBytes)
+	if err != nil {
+		return nil, err
+	}
+	nonce := hex.EncodeToString(nonceBytes)
+
+	// Payload: stringify body if provided
+	var payload string
+	if body != nil {
+		switch v := body.(type) {
+		case string:
+			payload = v
+		default:
+			jsonBytes, err := json.Marshal(body)
+			if err != nil {
+				return nil, err
+			}
+			payload = string(jsonBytes)
+		}
+	}
+
+	// Build string to sign
+	stringToSign := fmt.Sprintf("%s:%d:%s:%s", clientID, timestamp, nonce, payload)
+
+	// Generate HMAC-SHA256 signature
+	h := hmac.New(sha256.New, []byte(clientSecret))
+	h.Write([]byte(stringToSign))
+	signature := hex.EncodeToString(h.Sum(nil))
+
+	return &AuthHeaders{
+		XAuthClient:    clientID,
+		XAuthTimestamp: fmt.Sprintf("%d", timestamp),
+		XAuthNonce:     nonce,
+		XAuthSignature: signature,
+	}, nil
+}
+```
+
+```python Python
+import hmac
+import hashlib
+import secrets
+import time
+import json
+
+
+def generate_auth_headers(client_id: str, client_secret: str, body=None) -> dict:
+    """
+    Generate HMAC authentication headers for API requests.
+
+    :param client_id: Your Bitnob client ID
+    :param client_secret: Your Bitnob client secret
+    :param body: Request body as dict, str, or None
+    :returns: Dict of authentication headers
+    """
+    if not client_id or not client_secret:
+        raise ValueError("client_id or client_secret is not provided")
+
+    # Timestamp in seconds
+    timestamp = int(time.time())
+
+    # 16-byte random nonce, hex-encoded
+    nonce = secrets.token_hex(16)
+
+    # Payload: stringify body if provided
+    payload = ""
+    if body is not None:
+        payload = body if isinstance(body, str) else json.dumps(body)
+
+    # Build string to sign
+    string_to_sign = f"{client_id}:{timestamp}:{nonce}:{payload}"
+
+    # Generate HMAC-SHA256 signature (hex-encoded)
+    signature = hmac.new(
+        client_secret.encode(),
+        string_to_sign.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return {
+        "X-Auth-Client": client_id,
+        "X-Auth-Timestamp": str(timestamp),
+        "X-Auth-Nonce": nonce,
+        "X-Auth-Signature": signature,
+    }
+```
+
+</CodeGroup>
+
+## Verify your setup
+
+Sign a request to `/api/whoami`. It takes no body, so the payload segment of the canonical message is an empty string, which makes it the simplest way to confirm your signing function is correct.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/whoami` | Confirms your credentials and signature are valid |
+| `GET /api/balances` | Reads your balances |
+| `POST /api/customers` | Creates a customer |
+
+A `401` means the signature did not verify. Check that you signed the exact body string you sent, that the timestamp is in seconds rather than milliseconds, and that the nonce is hex-encoded.

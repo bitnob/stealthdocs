@@ -1,0 +1,173 @@
+---
+title: "Module 7: Designing controls & prevention systems"
+description: "The shift from detection to prevention, using rule-based and adaptive controls across the card stack."
+---
+## Objective
+
+This module equips your engineering, compliance, and product teams to move from fraud detection to prevention by embedding rule-based and intelligent safeguards throughout your virtual card infrastructure.
+
+Key goals:
+
+- Reduce exposure to known attack vectors
+- Shift fraud from reactive to proactive handling
+- Block high-risk actions at the edge
+- Minimize false positives without weakening controls
+
+## Security by design
+
+Designing fraud-resistant infrastructure requires a multi-layered approach across:
+
+| Layer | Strategy |
+|---|---|
+| API | Enforce rate limits, authentication, payload verification |
+| Card Lifecycle | Restrict velocity of creation, termination, and top-up |
+| Transaction Controls | Use MCC, BIN, geolocation, and spend behavior |
+| Refund System | Require strict matching, validation, and time checks |
+| Identity | Leverage device, IP, biometric, and behavioral signals |
+
+Reminder: Prevention starts with design. Controls must be active before fraud occurs, not after.
+
+## Rule-based controls that work
+
+Controls to Implement Immediately:
+
+| Category | Rule |
+|---|---|
+| Card Creation | Max 2 cards per user per 24 hours |
+| Top-up | Only allowed if card is active |
+| Spend | Deny if MCC ∈ [6051, 4829, 7995] or BIN conflict |
+| Refund | Require matching spendRef within past 30 days |
+| Chargebacks | Auto-flag user if > 2 disputes in 7 days |
+| Declines | Freeze card if 3 consecutive failed authorizations |
+| Withdrawals | Require $1 minimum post-withdrawal balance |
+
+## Behavior-based prevention (smart systems)
+
+Complement rule-based checks with behavioral systems:
+
+| Input | Action |
+|---|---|
+| Device fingerprint seen in past fraud | Prevent card creation, block login |
+| User's velocity exceeds norm | Limit top-ups or spend until review |
+| User spends at new MCC + new merchant | Soft-approve with secondary verification |
+| Pattern matches refund laundering graph | Trigger full manual review |
+| User moves float across card-wallet-card loop | Lock and route to treasury team |
+
+Insight: Intelligent risk engines reduce false positives while catching high-complexity fraud early.
+
+## Real-time transaction decision layer
+
+For every card transaction, design a decision layer:
+
+```json
+{
+  "cardId": "abc123",
+  "merchant": {
+    "mcc": 6051,
+    "name": "CRYPTO SERVICES"
+  },
+  "user": {
+    "id": "user456",
+    "kycTier": "1",
+    "deviceHash": "XYZ"
+  },
+  "rules": {
+    "mccBlocked": true,
+    "userTierTooLow": true,
+    "velocitySafe": true
+  },
+  "decision": "decline",
+  "reason": "MCC blocked, user tier insufficient"
+}
+```
+
+This enables:
+
+- Transparency in enforcement
+- Logging and auditing of risk decisions
+- Fast debugging of false positives
+- Data for tuning fraud rules
+
+## Webhook & log-Driven defense
+
+Webhooks can serve not just as notifications, but detection points:
+
+| Webhook | Risk Action |
+|---|---|
+| transaction.reversed without transaction.debit | Investigate: reversal abuse |
+| refund without matching authorization | Freeze and hold until review |
+| transaction.declined + card terminated | User-triggered attack pattern |
+| Multiple topup.failed on same card | Float abuse or wallet manipulation attempt |
+
+All webhooks must be:
+
+- Authenticated
+- Timestamped
+- Logged to a fraud log channel or monitoring system
+- Mapped to float movements
+
+## User lifecycle protections
+
+A user's full behavior must be scored across:
+
+- Identity (KYC, IP, phone number, email)
+- Devices used
+- Card usage
+- Refund or dispute rate
+- Card creation/termination frequency
+- Wallet movement history
+
+Design a risk score across these vectors to:
+
+- Approve actions (soft vs hard)
+- Limit daily activity
+- Escalate to human review
+- Block suspicious behavior entirely
+
+## Policy enforcement examples
+
+| Policy | Implementation |
+|---|---|
+| Refunds only go to active cards | Check card status before credit |
+| Chargebacks above threshold block card creation | Store rolling 7-day chargeback counter |
+| Declines over threshold freeze card | Count declines in the last 15 minutes |
+| High refund velocity across users to same MCC | Block merchant temporarily |
+| IP shared by flagged users | Add to firewall blocklist |
+
+## Module 7 knowledge check
+
+### 1. Why should refund logic enforce a matching spend reference?
+
+A. To prevent reversal loops
+
+B. To speed up refunds
+
+C. To reduce MCC fees
+
+D. To confirm legitimacy and block fake refunds
+
+**Answer:** D
+
+### 2. What's a risk of allowing refund-to-float for terminated cards without review?
+
+A. Poor UX
+
+B. Lost merchant support
+
+C. Float laundering and user abuse
+
+D. Extra audit cost
+
+**Answer:** C
+
+### 3. What is the benefit of mapping all decisions in real time?
+
+A. Allows better merchant reconciliation
+
+B. Helps spot webhook issues
+
+C. Makes logs easier to sort
+
+D. Provides transparency and auditability of fraud logic
+
+**Answer:** D

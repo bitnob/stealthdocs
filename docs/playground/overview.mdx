@@ -1,0 +1,96 @@
+---
+title: "Playground"
+description: "Free developer utilities that run entirely in your browser: hashing, HMAC, JSON tools, encoders, and validators. Nothing you type leaves the page."
+---
+
+Every tool here runs locally in your browser. Nothing you type is uploaded, logged, or sent to a server, so they are safe to use with real payloads while you debug an integration.
+
+## Hash and crypto
+
+<Columns cols={2}>
+  <Card title="HMAC generator" icon="signature" href="/docs/playground/hash-crypto/hmac-generator">
+    Generate HMAC-SHA256 signatures, including the exact scheme Bitnob API v2 uses.
+  </Card>
+  <Card title="SHA-256 generator" icon="hashtag" href="/docs/playground/hash-crypto/sha256-generator">
+    Hash text with SHA-256, SHA-384, SHA-512, or SHA-1.
+  </Card>
+  <Card title="Hash file checker" icon="file-shield" href="/docs/playground/hash-crypto/hash-file-checker">
+    Compute a file's SHA-256 digest and compare it against an expected hash.
+  </Card>
+  <Card title="Bitcoin address validator" icon="bitcoin" href="/docs/playground/hash-crypto/bitcoin-address-validator">
+    Check Base58 and bech32 addresses, with type and network detection.
+  </Card>
+  <Card title="UUID generator" icon="fingerprint" href="/docs/playground/hash-crypto/uuid-generator">
+    Generate UUID v4 identifiers for idempotency keys and references.
+  </Card>
+  <Card title="Random string generator" icon="shuffle" href="/docs/playground/hash-crypto/random-string-generator">
+    Cryptographically random strings with a configurable charset.
+  </Card>
+  <Card title="Private key generator" icon="key" href="/docs/playground/hash-crypto/private-key-generator">
+    Educational secp256k1 key generation with hex and WIF output.
+  </Card>
+</Columns>
+
+## JSON tools
+
+<Columns cols={2}>
+  <Card title="JSON formatter" icon="align-left" href="/docs/playground/json-tools/json-formatter">
+    Pretty-print JSON with your preferred indentation.
+  </Card>
+  <Card title="JSON validator" icon="circle-check" href="/docs/playground/json-tools/json-validator">
+    Validate syntax and pinpoint exactly where parsing fails.
+  </Card>
+  <Card title="JSON minifier" icon="minimize" href="/docs/playground/json-tools/json-minifier">
+    Strip whitespace and see the size difference.
+  </Card>
+  <Card title="JSON to CSV" icon="table" href="/docs/playground/json-tools/json-to-csv">
+    Convert an array of objects to CSV, ready for spreadsheets or bulk uploads.
+  </Card>
+  <Card title="JSONPath tester" icon="magnifying-glass" href="/docs/playground/json-tools/jsonpath-tester">
+    Query webhook payloads and API responses with JSONPath expressions.
+  </Card>
+  <Card title="JSON diff checker" icon="code-compare" href="/docs/playground/json-tools/json-diff-checker">
+    Structural diff of two JSON documents with per-path changes.
+  </Card>
+</Columns>
+
+## Text and binary
+
+<Columns cols={2}>
+  <Card title="Base64 encoder" icon="arrow-right" href="/docs/playground/text-binary/base64-encoder">
+    UTF-8 safe Base64 encoding, with a URL-safe variant.
+  </Card>
+  <Card title="Base64 decoder" icon="arrow-left" href="/docs/playground/text-binary/base64-decoder">
+    Decode standard or URL-safe Base64 back to text.
+  </Card>
+  <Card title="Hex encoder" icon="arrow-right" href="/docs/playground/text-binary/hex-encoder">
+    Text to hexadecimal bytes.
+  </Card>
+  <Card title="Hex decoder" icon="arrow-left" href="/docs/playground/text-binary/hex-decoder">
+    Hexadecimal back to text, tolerant of prefixes and spacing.
+  </Card>
+  <Card title="UTF-8 encoder" icon="arrow-right" href="/docs/playground/text-binary/utf8-encoder">
+    Inspect the exact bytes behind any string.
+  </Card>
+  <Card title="UTF-8 decoder" icon="arrow-left" href="/docs/playground/text-binary/utf8-decoder">
+    Turn a byte sequence back into text.
+  </Card>
+  <Card title="URL encoder" icon="link" href="/docs/playground/text-binary/url-encoder">
+    Percent-encode query parameters and full URLs correctly.
+  </Card>
+  <Card title="URL decoder" icon="link-slash" href="/docs/playground/text-binary/url-decoder">
+    Decode percent-encoded strings safely.
+  </Card>
+  <Card title="ASCII binary converter" icon="binary" href="/docs/playground/text-binary/ascii-binary-converter">
+    Text to 8-bit binary and back.
+  </Card>
+  <Card title="ROT13 cipher" icon="rotate" href="/docs/playground/text-binary/rot13-cipher">
+    The classic letter-rotation cipher, its own inverse.
+  </Card>
+  <Card title="Base32 converter" icon="repeat" href="/docs/playground/text-binary/base32-converter">
+    RFC 4648 Base32 encode and decode.
+  </Card>
+  <Card title="String byte inspector" icon="magnifying-glass-chart" href="/docs/playground/text-binary/string-byte-inspector">
+    Characters, code points, and UTF-8 bytes side by side.
+  </Card>
+</Columns>

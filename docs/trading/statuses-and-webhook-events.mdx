@@ -1,0 +1,75 @@
+---
+title: "Statuses and webhook events"
+description: "The order fields, status values, and webhook events the trading API returns, in one place to look up."
+related:
+  - /docs/trading/create-quote
+  - /docs/trading/trade-status-and-history
+---
+
+A single reference for the values the trading API returns. For the flow that produces them, see [How trading works](/docs/trading/how-trading-works).
+
+## Order fields
+
+Returned by [Get order by id or reference](/api-reference/trading/get-order-by-id-or-reference) and [List orders](/api-reference/trading/list-orders).
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | string | Bitnob's order identifier. Accepted anywhere an order id is required. |
+| `reference` | string | Your own identifier, supplied on submission. Also accepted for lookup. |
+| `base_currency` | string | The asset being bought or sold, for example `BTC`. |
+| `quote_currency` | string | The asset it is priced in, for example `USDT`. |
+| `side` | string | `BUY` or `SELL`. |
+| `order_type` | string | `limit` for quote-backed orders. |
+| `quantity` | string | The amount requested, as a decimal string. |
+| `filled_quantity` | string | The amount actually executed. |
+| `remaining_quantity` | string | Quantity still outstanding. `0` on a fully filled order. |
+| `price` | string | The executed price, expressed as quote currency per unit of base. |
+| `exchange` | string | Venue that executed the order. `internal` for Bitnob liquidity. |
+| `status` | string | Order outcome. See below. |
+| `created_at`, `updated_at` | string | RFC 3339 timestamps. |
+
+<Note>
+  Amounts and prices are decimal strings, not numbers. Parse them with a decimal type, never a float. See [Currencies and amounts](/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts).
+</Note>
+
+## Order status values
+
+| Status | Meaning | Terminal |
+|---|---|---|
+| `filled` | The order executed in full. `remaining_quantity` is `0`. | Yes |
+| `completed` | The trade executed and settled to your wallet balance. | Yes |
+| `failed` | The order did not execute. No funds moved. | Yes |
+
+Treat only `filled` and `completed` as success, and confirm from a lookup or a webhook rather than from the submission response. `side` is submitted in upper case (`BUY`, `SELL`) and may be echoed in lower case in some responses, so compare case-insensitively.
+
+## Webhook events
+
+Two events carry every trade outcome. Full payloads and the handler checklist are on [Receive trade webhooks](/docs/trading/trade-webhooks).
+
+| Event | Fires when |
+|---|---|
+| `trade.completed` | The trade executed and settled. |
+| `trade.failed` | The trade failed: quote expiry, insufficient balance, or a system error. |
+
+### Webhook payload fields
+
+| Field | Description |
+|---|---|
+| `event` | The event name. Branch on this first. |
+| `event_id` | Unique per delivery. Use it to de-duplicate retries. |
+| `data.tradeId` | The executed trade. `null` on `trade.failed`, because no trade exists. |
+| `data.reference` | Your reference, and your join key back to the submitted order. |
+| `data.from`, `data.to` | The assets converted, in lower case. |
+| `data.inputAmount`, `data.outputAmount` | Amounts in the smallest unit of each asset. |
+| `data.rate` | The rate applied to this trade. |
+| `data.status` | `completed` or `failed`. |
+| `data.reason` | Present on failures, for example `Quote expired` or `Insufficient balance`. |
+| `data.timestamp` | When the outcome occurred. |
+
+<Warning>
+  `data.tradeId` is `null` on `trade.failed`. Key your records on `reference`, which is present on both events, or a failed trade cannot be matched to the order that produced it.
+</Warning>
+
+## Failure reasons
+
+`reason` carries the cause on `trade.failed`. The two documented values are `Quote expired` and `Insufficient balance`. For how to respond to each, see [Handle trading failures](/docs/trading/error-handling-patterns).

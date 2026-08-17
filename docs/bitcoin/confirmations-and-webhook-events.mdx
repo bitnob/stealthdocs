@@ -1,0 +1,58 @@
+---
+title: "Confirmations and webhook events"
+description: "Confirmation thresholds for on-chain BTC, the difference Lightning makes, and the webhook events that carry every bitcoin outcome."
+related:
+  - /docs/bitcoin/send-bitcoin
+  - /docs/bitcoin/fee-market-and-transaction-strategies
+---
+
+A single reference for when a bitcoin payment is safe to credit, and which events tell you about it. For the flow that produces them, see [Issue addresses and Lightning invoices](/docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices).
+
+## Confirmation thresholds
+
+| Rail | Notification arrives | Safe to credit |
+|---|---|---|
+| On-chain BTC | At 1 confirmation | 3 confirmations or more |
+| Lightning | On invoice payment | Immediately |
+
+An on-chain webhook can fire with as little as one confirmation. One confirmation is not final: a chain reorganisation can still undo it.
+
+<Warning>
+  Wait for at least 3 confirmations before you credit a user's balance for an on-chain deposit. Crediting on the first notification exposes you to reorganisation risk on every deposit.
+</Warning>
+
+Lightning payments settle off-chain and require no block confirmations, so an invoice marked paid is final. That is what makes Lightning suited to tipping and micropayments, where waiting for blocks is not acceptable.
+
+To read the current depth of a transaction at any time, re-query [Get transaction by id or reference](/api-reference/transactions/get-transaction-by-id) rather than caching the count from the webhook.
+
+## Webhook events
+
+| Event | Fires when | Act on it |
+|---|---|---|
+| `deposit.success` | An inbound payment is confirmed. | Check the confirmation count, then credit. |
+| `transfer.success` | An outbound send completed. | Mark the withdrawal settled. |
+| `transfer.failed` | An outbound send failed. | Release the hold and surface the reason. |
+
+Deliveries are HTTPS POSTs signed with the `x-bitnob-signature` header. Verify the signature on every event before acting on it, and make handlers idempotent, de-duplicating on `event_id`. The full verification walkthrough and source IP list are on the [Addresses webhooks reference](/api-reference/addresses/webhooks).
+
+### `deposit.success` payload fields
+
+| Field | Description |
+|---|---|
+| `event` | The event name. Branch on this first. |
+| `event_id` | Unique per delivery. Use it to de-duplicate retries. |
+| `data.address` | The address that received the payment. |
+| `data.amount` | Amount received, in satoshis for BTC. |
+| `data.chain` | The chain, for example `bitcoin`. |
+| `data.currency` | The asset, for example `BTC`. |
+| `data.fee` | Fee attributed to the transaction. |
+| `data.hash` | The on-chain transaction hash. |
+| `data.reference` | The reference for this receipt. |
+| `data.transaction_id` | Bitnob's transaction identifier, for lookups. |
+| `data.timestamp` | When the deposit was observed. |
+
+## Address reuse
+
+Generate a new address for each receipt. Bitnob still fires `deposit.success` for a payment to a previously used address, so reuse does not break delivery, but it lets third parties link payments together through chain analysis and makes reconciliation ambiguous when several payments share one address.
+
+See [Address and privacy practices](/learn/playbooks/bitcoin/address-and-privacy-best-practices) for the fuller treatment.

@@ -1,0 +1,40 @@
+---
+title: "Hash file checker"
+description: "File integrity verification: compute a file's SHA-256 digest in your browser and compare it against the hash a publisher gave you."
+---
+
+import { HashFileChecker } from "/snippets/playground/hash-crypto.jsx";
+
+<HashFileChecker />
+
+When you download a binary, the publisher often lists its SHA-256 digest. Hashing your copy and comparing the two digests proves the file arrived byte for byte intact.
+
+The file never leaves your machine. It is read with the browser's File API and hashed locally with the Web Crypto API.
+
+## Verifying a download
+
+<Steps>
+  <Step title="Find the published digest">
+    Look for a `SHA256SUMS` file, a checksum line on the download page, or a release note. Copy the digest for the exact file you downloaded.
+  </Step>
+  <Step title="Hash your copy">
+    Select the file above. The digest is computed in your browser.
+  </Step>
+  <Step title="Compare">
+    Paste the published digest into the comparison field. A match means the bytes are identical. A mismatch means the file is corrupt or has been altered: do not run it.
+  </Step>
+</Steps>
+
+## The same check from a terminal
+
+```bash
+# macOS
+shasum -a 256 bitcoin-25.0-x86_64-apple-darwin.tar.gz
+
+# Linux
+sha256sum bitcoin-25.0-x86_64-linux-gnu.tar.gz
+```
+
+<Note>
+  A matching digest proves the file matches the one the publisher hashed. It does not prove the publisher is trustworthy, and it does not help if an attacker controls both the file and the page listing its digest. For releases that matter, verify the publisher's GPG signature over the checksum file as well.
+</Note>

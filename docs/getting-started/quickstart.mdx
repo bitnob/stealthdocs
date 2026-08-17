@@ -1,0 +1,94 @@
+---
+title: "Quickstart"
+description: "Your first signed request in five minutes: load your credentials, build the four HMAC headers, and get a 200 back from /api/whoami."
+---
+
+Every Bitnob request is HMAC-signed, so the first milestone of any integration is one authenticated call. This page gets you from credentials to a `200` from `/api/whoami` in about five minutes. Everything else in the docs builds on the signing helper you set up here.
+
+## Prerequisites
+
+You need the `CLIENT_ID` and `CLIENT_SECRET` you issued on the previous page, [Set up your account](/docs/getting-started/account-setup). The secret is shown once, so keep it out of source control and out of client-side code.
+
+<Steps>
+  <Step title="Load your credentials">
+    Keep credentials in the environment, not in source:
+
+    ```bash
+    export CLIENT_ID=yourClientId
+    export CLIENT_SECRET=yourSecretKey
+    ```
+  </Step>
+
+  <Step title="Sign a request">
+    Every request carries four headers: `X-Auth-Client`, `X-Auth-Timestamp`, `X-Auth-Nonce`, and `X-Auth-Signature`, an HMAC-SHA256 over `CLIENT_ID:TIMESTAMP:NONCE:PAYLOAD`. For a GET request the payload is an empty string.
+
+    ```bash
+    CLIENT_ID="${CLIENT_ID}"
+    CLIENT_SECRET="${CLIENT_SECRET}"
+    TIMESTAMP=$(date +%s)
+    NONCE=$(uuidgen)
+
+    PAYLOAD="${CLIENT_ID}:${TIMESTAMP}:${NONCE}:"
+    SIGNATURE=$(printf '%s' "$PAYLOAD" | openssl dgst -sha256 -hmac "$CLIENT_SECRET" -hex | awk '{print $2}')
+
+    curl -s "https://api.bitnob.com/api/whoami" \
+      -H "X-Auth-Client: ${CLIENT_ID}" \
+      -H "X-Auth-Timestamp: ${TIMESTAMP}" \
+      -H "X-Auth-Nonce: ${NONCE}" \
+      -H "X-Auth-Signature: ${SIGNATURE}"
+    ```
+
+    A `200` with your company details means your credentials and signing are correct. That is the whole milestone.
+
+    For application code, take a ready-made signing helper in Node.js, Go, or Python from [Authentication](/api-reference/authentication/authentication) rather than hand-rolling one.
+  </Step>
+
+  <Step title="If you got a 401 instead">
+    Three causes cover nearly every failure:
+
+    - The timestamp is in milliseconds; the API wants seconds.
+    - The signed body does not byte-for-byte match the sent body; for GET, sign an empty string.
+    - A header is missing or the secret is wrong.
+
+    See the troubleshooting notes on [Authentication](/api-reference/authentication/authentication).
+  </Step>
+
+  <Step title="Make your first real call">
+    With signing working, everything is open. Two good next calls:
+
+    ```bash
+    GET /api/balances        # your balances by currency
+    GET /api/transactions    # recent activity
+    ```
+
+    Then pick your product path below.
+  </Step>
+</Steps>
+
+## Build something
+
+<Columns cols={2}>
+  <Card title="Send your first payout" icon="money-bill-transfer" href="/docs/payouts/send-your-first-payout">
+    Quote, beneficiary, finalize, funded, delivered.
+  </Card>
+  <Card title="Accept USDT and settle in naira" icon="coins" href="/docs/stablecoins/accept-usdt-and-settle-in-naira">
+    Receive on-chain, settle to a bank account.
+  </Card>
+  <Card title="Issue your first card" icon="credit-card" href="/docs/card-issuing/issue-your-first-card">
+    A funded USD Visa card, end to end.
+  </Card>
+  <Card title="Swap bitcoin to USDT" icon="arrow-right-arrow-left" href="/docs/trading/swap-bitcoin-to-usdt">
+    Quote and execute a conversion.
+  </Card>
+</Columns>
+
+## Next
+
+<Columns cols={2}>
+  <Card title="Send your first payout" icon="rocket" href="/docs/payouts/send-your-first-payout">
+    Your first real money movement, end to end.
+  </Card>
+  <Card title="Core concepts" icon="cubes" href="/docs/getting-started/core-concepts-and-architecture">
+    The model every product shares.
+  </Card>
+</Columns>

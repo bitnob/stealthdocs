@@ -1,0 +1,33 @@
+---
+title: "URL encoder"
+description: "Percent-encoding for query parameters and URLs, including the difference between encoding a component and a whole URL."
+---
+
+import { UrlTool } from "/snippets/playground/text-binary.jsx";
+
+<UrlTool mode="encode" />
+
+URLs may only contain a restricted set of ASCII characters. Everything else, including spaces, `&`, `?`, `#`, and any non-ASCII character, must be percent-encoded as `%` followed by two hex digits.
+
+## Encode the component, not the whole URL
+
+This is the mistake that breaks most query strings. Encoding a full URL escapes the `://` and `?` that make it a URL; encoding only each parameter value is almost always what you want.
+
+```javascript
+// Wrong: destroys the URL structure
+encodeURI("https://api.bitnob.com/search?q=a&b");
+
+// Right: encode each value, then assemble
+const url = new URL("https://api.bitnob.com/search");
+url.searchParams.set("q", "a&b");   // → ?q=a%26b
+```
+
+`encodeURIComponent` escapes `&`, `?`, `=`, and `/`. `encodeURI` leaves them alone because it assumes you handed it a complete URL.
+
+## Spaces have two encodings
+
+In a path, a space is `%20`. In a query string, `+` is also accepted as a space for historical reasons. `%20` is valid in both places, so prefer it.
+
+<Tip>
+  Reach for your language's URL builder rather than concatenating strings: `URL`/`URLSearchParams` in JavaScript, `urllib.parse.urlencode` in Python. They apply the right rules per position automatically.
+</Tip>

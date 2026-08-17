@@ -1,0 +1,31 @@
+---
+title: "Bitcoin address validator"
+description: "Bitcoin address validation with checksum verification: check Base58 and bech32 addresses and see the address type and network before you send."
+---
+
+import { BitcoinAddressValidator } from "/snippets/playground/hash-crypto.jsx";
+
+<BitcoinAddressValidator />
+
+Every Bitcoin address carries a checksum. A typo almost always breaks that checksum, which is what stops mistyped addresses from silently sending funds into nowhere. This tool verifies the checksum and reports the address type and network.
+
+## Address types you will see
+
+| Prefix | Type | Notes |
+|---|---|---|
+| `1` | P2PKH (legacy) | The original format. Highest transaction fees. |
+| `3` | P2SH | Script hash. Often wrapped SegWit. |
+| `bc1q` | P2WPKH / P2WSH (SegWit v0) | Lower fees. Case-insensitive bech32. |
+| `bc1p` | P2TR (Taproot) | Bech32m encoding. Best fees and privacy. |
+| `m`, `n`, `2`, `tb1` | Testnet | Never send mainnet funds to these. |
+| `bcrt1` | Regtest | Local development only. |
+
+## Validate before you send, always
+
+Validation catches typos and wrong-network mistakes. It cannot tell you an address belongs to the person you intend to pay, so it is not a defence against an attacker who substitutes their own valid address. Combine it with confirming the address through a second channel for large transfers.
+
+For addresses issued through Bitnob, see [Issuing Bitcoin addresses](/docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices). Stablecoin addresses on other chains have their own formats and can be checked with [Validate Address](/api-reference/addresses/validate-address).
+
+<Warning>
+  Bitcoin transactions are irreversible. An address that passes validation but belongs to the wrong recipient cannot be recovered.
+</Warning>

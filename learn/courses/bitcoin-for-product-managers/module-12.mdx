@@ -1,0 +1,213 @@
+---
+title: "Module 12: Designing Bitcoin payment products for merchants"
+description: "Merchant payment products designed around reliable settlement, volatility, and clean reconciliation."
+---
+## 12.1 Introduction
+
+- Getting paid reliably,
+- Managing cash flow,
+- Avoiding unnecessary financial risk (especially Bitcoin volatility),
+- Reconciling payments easily into their accounting systems.
+
+When building Bitcoin payment products for merchants, you must design for operational realities, not just Bitcoin philosophy.
+
+This module will explain how to build Bitcoin payment experiences for real-world merchants. Whether they are selling coffee, airline tickets, school supplies, or running full-scale e-commerce platforms.
+
+## 12.2 Understanding merchant mindset
+
+| Merchant Need | Bitcoin Product Implication |
+|---|---|
+| Predictable settlement | Explain confirmations, volatility, fees clearly. |
+| Fast payments | Consider using Lightning Network. |
+| Minimize FX risk | Offer optional auto-conversion to fiat or stablecoins. |
+| Simple refund flows | Design manual refund flows (Bitcoin is irreversible). |
+| Record keeping | Provide detailed payment histories, invoices, transaction references. |
+| Transparent fees | Show network fees, service fees, volatility margins. |
+| Customer support tools | Allow merchants to track payments, handle disputes, verify addresses. |
+
+**Key insight:** Merchants care more about operational reliability than about ideological Bitcoin purity. Build for their business needs first.
+
+## 12.3 Merchant payment flow basics
+
+Basic merchant payment flow:
+
+1. Create Invoice
+
+   The merchant generates a Bitcoin payment request (invoice) for a specific amount. Often with an expiry time (e.g., pay within 30 minutes).
+
+2. Show Invoice to Customer
+
+   Display QR code + Bitcoin address. Show BTC amount and optionally fiat equivalent.
+
+3. Detect Payment
+
+   Listen for incoming Bitcoin transactions to the address. Verify payment amount matches requested invoice.
+
+4. Confirm Payment
+
+   Wait for the appropriate number of confirmations (1–6 based on risk tolerance).
+
+5. Mark Invoice Paid
+
+   Notify merchants automatically via dashboard or app.
+
+6. Settle Funds
+
+   Leave in Bitcoin or auto-convert to fiat based on the merchant's settings.
+
+## 12.4 Settlement models
+
+| Settlement Type | Pros | Cons |
+|---|---|---|
+| Hold in bitcoin | Merchant gains exposure to bitcoin upside. No FX cost. | Merchant bears price volatility risk. Accounting complexity. |
+| Auto-Convert to Fiat | Protects merchant from Bitcoin price volatility. Easier accounting. | Relies on conversion partners. May introduce extra fees or FX spreads. |
+| Hybrid (Merchant Choice) | Flexibility to choose per transaction or per day. | Adds operational complexity to app UI and backend. |
+
+**Tip: Sensible defaults.** Offer default auto-conversion to fiat for everyday merchants, but allow advanced merchants to opt-in to Bitcoin retention.
+
+## 12.5 Invoice expiry and confirmations
+
+Because Bitcoin payments are push-based (not pull like cards):
+
+- Sometimes customers generate a payment but never broadcast it.
+- Or send with too low a fee and it gets stuck in the mempool.
+
+Always set invoice expiry times. Common: 15 minutes, 30 minutes, 1 hour.
+
+After expiry:
+
+- Cancel invoice.
+- Allow merchant to request customer to generate a new one.
+
+**Confirmation recommendations:**
+
+| Payment Size | Confirmation Policy |
+|---|---|
+| Small (below $50) | Accept 0–1 confirmation (low risk). |
+| Medium ($50–$1000) | Wait for 1–3 confirmations. |
+| Large (above $1000) | Wait for 3–6 confirmations. |
+
+Show the confirmation status clearly on merchant dashboards.
+
+Example display: "Payment detected, awaiting 2 more confirmations."
+
+## 12.6 Refund flows and dispute handling
+
+- Bitcoin is irreversible once confirmed.
+- No native refund button.
+- Refunds must be manually initiated by the merchant if needed.
+
+Recommended refund flow:
+
+1. Merchant clicks "Issue Refund" on a transaction in their dashboard.
+2. Merchant must request refund address from customer.
+3. Merchant manually sends bitcoin back to customer’s address.
+
+**Tip: Clear policies.** Document refund policies very clearly upfront to reduce disputes.
+
+Refund language example: "Refunds will be processed manually. You must provide a valid Bitcoin address. Refunds are only possible for completed and verifiable payments."
+
+## 12.7 Building merchant dashboards
+
+Merchant dashboards must:
+
+- Show payment history with transaction details.
+- Display invoice statuses (Pending, Paid, Expired, Cancelled).
+- Show confirmations clearly.
+- Allow filtering by date, customer, status.
+- Provide CSV export for accounting.
+
+**Merchant dashboard key fields:**
+
+| Field | Description |
+|---|---|
+| Invoice ID | Unique reference for the invoice. |
+| Customer Name (opt) | If collected during invoice creation. |
+| Bitcoin Address | Receiving address for payment. |
+| Amount Requested | Amount invoiced (BTC and fiat equivalent). |
+| Amount Received | Actual amount paid. |
+| Fee | Network fee paid (for withdrawal or settlement if applicable). |
+| Status | Pending, Paid, Expired, Refunded, Cancelled. |
+| Settlement Status | BTC held, converted to fiat, withdrawn. |
+
+## 12.8 Fee management for merchants
+
+Merchants must understand:
+
+- Bitcoin network fees: paid by customers when sending bitcoin.
+- Service fees: optional platform fee deducted for providing payment services.
+- FX spreads: when converting bitcoin to fiat (the spread between market rate and payout rate).
+
+Be extremely clear about fee structures to avoid disputes later.
+
+Good practice:
+
+- Show BTC network fee estimates during invoice generation.
+- Separate merchant service fees from Bitcoin network fees visually.
+
+## 12.9 Lightning network for merchants
+
+Lightning is ideal for merchant use cases:
+
+- Near-instant Bitcoin payments.
+- Very low fees compared to on-chain transactions.
+- Good for low-value transactions (e.g., food vendors, POS systems).
+
+If you integrate Lightning:
+
+- Allow merchants to create Lightning invoices easily.
+- Abstract channel liquidity management from merchants (handled by the platform backend).
+- Allow auto-settlement to on-chain Bitcoin or fiat daily.
+
+**Tip: Fallback mechanism.** For large transactions, fallback to on-chain Bitcoin if Lightning capacity is insufficient.
+
+## 12.10 Compliance and accounting for merchants
+
+Merchants accepting bitcoin must:
+
+- Record Bitcoin sales for accounting and tax purposes.
+- Track Bitcoin transaction IDs as payment proof.
+- Convert BTC amounts to fiat equivalent for tax reporting (where required).
+
+Help merchants by:
+
+- Providing clear CSV exports.
+- Displaying historical Bitcoin-to-fiat conversion rates at time of payment.
+
+Compliance varies by jurisdiction. Some countries may require:
+
+- KYC for merchants,
+- VAT or GST collection,
+- Crypto transaction reporting.
+
+Design backends to be flexible depending on regulatory region.
+
+## 12.11 PM reflection points for merchant products
+
+When designing Bitcoin merchant products:
+
+- Teach merchants Bitcoin basics without overwhelming them.
+- Build simple payment flows but leave room for flexibility (e.g., fiat settlement choice).
+- Monitor Bitcoin network conditions, notify merchants if fees spike.
+- Handle slow or missing payments gracefully (expired invoices, re-generation).
+- Protect against refund frauds through manual verification processes.
+
+**Earning trust:** Merchant trust is earned not through Bitcoin purity, but through reliable, clear, honest payment flows and operational support.
+
+## 12.12 Summary of module 12
+
+Building Bitcoin payment products for merchants requires:
+
+- Understanding operational and financial realities.
+- Abstracting Bitcoin’s complexity behind simple invoice/payment flows.
+- Offering flexibility in settlement (BTC vs fiat).
+- Handling refunds, disputes, accounting clearly and respectfully.
+- Exploring Lightning for faster and cheaper Bitcoin payments.
+
+Done right, Bitcoin unlocks new markets, new payment rails, and greater financial freedom for businesses of all sizes.
+
+In Bitcoin merchant payments, simplicity is power. Transparency is trust. Settlement is survival.
+
+## Module 12 complete
+
+You now understand how to design Bitcoin merchant payment experiences that are real-world ready, not just tech demos, but serious, operationally viable payment systems for Africa, Asia, Latin America, and beyond.

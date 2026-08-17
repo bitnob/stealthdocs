@@ -1,0 +1,50 @@
+---
+title: "Handle trading failures"
+description: "Every way a trade fails, what the API returns for each, and the fallback path that protects the user and your ledger."
+related:
+  - /docs/trading/statuses-and-webhook-events
+  - /docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows
+---
+
+Trades fail for ordinary reasons: markets moved past a quote, a balance came up short, a reference was reused. Because execution is atomic, every failure is clean, no funds move, so handling them well is a UX and bookkeeping problem, not a recovery problem.
+
+One rule governs everything: **never debit a user's view of their balance until `trade.completed` arrives**, and always retry with the same `reference`, which returns the original result instead of trading twice.
+
+## The failure cases
+
+<AccordionGroup>
+  <Accordion title="Quote expired (400)">
+    The quote was valid but not executed within its window.
+
+    **Respond:** show "This price has expired, refresh to get a new quote", fetch a fresh [quote](/api-reference/trading/create-quote), and never auto-retry an expired quote without the user seeing the new rate. Validate `expires_at` server-side before submitting; [Get quote status](/api-reference/trading/get-quote-status) re-reads a quote you hold.
+  </Accordion>
+  <Accordion title="Quote required (400, NGN pairs)">
+    Naira orders must include a `quote_id`; they cannot execute at a market rate. Lock the quote first.
+  </Accordion>
+  <Accordion title="NGN not enabled (403)">
+    Naira trading is per-account. Ask Bitnob to enable it before exposing NGN pairs in your product.
+  </Accordion>
+  <Accordion title="Invalid asset pair or amount (400)">
+    Unsupported pair, or a missing, zero, or malformed `quantity`. Validate input in your own layer; amounts are major units of the base currency.
+  </Accordion>
+  <Accordion title="Duplicate reference (409)">
+    Idempotency caught a replay. Fetch the existing trade with [Get order](/api-reference/trading/get-order-by-id-or-reference) and treat it as the result; log a conflict if the amounts differ, because that is a bug on your side.
+  </Accordion>
+  <Accordion title="Insufficient balance (422)">
+    The source balance cannot cover the trade. Prevent it up front with a balance check, or queue the trade behind a top-up and notify the user.
+  </Accordion>
+  <Accordion title="Execution error (500)">
+    Internal routing or engine failure. Retry once with backoff using the same reference; alert your ops channel for trades above your size threshold if it persists.
+  </Accordion>
+</AccordionGroup>
+
+## Monitoring and recovery
+
+- Track every `trade.failed` event with its `reason`; alert on spikes, for example 5 failures within a minute, which usually signal a systemic cause.
+- Sweep [List orders](/api-reference/trading/list-orders) on a schedule and flag trades initiated but never confirmed by a webhook.
+- Confirm an order's real state with [Get order](/api-reference/trading/get-order-by-id-or-reference) before any retry decision, and use [Cancel order](/api-reference/trading/cancel-order) where one is still cancellable.
+- Log `reference`, `quote_id`, pair, amounts, failure code, and timestamp on every attempt; that one habit powers dashboards, postmortems, and support.
+
+## Protecting users
+
+Communicate failures plainly and offer the next step, refresh or retry, in the UI. Show nothing as complete until the webhook confirms it, and never silently swallow a failure; a user who saw "processing" forever files a chargeback-grade support ticket.

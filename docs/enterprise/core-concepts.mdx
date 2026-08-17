@@ -1,0 +1,118 @@
+---
+title: "Core concepts"
+description: "Vaults, wallets, policies, and approvals: the objects to model your Enterprise integration around."
+related:
+  - /docs/enterprise/authentication
+  - /docs/enterprise/exchange-integration-guide
+---
+These are the building blocks behind Bitnob Enterprise wallet infrastructure. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
+
+## Custody model
+
+Bitnob Enterprise is non-custodial by default. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
+
+The platform itself cannot move funds without an authenticated API call that satisfies every configured policy. Every signing event is recorded as an immutable activity entry for compliance and audit.
+
+- **Keys are generated in hardware isolation.** No process outside the enclave ever sees the raw private key material.
+- **Policies run before signing.** The enclave only releases a signature when the authenticated request satisfies every rule in every active policy.
+- **Bitnob cannot unilaterally move funds.** There is no admin backdoor. Root quorum governance applies even to Bitnob-side operations on your organisation.
+
+## Resource hierarchy
+
+All resources are strictly nested. Understanding this hierarchy is essential for designing your wallet topology.
+
+![Resource Hierarchy](/images/resource-hierarchy.png)
+
+- **Organisation**: the top-level tenant. All resources are scoped to your organisation, derived automatically from your API key.
+- **Vault**: an HD seed container. A dedicated vault maps 1-to-1 with a single wallet per chain. A pool vault holds unlimited wallets, ideal for assigning one per customer. See [Vaults](/api-reference/wallet-infrastructure/vaults/list-vaults).
+- **Wallet**: a logical account derived from a vault's seed, scoped to a specific chain. Holds multiple asset balances and owns all addresses derived from it. See [Wallets](/api-reference/wallet-infrastructure/wallets/list-wallets).
+- **Address**: a blockchain address derived from the wallet's HD path. Each wallet gets one primary address per chain; additional addresses can be [derived on demand](/api-reference/wallet-infrastructure/wallets/create-address) and [listed](/api-reference/wallet-infrastructure/wallets/list-addresses).
+
+## Vault types
+
+Choose the vault type that matches your use case. The choice is irreversible, upgrading a dedicated vault to a pool vault cannot be undone. Existing vaults can be inspected with [List Vaults](/api-reference/wallet-infrastructure/vaults/list-vaults) and [Get Vault](/api-reference/wallet-infrastructure/vaults/get-vault).
+
+| Type | Wallets per chain | Best for |
+|---|---|---|
+| `dedicated` | 1 | Treasury accounts, operational hot wallets, cold storage |
+| `pool` | Unlimited | Exchanges, neobanks, any platform assigning one wallet per customer |
+
+## Wallet types
+
+The type is set on [Create Wallet](/api-reference/wallet-infrastructure/wallets/create-wallet) and can be reviewed with [List Wallets](/api-reference/wallet-infrastructure/wallets/list-wallets) or changed with [Update Wallet](/api-reference/wallet-infrastructure/wallets/update-wallet).
+
+| Type | Description |
+|---|---|
+| `hot` | Online, actively signing transactions. Suitable for customer deposit and withdrawal wallets. |
+| `cold` | Offline storage. Requires elevated approval thresholds configured in your policies before the enclave will sign. |
+| `operational` | System-managed wallets used for gas stations and internal fund sweeps. Not directly customer-facing. |
+
+## Policy engine
+
+A policy is a declarative rule that runs before the Bitnob Secure Enclave signs a transaction. Policies are organisation-scoped and evaluated by category in priority order. The first matching rule wins.
+
+| Action | Effect |
+|---|---|
+| `block` | Reject the transaction outright. No signing occurs. |
+| `alert` | Allow the transaction but notify stakeholders. |
+| `require_approval` | Pause the transaction in `pending_authorization` until enough approvers vote. |
+| `delay` | Queue the transaction for deferred execution. |
+
+Policies are evaluated by category:
+
+- `access`: who can access which wallets
+- `whitelist`: restrict destinations to known addresses only
+- `limits`: per-transaction spending caps
+- `approvals`: multi-signature requirements
+- `velocity`: daily, weekly, or monthly volume controls
+- `compliance`: regulatory controls
+- `quorum`: root-level governance for policy changes themselves
+
+## Approvals and root quorum
+
+When a policy fires `require_approval`, an approval request is created and the transaction stops at `pending_authorization`. Approvers then vote:
+
+- Once the required number of approvals is reached, the transaction proceeds automatically.
+- If any approver rejects, the transaction terminates as `rejected`.
+
+A root quorum is a special policy of category `quorum` that protects policy changes themselves. When a root quorum is active, creating, editing, or deleting any policy also requires quorum approval, preventing any single administrator from unilaterally weakening your security controls.
+
+<Warning>
+  Configure a root quorum before deploying to production. Without one, any API key with admin permission can modify policies unilaterally.
+</Warning>
+
+## Gas stations
+
+A gas station is a pre-funded, organisation-owned account whose sole job is to sponsor transaction fees on behalf of customer wallets: see [Gas Stations](/api-reference/wallet-infrastructure/gas-stations/list-gas-stations) and [Sponsor and Broadcast](/api-reference/wallet-infrastructure/gas-stations/sponsor-and-broadcast-external-tron-transaction).
+
+- Gas stations are scoped per chain and network.
+- When a customer wallet has insufficient native gas, the gas station tops it up automatically before broadcasting.
+- Each gas-sponsored transfer emits a separate `gas_sponsorship` transaction linked to the original via `sponsor_tx_id`.
+- On Tron, gas stations support TRX staking and resource delegation: stake once for energy and bandwidth so USDT transfers cost near-zero TRX.
+
+Set an `auto_refill_enabled` threshold and a `refill_from_wallet_id` so the gas station tops itself up when its balance runs low. Monitor health via `GET /gasstations/stats`.
+
+## Address book
+
+The address book is an organisation-level allowlist of named, validated recipient addresses. It works alongside `whitelist` policies to restrict outbound transfers to only known, pre-approved destinations.
+
+- Address book entries are immutable. The on-chain address string cannot be edited after creation. To change a destination, delete the entry and re-add it.
+- Addresses are validated against the specified chain at creation time.
+- Pair address book entries with a `whitelist` category policy to block all outbound transfers to non-whitelisted addresses.
+
+## Transaction lifecycle
+
+Every outbound transaction moves through a defined set of statuses. Understanding these helps you design correct notification handlers and UI states. The calls involved are [Create Transaction](/api-reference/wallet-infrastructure/transactions/create-transaction), [Get Transaction](/api-reference/wallet-infrastructure/transactions/get-transaction), and [List Transactions](/api-reference/wallet-infrastructure/transactions/list-transactions).
+
+| Status | Description |
+|---|---|
+| `pending_signature` | Transaction created. Awaiting Enclave signing. |
+| `pending_authorization` | A policy requires multi-party approval. Transaction is paused until approvers vote. |
+| `signed` | Signed by the Enclave. Not yet broadcast. |
+| `awaiting_sponsorship` | Native gas is being transferred from a gas station before broadcast. |
+| `broadcasting` | Submitted to the blockchain network. |
+| `confirming` | On-chain and accumulating block confirmations. |
+| `completed` | Confirmed with sufficient confirmations. Terminal. |
+| `failed` | Errored at any stage. Terminal. |
+| `cancelled` | Cancelled by the requester before broadcast. Terminal. |
+| `rejected` | An approver denied the approval request. Terminal. |

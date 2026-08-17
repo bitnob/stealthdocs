@@ -1,0 +1,133 @@
+---
+title: "Module 11: Bitcoin address types, multi-address watching, batching, and webhooks"
+description: "How address types, multi-address watching, batching, and webhooks affect cost, privacy, and operations."
+---
+## 11.1 Introduction: Why this matters for PMs
+
+- Address types affect user cost, compatibility, and privacy.
+- Multi-address watching affects operational cost, UX transparency, and security monitoring.
+- Batching affects platform fee economics and liquidity flows.
+- Webhooks affect reliability, responsiveness, and user notification systems.
+
+If you don't understand how Bitcoin handles addresses, payments, batching, and notifications, your product either bleeds money silently or fails users when it matters most.
+
+This module makes sure you, as a PM, know how to design flows, manage backends, and structure systems that respect Bitcoin's realities.
+
+## 11.2 Bitcoin address types: What you must know
+
+There are multiple Bitcoin address formats, each designed at different points in Bitcoin's evolution.
+
+| Address Type | Format Example | Characteristics | UX Impact |
+|---|---|---|---|
+| Legacy (P2PKH) | 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa | Original Bitcoin format. Longer, higher fees. | Expensive fees. Compatibility with all old wallets. |
+| SegWit (P2SH Wrapped) | 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy | SegWit nested inside P2SH. | Lower fees. Broad compatibility. |
+| Native SegWit (Bech32) | bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh | Full SegWit native address. Lower fees, better for batching. | Very low fees. Some old services may not support. |
+| Taproot (P2TR) | bc1p5cyxnuxmeuwuvkwfem96llyfqkue3x9n6nq6a4 | Newest format: better privacy, complex scripting. | Future-proof. Some ecosystem parts still catching up. |
+
+## 11.3 Product decisions: Which address types to use?
+
+Recommendation for serious Bitcoin platforms:
+
+- Default to Bech32 (Native SegWit) addresses, best fee optimization, broad compatibility now.
+- Add Taproot support when targeting privacy-focused users or futureproof scripting applications.
+- Accept all address types inbound (for maximum compatibility when receiving payments).
+
+When onboarding users, show address types clearly if needed but choose the best one by default. Never confuse users by making them choose address types unless absolutely necessary.
+
+## 11.4 Multi-address watching: Tracking payments correctly
+
+In Bitcoin, each payment is made to a specific address, not to a "named account" on a database.
+
+When you issue many addresses (one per user, one per invoice, etc.), your backend must watch these addresses to detect incoming Bitcoin transactions.
+
+| Key Concept | What It Means for Pms |
+|---|---|
+| Address Watching | Your server/software monitors all issued addresses for incoming payments. |
+| Address Rotation | Every time a user wants to receive, issue a fresh new address, improves privacy and bookkeeping. |
+| Gap Limit | You can pre-derive thousands of addresses, but you must watch ahead (e.g., 20 unused addresses ahead) to not miss payments. |
+
+## 11.5 Product UX behavior: How to handle watching and receiving
+
+- Always auto-generate a new Bitcoin address per new payment. "Receive bitcoin" = fresh address every time.
+- Show confirmation progress after a payment is detected. "Payment detected, 0/3 confirmations."
+- Allow users to label addresses (optional): "Salary from Kojo," "Invoice #404."
+- Notify users early: Payment detected (0 confirmations), Payment finalized (3+ confirmations).
+- Support payment recovery: If user says "I paid," but you can't detect it, allow manual investigation via address lookup (but design to minimize this).
+
+## 11.6 Batching Bitcoin transactions: Critical for cost management
+
+Problem: Bitcoin fees fluctuate wildly. Each transaction costs base fees per transaction + additional per input/output.
+
+Solution: Batching, sending multiple outputs (payments) in a single Bitcoin transaction.
+
+| Example | Explanation |
+|---|---|
+| Without Batching | 10 payments = 10 transactions = 10× base fee. |
+| With Batching | 10 payments inside 1 transaction = 1× base fee + small cost per output. |
+
+Result:
+
+- Drastically lower total fees.
+- Faster settlement windows.
+- Better liquidity and treasury management.
+
+## 11.7 Product rules for batching
+
+| Product Behaviour | Reason |
+|---|---|
+| Batch outgoing Bitcoin withdrawals | Lower fees, better treasury control. |
+| Communicate withdrawal windows if batching | E.g., "Withdrawals processed every hour." |
+| Handle urgent withdrawals separately (premium users?) | Offer instant withdrawal with individual transaction at user-chosen higher fee. |
+
+## 11.8 Webhooks: Real-time Bitcoin transaction monitoring
+
+Once your backend detects a payment or transaction, you need to notify your app/frontend in real-time.
+
+| What Is a Webhook? | How It Works |
+|---|---|
+| Webhook | Your server sends a message (POST request) to a predefined URL (your app's backend) when a transaction event happens. |
+
+| Bitcoin Event | Webhook Trigger |
+|---|---|
+| Incoming payment detected | btc.received.detected |
+| Payment reaches 1+ confirmations | btc.confirmed.success |
+| Outgoing transaction broadcasted | btc.sent.broadcasted |
+
+## 11.9 Webhook product responsibilities
+
+✅ Reliability: If the webhook delivery fails, retry automatically (with exponential backoff).
+
+✅ Security: Sign all webhook payloads with a secret or use HMAC verification.
+
+✅ Idempotency: Your receiving app should gracefully handle duplicate webhook events (e.g., if retries happen).
+
+✅ Transparency: Allow API clients (external partners if any) to inspect webhook history via dashboard or API.
+
+## 11.10 Final reflection for PMs
+
+Bitcoin is not a database. Bitcoin is a living financial network.
+
+If your product:
+
+- Watches Bitcoin addresses correctly,
+- Rotates addresses for privacy,
+- Batches transactions for fee efficiency,
+- Triggers reliable webhooks for user events,
+
+then you are operating on Bitcoin’s terms, not pretending Bitcoin works like Visa.
+
+That’s what separates real Bitcoin product builders from casual crypto app makers.
+
+## Module 11 complete
+
+You now understand:
+
+- Bitcoin address types and product tradeoffs,
+- How to structure address issuance and multi-address watching,
+- Why batching Bitcoin transactions is survival for serious platforms,
+- How to build a proper webhook-driven Bitcoin UX,
+- How to minimize fees, maximize reliability, and protect user trust.
+
+Every Bitcoin address, every transaction, every webhook,
+is a moment where a user is trusting you with their financial freedom.
+Design and ship accordingly.

@@ -1,0 +1,96 @@
+---
+title: "Monitor card transactions"
+description: "Read a card's transaction history, understand each record type, and surface declines, refunds, reversals, and chargebacks to your users with the right meaning."
+related:
+  - /docs/card-issuing/webhooks
+  - /learn/playbooks/cards/virtual-card-fraud-and-compliance-playbook
+---
+
+Every authorisation, settlement, top-up, refund, reversal, and decline on a card is recorded and exposed twice: as a [webhook event](/docs/card-issuing/webhooks) in real time, and in the queryable history. This guide covers the pull side and what each record means for your users.
+
+## Fetch the history
+
+Full schema: [List card transactions](/api-reference/cards/list-card-transactions-by-card), [Get single card transaction](/api-reference/cards/get-single-card-transaction) for one record, and [List all card transactions](/api-reference/cards/list-all-card-transactions) across every card.
+
+```http
+GET /api/cards/{cardId}/transactions
+```
+
+Filter by `status`, `type`, and a date range. Each record carries amount, timestamp, merchant name, MCC, and outcome.
+
+## What each record type means
+
+| Type | Meaning |
+|---|---|
+| Authorization | A merchant placed a hold. Funds reserved, not yet taken. |
+| Settlement | A previously authorised charge completed. Money moved. |
+| Top-up | You loaded the card from your balance. |
+| Reversal | An authorisation was cancelled before settlement. Funds released. |
+| Refund | A settled charge was returned by the merchant. |
+| Chargeback | The cardholder disputed a charge. |
+| Withdrawal | Value moved from the card back to your account. |
+| Termination | The card was shut down; may include a balance refund. |
+
+### Refund or reversal?
+
+The distinction matters for balance display:
+
+- **Reversal**: authorised, then cancelled before settlement. No money ever left; the hold releases.
+- **Refund**: settled, then returned. Money left and came back, in 3 to 14 business days depending on the merchant.
+
+If the card is terminated, incoming refunds and reversals are credited to your master balance instead of the card.
+
+### Chargebacks
+
+Refunds are merchant-initiated; chargebacks are cardholder-initiated disputes. A chargeback triggers a formal Visa investigation that can take up to 60 days and may carry processor fees. Route these through your support flow rather than your normal refund handling. The chargeback fee is on [Fees and decline rules](/docs/card-issuing/card-fees).
+
+## Explain declines
+
+Every decline carries a reason. Show it to the user; "payment declined" with no reason is a support ticket, "insufficient card balance" is a top-up.
+
+| Reason code | Meaning |
+|---|---|
+| `insufficient_funds` | Card balance cannot cover the charge. |
+| `card_inactive` | Card is frozen or terminated. |
+| `mcc_not_allowed` | Merchant category is blocked. |
+| `invalid_card_details` | Wrong CVV, PAN, or expiry entered. |
+| `international_blocked` | Cross-border transactions restricted for this card. |
+| `velocity_limit` | Too many transactions in a short window. |
+| `issuer_downtime` | Temporary processor issue. |
+| `fraud_block` | Auto-flagged as suspicious. |
+
+<Warning>
+  Repeated declines are not free. Insufficient-funds and frozen-card declines count as decline-rule violations: the second carries a fee and the third terminates the card. See [Fees and decline rules](/docs/card-issuing/card-fees).
+</Warning>
+
+### Blocked merchant categories
+
+Some MCCs are declined at the processor level regardless of balance:
+
+| MCC | Category |
+|---|---|
+| 4829 | Money transfer |
+| 6051 | Non-fiat currency services, including crypto exchanges |
+| 7995 | Betting and gambling |
+| 7273 | Dating services |
+| 5966 | Telemarketing merchants |
+| 7801–7802 | Licensed online casinos and racing (US) |
+
+Per-card caps on top of these are set with [Update spend limits](/api-reference/cards/update-spend-limits).
+
+## Build the monitoring loop
+
+<Steps>
+  <Step title="Ingest webhooks as the primary feed">
+    Persist every event keyed by `eventId`. This is your real-time ledger; the catalogue is on [Webhook events](/docs/card-issuing/webhooks).
+  </Step>
+  <Step title="Reconcile against the API on a schedule">
+    Sweep [List card transactions](/api-reference/cards/list-card-transactions-by-card) and diff against your persisted events, so a missed webhook never becomes a wrong balance.
+  </Step>
+  <Step title="Surface it to users">
+    Show merchant name, amount, state, and the decline reason where relevant. Group by day, and label refunds and reversals distinctly from spends.
+  </Step>
+  <Step title="Alert on risk signals">
+    Watch decline bursts per card, `fraud_block` reasons, and `virtualcard.transaction.declined.charge` fee events; each is an early warning worth an internal alert.
+  </Step>
+</Steps>

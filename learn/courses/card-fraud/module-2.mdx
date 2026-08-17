@@ -1,0 +1,98 @@
+---
+title: "Module 2: Understanding and preventing virtual card fraud"
+description: "The fraud vectors specific to virtual cards, from stolen credentials to compromised merchant integrations."
+---
+## Key fraud vectors with virtual cards
+
+1. Stolen Credentials
+
+   Phishing or malware can compromise user credentials.
+
+   Once access is gained, attackers generate or use existing cards.
+
+2. Compromised Merchant Integrations
+
+   If a merchant is breached, saved virtual card details may be exposed.
+
+   Vulnerabilities in integrations (e.g., unsecured APIs) can be entry points.
+
+3. Social Engineering of Customers or Support Agents
+
+   Impersonation or manipulation to gain access to card creation flows or login recovery.
+
+4. Account Takeover (ATO)
+
+   Email and password reuse enables login via credential stuffing or brute-force attacks.
+
+5. Abuse of Programmatic APIs
+
+If an API key leaks or isn't rate-limited, attackers can create cards or drain balances.
+
+## Real-world case examples
+
+**Case 1: B2B virtual card abuse in expense systems**
+
+A vendor infiltrated a client's expense reimbursement system and issued multiple virtual cards for fake invoice payments. Lack of per-transaction approval controls enabled the fraud.
+
+**Case 2: OTP interception for card activation**
+
+Attackers used SIM swap to intercept OTPs during card setup, enabling unauthorized activation and spend.
+
+**Case 3: API key compromise**
+
+An engineering team mistakenly exposed sandbox and production API keys in frontend code. Fraudsters created virtual cards and ran test transactions on stolen services.
+
+## Built-in protections of virtual cards
+
+Virtual cards inherently reduce some fraud risks:
+
+- **Unique card number per transaction or merchant:** Prevents re-use if compromised.
+- **Spending and merchant controls:** Limit where and how a card can be used.
+- **Auto-expiry and low-value limits:** Prevent long-term fraud exposure.
+- No physical card theft risk.
+
+Virtual cards provide spend control, transparency, and automation to identify and prevent suspicious or abnormal transactions in real-time.
+
+## Best practices for fraud prevention
+
+### Platform controls
+
+- Enforce 2FA and biometric authentication
+- Lock virtual cards after suspicious activity
+- Enforce strict API key rotation and rate limits
+- Integrate fraud detection systems for behavioral anomalies
+
+### Customer guidelines
+
+- Never share card credentials or OTPs
+- Use unique login credentials across platforms
+- Enable alerts for every transaction
+- Report suspicious activity immediately
+
+### Team SOPs
+
+- Set merchant category codes (MCC) restrictions
+- Require secondary approval for high-value card creation
+- Use velocity checks (e.g., number of cards per user per day)
+
+## What to watch for (red flags)
+
+- Card created and used immediately
+- Multiple cards generated in short succession
+- Spending pattern deviates from norm
+- Frequent declines or failed authorization attempts
+- Logins from unusual geolocations or devices
+
+## Quick assessment: Module 2
+
+### 1. Choose the most secure virtual card practice:
+
+A. Allow cards to be reused across vendors
+
+B. Send OTPs over email only
+
+C. Enable biometric auth for card creation
+
+D. Allow card creation without limits
+
+**Correct answer:** C

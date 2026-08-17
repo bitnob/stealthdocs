@@ -1,0 +1,132 @@
+---
+title: "Module 20: Card authorizations, silent transactions, and pre-Authorizations"
+description: "Authorizations versus settlement, why holds distort balances, and how to explain ghost charges."
+---
+## Learning objectives
+
+- Understand what a card authorization is, and how it differs from settlement
+- Learn why merchants hold funds (and how that affects balance perception)
+- Identify common causes of “ghost charges” or silent deductions
+- Build product logic that tracks authorizations correctly and explains them to users
+- Design for trust around temporary holds, refunds, and perceived vs. actual balance
+
+## What is a card authorization?
+
+A card authorization is a real-time approval request sent from a merchant to the card issuer, asking:
+
+*“Is this card valid, and does it have enough funds?”*
+
+If approved, the amount is held, but not yet transferred. The actual money only moves during **settlement**, which can happen minutes or days later.
+
+## Authorization vs. Settlement
+
+| Stage | Action |
+|---|---|
+| Authorization | Reserves funds, reduces available balance |
+| Settlement | Finalizes charge, transfers funds from card to merchant |
+
+### Why the distinction matters
+
+- If a transaction is authorized but not settled → funds appear “gone” but are never received by the merchant
+- If a merchant cancels before settlement → it's logged as a **reversal**
+- If a card is terminated during the hold period → reconciliation gets complex
+
+## Silent authorizations (a.k.a. “Test charges”)
+
+Some merchants, especially digital services, send \$0 or \$1 authorizations to verify the card before allowing a larger charge.
+
+Common with:
+
+- Spotify
+- Apple/iTunes
+- Uber
+- Meta (ads)
+- Netflix trial accounts
+
+These test authorizations are often:
+
+- Not followed by a charge
+- Not settled
+- Not explained to users
+- **Example Scenario:** User sees a \$1 deduction → balance drops → no transaction log. User thinks: *“Where did my money go?”*
+
+In reality: The \$1 was an authorization only. It will disappear in 7–14 days if not settled.
+
+## Real use cases for pre-Authorizations
+
+| Use Case | Merchant Logic |
+|---|---|
+| Hotel booking | Hold $200 in case of damage or cancellation |
+| Car rentals | Pre-authorize $500 as security |
+| Fuel pumps | Pre-authorize $150 (actual fuel cost settled later) |
+| In-app platforms | Test card to avoid failed renewals later |
+
+These are real authorizations that show up in logs and impact user balance, even if they’re not final charges.
+
+## Implications for product teams
+
+If you don’t explain this logic, users will:
+
+- Believe they’ve been charged twice
+- Open support tickets for “missing funds”
+- Panic when their balance doesn’t reflect reality
+- Distrust your system, especially if they use local funding sources with high sensitivity to small deductions
+
+## Product design recommendations
+
+### 1. Show pending transactions separately
+
+Create two balance displays:
+
+- **Available balance** (after all holds)
+- **Pending authorizations list** (even if not settled)
+- Your Card
+- Available: \$43.00
+- Pending: \$57.00
+- Total Top-Up: \$100.00
+
+### 2. Mark pre-Auths and \$1 tests clearly
+
+| Field | Label |
+|---|---|
+| Amount: $1 | “Merchant test authorization” |
+| Status | “Pending hold, not charged” |
+| Expected release | “Will expire if not used in 7–14 days” |
+
+Let the user tap for more info. Add links to docs if necessary.
+
+### 3. Create clear user-Facing copy
+
+When a hold is detected:
+
+*“This \$1 was temporarily held by Spotify to verify your card. It is not a charge and will be released automatically.”*
+
+When a transaction is reversed:
+
+*“You were not charged. The hold placed by the merchant has been released.”*
+
+## Handling edge cases
+
+| Edge Case | Solution |
+|---|---|
+| Card terminated while pre-auth is live | Still allow reversal to platform float or wallet |
+| Pre-auth amount differs from final charge | Log both transactions as part of the same chain |
+| Merchant initiates reversal but balance isn’t restored | Wait for webhook or release timer to pass |
+| Duplicate pre-auths (common in apps) | Collapse in UI to avoid confusion |
+| Final charge arrives days later | Match based on reference, merchant name, or timestamp proximity |
+
+## Developer implementation tips
+
+- Track `authorizationId` and `settlementId` separately when possible
+- Do not finalize spend logs based on authorization alone
+- Use webhook event `transaction.reversed` to detect cancellations
+- Auto-release holds in user display after N days if settlement fails to arrive
+- Always log authorization time, merchant, and expected expiry
+
+## Recap
+
+- Authorizations are not the same as charges
+- Test and pre-auth transactions can create balance gaps and user confusion
+- Good card UX distinguishes between held, charged, and refunded
+- Design for transparency: show what’s held, what’s pending, and what’s final
+- Education and logging are more important than hiding the complexity

@@ -1,0 +1,101 @@
+---
+title: "Threat models and security risks"
+description: "The attack surfaces specific to user-held keys, and the controls that mitigate each one."
+---
+Building a Bitcoin wallet where users manage their own private keys introduces a fundamentally different security model compared to traditional fintech apps.
+
+In non-custodial Bitcoin wallets, users are their own banks.
+
+As a developer or company building such a wallet, you must think like a security architect. Below we outline the major real-world risks and how you should address them at the product, engineering, and user education layers.
+
+## Device theft or loss
+
+**Risk:** If a user's device (mobile phone, laptop) is stolen, anyone who accesses it could steal the private keys and Bitcoin.
+
+**Mitigations:**
+
+- Encrypt the wallet data (private keys, seeds) on the device using strong symmetric encryption (e.g., AES-256).
+- Require a PIN, biometrics, or passcode to access the wallet app.
+- Auto-lock the app after a period of inactivity.
+- Offer optional 2FA on sensitive actions (e.g., initiating a send transaction).
+
+<Info>
+  Wallet encryption should use a key derived from the user's passcode, not a hardcoded or device-tied key.
+</Info>
+
+## Seed backup loss
+
+**Risk:** If a user does not back up their seed phrase, and they lose their device, their Bitcoin is permanently lost.
+
+**Mitigations:**
+
+- Force users to back up the seed phrase during onboarding.
+- Verify backup by asking users to re-enter parts of the seed (e.g., “Enter word #12”).
+- Warn users clearly about consequences of not backing up.
+- Offer optional encrypted cloud backup only if it’s genuinely secure (e.g., encrypt seed on-device before uploading).
+
+**Suggestion:** Consider building a backup reminder system that periodically reminds users until a verified backup is completed.
+
+## Supply chain attacks (malicious code in app)
+
+**Risk:** If your app build process is compromised, malicious code could be inserted to leak keys or send funds to attacker addresses.
+
+**Mitigations:**
+
+- Minimize 3rd-party SDKs and dependencies, especially in security-critical parts of the app.
+- Audit open-source libraries you use for Bitcoin key generation and signing.
+- Implement build reproducibility checks where possible.
+- Separate your wallet codebase from analytics, ads, or unrelated services.
+
+**Security mindset:** Bitcoin wallet apps should treat their signing code paths like banks treat financial transaction paths: minimal, isolated, and auditable.
+
+## Phishing and fake recovery attacks
+
+**Risk:** Scammers often trick users into entering their seed phrase into fake apps, websites, or over the phone.
+
+**Mitigations:**
+
+- NEVER ask users for their seed phrase again inside your app after initial backup verification.
+- Display strong in-app warnings:
+  - "No employee or app will ever ask for your seed phrase."
+  - "Never enter your seed phrase into any website or other app."
+- Educate users about phishing attacks during onboarding.
+- Integrate security tips inside your transaction screens.
+
+**User experience:** A great Bitcoin wallet is one that assumes its users are human, not infallible.
+
+## Malware and clipboard attacks
+
+**Risk:** Malware on the user's device could hijack clipboard data. For example, replacing Bitcoin addresses during a copy-paste operation.
+
+**Mitigations:**
+
+- Use QR codes for payment address sharing wherever possible.
+- Display a partial address fingerprint (e.g., first 4 and last 4 characters) to confirm correct addresses.
+- Show warnings if users paste Bitcoin addresses manually.
+
+**Advanced mitigation:** Some wallets re-scan clipboard content and detect changes right after a paste action to warn users. You may consider this too.
+
+## Summary table: Threats and defenses
+
+| Threat | Mitigation |
+|---|---|
+| Device theft or loss | Encrypt wallet locally, PIN/bio lock, auto-timeout |
+| Seed backup loss | Forced backup + verification at onboarding |
+| Supply chain attack | Audit libraries, minimize dependencies, reproducible builds |
+| Phishing attacks | Strong user education, zero re-entry of seed |
+| Clipboard malware | Prefer QR codes, show partial address (first/last characters) for confirmation |
+
+## Mindset for builders
+
+When building user-managed Bitcoin wallets:
+
+- Assume your users will make mistakes: design recovery and education around that.
+- Assume the environment (mobile device, operating system) can sometimes be compromised: build layered defenses.
+- Treat every action involving private keys or Bitcoin transactions as a critical event: log securely, monitor for anomalies, minimize exposure.
+
+Security is UX. Good security flows should feel seamless to non-technical users.
+
+**Developer tip:** If you are unsure how much security is enough: Benchmark your app against wallets like Sparrow, Phoenix, BlueWallet, and Green.
+
+These are leading examples of non-custodial wallet apps that successfully balance UX and strong Bitcoin security.

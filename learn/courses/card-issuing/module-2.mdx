@@ -1,0 +1,150 @@
+---
+title: "Module 2: Card lifecycle from a product perspective"
+description: "The lifecycle states of a card, who controls each transition, and how to model them in your backend."
+---
+## Learning objectives
+
+- Understand the three fundamental lifecycle states of a virtual card
+- Know who (user, system, compliance) controls transitions between states
+- Learn how to design your product UX and backend around lifecycle changes
+- Be able to build workflows that prevent user confusion and operational risk
+
+## Virtual card lifecycle: the big picture
+
+Virtual cards follow a strict, state-based lifecycle:
+
+`[ACTIVE] ⇄ [FROZEN] → [TERMINATED]`
+
+Let’s define each state clearly and explore why it exists, how transitions happen, and what you need to do at each step.
+
+## `ACTIVE`
+
+**What it means:** The card is fully functional and can be used to:
+
+- Make payments
+- Receive refunds
+- Be topped up or withdrawn (if supported)
+
+**How it enters this state:**
+
+- Immediately after successful creation
+- After being unfrozen (if previously frozen)
+
+**What you should do in your product:**
+
+- Display the card as "Ready to use"
+- Show full balance and transaction options
+- Allow users to take actions: spend, fund, freeze
+- Monitor spending behavior
+
+**Backend logic to support this state:**
+
+- Permit authorization requests
+- Accept webhook events for transactions
+- Track usage patterns
+
+## `FROZEN`
+
+**What it means:** The card is suspended. It cannot be used for:
+
+- Purchases
+- Top-ups
+- Withdrawals
+
+**Why cards are frozen:**
+
+| Trigger | Example |
+|---|---|
+| User Action | User manually freezes card from your app |
+| Security System | Fraud, too many declines, suspicious IP/device |
+| Compliance Logic | KYC expired, suspicious merchant MCC |
+| Automated Platform Rule | 3 failed top-ups, unusual pattern |
+
+**Can frozen cards be reactivated?** Yes. They can be unfrozen manually or automatically.
+
+**What you should do in your product:**
+
+- Show the card as “Frozen” (clear visual state)
+- Allow unfreeze (if policy permits)
+- Inform the user *why* it was frozen, not just *that* it was frozen
+- Block top-ups, spending, and display warning on UI
+
+**What not to do:**
+
+- ❌ Don’t auto-terminate a frozen card unless the rules allow it
+- ❌ Don’t hide the card, make it visible, but read-only
+
+## `TERMINATED`
+
+**What it means:** The card is permanently deactivated. It cannot be:
+
+- Used
+- Funded
+- Reactivated
+- Returned to frozen or active
+
+**Why cards are terminated:**
+
+| Reason | Description |
+|---|---|
+| Manual | User or admin terminated the card |
+| Security | Too many failed transactions |
+| Fraud escalation | Proven abuse or high-risk usage |
+| KYC/Compliance failure | User flagged or sanctions hit |
+| Card misuse | Using the card in blocked MCCs or geographies |
+
+**Important system rules (example):**
+
+- If a card has 1+ successful transaction → terminated after 4 consecutive declines
+- If a card has never succeeded → terminated after 3 declines
+- Frozen cards can also be auto-terminated after rule violations
+
+**What you should do in your product:**
+
+- Clearly show the card is “Closed” or “Inactive Permanently”
+- Prevent any further action
+- Display final balance if relevant
+- Provide option to create a new card
+- Show termination reason (in plain English)
+
+**What happens behind the scenes:**
+
+- Webhooks will still be fired for reversals or refunds
+- System may refund final balance (if applicable)
+- A new card must be created if needed again
+
+## Product design checklist per state
+
+| State | Ux Element | Actionable Tip |
+|---|---|---|
+| Active | Green status chip, spend button enabled | Allow spend, top-up, freeze |
+| Frozen | Yellow warning banner, disabled spend button | Provide reason + unfreeze CTA |
+| Terminated | Greyed-out card UI, “Closed” label | Offer “Create New Card” flow |
+
+## Common lifecycle pitfalls
+
+| Mistake | Why It Breaks |
+|---|---|
+| Not showing reason for freeze | Leads to user confusion and complaints |
+| Allowing top-up on frozen card | Funds get stuck; users don’t see them |
+| Reactivating a terminated card | Most schemes forbid this, always create a new card |
+| Terminating without refunding balance | Violates financial best practices |
+| Not logging lifecycle transitions | Makes auditing and dispute resolution harder |
+
+## Knowledge check
+
+Which of these is true?
+
+1. A terminated card can be unfrozen.
+2. A card must be frozen before being terminated.
+3. All cards start in the frozen state.
+4. Cards can move directly from active to terminated.
+
+**Answer:** Cards can be terminated without being frozen first, especially if flagged by fraud or abuse logic.
+
+## Key takeaways
+
+- Every card has a clear state: Active, Frozen, or Terminated
+- You must reflect state transitions clearly in your product
+- System rules can trigger transitions automatically. Always build with them in mind
+- Users will trust your product more if they understand what’s happening and why

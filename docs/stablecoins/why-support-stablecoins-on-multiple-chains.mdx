@@ -1,0 +1,40 @@
+---
+title: "Why multiple chains"
+description: "The cost, speed, and user-expectation trade-offs behind supporting more than one chain."
+related:
+  - /docs/stablecoins/supported-chains
+  - /docs/stablecoins/issuing-stablecoin-addresses
+---
+Offering stablecoins [across diverse blockchain networks](/api-reference/addresses/supported-chains) lets Bitnob meet varied technical requirements and user expectations. Below are the key motivations and considerations for multi-chain support:
+
+## Fees and throughput
+
+Gas cost optimisation: Ethereum mainnet often has high transaction fees under load. By supporting Solana or BSC, users can choose lower-cost rails for micro-payments or high-frequency transfers.
+
+Throughput and latency: Solana and Tron process thousands of transactions per second, reducing confirmation delays for time-sensitive workflows.
+
+## Ecosystem fit
+
+DeFi composability: Many lending, trading and yield-farming protocols reside on Ethereum and its Layer 2s (Arbitrum, Optimism). Native ERC-20 stablecoins integrate directly with those applications.
+
+Local user habits: In markets where BSC or Tron have larger user bases, customers expect to manage tokens there. Supporting those chains improves adoption and user satisfaction.
+
+## Resilience
+
+Network uptime: No chain is immune to congestion or upgrade-related downtime. Spreading liquidity across multiple networks safeguards against single-chain outages.
+
+Regulatory flexibility: Different chains have varying levels of decentralisation and compliance tooling. Multi-chain support lets Bitnob adapt to evolving regional requirements without rebuilding core logic.
+
+## What it means for your product
+
+Unified API surface: Our chain abstraction layer routes requests to the correct network while exposing consistent parameters and response schemas. Engineers build once and deploy everywhere.
+
+Dashboard and UI flows: Designers should let users select a preferred network when sending or receiving stablecoins, showing real-time fee estimates and confirmation times per chain.
+
+## Future-proofing
+
+Onboarding emerging networks: As new high-performance chains gain traction, Bitnob can plug them into the same abstraction layer with minimal effort.
+
+Supporting token innovations: Algorithmic stablecoins or interest-bearing variants often launch on specific blockchains. Multi-chain architecture lets us onboard them without rewriting core services.
+
+By offering stablecoins on Ethereum, Solana, Arbitrum, Tron, BSC and more, Bitnob ensures optimal cost, speed, and interoperability empowering both engineering and design teams to deliver a flexible, resilient payments platform.

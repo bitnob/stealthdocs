@@ -1,0 +1,108 @@
+---
+title: "How integrators can make money"
+description: "Spread, fee, and packaging models for earning revenue on top of the Trading API."
+---
+
+## Add a spread (markup) on trades
+
+When you fetch a quote via /api/trading/quotes, you receive:
+
+```json
+{
+  "rate": 2250,
+  "outputAmount": "225000"
+}
+```
+
+You can **offer the user a slightly lower rate** than what you receive.
+
+Example:
+
+- Bitnob rate: 2250 sats per cent
+- You offer: 2200 sats per cent
+- Effective spread: 2.2%
+
+When executing the trade:
+
+- You still use the Bitnob quote (locked or live)
+- You record the actual **execution amount** vs. **user-facing rate**
+- **The difference = your profit** (in sats or cents)
+
+This model works even at high volume and is **invisible to the user** if the rate is still competitive.
+
+## Bundle trading into a service offering
+
+For platforms where trading is a backend function (e.g., remittances, merchant payouts):
+
+Offer a fixed USD (or NGN) rate to your users (e.g., “Send \$100 to Nigeria”)
+
+**On the backend, you:**
+
+- Accept bitcoin
+- Convert to USDT using Bitnob
+- Lock in a margin inside the conversion logic (e.g., build 1-2% spread into rates)
+
+This gives you:
+
+- **Price control**
+- **Earnings from FX/timing edge**
+- **Revenue on every trade**, whether the user is aware of the backend asset movement or not
+
+Naira rails: the same model works with NGN. Accept naira from a Nigerian user, convert to USDT, USDC, or Bitcoin (or the reverse to pay out in naira), and build your spread into the NGN rate.
+
+## Charge a platform or execution fee
+
+Some apps transparently monetize via fees on each trade:
+
+- Trade Value: \$250.00
+- Network Fee: \$0.00
+- Execution Fee: \$2.50 (1%)
+- Total Charged: \$252.50
+
+You can:
+
+- Show this in the UI
+- Bake it into the output value (user receives slightly less)
+- Track this via internal metadata on each reference and tradeId
+
+Bitnob doesn’t charge trading fees by default, so this gives you room to add your own layer.
+
+## Tiered access for sub-Accounts (B2B2C)
+
+If you run a platform serving other businesses or teams:
+
+- Offer **white-labeled trading access**
+- Mark up rates
+- Charge monthly platform fees
+- Offer volume-based discounts or rewards
+
+You become the **merchant of record**, and Bitnob is your infrastructure layer.
+
+## Offer instant swap with delayed fulfillment
+
+This is an advanced strategy.
+
+- Let users “Buy bitcoin Now” at a given rate
+- Delay execution a few minutes while batching trades
+- **Capture timing or price efficiency** using backend logic
+- Fulfill with Bitnob once execution terms are favorable
+
+This is similar to how Cash App and Revolut optimize behind the scenes.
+
+Only do this if you have treasury experience or strong controls.
+
+## Incentivized spread: Subsidize rate on buy, earn on sell
+
+For customer acquisition:
+
+- Offer best-in-market rate for BTC purchases (maybe break even)
+- Make money on the sell side when user exits to stablecoin
+
+This is common in wallets, trading apps, and even DeFi platforms.
+
+## Best practices for monetizing
+
+- **Track every trade’s input/output/spread/fees** in your internal ledger
+- Use the reference field to link trades to users or business units
+- Record fee revenue separately for accounting, analytics, and tiering
+- Consider limits per user per day to protect against abuse

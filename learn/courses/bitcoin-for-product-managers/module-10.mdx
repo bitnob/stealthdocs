@@ -1,0 +1,186 @@
+---
+title: "Module 10: Designing Bitcoin support for existing custodial wallets"
+description: "Bitcoin support inside an existing custodial platform, without breaking its internal ledger model."
+---
+## 10.1 Introduction
+
+- They hold users' balances in their own accounts.
+- Users interact with internal databases, not public blockchains.
+- Funds are moved between users internally unless external payouts are needed.
+
+When these platforms want to add Bitcoin support, they face a reality:
+
+Bitcoin is not an account-based system.
+
+Bitcoin is a UTXO-based global ledger that demands real cryptographic control, real on-chain settlement, and risk-aware liquidity management.
+
+This module will show how to think about integrating Bitcoin into existing custodial systems cleanly, securely, and at scale.
+
+## 10.2 Understanding custodial wallet constraints
+
+| Feature of Custodial Wallet | Implication for Bitcoin Integration |
+|---|---|
+| Centralized ledger (internal database) | Must mirror Bitcoin balances off-chain carefully. |
+| Account-based architecture (user_id, balance) | Bitcoin needs to be abstracted into account-like experiences for users. |
+| Fiat-focused | Bitcoin price exposure and volatility must be managed. |
+| Compliance built-in (KYC, AML) | Bitcoin flows must inherit or adapt to existing compliance frameworks. |
+| Operational simplicity | Bitcoin complexity must be hidden from end-users wherever possible. |
+
+## 10.3 Bitcoin in custodial contexts
+
+Bitcoin is not a balance in an internal database by default.
+
+It consists of:
+
+- UTXOs controlled by private keys.
+- Transactions needing fee estimation and broadcasting.
+- Finality depending on confirmations.
+
+Custodial systems must build a bridge:
+
+- Internally model Bitcoin balances for users.
+- Externally manage real Bitcoin funds on the blockchain.
+- Handle real blockchain delays, fee fluctuations, and security risks.
+
+You are not "creating Bitcoin accounts". You are managing claims over real Bitcoin stored securely in wallets you control.
+
+## 10.4 Key architecture principles for adding Bitcoin support
+
+| Principle | Action |
+|---|---|
+| Aggregate Custody | Hold bitcoin in pooled addresses or wallets. Users have internal balances, not individual UTXOs. |
+| Secure Key Management | Use hardened security setups: multi-signature wallets, hardware modules, strict access control. |
+| UTXO Management | Consolidate UTXOs efficiently to avoid wallet bloat and fee inefficiencies. |
+| Fee Management | Manage dynamic Bitcoin network fees properly in pricing and withdrawals. |
+| Risk Segregation | Separate operational hot wallets (for small instant transactions) from cold storage (long-term Bitcoin reserves). |
+
+## 10.5 Design models for exposing Bitcoin to users
+
+There are different ways to introduce Bitcoin functionality into a custodial wallet:
+
+1. Buy/Sell Only (No Send/Receive)
+
+   - Allow users to buy bitcoin using their fiat balance.
+   - Allow users to sell bitcoin into fiat.
+   - Bitcoin stays inside the company’s custody.
+
+   **Pros:** Simple. Easier compliance. No blockchain interaction for users.
+
+   **Cons:** Users cannot withdraw real Bitcoin unless additional systems are built.
+
+2. On-Chain Send and Receive
+
+   - Allow users to send and receive real Bitcoin addresses.
+   - Real blockchain transactions are made.
+   - Users experience real fees, real confirmations, real delays.
+
+   **Pros:** True Bitcoin ownership experience.
+
+   **Cons:** More complex. Users must understand fees, confirmations. Higher operational security required.
+
+3. Lightning Network Support (Optional Layer)
+
+   - Allow fast Bitcoin payments over the Lightning Network.
+   - Users can send or receive bitcoin with minimal fees and instant finality.
+
+   **Pros:** Great for micropayments, cross-border remittances.
+
+   **Cons:** Requires Lightning node management, channel liquidity handling.
+
+4. Hybrid Approaches
+
+   - Internal custodial Bitcoin accounts.
+   - Withdrawal to on-chain Bitcoin addresses available for advanced users.
+   - Optional Lightning withdrawals for small amounts.
+
+## 10.6 Compliance and risk considerations
+
+Adding Bitcoin to a custodial platform triggers serious legal and operational questions.
+
+| Risk Area | Required Action |
+|---|---|
+| KYC/AML | Extend KYC rules to Bitcoin-related activity. Monitor Bitcoin deposits and withdrawals. |
+| Source of Funds | Watch for tainted or sanctioned Bitcoin (e.g., from mixers, ransomware addresses). |
+| Licensing | Some jurisdictions require a specific license for offering custody of cryptocurrencies. |
+| Travel Rule | Some jurisdictions require sender and receiver info for crypto transactions. |
+| Insurance | Consider Bitcoin custody insurance for cold storage. |
+
+<Info>
+  Even if you abstract Bitcoin behind your app UI, the regulators see your company as the custodian. Meaning you carry responsibility for Bitcoin user funds.
+</Info>
+
+## 10.7 Building the right user experience
+
+Bitcoin behaves differently than fiat:
+
+- Transaction settlement is not instant.
+- Network congestion can delay confirmations.
+- Fees fluctuate minute to minute.
+- Privacy expectations are higher.
+
+Good UX must:
+
+- Explain confirmations (pending → confirming → finalized).
+- Explain network fees transparently.
+- Show real-time balances even if pending transactions exist.
+- Warn about volatility if users are holding bitcoin as an asset.
+- Provide clear backup/recovery pathways if users are allowed custody (rare in custodial models).
+
+Example small banner when sending bitcoin:
+
+"Your transaction is being broadcast to the Bitcoin network. It may take 10–60 minutes to confirm depending on network conditions."
+
+## 10.8 Infrastructure options
+
+You must decide:
+
+| Option | Pros | Cons |
+|---|---|---|
+| Build your own Bitcoin custody stack | Full control. Customizable. | High security risk. Long time to market. Expensive to secure. |
+| Partner with Bitcoin infrastructure providers (like Bitnob) | Faster launch. Leverage external expertise. Reduce custody risk. | Dependency risk. Need strong SLA agreements. |
+
+Most fintechs prefer starting with partnerships, then migrating to partial self-custody later once operational experience grows.
+
+## 10.9 Case study models
+
+| Company | Bitcoin Offering | Notes |
+|---|---|---|
+| Cash App | Buy, Sell, Send, Receive bitcoin | Custodial wallet, optional self-custody withdrawals. Very user-friendly Bitcoin experience. |
+| Strike | Bitcoin-backed fiat payments + Lightning | Abstracts Bitcoin from users for seamless payments. |
+| Binance | Custodial crypto exchange (multi-asset) | Bitcoin trading only through custodial balances. Withdrawal needs explicit blockchain transactions. |
+
+You can choose models based on:
+
+- User sophistication
+- Regulatory environment
+- Strategic goals (full Bitcoin experience vs Bitcoin-as-payments-rail)
+
+## 10.10 PM reflection points
+
+If you are planning Bitcoin support in a custodial platform:
+
+- Decide early: Buy/sell only? Full send/receive? Lightning?
+- Understand that Bitcoin custody is serious. You are now securing real, irreversible money.
+- Plan user flows that explain confirmations, fees, and volatility gently but honestly.
+- Handle real Bitcoin transaction fees gracefully, especially for microtransactions.
+- Ensure operational teams understand blockchain monitoring, transaction broadcasting, and mempool dynamics.
+
+Adding Bitcoin is not just adding another currency.
+It is adding a new financial system inside your app. Treat it with the seriousness it deserves.
+
+## 10.11 Summary of module 10
+
+Adding Bitcoin support into custodial wallets requires:
+
+- Abstracting UTXO-based Bitcoin reality into account-like user experiences.
+- Building real security and compliance infrastructure behind simple frontends.
+- Choosing whether to manage Bitcoin yourself or partner with serious infrastructure providers.
+- Handling transaction settlement, fee dynamics, and privacy expectations properly.
+
+Done right, Bitcoin expands your platform’s reach, resilience, and global financial relevance. Done poorly, it exposes you to catastrophic technical, legal, and reputational risks.
+
+Bitcoin is powerful. Building with Bitcoin demands precision.
+
+## Module 10 complete
+
+You now understand how to design and integrate Bitcoin support into existing custodial wallet systems, with full knowledge of architecture, compliance, security, user experience, and operational realities.

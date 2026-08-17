@@ -1,0 +1,143 @@
+---
+title: "Module 3: Registering card users"
+description: "Why cardholder registration is mandatory, what data it needs, and how to map card users to your own model."
+---
+## Learning objectives
+
+- Understand why card user registration is mandatory in most systems
+- Know what data you need to register a user
+- Decide how to map Bitnob’s card users to your own internal user model
+- Learn common mistakes that cause card creation failures
+- Design a clean integration flow with proper error handling
+
+## What does it mean to “register a card user”?
+
+In every virtual card system (whether you're issuing through Visa, Verve, Mastercard, or another scheme), there's a concept of a “cardholder” or “card user”.
+
+Even if your product never asks your customer to "register" for anything, the system behind the scenes must assign every card to a person, entity, or reference.
+
+You are creating a legal + financial identity link between the card and the person spending.
+
+## Why is this required?
+
+Card schemes require that every card is traceable to:
+
+- A verified person (in consumer apps), or
+- A registered business (in B2B apps)
+
+This is for:
+
+| Reason | Description |
+|---|---|
+| KYC | Meet regulatory obligations for anti-money laundering (AML) |
+| Fraud Prevention | Identify and block users abusing the system |
+| Dispute Resolution | Know who made a payment if it’s contested |
+| Card Limits | Limit spend, top-ups, and transactions per user |
+| Compliance Audits | Prove you’re not issuing anonymous cards into the wild |
+
+Even if you're building a fully abstracted experience. Your backend must create and manage this linkage.
+
+## What data is required?
+
+This depends on the issuing partner and the region. But generally, every registered card user requires:
+
+| Field | Example |
+|---|---|
+| first_name | Nia |
+| last_name | Okonkwo |
+| email | nia@walletapp.io |
+| phone_number | +2348012345678 |
+| country | NG |
+| reference | user_123abc (your internal user ID) |
+
+**Best practice:** Don’t reuse email or phone across multiple users. It may result in creation failures.
+
+## Mapping your user to the card system
+
+In your platform, you already have a User ID or customer object.
+
+Use that as the reference when you register the user with the card system.
+
+YourUser(user_id: "user_001") ⇨ Registered Card User(reference: "user_001")
+
+This gives you a 1:1 mapping. All cards, transactions, and events can now be linked back cleanly.
+
+## API example: Register a card user
+
+```json
+POST /api/customers
+```
+
+```json
+{
+  "reference": "user_001",
+  "first_name": "Nia",
+  "last_name": "Okonkwo",
+  "email": "nia@walletapp.io",
+  "phone_number": "+2348012345678",
+  "country": "NG"
+}
+```
+
+```json
+{
+  "status": "success",
+  "data": {
+    "card_user_id": "d4c5a8a1-bb22-4a72-90a5-a9998123dfe3",
+    "reference": "user_001"
+  }
+}
+```
+
+You **must** store reference in your database. This is what you’ll need to issue cards.
+
+## Common mistakes
+
+| Mistake | What Happens |
+|---|---|
+| Duplicate email or phone across references | Card creation fails silently or throws 409 Conflict |
+| Missing required fields | Hard 400 errors |
+| Trying to create a card before registering user | Card creation fails with vague error |
+| Changing reference after registration | Results in broken mappings or mismatched user data |
+| Using temporary test data in production | May get flagged during audits or sandbox promotion |
+
+## One-time vs. Reusable users
+
+| Pattern | When to Use |
+|---|---|
+| One-time user per card | Anonymous, burner cards, marketing campaigns |
+| Reusable user per app customer | Wallets, payroll, consumer apps |
+
+### Best practice:
+
+Use one card user per real user in your system.
+
+That way, all future cards and transactions link to one record.
+
+## Knowledge check
+
+Which of these statements is true?
+
+1. You don’t need to register users if you only issue one card per app.
+2. Phone number must be globally unique across card users.
+3. You can issue a card directly without registering the user.
+4. Registered users are not visible to Bitnob or card issuers.
+
+Answer :
+
+Phone number must be unique. Many systems use this to deduplicate identities.
+
+## Developer tip
+
+If you support multiple wallets, apps, or projects: add a project_id or environment tag to your user reference:
+
+- `reference = "prod:user_001"` or `"wallet:user_xyz"`
+- This makes debugging, deletion, and auditing easier later.
+
+## Key takeaways
+
+- Registering card users is a legal and technical requirement in every card program
+- You should map this to your own user model cleanly
+- Always register the user **before issuing the card**
+- Store the reference permanently. This is what you use to issue cards
+- Clean data = smooth lifecycle, fewer errors, and easier support

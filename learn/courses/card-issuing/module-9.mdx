@@ -1,0 +1,145 @@
+---
+title: "Module 9: Fees, cross-Border charges, and revenue modeling"
+description: "Where card fees come from, why cross-border charges hit USD cards, and how to model revenue."
+---
+## Learning objectives
+
+- Understand the different types of fees associated with virtual cards
+- Learn how and why cross-border charges apply, even for USD cards
+- Break down how card networks, issuers, and processors make money
+- Build a realistic revenue model around your own card product
+- Learn to communicate fees transparently to users while protecting margins
+
+## Why this matters
+
+Most people assume card payments are free or that all costs are covered by the merchant. That’s a common misconception, especially in virtual card systems where issuers and platforms operate under tighter margins and higher risks.
+
+If you’re launching a card product and don’t understand fees, you risk:
+
+- Losing money on each transaction
+- Getting surprised by network charges
+- Creating a poor user experience during “mystery declines” or FX markups
+- Building a product that can’t scale profitably
+
+## Types of card fees
+
+Below is a breakdown of fees you may encounter or need to pass on:
+
+| Fee Type | Who Applies It | Description |
+|---|---|---|
+| Card Issuance Fee | You or your platform | Charged to user (e.g., $1 per card created) |
+| Top-Up Fee | You or your provider | Usually a flat fee per top-up (e.g., $1 per $100 loaded) |
+| FX Fee | Processor or issuer | Applied when converting local currency (e.g., NGN) to USD |
+| Cross-Border Fee | Card network (Visa, Mastercard) | Applied when a USD transaction is processed outside the US |
+| Withdrawal Fee | Issuer | If cash withdrawal or POS is enabled (rare for virtual) |
+| Dispute/Chargeback Fee | Issuer or processor | Cost of handling chargebacks |
+| Termination Fee | You (optional) | Fee for replacing a terminated card |
+
+## Understanding cross-Border fees (even in USD)
+
+This is one of the most misunderstood aspects of virtual cards.
+
+Even if:
+
+- Your card is denominated in USD
+- The user is in Nigeria
+- The merchant charges USD
+
+You may still pay a cross-border fee. Why?
+
+Because the location of the merchant's acquiring bank matters more than the currency.
+
+**Example:** You buy Facebook Ads from Nigeria. Charged in USD. Facebook routes the payment through a bank in Ireland. Visa classifies this as a cross-border transaction. You get charged 2.5% + \$0.50, passed from the network to your processor, and to you.
+
+This is not a bug. It’s a common reality of global payments infrastructure.
+
+## FX fees vs. Cross-border fees
+
+| Scenario | Fx Fee? | Cross-border Fee? |
+|---|---|---|
+| Pay NGN → Card in USD | Yes | Maybe |
+| Card pays Amazon in USD | No | Maybe |
+| Card pays a merchant charging EUR | Yes | Yes |
+| Card pays a US merchant settled in the US | No | No |
+
+## Realistic card revenue models
+
+Let’s now look at how platforms make money on card products.
+
+1. Flat Markup on Top-Up
+
+2. Charge a fixed fee per load.
+
+3. E.g. Top up \$100 → Fee: \$1
+
+4. **Pros:** Easy to communicate
+
+5. **Cons:** Doesn’t scale with spend
+
+6. Percentage Spread
+
+7. Take a margin on top of what the processor charges.
+
+8. E.g. FX Rate 750 → Charge 765
+
+9. **Pros:** Scales with spend
+
+10. **Cons:** Must be justified and visible
+
+11. Subscription Model
+
+12. Charge users monthly for access to premium card features.
+
+13. E.g. \$2/month for higher limits, more cards
+
+14. **Pros:** Predictable revenue
+
+15. **Cons:** High churn risk if spend is low
+
+16. Hybrid (Most Common)
+
+\$1 per card creation
+
+\$1 top-up fee per \$100
+
+2.5% FX markup on cross-border spends
+
+Volume-based revenue share from processor (if available)
+
+## Revenue stream design for different audiences
+
+| Audience | Monetization Tactic |
+|---|---|
+| Freelancers | Add fees to withdrawals or convert to USD card value |
+| Consumers | Bundle with wallet product; charge creation and FX fees |
+| Teams or SMEs | Offer budget control, charge monthly or per card |
+| International Payouts | Pass FX markup transparently in quote process |
+
+## Internal float cost vs. Pass-through
+
+You may choose to:
+
+- Absorb some card fees to improve UX (loss leader model)
+- Pass through fees exactly as charged
+- Mark up to create a margin
+
+Your strategy depends on your market, customer LTV, and whether cards are a product or a feature in a broader system.
+
+## How to display fees transparently
+
+Users respect honesty. Show:
+
+- Top-up cost in the confirmation screen
+- Cross-border fee warning after known merchants (e.g., Facebook, Alibaba)
+- \$0.50 + 2.5% breakdown when showing statement
+- Refund policies and chargeback timelines
+- Freezing and termination costs (if any)
+
+Avoid “surprise fees.” Those break trust.
+
+## Recap
+
+- Every card product has costs, some fixed, some per-transaction, some hidden in network rules
+- You must understand and model FX, cross-border, top-up , and operational fees
+- Monetization can be flat, tiered, or volume-based: design it to match your users
+- Transparent communication is not just ethical. It's good product design

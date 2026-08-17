@@ -1,0 +1,156 @@
+---
+title: "Module 12: Designing card UX for trust and clarity"
+description: "The UX states a card interface must handle, and how to keep users oriented through declines and delays."
+---
+## Learning objectives
+
+- Understand the key UX states every card interface must support
+- Learn what information should be shown at each point in the card lifecycle
+- Prevent user confusion during declined transactions, freezes, or delays
+- Design top-up, spend, and error states that build confidence
+- Create a card experience that reduces support volume and improves retention
+
+## Why UX clarity matters in card products
+
+Cards are deeply personal. When someone uses a virtual card:
+
+- They expect it to work instantly
+- They associate it with real money and trust
+- They panic when it fails, even if for legitimate reasons
+
+If your interface doesn't explain clearly what’s happening, especially during errors, users assume:
+
+- Their funds are missing
+- The product is broken
+- You’re unreliable or worse, unsafe
+
+Clear, thoughtful UX builds resilience into your product.
+
+## Core UX responsibilities of a card product
+
+Your card interface must allow users to:
+
+- Know when the card is ready to use
+- See how much is available to spend
+- Understand fees, limits, and top-up behavior
+- Review past transactions with context
+- Take safe action when something goes wrong (freeze, retry, contact support)
+- Know if/why the card is not usable (frozen, terminated, declined)
+
+If your UI doesn’t communicate these, even the best backend can’t fix the user experience.
+
+## State-driven card UI
+
+### 1. Card issued (active)
+
+**What to show:**
+
+- Card label
+- Masked PAN (e.g., `5078 **** **** 1234`)
+- Expiry date
+- CVV (if shown once)
+- Status: "Active"
+- Available balance
+- Top-up button
+- Recent transactions (last 5)
+
+Make sure this screen feels “ready.” Use clear visual cues like checkmarks, green labels, or success banners to reduce anxiety.
+
+### 2. Card frozen
+
+**What to show:**
+
+- Status: “Frozen”
+- Explanation: “This card is temporarily disabled and cannot be used for payments.”
+- CTA: “Unfreeze Card” (if allowed)
+- Contact support option (if required by policy)
+
+Users should not be left guessing. Explain the freeze and allow recovery.
+
+### 3. Card terminated
+
+**What to show:**
+
+- Status: “Terminated” or “Closed”
+- Final balance (if relevant)
+- Refund policy and what will happen next
+- Option: “Create new card”
+- Clear explanation: “This card was closed after 4 failed attempts.”
+
+Avoid simply removing the card from view: keep it visible and readable.
+
+## Top-up UX
+
+**Good top-up flow:**
+
+1. Enter Amount
+2. Show real-time fee breakdown (e.g., “\$1 top-up fee”)
+3. Confirmation screen: “You’re adding \$50 to this card. You’ll pay \$51.”
+4. Loading state with webhook listener or polling
+5. Success screen showing new balance
+
+Top-ups are emotional. Make the user feel confident the money is going where it should.
+
+## Spend UX
+
+After a successful transaction:
+
+- Show transaction immediately in recent activity
+- Display merchant name and amount
+- Confirm deduction from balance
+- Optionally allow a tap-through for detail view
+
+## Decline UX
+
+This is the most sensitive and critical UI state.
+
+**Decline messaging:**
+
+| Reason | What to Show |
+|---|---|
+| Insufficient funds | “You don’t have enough on this card. Top up to try again.” |
+| Merchant not supported | “Payments to this merchant are blocked for security or policy reasons.” |
+| Card frozen | “This card is currently frozen. Unfreeze to continue.” |
+| Too many attempts | “This card has been closed after multiple failed transactions.” |
+
+Avoid vague errors like “Something went wrong” or generic failure messages.
+
+## Transaction history
+
+Each card should have a transaction feed showing:
+
+| Field | Why It Matters |
+|---|---|
+| Merchant name | Helps users remember the context |
+| Amount and status | Confirms deduction or refund |
+| Timestamp | Reassures user of order and timing |
+| Type (spend, refund, reversal) | Prevents confusion |
+| Decline reason (if any) | Builds trust in system behavior |
+
+Make transaction feeds interactive, not static. Let users tap into them to learn more.
+
+## Additional UX enhancements
+
+| Feature | Benefit |
+|---|---|
+| Progress bar for spend limits | Helps users budget in real time |
+| Card settings (nickname, freeze, delete) | Empowers users to manage risk |
+| In-app receipt generator | Useful for freelancers or teams |
+| Smart alerts (e.g., “Your card was declined. Top up now.”) | Turns problems into actionable flows |
+| Retry button after failure | Reduces abandonment |
+
+## What to avoid
+
+- Showing a blank card with no feedback after decline
+- Disappearing the card after termination without context
+- Requiring users to contact support to understand status
+- Masking all transaction details in the name of simplicity
+- Not showing updated balance after top-up or refund
+
+## Recap
+
+- Card products are trust-driven; every pixel matters
+- Show clear, contextual information at every lifecycle state
+- Handle failures gracefully and with guidance
+- Treat declines, refunds, and freezes as UX events, not just technical ones
+- Build your interface to teach, reassure, and empower users

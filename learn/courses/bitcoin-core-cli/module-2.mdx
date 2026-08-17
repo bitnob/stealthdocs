@@ -1,0 +1,156 @@
+---
+title: "Module 2: Bitcoin Core architecture"
+description: "What a full node actually does, where Bitcoin Core keeps its data, and how RPC access is secured."
+---
+## Learning objectives
+
+- Understand what it means to run a full Bitcoin node
+- Know the difference between bitcoind and bitcoin-cli
+- Identify where Bitcoin Core stores data (blocks, wallets, mempool)
+- Understand how RPC access works and how to secure it
+
+## Lesson outline
+
+## What is a full node?
+
+A full node:
+
+- Validates every block and transaction
+- Stores a full copy of the blockchain
+- Participates in network consensus rules
+- Enforces transaction policy (fees, size, etc.)
+
+When you run bitcoind with default settings (mainnet), it:
+
+- Connects to the peer-to-peer Bitcoin network
+- Downloads and verifies all ~800GB of block data
+- Stores this in a dedicated data directory
+
+In regtest or testnet, it simulates this behavior on a smaller scale.
+
+<Note>
+  Full nodes are essential for decentralization, they enforce the rules of Bitcoin without trusting any third party.
+</Note>
+
+## bitcoind vs bitcoin-cli
+
+bitcoind: the daemon that runs the full Bitcoin node.
+
+bitcoin-cli: the command-line client used to send RPC commands to bitcoind.
+
+In regtest or testnet, it simulates this behavior on a smaller scale.
+
+Example interaction:
+
+- bitcoind -regtest -daemon
+- bitcoin-cli -regtest getblockchaininfo
+
+bitcoin-cli is just a frontend. It doesn’t do any validation. All the logic lives in the running bitcoind instance.
+
+Tip:
+
+Think of bitcoind as the server, and bitcoin-cli as your terminal-based admin tool.
+
+Example interaction:
+
+```bash
+bitcoind -regtest -daemon
+
+bitcoin-cli -regtest getblockchaininfo
+```
+
+## Bitcoin Core data directory structure
+
+By default:
+
+- Linux: ~/.bitcoin/
+- Regtest: ~/.bitcoin/regtest/
+- Testnet: ~/.bitcoin/testnet3/
+
+Key folders & files:
+
+| File/dir | Purpose |
+|---|---|
+| blocks/ | Raw block data (.dat files) |
+| chainstate/ | Fast-access database of current UTXO set |
+| wallets/ | Wallet database files |
+| mempool.dat | Unconfirmed transactions |
+| debug.log | Node logs and errors |
+| bitcoin.conf | Configuration file |
+
+## Understanding the mempool
+
+The mempool is Bitcoin Core’s memory-based pool of unconfirmed transactions.
+
+It grows when blocks are full or fee pressure is high.
+
+Use getrawmempool to view TXs in the pool:
+
+```bash
+bitcoin-cli -regtest getrawmempool
+```
+
+In regtest, the mempool clears instantly when you mine blocks, useful for testing.
+
+## Wallets in Bitcoin Core
+
+Bitcoin Core now supports multi-wallet mode:
+
+Each wallet has its own balance, address pool, and UTXOs.
+
+Wallets are stored in: ~/.bitcoin/wallets/
+
+You can create or load a wallet like this:
+
+```bash
+bitcoin-cli -regtest createwallet "demo"
+
+bitcoin-cli -regtest listwallets
+```
+
+<Note>
+  Wallets must be loaded to access balances or send transactions.
+</Note>
+
+## Permissioning and RPC ports
+
+Default RPC Port:
+
+- Mainnet : 8332
+- Testnet : 18332
+- Regtest : 18443
+
+Authentication:
+
+By default, Bitcoin Core uses .cookie file auth (preferred for security).
+
+Or you can manually set rpcuser and rpcpassword in bitcoin.conf.
+
+Example bitcoin.conf:
+
+```plaintext
+server=1
+rpcuser=admin
+rpcpassword=supersecret
+rpcallowip=127.0.0.1
+```
+
+**Security best practices:**
+
+- Never expose RPC to the public internet
+- Always use HTTPS if accessing over a network
+- For Docker or remote CLI use: restrict to localhost or use SSH port forwarding
+
+## Activity
+
+Inspect your Bitcoin data directory:
+
+1. Navigate to ~/.bitcoin/regtest/
+2. List and describe what’s in blocks/, chainstate/, and wallets/
+3. Run:
+
+```bash
+bitcoin-cli -regtest getwalletinfo
+
+bitcoin-cli -regtest getmempoolinfo
+```

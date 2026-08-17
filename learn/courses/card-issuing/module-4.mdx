@@ -1,0 +1,167 @@
+---
+title: "Module 4: Issuing a card"
+description: "What triggers card creation, the dependencies it needs, and how to handle success and failure well."
+---
+## Learning objectives
+
+- Understand how virtual cards are issued technically and operationally
+- Know what triggers card creation, and what dependencies must be in place
+- Write or spec the API request to issue a card
+- Design the right experience around card creation success or failure
+- Prevent the most common integration mistakes
+
+## What does “issuing a card” actually mean?
+
+To “issue” a virtual card means to:
+
+- Allocate a new, unique card number (PAN), expiry, and CVV
+- Link that card to a registered user (from Module 3)
+- Create a backend record with spend, funding, and transaction limits
+- Activate the card and return it to your app via API
+- Enable the card for use online under a payment scheme (e.g., Visa, Verve)
+
+This process happens within seconds, but it relies on years of network and issuer infrastructure behind the scenes.
+
+## When should you issue a card?
+
+Virtual card issuance can be triggered by:
+
+| Scenario | Example |
+|---|---|
+| On user signup | Issue a card by default to every verified user |
+| After first deposit | Wait until they fund their wallet or complete KYC |
+| On request | Let users tap "Create Card" manually |
+| Programmatic logic | Auto-create cards based on payout, spend, or budget triggers |
+| Event-based systems | e.g. Issue a card for each influencer campaign |
+
+Best practice
+
+Issue only after the user has real value to transact, either identity, money, or intent.
+
+## Requirements before you issue
+
+To successfully issue a card, you must:
+
+- Have already registered the card user (see [Module 3](/learn/courses/card-issuing/module-3))
+- Have stored their `card_user_id`
+- Be under your card issuance quota (e.g., 2 active cards per user)
+- Pass a valid reference and other metadata with the request
+
+## Sample card issuance API request
+
+Full request and response schema: [Create Card](/api-reference/cards/create-card-embedded-customer).
+
+```bash
+POST /api/cards
+```
+
+```json
+{
+  "reference": "card_user_001",
+  "label": "Main Wallet Card",
+  "currency": "USD"
+}
+```
+
+| Field | Required | Description |
+|---|---|---|
+| reference | ✅ | The user’s registered reference (must match registered user) |
+| label | Optional | Name to show in the app (e.g., “Marketing Card”) |
+| currency | Optional | Defaults to USD (or required if multi-currency is supported) |
+
+```json
+{
+  "status": "success",
+  "data": {
+    "cardId": "8e2a77a1-913a-4aa6-8f29-c4e4a26e36a1",
+    "status": "active",
+    "maskedPan": "5078********9010",
+    "expiry": "12/27",
+    "cvv": "***",
+    "createdAt": "2025-05-01T10:00:00Z"
+  }
+}
+```
+
+**Note:** PAN, CVV, and expiry are only shown once. Display securely or store encrypted if required.
+
+```json
+{
+  "eventId": "8e4b0d3c-5e2f-4a6b-9c0d-2e3f4a5b6c7d",
+  "companyId": "<company_uuid>",
+  "event": "virtualcard.created.failed",
+  "data": {
+    "id": "<card_id>",
+    "companyId": "<company_uuid>",
+    "reference": "card_user_001",
+    "reason": "reference_does_not_match_registered_user",
+    "amount": 5000000,
+    "createdStatus": "failed",
+    "customerEmail": "user@example.com"
+  }
+}
+```
+
+## UX tip: Displaying card details
+
+| Field | Show in App? | Why |
+|---|---|---|
+| PAN (card number) | ✅ Securely, once | Users need this to pay |
+| Expiry | ✅ | Required for most merchants |
+| CVV | ✅ Once | Often needed to verify online |
+| Cardholder name | Optional | Can be “Virtual Card” or user’s name |
+| Card status | ✅ | Show "Active", "Frozen", or "Terminated" clearly |
+
+**Display warning:** Let users know they can’t recover card details later. If lost, they must terminate and create a new one.
+
+## What happens behind the scenes
+
+- Your API call goes to your platform (or Bitnob if integrated)
+- Your platform contacts the card processor (e.g. Interswitch, Marqeta)
+- A unique PAN, expiry, and CVV are allocated
+- The card is linked to your registered user
+- The card is marked active and can be used immediately
+- You receive card metadata (masked or full)
+
+This flow is usually invisible to the user, it just feels instant.
+
+## Quotas and limits to be aware of
+
+| Limit | Typical Value |
+|---|---|
+| Max cards per user | 2 (some platforms may allow more) |
+| Card creation rate | Throttled to prevent abuse (e.g. 5 per minute) |
+| Label character limit | Usually 32 or fewer |
+
+Exceeding these may result in silent errors or failed API responses.
+
+## Common mistakes to avoid
+
+| Mistake | Outcome |
+|---|---|
+| Issuing a card before registering the user | Fails with vague error |
+| Using the same reference twice without cleanup | Conflicts in card-user mapping |
+| Not storing the card ID | You’ll lose the ability to top-up, track, or manage the card |
+| Showing CVV after initial API call | Violates scheme and processor compliance rules |
+
+## Recap quiz
+
+1. Can a card be issued before a user is registered?
+2. Are PAN and CVV reusable after the API response?
+3. Is the card active immediately after it’s created?
+4. What field links your system user to the virtual card record?
+
+Answers:
+
+1. No
+2. No
+3. Yes
+4. reference
+
+## Key takeaways
+
+- Virtual card issuance is fast, but must be done after user registration
+- You’ll receive the card details only once: design your UI accordingly
+- Displaying card status and limits clearly builds trust
+- Store the `card ID` securely for future operations (top-up, freeze, etc.)
+- Always catch errors and webhook events for lifecycle changes

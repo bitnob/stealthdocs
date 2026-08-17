@@ -1,0 +1,127 @@
+---
+title: "Module 10: Capstone simulation, end-to-end fraud & risk response"
+description: "A full simulated fraud incident, from detection through containment to resolution."
+---
+This module serves as a real-world scenario training simulation. You will walk through an end-to-end fraud incident from detection to resolution, applying everything learned in prior modules.
+
+This is ideal for:
+
+- Fraud teams
+- Compliance and audit reviewers
+- Product and support leads
+- Treasury operations
+- Developers building risk controls
+
+The goal is to simulate a cross-functional, time-sensitive, multi-layered incident, exactly the kind of challenge real platforms face under pressure.
+
+## Capstone simulation scenario
+
+Context: Your system supports virtual dollar cards issued through a regulated partner. On Monday morning, customer support receives several complaints from users reporting reversed transactions and incorrect balances.
+
+You are part of the Fraud & Treasury Response Unit tasked with determining:
+
+- What happened
+- Whether there is an actual fraud pattern
+- How to contain the issue
+- What changes must be made going forward
+
+## Step 1: Initial trigger
+
+Support tickets include:
+
+- "I topped up \$50, my transaction was reversed, but the card was terminated."
+- "My card was declined multiple times, then disappeared."
+- "I got a refund, but I never made a transaction."
+- "My account shows a top-up but no spend."
+
+**You pull logs and find:**
+
+- 3 different users topped up within 30 minutes
+- Each card was terminated shortly after
+- All users received refunds within 2 hours from a merchant tagged MCC 6051 (crypto-related)
+- The refund went to float instead of to the cards (since the cards were terminated)
+- 3 users withdrew that float to their wallet
+
+## Step 2: Trace the timeline
+
+Use the following sequence for User A:
+
+| Action | Details |
+|---|---|
+| Top-Up | $100 at 09:11 UTC |
+| Spend | Attempted authorization at MCC 6051 (declined) |
+| Termination | Card auto-terminated after 3 failed transactions |
+| Refund Received | $100 at 11:07 UTC |
+| Float Credited | No matching spendRef: went to float |
+| Withdrawal | $100 moved to user's main wallet at 11:10 UTC |
+
+Initial Loss to Platform: \$100 x 3 users = \$300
+
+## Step 3: Forensic checklist
+
+| Area | Findings |
+|---|---|
+| Card Lifecycle Logs | All cards terminated due to decline threshold |
+| Spend Records | No successful authorizations: all declined |
+| Refund Source | Same merchant ID, MCC 6051 |
+| User Profile | All 3 users share similar deviceHash and IP |
+| Webhook Trail | transaction.declined, transaction.terminated, refund.success received in sequence |
+| BIN Match | Cards were issued from corporate BINs |
+| Velocity | 3 users created cards in \<30 minutes |
+
+## Step 4: Containment response
+
+| Action | Taken |
+|---|---|
+| Freeze wallets of 3 impacted users | ✅ |
+| Block merchant ID from processing further refunds | ✅ |
+| Blacklist IP and device fingerprint | ✅ |
+| Disable card creation for shared velocity group | ✅ |
+| Log float exposure event to treasury audit channel | ✅ |
+| Start internal fraud report (FRC-2024-009) | ✅ |
+
+## Step 5: Risk summary
+
+| Category | Insight |
+|---|---|
+| Root Cause | Refunds from a high-risk merchant routed to float due to card termination timing |
+| Exposure | $300 float loss (refunded without valid spend) |
+| Vector | Refund laundering via top-up and MCC 6051 |
+| Prevention Gaps | No enforcement of refund → spend mapping |
+| Risk Score | Medium-High (contained early) |
+| Compliance Risk | Minimal (no chargebacks, low volume) |
+| Pattern Matched | MCC abuse + velocity + terminated card refund funneling |
+
+## Step 6: Action items & remediation
+
+| Team | Task |
+|---|---|
+| Treasury | Recover lost float, verify partner merchant status |
+| Fraud | Add new rule: block refund if no matching spend within 7 days |
+| Engineering | Update webhook handler to enforce spendRef linkage |
+| Compliance | Add merchant to enhanced monitoring list |
+| Support | Create canned response template for refund-related reversals |
+| Product | Evaluate new card lifecycle alerting per user/IP/device |
+
+## Quick reflection questions
+
+### 1. What failure allowed float to be laundered?
+
+Refund was issued to a float destination due to lack of spendRef enforcement.
+
+### 2. What pattern linked the accounts?
+
+Same IP, device fingerprint, merchant, and timing.
+
+### 3. What would a better rule have prevented?
+
+Block refund without verified spend within X hours or days.
+
+## Final capstone checklist
+
+- Detected and isolated suspicious refund flow
+- Logged card lifecycle events and webhook trail
+- Identified root cause and quantified loss
+- Contained affected users and flows
+- Triggered treasury audit and compliance reports
+- Implemented systemic prevention changes

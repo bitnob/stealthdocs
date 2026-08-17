@@ -1,0 +1,156 @@
+---
+title: "Module 4: MCC & BIN-Based threats and controls"
+description: "How MCCs and BINs shape routing, risk, and compliance, and how attackers exploit both."
+---
+## Purpose
+
+This module provides in-depth training on how Merchant Category Codes (MCCs) and Bank Identification Numbers (BINs) influence virtual card risk, compliance, transaction routing, and fraud patterns. Teams will learn how attackers exploit them, how to classify merchant risk, and how to protect your issuing infrastructure at the card level.
+
+This module is relevant for:
+
+- Risk and fraud analysts
+- Compliance and audit teams
+- Treasury and product operations
+- Engineering teams integrating card controls
+- Partners evaluating card risk architecture
+
+## Understanding MCCs: merchant category codes
+
+### What is an MCC?
+
+An MCC is a 4-digit code assigned to merchants by the payment network (Visa, Mastercard, etc.), classifying them by their business type.
+
+### Examples
+
+| Mcc Code | Merchant Type |
+|---|---|
+| 4816 | Computer Network/Information Services |
+| 4829 | Money Transfer (high-risk) |
+| 5815 | Digital Goods - Apps, Music |
+| 6051 | Crypto, Foreign Currency, Non-bank money services |
+| 7995 | Gambling, Betting, Lottery |
+
+### Why MCCs matter
+
+- Define risk level of a merchant
+- Help detect fraud (e.g., spikes in high-risk categories)
+- Allow enforcement of compliance restrictions (gambling, crypto, etc.)
+- Drive fees (e.g., cross-border, interchange categorization)
+- Can be used to whitelist/blacklist entire merchant types
+
+## Real examples of MCC abuse
+
+**Pattern 1: MCC jumping**
+
+Fraudsters test stolen cards across many MCCs in rapid succession to find which types your system allows.
+
+**Pattern 2: Refund laundering through MCCs**
+
+Refunds issued from MCC 6051 (crypto) or MCC 4829 (money transfer) are often part of laundering behavior where the merchant and user collude.
+
+**Pattern 3: Decline mapping**
+
+Fraudsters observe your decline behavior for specific MCCs and learn which are blocked or allowed, then automate test passes.
+
+## Best practice: MCC controls
+
+- Default block high-risk MCCs (4829, 6051, 7995, 7801, etc.)
+- Log all MCC usage per user
+- Implement per-user MCC limits (e.g., allow 1–2 types per card)
+- Flag MCCs that differ from user's historical behavior
+- Require escalation for MCC overrides
+
+> “It is cheaper to prevent a high-risk MCC from being approved than to unwind a fraud chain after the fact.”
+
+## BINs: bank identification numbers
+
+### What is a BIN?
+
+A BIN is the first 6–8 digits of a card number, identifying:
+
+- The card issuer
+- Country
+- Scheme (e.g., Visa, Mastercard)
+- Funding type (prepaid, debit, credit)
+- Use case (consumer vs corporate)
+
+**BIN example breakdown:** Card number: `4026 12XX XXXX XXXX`
+
+- **4026** → Visa Prepaid
+- **Country** → United States
+- **Funding** → Low-value single-use card
+
+**BINs drive:**
+
+- Where the card can be used
+- Merchant acceptance or blocks
+- Interchange and FX fees
+- Compliance scope (sanctions, licensing)
+
+## BIN and MCC alignment risks
+
+| Scenario | Risk |
+|---|---|
+| BIN says "Nigeria" but used for MCC 6051 (Crypto in US) | May breach local FX or compliance limits |
+| Corporate BIN used at MCC 7297 (Massage Parlors) | May flag inappropriate spend or MCC leak |
+| Card issued from Travel BIN used at Gambling MCC | BIN not intended for such use; triggers scheme audit |
+
+**Resolution actions:**
+
+- Detect mismatched MCC-BIN usage
+- Terminate cards used outside allowed BIN-MCC mapping
+- Update scheme reporting on MCC changes
+
+## BIN compliance examples
+
+| Requirement | Control |
+|---|---|
+| Scheme requires non-reloadable for gift cards | Limit top-ups to one per BIN type |
+| Cross-border FX requires FX warning if BIN mismatch | Add BIN vs merchant country flag |
+| BINs used for crypto must follow enhanced due diligence | Require KYC tier ≥ 2 before crypto MCCs are enabled |
+
+## Engineering safeguards
+
+- Tag each card with BIN metadata on creation
+- Validate MCC on every authorization attempt
+- Add rules like: `if MCC in [6051, 4829] and userTier < Tier2: decline`
+- Maintain MCC usage logs for audit compliance
+- Add per-user MCC anomaly flagging logic
+
+## Module 4 quick check
+
+### 1. What is a primary reason to block MCC 7995?
+
+A. It is a grocery category
+
+B. It enables reward points
+
+C. It’s a high-risk gambling category
+
+D. It is the default code for travel
+
+**Correct answer:** C
+
+### 2. Which part of the card number reveals issuing institution and card type?
+
+A. CVV
+
+B. PAN
+
+C. BIN
+
+D. Last 4 digits
+
+**Correct answer:** C
+
+### 3. What should happen if a refund is issued from a blocked MCC?
+
+A. Automatically credit the card
+
+B. Flag for investigation
+
+C. Ignore the refund
+
+D. Reissue the card
+
+**Correct answer:** B

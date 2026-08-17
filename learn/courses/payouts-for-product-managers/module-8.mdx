@@ -1,0 +1,127 @@
+---
+title: "Module 8: Security principles for Bitcoin and stablecoin payouts"
+description: "Security principles for products moving Bitcoin, stablecoins, and fiat where mistakes are irreversible."
+---
+## Introduction
+
+You are not just protecting usernames and passwords. You are protecting real money (Bitcoin, stablecoins, and fiat flows), in an environment where:
+
+- Attacks are financially motivated
+- Mistakes are often irreversible
+- Weaknesses invite catastrophic brand and financial losses
+
+As a product manager, you are responsible for integrating security into the core of the product’s design, operations, and monitoring. Security is not something to "leave to engineering." It must be baked into how payout systems are designed from the beginning.
+
+### Core security principles for payout products
+
+| Principle | Meaning |
+|---|---|
+| Minimize Custody Exposure | Hold as little hot wallet or operational funds online as possible. |
+| Build for Irreversibility | Assume that if an unauthorized payout happens, you cannot recover the funds. |
+| Segregate Risk Domains | Separate operational access from treasury controls, API keys from payment keys. |
+| Secure Every Entry Point | Treat webhooks, APIs, dashboards, and funding endpoints as critical security surfaces |
+| Monitor in Real-Time | Security must include live anomaly detection, not just after-the-fact audits |
+
+### Major security surfaces in payout products
+
+| Surface | Risk |
+|---|---|
+| Hot Wallets | Theft via operational breaches, key leaks. |
+| API Access | Unauthorized payout initiation or payout detail manipulation. |
+| Funding Address Handling | Spoofed addresses, chain confusion |
+| Beneficiary Management | Account redirection attacks, social engineering to change payout destinations. |
+| Webhook Listeners | Malicious actors faking events to manipulate internal systems. |
+| Admin Dashboards | Privilege escalation and direct payout execution risks. |
+
+### Hot wallet management principles
+
+- Keep operational Bitcoin hot wallets small relative to total treasury.
+- Use multisig wallets wherever possible for large balances.
+- Rotate operational wallet keys regularly.
+- Monitor wallet balances and unusual transaction patterns in real-time.
+
+### API and key management principles
+
+Use strict least-privilege API key generation (only the permissions required).
+
+Rotate API keys on a scheduled basis and immediately upon suspected compromise.
+
+Require HMAC signing on all webhook payloads.
+
+Require idempotency keys on all payout-initiating API calls.
+
+Implement strong API rate limiting and anomaly detection.
+
+### User funding address security
+
+Dynamically validate blockchain network selected (e.g., ensure user sending USDT on the correct chain).
+
+Regenerate new funding addresses or invoices for every transaction to prevent address reuse attacks.
+
+Monitor unusual funding patterns (e.g., repeated small partial payments indicative of probing attacks).
+
+### Beneficiary account protection
+
+Lock beneficiary details after payout request initiation.
+
+Require multi-factor authentication or re-verification for account change requests.
+
+Rate-limit changes to payout beneficiary information per user session.
+
+Build internal transaction previews with multi-party approval for high-risk payouts.
+
+### Webhook security
+
+Require HTTPS with verified certificates for all webhook endpoints.
+
+Sign all webhook payloads using your API secret with HMAC SHA-256.
+
+Validate webhook signatures before processing any event.
+
+Build idempotent webhook processing to prevent duplicate or replayed webhook attacks.
+
+Rate-limit webhook receivers to prevent flooding or denial-of-service.
+
+### Admin dashboard and internal control security
+
+Enforce strict role-based access controls (RBAC).
+
+Use multi-factor authentication (MFA) for all administrative access.
+
+Maintain audit logs of all payout initiation, payout edits, and operational actions.
+
+Separate payout creation permissions from payout approval permissions where possible.
+
+Monitor administrative sessions for unusual access times, IP addresses, and behavior patterns.
+
+### Treasury-specific security best practices
+
+Store long-term stablecoin reserves and large Bitcoin holdings in cold storage with multi-party access.
+
+Segregate operational liquidity wallets from strategic reserves.
+
+Monitor liquidity buffer depletion rates to detect unusual drawdowns that might indicate security breaches.
+
+Design crisis response playbooks for hot wallet compromise scenarios.
+
+## PM action checklist
+
+Work with engineering to define security checkpoints across the payout lifecycle.
+
+Enforce HMAC webhook validation and HTTPS-only communication from the start.
+
+Require operational limits, separation of duties, and audit logging on admin actions.
+
+Set internal security KPIs (e.g., wallet balance exposure limits, webhook false positive rates).
+
+Build real-time anomaly monitoring dashboards tied to trip activities and payout flows.
+
+## Closing reflection
+
+In payout products, no amount of branding, UX design, or feature set can save you from a single major security failure.
+
+Security is not separate from product management. It is a first-class product feature, silently working behind every payout successfully completed.
+
+In the next module, we will address
+
+ Onboarding, KYC/KYB, and Compliance in Payout Systems.

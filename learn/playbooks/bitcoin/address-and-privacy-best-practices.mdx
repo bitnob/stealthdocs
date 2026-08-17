@@ -1,0 +1,154 @@
+---
+title: "Address and privacy practices"
+description: "How wallet design leaks user information on a public ledger, and the address and change habits that prevent it."
+---
+## Why Bitcoin privacy matters
+
+Every transaction on Bitcoin is permanently recorded on a public ledger. Without proper wallet design, users unknowingly leak information such as:
+
+- How much Bitcoin they control
+- Who they transact with
+- How frequently they spend
+- Potential clustering of their financial behavior
+
+In Bitcoin, address management and transaction construction directly impact privacy. Building your wallet properly protects your users, and preserves Bitcoin’s foundational principles of pseudonymity and financial freedom.
+
+### Core address management principles
+
+| Principle | Reason |
+|---|---|
+| One address, one payment | Prevents easy linking of incoming transactions. |
+| Do not reuse addresses | Makes transaction graph analysis harder. |
+| Rotate addresses automatically | Users should not manually request a new address each time. |
+| Segregate internal and external addresses | Internal addresses (change) should not be exposed to users. |
+| Label addresses internally | Useful for transaction correlation internally, without exposing labels on-chain. |
+
+## How to implement good address management
+
+### 1. Use HD wallets (BIP32/BIP44)
+
+Hierarchical Deterministic (HD) wallets allow you to derive millions of Bitcoin addresses from a single seed phrase (BIP39).
+
+Each customer wallet should internally maintain two logical chains:
+
+| Chain Type | Purpose |
+|---|---|
+| External Chain (receiving) | Addresses users give to other people to receive bitcoin. |
+| Internal Chain (change) | Addresses where wallet sends change when making a transaction. Never shown to users. |
+
+Use standard derivation paths. For native SegWit (bc1q) addresses, use BIP84:
+
+- For Bitcoin mainnet: m/84'/0'/account'/0/0 (external)
+- m/84'/0'/account'/1/0 (internal)
+- (Legacy P2PKH uses BIP44 `m/44'`, P2SH-wrapped SegWit uses BIP49 `m/49'`, and Taproot uses BIP86 `m/86'`.)
+
+Where:
+
+- account = user identifier
+- 0/1 = external/internal branch
+- 0 = address index
+
+Wallet libraries like BDK automatically manage this structure correctly.
+
+### 2. Rotate receiving addresses
+
+After each received transaction, immediately rotate the receive address.
+
+When an address sees a successful incoming transaction:
+
+- Mark it as "used" internally.
+- Derive the next external address.
+- Display the new address for future deposits.
+
+Some wallets even pre-generate the next address in the background to ensure smooth UX.
+
+### 3. Change address management (important)
+
+When sending bitcoin, the remainder of the UTXO after deducting the sent amount and fees must be returned somewhere. This change must be sent to an internal address, not the external (receiving) address.
+
+Otherwise:
+
+- External observers can easily link sending activity to previous incoming funds.
+- Users' privacy is compromised.
+
+Use HD derivation paths to create a new internal address for every change output.
+
+Wallet libraries like BDK and bitcoinjs-lib handle change outputs automatically if configured properly.
+
+### 4. Avoid address reuse in frontend UX
+
+Never expose the same address to the user twice.
+
+In frontend logic:
+
+- After a payment is completed, hide or grey out the previous address.
+- If user wants to receive again, show a new address automatically.
+
+Some wallets (e.g., Samourai, Sparrow) force address rotation automatically after use.
+
+## Transaction graph privacy best practices
+
+| Problem | Solution |
+|---|---|
+| Linking multiple UTXOs from the same wallet in a single transaction reveals ownership | Use a minimal number of UTXOs per send. Enable manual coin selection for advanced users. |
+| Sending change to same address used for receiving payments | Always use fresh internal addresses for change. |
+| Broadcasting transactions through identifiable IPs | In future upgrades, consider Tor or Dandelion broadcasting layers. |
+
+### Practical implementation example
+
+**When receiving:**
+
+- User selects "Receive bitcoin."
+- App generates a new external address (if the last one was used).
+- App shows QR code and address.
+
+**When sending:**
+
+- App selects inputs (UTXOs).
+- App calculates change output.
+- App assigns change to a freshly derived internal address.
+
+**Pseudocode (high-level):**
+
+```pseudocode
+if (lastReceiveAddressUsed) {
+    receiveAddress = deriveNewExternalAddress();
+} else {
+    receiveAddress = getLastExternalAddress();
+}
+
+// When sending
+tx = buildTransaction(inputs, outputs);
+tx.changeAddress = deriveNewInternalAddress();
+```
+
+### Future upgrades: PayJoin, CoinJoin
+
+Advanced techniques like PayJoin and CoinJoin allow users to collaborate with other users to hide transaction flows.
+
+While not mandatory at MVP stage, architect your wallet such that:
+
+- You can add optional PayJoin/Pay-to-EndPoint (P2EP) support later.
+- You can allow users to participate in collaborative CoinJoin transactions.
+
+**BDK compatibility:** BDK is future-proofed toward supporting these kinds of privacy-enhancing features.
+
+### Closing thoughts on address and privacy design
+
+Privacy is not automatic on Bitcoin.
+
+Wallet developers must be proactive in designing for privacy.
+
+Your users will not know they are leaking information unless you protect them by default.
+
+Good address and privacy practices are not "advanced" features. They should be the default.
+
+A wallet that respects user privacy today will earn user trust tomorrow.
+
+### Quick checklist
+
+- Always rotate addresses after use
+- Always generate internal addresses for change
+- Never reuse addresses
+- Allow (or plan for) manual UTXO selection later
+- Educate users if needed, but design privacy as default

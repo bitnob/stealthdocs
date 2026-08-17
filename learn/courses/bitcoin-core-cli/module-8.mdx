@@ -1,0 +1,185 @@
+---
+title: "Module 8: Developing with Bitcoin Core locally"
+description: "Scripted local environments: simulated wallet activity, confirmations, re-orgs, and mempool states."
+---
+## Learning objectives
+
+- Build realistic Bitcoin development environments using regtest
+- Write scripts to simulate wallet activity and transaction flows
+- Mock confirmations, chain reorganizations, and mempool states
+- Understand when and how to separate your wallet and node services in production
+
+## Building testing environments using Regtest
+
+regtest is Bitcoin Core’s regression testing mode, designed for isolated, fully controlled environments.
+
+You can:
+
+- Spin up a node without syncing to any peers
+- Mine blocks instantly
+- Generate unlimited test BTC
+- Simulate any transaction scenario
+
+Use this environment to build and test:
+
+- Transaction pipelines
+- Webhooks and callbacks
+- Wallet-to-wallet transfers
+- Payment monitoring flows
+
+A typical developer setup includes:
+
+- bitcoind -regtest -daemon
+- bitcoin-cli or a language-based RPC client
+- Optional scripts and mocks for block generation, fees, and UTXOs
+
+Example bitcoin.conf for regtest development:
+
+```ini
+regtest=1
+server=1
+rpcuser=youruser
+rpcpassword=yourpassword
+```
+
+## Writing integration scripts in bash and Python
+
+Bitcoin Core exposes a JSON-RPC interface, so any scripting language that supports HTTP requests can interact with it.
+
+### Bash script to mine, fund, and send
+
+```bash
+#!/bin/bash
+# Generate 101 blocks to fund wallet
+bitcoin-cli -regtest generatetoaddress 101 $(bitcoin-cli -regtest getnewaddress)
+```
+
+### Python script using requests
+
+```python
+import requests
+```
+
+Use this setup to build:
+
+- CI tests
+- Sandbox payment flows
+- Automated funding or sweep logic
+
+## Mocking confirmations and network events
+
+### Simulating confirmations
+
+Send a transaction:
+
+```bash
+bitcoin-cli -regtest sendtoaddress <address> <amount>
+```
+
+Then confirm it instantly:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 1 $(bitcoin-cli -regtest getnewaddress)
+```
+
+Check confirmation count:
+
+```bash
+bitcoin-cli -regtest gettransaction <txid>
+```
+
+### Simulating re-orgs
+
+1. Invalidate a previously mined block:
+
+```bash
+bitcoin-cli -regtest invalidateblock <blockhash>
+```
+
+2. Create a longer competing chain:
+
+```bash
+bitcoin-cli -regtest generatetoaddress 2 $(bitcoin-cli -regtest getnewaddress)
+```
+
+Use this to simulate:
+
+- Dropped/unconfirmed transactions
+- Edge case user experiences
+- Fallback logic for timeouts
+
+## Production notes
+
+When to Use a Pruned Node
+
+A pruned node deletes historical block data but retains the full UTXO set and validates blocks.
+
+Use pruning if:
+
+- You don’t need to inspect old transactions
+- You’re running lightweight infrastructure
+- You want to reduce disk usage (~1GB vs 500GB+)
+
+Set in bitcoin.conf:
+
+```ini
+prune=550
+```
+
+Pruned nodes still validate consensus and can serve most wallet operations.
+
+Separating Wallet Logic from Node Logic
+
+In production, it is often best practice to separate your wallet service from your full node for better security, performance, and scalability.
+
+Benefits of Separation
+
+| Benefit | Description |
+|---|---|
+| Security | Wallet (private key logic) can be isolated from the public node. |
+| Multi-tenant Design | A single node can serve many wallets, improving scalability and separation. |
+| Performance | Reduces wallet-specific load on the node, enhancing performance. |
+| Modularization | Enables independent wallet upgrades, migrations, and redundancy setups. |
+| Compliance | Allows wallet services to integrate KYC, usage tracking, or user authentication separately. |
+
+Example Workflow
+
+Deposit Flow
+
+1. App requests an address → Wallet service calls
+2. Wallet signs → signrawtransactionwithwallet
+3. Node broadcasts → sendrawtransaction
+
+Withdrawal Flow
+
+1. App prepares TX → Wallet service calls createrawtransaction
+2. Wallet signs → signrawtransactionwithwallet
+3. Node broadcasts → sendrawtransaction
+
+Deployment Practices
+
+Run wallet service on a locked-down server
+
+Use disablewallet=1 on public-facing node
+
+Use strict RPC credentials and IP allowlists
+
+Consider separate Docker containers for each service
+
+Monitor wallet usage and log signing events
+
+## Activity
+
+Write a Bash or Python script that:
+
+- Starts a wallet
+- Mines 101 blocks
+- Sends BTC to 3 addresses
+- Confirms each transaction with block generation
+- Verifies balances
+
+Modify the script to simulate:
+
+- A zero-conf state
+- A re-org scenario
+- Use of decoderawtransaction to verify TXs

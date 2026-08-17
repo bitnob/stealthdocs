@@ -1,0 +1,38 @@
+---
+title: "Private key generator"
+description: "An educational secp256k1 key generator showing how a Bitcoin private key relates to its WIF encoding and public key."
+---
+
+import { PrivateKeyGenerator } from "/snippets/playground/hash-crypto.jsx";
+
+<PrivateKeyGenerator />
+
+<Warning>
+  **Educational use only. Never put real funds behind a key generated in a web browser.**
+
+  Browser memory can be read by extensions, the page can be cached, and you cannot audit what the page did with the key. Real keys belong in a hardware wallet or an audited offline generator. For production custody, see [Enterprise wallet infrastructure](/docs/enterprise/overview), where keys are generated inside a hardware-isolated enclave and never exported.
+</Warning>
+
+A Bitcoin private key is simply a 256-bit number below the secp256k1 curve order. Its public key is derived by multiplying the curve's generator point by that number, and the address is a hash of the public key. Each step goes one way only: you can derive an address from a key, never the reverse.
+
+## The chain of derivation
+
+```
+private key (256-bit number)
+  → public key   (elliptic curve point multiplication)
+    → address    (hash + checksum encoding)
+```
+
+## Key formats
+
+| Format | Looks like | Notes |
+|---|---|---|
+| Raw hex | 64 hex characters | The underlying number |
+| WIF | Starts with `K`, `L`, or `5` | Base58Check with a network byte and checksum |
+| WIF (testnet) | Starts with `c` or `9` | Testnet version byte |
+
+`K` and `L` indicate a compressed public key, which is what modern wallets use; `5` indicates the older uncompressed form.
+
+## What real wallets do instead
+
+Production wallets do not generate independent keys. They generate one BIP-39 seed phrase, then derive an unlimited tree of keys from it deterministically (BIP-32). That way a single backup recovers every address. The course module on [wallets and addresses](/learn/courses/bitcoin-core-cli/module-3) walks through this from the CLI.

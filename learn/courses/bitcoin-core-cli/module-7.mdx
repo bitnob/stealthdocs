@@ -1,0 +1,143 @@
+---
+title: "Module 7: Working with Bitcoin RPC"
+description: "The JSON-RPC interface called directly with curl, and RPC credential security for production."
+---
+## Learning objectives
+
+- Understand how bitcoin-cli and raw RPC calls work under the hood
+- Make authenticated JSON-RPC requests using curl
+- Configure and secure your RPC credentials
+- Learn best practices for securing RPC access in production environments
+
+## bitcoin-cli vs curl RPC calls
+
+When you run:
+
+```bash
+bitcoin-cli -regtest getblockchaininfo
+```
+
+You’re using a thin wrapper around a JSON-RPC call that’s being sent to the local bitcoind daemon.
+
+The same request using curl:
+
+```bash
+curl --user youruser:yourpassword \\
+  --data-binary '{"jsonrpc":"1.0","id":"curltest","method":"getblockchaininfo","params":[]}' \\
+  -H 'content-type: text/plain;' \\
+  http://127.0.0.1:18443/
+```
+
+This shows you how clients communicate with bitcoind directly.
+
+Key parts of the RPC call:
+
+- Method: what you want to execute (eg. getnewaddress )
+- params: arguments in array format
+- id: request ID (any unique string)
+- jsonrpc: always "1.0" for Bitcoin Core
+
+## Reading and writing raw JSON requests
+
+Example 1: Get a new address
+
+Here is your updated code block using the exact JSON you provided:
+
+```bash
+curl --user youruser:yourpassword \\
+  --data-binary '{
+    "jsonrpc": "1.0",
+    "id": "newaddress",
+    "method": "getnewaddress",
+    "params": ["payments"]
+  }'
+```
+
+Example 2: Send BTC
+
+```bash
+
+{
+  "jsonrpc": "1.0",
+  "id": "sendbtc",
+  "method": "sendtoaddress",
+  "params": ["bcrt1qabc...", 0.25]
+}
+
+
+curl --user user:pass \\
+  --data-binary @payload.json \\
+  -H 'content-type: text/plain;' \\
+  http://127.0.0.1:18443
+```
+
+## Authentication options
+
+Cookie-based (default & recommended)
+
+Bitcoin Core writes an auth cookie to:
+
+```bash
+~/.bitcoin/regtest/.cookie
+```
+
+To use it with curl:
+
+```bash
+curl --cookie ~/.bitcoin/regtest/.cookie \\
+     --data-binary '{"method":"getblockchaininfo","params":[],"id":"rpc","jsonrpc":"1.0\
+```
+
+This is secure for local-only use.
+
+Manual username/password
+
+In bitcoin.conf:
+
+```bash
+server=1
+rpcuser=admin
+rpcpassword=verysecurepassword
+```
+
+Then restart bitcoind.
+
+Now you can use:
+
+```bash
+curl --user admin:verysecurepassword ...
+```
+
+## Securing RPC on real nodes
+
+Never expose RPC publicly. Always bind to localhost or use strict firewall rules.
+
+Key configuration options:
+
+```bash
+rpcbind=127.0.0.1
+rpcallowip=127.0.0.1
+```
+
+To expose RPC over SSH securely:
+
+```bash
+ssh -L 8332:localhost:8332 yourserver
+```
+
+Then curl to localhost on your own machine.
+
+Production checklist:
+
+- Use cookie auth or a strong password
+- Disable or restrict RPC access by IP
+- Avoid exposing RPC over HTTP (use HTTPS reverse proxy if needed)
+- Regularly rotate rpcpassword if using manual auth
+
+## Activity
+
+1. Create a JSON-RPC payload to get a new address.Use cookie auth or a strong password
+2. Use curl to post the payload to your running regtest node.
+3. Inspect the .cookie file and try using it for auth.
+4. Update your bitcoin.conf with rpcuser and rpcpassword , restart, and authenticate manually
+5. Attempt a bad request and read the JSON-RPC error response.

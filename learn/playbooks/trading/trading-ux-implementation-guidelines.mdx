@@ -1,0 +1,131 @@
+---
+title: "Trading UX implementation guidelines"
+description: "Concrete requirements for quote presentation, countdowns, states, and error handling in a trading UI."
+---
+## Quote presentation
+
+Requirements:
+
+Show exact values returned from POST /api/trading/quotes: see [Quotes](/api-reference/trading/create-quote):
+
+- inputAmount, outputAmount, rate, fee, expiresAt
+- Display countdown timer (expiresAt - now) prominently
+
+Format monetary values:
+
+- USDT → \$100.00
+- BTC → 225,000 sats
+- NGN → ₦5,000
+- Rate → 2,250 sats per \$0.01
+
+UI Examples:
+
+- “You’re converting: \$100.00”
+- “You’ll receive: 225,000 sats”
+- “Rate: 2,250 sats per cent”
+- “Fee: \$0.80”
+- “Quote valid for: 29 seconds”
+
+## Expiration logic
+
+Requirements: Disable “Confirm” button as soon as expiresAt \< now
+
+Show a non-blocking notification:
+
+> “Quote expired. Please refresh for a new price.”
+
+Optionally provide:
+
+- Auto-refresh quote after expiration
+- Manual “Get New Quote” button
+
+## Trade confirmation feedback
+
+Requirements: After user confirms:
+
+Show progress indicator (modal or inline stepper)
+
+Reflect each step of backend trade lifecycle:
+
+- Quote validation
+- Balance verification
+- Execution
+- Wallet credit
+- Confirm only after trade.completed webhook or [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference) returning status = completed
+
+Suggested UI:
+
+- [✓] Quote locked
+- [✓] Balance available
+- [✓] Trade executed
+- [✓] Funds credited
+
+## Input field logic
+
+Requirements: Input field must:
+
+Accept only valid numbers
+
+Internally normalize:
+
+- USDT → cents (10000 = \$100.00)
+- BTC → sats (225000 = 0.00225 BTC)
+- NGN → whole naira (5000 = ₦5,000)
+
+Display labels:
+
+- “Enter amount in USD”
+- “Enter amount in bitcoin (BTC)”
+- “Enter amount in Naira (NGN)”
+- Show live preview of converted value
+
+## Post-trade success page
+
+Must Display:
+
+- inputAmount, outputAmount
+- rate used Destination wallet label
+- Trade reference Timestamp (optional)
+
+Example:
+
+- Trade Successful
+- You converted: \$100.00
+- You received: 225,000 sats Rate: 2,250 sats per cent
+- Wallet: BTC Wallet
+- Reference: trade_4837ABC
+
+## Failure handling
+
+Required Error States:
+
+| Condition | Ux Message |
+|---|---|
+| Quote expired | This quote has expired. Please request a new quote. |
+| Insufficient balance | You do not have enough balance to complete this trade. |
+| Duplicate reference | This trade has already been submitted. |
+| Execution failure | Trade failed. No funds were moved. Try again later. |
+
+Provide a dismissible alert and log internally with full context.
+
+## Visual hierarchy
+
+Priorities:
+
+- Input/output clarity
+- Rate integrity
+- Quote expiry countdown
+- Confirmation status
+- Success/Failure state
+
+Use consistent typography and spacing to reinforce the idea that every number is important and intentional.
+
+## Visual language
+
+Do not use animations that introduce uncertainty
+
+Avoid color-coding outcomes (e.g., green for BTC, red for USDT) unless backed by semantics
+
+Use iconography sparingly, prioritize text
+
+Confirm actions with checkmarks, not emojis or confetti

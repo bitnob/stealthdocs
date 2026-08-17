@@ -1,0 +1,181 @@
+---
+title: "Test in sandbox"
+description: "Exercise deposits, quotes, expiry, webhooks, and failure paths against sandbox credentials before your integration touches real funds."
+---
+
+Sandbox runs the same API with simulated funds. Use it to make failure modes visible while they are still cheap.
+
+Production is messier than any code review suggests. Webhooks arrive late or twice, users hesitate until a quote expires, payouts get rejected for a bad account number. This guide shows how to produce those conditions on purpose.
+
+## How sandbox works
+
+Sandbox is not a separate host. It is a separate credential.
+
+| | Sandbox | Production |
+|---|---|---|
+| Base URL | `https://api.bitnob.com` | `https://api.bitnob.com` |
+| `CLIENT_ID` | Same | Same |
+| `CLIENT_SECRET` | Sandbox secret | Production secret |
+| Funds | Simulated | Real |
+| Data retention | Reset from time to time | Permanent |
+
+The secret you sign with decides which environment you are in.
+
+<Warning>
+  Because the host is the same, a misconfigured secret sends a test request to production. Keep the two secrets in separate configuration, and never load both into one process.
+</Warning>
+
+## Set up a sandbox workspace
+
+<Steps>
+  <Step title="Create a sandbox key">
+    In the dashboard, open **Settings** > **API Keys** and create a sandbox key. See [Set up your account](/docs/getting-started/account-setup).
+  </Step>
+  <Step title="Keep it in its own configuration file">
+    ```bash
+    BITNOB_CLIENT_ID=yourClientId
+    BITNOB_CLIENT_SECRET=yourSandboxSecret
+    BITNOB_BASE_URL=https://api.bitnob.com
+    ```
+  </Step>
+  <Step title="Expose your webhook endpoint">
+    Run a tunnel, such as `ngrok http 3000`, and set the public URL as your webhook URL in the dashboard.
+  </Step>
+  <Step title="Confirm your credentials">
+    Call `/api/whoami`. A `200` means signing works.
+  </Step>
+</Steps>
+
+## Simulate an inbound deposit
+
+Virtual accounts have a sandbox-only endpoint that fakes an inbound transfer. It takes no request body.
+
+```bash
+POST /api/virtual-accounts/{id}/simulate-deposit
+```
+
+The response confirms the credit and the new balance:
+
+```json
+{
+  "success": true,
+  "message": "Virtual account deposit simulated",
+  "data": {
+    "transaction": {
+      "id": "019fe85f-89cc-7b9e-a42b-07fc78089499",
+      "amount": "100000",
+      "currency": "NGN",
+      "type": "credit",
+      "status": "completed",
+      "reference": "sbx-dep-019fe85f-89cc-7b8f-bddb-c6600777eabf"
+    },
+    "new_balance": "800000"
+  }
+}
+```
+
+This drives the same downstream path a real deposit does, so your balance update and your webhook handler both get exercised. See [Simulate deposit](/api-reference/virtual-accounts/simulate-deposit-sandbox).
+
+<Note>
+  The endpoint is rejected in production. It is safe to leave in a test suite.
+</Note>
+
+## Test quote expiry
+
+Quote expiry only shows up when a user hesitates, which is exactly when nobody is watching.
+
+<Steps>
+  <Step title="Create a quote">
+    Call [Create payout quote](/api-reference/payouts/create-quote) and record `expires_at`.
+  </Step>
+  <Step title="Wait past expires_at">
+    Do nothing until the timestamp passes.
+  </Step>
+  <Step title="Try to execute">
+    Initialize the payout against the expired `quote_id` and observe the error.
+  </Step>
+  <Step title="Check your interface">
+    Confirm it blocks the attempt, explains why, and offers a fresh quote.
+  </Step>
+</Steps>
+
+See [Quote lifecycle and expiry](/docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows).
+
+## Test webhook delivery and retries
+
+We retry a failed delivery 3 times after the first failure. Confirm your handler behaves under those retries before you rely on it.
+
+<Steps>
+  <Step title="Return a failure on purpose">
+    ```javascript
+    app.post('/webhooks/bitnob', (req, res) => {
+      console.log('received:', req.body);
+      res.status(500).send('simulated failure');
+    });
+    ```
+  </Step>
+  <Step title="Trigger an event">
+    Simulate a deposit and watch the retries arrive in your log.
+  </Step>
+  <Step title="Confirm the retry count and spacing">
+    Compare what you see against the documented behaviour in [Webhooks](/api-reference/addresses/webhooks).
+  </Step>
+  <Step title="Process the same event twice">
+    Return `200` and replay the event. Confirm the second run changes nothing.
+  </Step>
+</Steps>
+
+## Test the failure paths
+
+Most integrations test the happy path and ship. These four errors are worth producing deliberately, because each one reaches production eventually.
+
+| Condition | How to produce it | What to confirm |
+|---|---|---|
+| Bad signature | Sign with the wrong secret | You return a clear error and do not retry blindly |
+| Duplicate reference | Submit the same reference twice | You treat the conflict as success, not failure |
+| Insufficient balance | Request more than your sandbox balance | You surface the reason to the user |
+| Unreachable webhook | Stop your tunnel, then trigger an event | Your reconciliation job catches the gap |
+
+The last row is the one people skip. Retries are finite, so an endpoint that is down long enough misses events permanently. Reconciliation is what recovers them. See [Webhooks and event handling](/docs/getting-started/api-best-practices/webhook-best-practices).
+
+## Edge cases worth reproducing
+
+- A webhook arrives before your database has written the reference.
+- Two webhooks for the same flow arrive in parallel.
+- A payment arrives just after a quote expires.
+- A user sends an asset you did not expect.
+- The same reference is reused across two attempts.
+- A signature header is missing or altered.
+
+## Build a repeatable script
+
+Ad-hoc testing stops happening once the feature ships. Put the flow in a script instead:
+
+1. Create a quote and store it.
+2. Execute against the quote.
+3. Simulate the deposit.
+4. Record every webhook received, with its event name and reference.
+5. Assert the final state matches what you expect.
+
+Run it in CI against sandbox credentials. A broken webhook handler then fails a build rather than a payment.
+
+## Before you go live
+
+<Steps>
+  <Step title="Swap the secret, nothing else">
+    The base URL and `CLIENT_ID` do not change. Only `CLIENT_SECRET` does.
+  </Step>
+  <Step title="Point the webhook URL at production">
+    Update it in the dashboard and confirm the endpoint is reachable over HTTPS.
+  </Step>
+  <Step title="Confirm compliance is approved">
+    Production requires completed verification. See [Set up your account](/docs/getting-started/account-setup).
+  </Step>
+  <Step title="Run one small real transaction">
+    Send the smallest amount the corridor allows and follow it end to end before you open the flow to users.
+  </Step>
+</Steps>
+
+## Next
+
+Continue to [Observability, logging, and traceability](/docs/getting-started/api-best-practices/observability-logging-and-traceability), which covers what to record so that a production question has an answer.

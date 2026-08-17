@@ -1,0 +1,40 @@
+---
+title: "JSONPath tester"
+description: "JSONPath pulls a single value out of a deeply nested payload. Test expressions against a real webhook body before you put them in code."
+---
+
+import { JsonPathTester } from "/snippets/playground/json-tools.jsx";
+
+<JsonPathTester />
+
+JSONPath is to JSON what XPath is to XML: a compact expression that selects values by position rather than by walking the structure yourself. It is useful for pulling one field out of a webhook payload, or for asserting on a response in a test.
+
+## Supported syntax
+
+| Expression | Selects |
+|---|---|
+| `$` | The root document |
+| `$.data.status` | A property by name |
+| `$['data']['status']` | The same, in bracket form |
+| `$.items[0]` | An array element by index, negative counts from the end |
+| `$.items[*]` | Every element of an array, or every value of an object |
+| `$..status` | Every `status` anywhere in the document, at any depth |
+
+Filter expressions such as `$.items[?(@.amount > 100)]` are not supported here.
+
+## Querying in code
+
+```bash
+# jq uses its own syntax for the same idea
+echo "$PAYLOAD" | jq '.data.payouts[].status'
+```
+
+```python
+# pip install jsonpath-ng
+from jsonpath_ng import parse
+[m.value for m in parse("$.data.payouts[*].status").find(payload)]
+```
+
+<Note>
+  Recursive descent (`..`) is handy for exploring an unfamiliar payload, but pin down an exact path before shipping. A recursive match can silently start returning extra values when the payload gains a field with the same name.
+</Note>

@@ -1,0 +1,203 @@
+---
+title: "Execute a trade"
+description: "Execute a quoted trade and confirm the balances it produces."
+related:
+  - /docs/trading/trade-status-and-history
+  - /docs/trading/error-handling-patterns
+---
+Convert between stablecoins, Bitcoin, and NGN.
+
+This endpoint allows you to perform a real-time asset conversion between supported assets. You can execute at current market rate or lock pricing using a previously generated quote ID.
+
+## Endpoint
+
+Full request and response schema: [Create Order](/api-reference/trading/submit-order) in the API reference.
+
+```bash
+POST /api/trading/orders
+```
+
+## Purpose
+
+Use this endpoint to:
+
+- Execute a trade between supported currencies (USDT, USDC, Bitcoin, NGN) for a user or system wallet
+- Lock in pricing using a valid [quote](/api-reference/trading/create-quote) (quoteId)
+- Route funds directly to your Bitnob wallet for the destination asset
+- Track every trade via reference ID, [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference), and webhooks
+
+## Request
+
+<ParamField body="base_currency" type="string" required>
+  The base currency for the trade. One of `BTC`, `USDT`, `USDC`, or `NGN`.
+</ParamField>
+
+<ParamField body="quote_currency" type="string" required>
+  The quote currency for the trade. One of `BTC`, `USDT`, `USDC`, or `NGN`. For naira trades, one side of the pair must be NGN.
+</ParamField>
+
+<ParamField body="side" type="string" required>
+  `buy` or `sell`.
+</ParamField>
+
+<ParamField body="quantity" type="string" required>
+  Amount of base currency to trade, in major units: `0.0001` (BTC) or `5000` (₦5,000).
+</ParamField>
+
+<ParamField body="price" type="string" required>
+  The `price` from the quote you are executing against.
+</ParamField>
+
+<ParamField body="quote_id" type="string">
+  The quote `id` from the create-quote response. Required for NGN pairs; optional for crypto pairs, where omitting it executes at the live market rate.
+</ParamField>
+
+<ParamField body="reference" type="string">
+  Your unique reference for this trade. Also the idempotency key: reusing it returns the original trade instead of executing again.
+</ParamField>
+
+## Example request
+
+```json
+{
+  "base_currency": "BTC",
+  "quote_currency": "USDT",
+  "side": "buy",
+  "quantity": "0.0001",
+  "price": "90822.540125",
+  "quote_id": "a31798b2-3412-4e93-9211-e8a30164e934",
+  "reference": "324567890"
+}
+```
+
+### Example request (NGN pair) preview
+
+<Note>
+  **Preview, enabled per account:** NGN (naira) trading is being rolled out gradually and is not enabled for all companies yet.
+</Note>
+
+For a naira trade, set base_currency to what you are spending and use side: "sell". quote_id is required: carry over the price and id from the quote.
+
+```json
+{
+  "base_currency": "NGN",
+  "quote_currency": "USDT",
+  "side": "sell",
+  "quantity": "5000",
+  "price": "<price from the quote>",
+  "quote_id": "<id from the quote>",
+  "reference": "ngn_swap_001"
+}
+```
+
+## Response
+
+```json
+{
+    "success": true,
+    "message": "Order submitted successfully",
+    "data": {
+        "order": {
+            "id": "4bcda61a-c24d-434a-a31c-3ab31e8281d2",
+            "base_currency": "USDT",
+            "quote_currency": "BTC",
+            "side": "SELL",
+            "order_type": "limit",
+            "quantity": "10",
+            "price": "69920.93408475",
+            "status": "filled",
+            "created_at": "2026-03-23T12:07:17.344023896Z",
+            "updated_at": "2026-03-23T12:07:17.344023896Z",
+            "filled_quantity": "10",
+            "remaining_quantity": "0",
+            "quote_id": "385426de-a61c-4240-aed8-5f23d2565f31"
+        },
+        "fills": [
+            {
+                "id": "4b39670b-f800-4013-9abf-ee8c9db9d1c0",
+                "order_id": "4bcda61a-c24d-434a-a31c-3ab31e8281d2",
+                "counterparty_order_id": "",
+                "quantity": "9.98",
+                "created_at": "2026-03-23T12:07:18.208005461Z"
+            }
+        ],
+        "quote_consumption": {
+            "quote_id": "385426de-a61c-4240-aed8-5f23d2565f31",
+            "consumed_quantity": "10",
+            "remaining_quantity": "0",
+            "is_exhausted": false
+        }
+    },
+    "metadata": {
+        "request_id": "req_019d1a97-9d5c-7e84-918a-575d898062ad"
+    },
+    "timestamp": "2026-03-23T12:07:18.218302926Z"
+}
+```
+
+## Response fields
+
+| Field | Type | Description |
+|---|---|---|
+| id | string | Unique ID of the order |
+| base_currency | string | The base currency for the trade (e.g., USDT) |
+| quote_currency | string | The quote currency for the trade (e.g., BTC) |
+| side | string | The side of the trade (BUY or SELL) |
+| order_type | string | The type of order (e.g., limit) |
+| quantity | string | The quantity of base currency ordered |
+| price | string | The price at which the order was placed |
+| order.status | string | Status of the order (filled, pending, cancelled) |
+| created_at | string | ISO 8601 timestamp when order was created |
+| updated_at | string | ISO 8601 timestamp when order was last updated |
+| filled_quantity | string | The quantity that has been filled |
+| remaining_quantity | string | The quantity remaining to be filled |
+| quote_id | string | The quote ID used to lock the trade rate |
+| id | string | Unique ID of the fill |
+| order_id | string | The order ID this fill belongs to |
+| counterparty_order_id | string | The counterparty order ID matched against this fill |
+| quantity | string | The quantity filled |
+| created_at | string | ISO 8601 timestamp when fill was executed |
+| quote_id | string | The quote ID that was consumed by this trade |
+| consumed_quantity | string | The quantity consumed from the quote |
+| remaining_quantity | string | The quantity remaining on the quote |
+| is_exhausted | boolean | Whether the quote has been fully consumed |
+
+## Trade behaviour
+
+If quoteId is provided:
+
+- The rate is locked
+- If the quote is expired, trade will fail (quote_expired)
+
+If quoteId is omitted:
+
+- The trade is executed at live market rate
+- Final output may vary slightly depending on real-time pricing
+
+For NGN pairs: quote_id is always required. Naira trades cannot execute at a live market rate, so the rate must be locked with a quote first.
+
+## Idempotency
+
+You must submit a unique reference for each trade attempt. Reusing the same reference will return the original trade object, preventing accidental double execution.
+
+## Webhooks
+
+On completion, Bitnob will emit:
+
+| Event | When It Fires |
+|---|---|
+| trade.completed | When trade is successfully executed |
+| trade.failed | If the trade fails due to quote, balance, or system errors |
+
+## Errors
+
+| Code | Message | Description |
+|---|---|---|
+| 400 | Quote expired | quoteId is no longer valid. |
+| 400 | Invalid asset pair | Use a supported pair (USDT, USDC, BTC, NGN); naira trades need NGN on one side. |
+| 400 | Quote required | quote_id is mandatory for NGN pairs. |
+| 403 | NGN not enabled | Naira trading is not enabled on your account. |
+| 400 | Missing or invalid amount | Must be > 0 and in proper unit. |
+| 409 | Duplicate reference | Trade with that reference already exists. |
+| 422 | Insufficient balance | Source wallet doesn’t have enough funds. |
+| 500 | Execution failed | Internal issue; retry or contact support. |

@@ -1,0 +1,167 @@
+---
+title: "Module 7: Security model of Bitcoin wallets"
+description: "The security model behind wallets, and the failure modes that end products and companies."
+---
+## 7.1 Introduction
+
+Security failures in Bitcoin wallets lead to:
+
+- Immediate theft of user funds
+- Permanent loss with no recovery
+- Destruction of user trust and product reputation
+
+Understanding the security model of Bitcoin wallets is essential for product managers, designers, and engineers to build responsibly.
+
+Wallets must be designed with a threat model in mind
+constantly thinking:
+"What can go wrong? What are the weak points?"
+
+## 7.2 Fundamental truths about Bitcoin wallet security
+
+| Principle | Consequence |
+|---|---|
+| Control of private keys = Control of bitcoin | Lose keys, lose bitcoin. Leak keys, lose bitcoin. |
+| Bitcoin is final | No undo button, no chargebacks. |
+| Cryptographic operations must be local and secure | Never expose signing or key material to networks. |
+| Users are humans | They forget passwords, lose devices, fall for scams. Wallets must help mitigate this. |
+
+## 7.3 Main threats Bitcoin wallets face
+
+1. Device Theft or Loss
+
+   If a phone or laptop is stolen, an attacker might access the wallet app and private keys.
+
+   **Defense:**
+
+   - Encrypt private keys at rest.
+   - Protect app access with PIN codes, biometrics.
+   - Auto-lock wallet apps after inactivity.
+   - Allow full wallet recovery only via seed phrase.
+
+2. Malware and Phishing
+
+   Malware can:
+
+   - Steal private keys stored insecurely.
+   - Replace clipboard Bitcoin addresses (changing the address when user pastes).
+   - Trick users into revealing seed phrases through fake apps or emails.
+
+   **Defense:**
+
+   - Never store or expose private keys in plaintext.
+   - Warn users clearly about verifying addresses.
+   - Never ask users to re-enter seed phrases unless in a true recovery context.
+   - Educate users about phishing risks.
+
+3. Cloud Storage and Backup Risks
+
+   If wallets offer cloud backups, attackers may:
+
+   - Hack user cloud accounts.
+   - Retrieve improperly secured wallet backups.
+
+   **Defense:**
+
+   - Encrypt seed phrases client-side before uploading to cloud.
+   - Use user-controlled passphrases, not server-controlled encryption.
+   - Clearly label cloud backup as optional and risky if user chooses it.
+
+4. Supply Chain Attacks
+
+   If the wallet software itself is compromised during development, update distribution, or build processes, attackers could inject malicious code to leak keys.
+
+   **Defense:**
+
+   - Audit and minimize third-party dependencies.
+   - Use secure build pipelines.
+   - Prefer open-source libraries with strong security reputations (e.g., BDK, Noble libraries).
+   - Allow community verification of wallet source code where possible.
+
+5. Physical Access Attacks
+
+   Attackers with access to unlocked devices may extract wallet secrets.
+
+   **Defense:**
+
+   - Hardware-level encryption (using Secure Enclave / Android Keystore).
+   - Detect rooted/jailbroken devices and restrict access.
+   - Encourage users to set strong device-level security (passwords, PINs).
+
+6. Social Engineering and Seed Phrase Theft
+
+   Most Bitcoin thefts happen not because of technical hacking, but because users are tricked. Examples:
+
+   - "Customer support" asking for a seed phrase.
+   - "Urgent security update" requiring users to re-enter their seed.
+
+   **Defense:**
+
+   - Never, under any circumstance, design flows that re-request seed phrases except during voluntary wallet recovery.
+   - Warn users constantly: "No one from [Wallet Name] will ever ask for your recovery phrase."
+
+## 7.4 Wallet threat model summary
+
+| Threat | Example Attack | Defense |
+|---|---|---|
+| Device Theft | Physical phone theft | Encryption + app passcode |
+| Malware | Clipboard address swapping | Address verification, QR code use |
+| Phishing | Fake wallet apps | User education, never requesting seed entry post-onboarding |
+| Cloud Breaches | Cloud backup compromise | Client-side encryption with user passphrase |
+| Supply Chain Attack | Compromised SDKs | Dependency audits, reproducible builds |
+| Physical Device Hacks | Extraction of unencrypted keys | Hardware security modules (Secure Enclave, Keystore) |
+
+## 7.5 What happens if users lose their seed?
+
+If a user loses:
+
+- Their device
+- Their app
+- Their access credentials
+
+And they also lost their seed phrase, then their Bitcoin is permanently lost.
+
+**Irreversible loss:** There is no company or support agent that can recover a lost Bitcoin wallet without the seed.
+
+**PM reflection:** Every wallet product must:
+
+- Treat the seed phrase as the real "vault key."
+- Force backup at onboarding.
+- Educate users that backup = bank vault key, not just a password reset.
+- Offer optional encrypted backups only with full user control.
+- Never promise "account recovery" like Web2 apps do. Bitcoin wallets do not work that way.
+
+## 7.6 UX principles for security
+
+| Principle | Implementation Tip |
+|---|---|
+| Backup Before Use | Force users to backup seed before receiving bitcoin. |
+| Minimize Key Exposure | Sign transactions locally. Never send keys to servers. |
+| Secure App Access | PIN, biometrics, timeouts. |
+| Warn Constantly About Scams | Banners, notifications, FAQs about phishing risks. |
+| Never Request Seed Re-entry | Only on voluntary recovery, never randomly. |
+
+## 7.7 Advanced protections (optional future features)
+
+| Protection | Benefit |
+|---|---|
+| Passphrase-Protected Seeds (BIP39) | Users can add an extra word to their seed for extra protection. |
+| Multisignature Wallets | Require multiple devices or keys to approve a transaction. |
+| Transaction Notifications | Alert users when transactions are broadcast, adding real-time fraud detection. |
+| Time-Locked Backups | Allow seed phrase backups that only decrypt after a delay, discouraging quick theft. |
+
+## 7.8 Summary of module 7
+
+Bitcoin wallet security is life or death for user funds.
+
+A Bitcoin wallet must:
+
+- Secure private keys against device loss, theft, malware, and human error.
+- Treat the seed phrase as the absolute foundation of user control.
+- Protect users not only with encryption, but also with intelligent UX that minimizes risk.
+- Expect that users will make mistakes, and design flows that limit irreversible disasters.
+
+In Bitcoin wallets, users are their own banks. The product’s job is to make them safe, without lying to them about the risks.
+
+## Module 7 complete
+
+You now deeply understand the real-world security model of Bitcoin wallets, the threats, defenses, and why product and UX design must be structured around protecting private keys and seed phrases above everything else.

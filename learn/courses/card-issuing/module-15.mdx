@@ -1,0 +1,139 @@
+---
+title: "Module 15: Fraud patterns and spend abuse"
+description: "The difference between fraud and misuse, the behaviour and velocity signals that expose it, and safeguards that hold."
+---
+## Learning objectives
+
+- Understand the most common ways virtual cards are abused or manipulated
+- Learn how fraud differs from accidental misuse
+- Know how to detect fraud early through behavior, velocity, and patterns
+- Build product safeguards that stop abuse before it reaches your support team
+- Learn what to log, flag, and escalate internally
+
+## Why fraud is inevitable in card systems
+
+When you give users:
+
+- The ability to spend global currency (e.g. USD)
+- With low friction (virtual card = instant issuance)
+- And automation (API-powered top-ups)
+
+You also attract:
+
+- Card testers
+- Money launderers
+- Arbitrage exploiters
+- Subscription churners
+- Dispute exploiters
+
+Not because your product is weak, but because cards are high-value endpoints. Your job is to control risk without over-policing good users.
+
+## Common fraud patterns in virtual cards
+
+### 1. Card testing
+
+A bot or attacker creates hundreds of cards (or uses stolen numbers) to test small purchases at real merchants.
+
+**Behavior:** Multiple small transactions, multiple PANs, short time window **Risk:** Payment network blacklisting, balance abuse, merchant chargebacks
+
+### 2. Overfunding + dumping
+
+A user tops up multiple cards quickly and dumps them into merchants that offer refunds or crypto-like services.
+
+**Behavior:** High-value top-ups, strange merchants, refunds within 24h **Risk:** Processor blocks, refund to float theft
+
+### 3. Cross-border arbitrage
+
+Users intentionally trigger FX or cross-border charges to exploit pricing or refund rules.
+
+**Behavior:** High spend on specific platforms (e.g. Facebook, TikTok Ads) **Risk:** Systemic losses due to repeated cross-border fees or clawbacks
+
+### 4. Chargeback abuse
+
+User claims every transaction was unauthorized, even if they initiated them.
+
+**Behavior:** Multiple chargebacks, especially for digital goods **Risk:** High processor dispute fees, merchant bans
+
+### 5. Multiple declines → account cycling
+
+Users fail repeatedly on a card, get terminated, then create a new user and restart.
+
+**Behavior:** Same IP, device, or wallet funding multiple user IDs **Risk:** Systemic abuse of free card issuance or top-up cycles
+
+## How to detect early signals of fraud
+
+| Signal | Description |
+|---|---|
+| Card velocity | More than 2–3 card creations per user in \<24 hours |
+| Decline patterns | Multiple identical failed attempts (same amount, same MCC) |
+| Merchant overlap | Same merchant across many accounts in a short time |
+| Refund frequency | User gets refunded more than they spend |
+| Device/IP reuse | Same browser fingerprint or IP used by many users |
+| Card usage without top-ups | Spending immediately after card is created with no user interaction |
+| Repeated top-ups + inactivity | High funding with no merchant authorization within 30 minutes |
+
+## What you should log and monitor
+
+| Data Point | Why It Matters |
+|---|---|
+| Card creation events per user/device/IP | Prevent card farms |
+| First spend time after top-up | Detect automation and bots |
+| MCC and merchant patterns | Block known fraud vectors |
+| Webhook failure responses | Reveal tampering or replay attempts |
+| Chargeback count and win/loss rate | Track user-initiated risk behavior |
+
+## Internal flags and scoring
+
+Create a basic fraud scoring model using weights:
+
+- +2 = top-up \> \$1000 within 1 hour of account creation
+- +1 = 3+ failed transactions in 10 mins
+- +3 = refund \> 50% of total card activity
+- +2 = same device used on 4 accounts
+- +5 = dispute filed for more than one transaction
+
+Thresholds can trigger:
+
+Freeze Admin review Card termination Shadow banning from new issuance
+
+## Product safeguards to build in
+
+| Control | Description |
+|---|---|
+| Limit cards per user | Prevent large-scale card testing |
+| Delay full card detail until first top-up | Stops bots from issuing, then scraping PANs |
+| Manual review for high-value top-ups | Prevents large losses from one incident |
+| Block by MCC | Pre-empt fraud-prone categories (e.g., crypto, betting) |
+| Geo or IP lock cards | Prevent foreign actors from testing domestic card systems |
+| Velocity rules | Limit number of failed attempts per minute per card or user |
+| Require extra verification for refund or termination | Prevent refund-triggered laundering |
+
+## Team readiness and response playbook
+
+When a fraud pattern is detected:
+
+- Freeze card immediately
+- Disable user from creating new cards
+- Log and export last 5 transactions
+- Notify internal risk or fraud team
+- Optionally, blacklist IP, email domain, or funding wallet
+- If chargebacks exist, file counter-dispute with evidence
+- Add the user to “restricted issuance” group for ongoing monitoring
+
+## When to automate vs. When to review manually
+
+| Situation | Recommendation |
+|---|---|
+| Low-value top-up, first card | Approve automatically |
+| High top-up + new account | Queue for review |
+| 3+ declines in 1 hour | Freeze card, alert ops |
+| MCC: `7995`, `4829`, `6051` | Auto-decline or deny spend |
+| Merchant: flagged platform | Admin-only allowlist approval |
+
+## Recap
+
+- Fraud is a feature of financial systems. Your job is to reduce, not eliminate
+- Most abuse happens in patterns, not isolated incidents
+- Good logging, velocity limits, and product design prevent 80% of cases
+- Support and ops must be trained to recognize, flag, and act on fraud signals
+- Transparency with users is important, but you don’t need to explain fraud logic in detail

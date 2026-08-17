@@ -1,0 +1,34 @@
+---
+title: "Hex decoder"
+description: "Hexadecimal decoding back to text, tolerant of 0x prefixes, spaces, and mixed case."
+---
+
+import { HexTool } from "/snippets/playground/text-binary.jsx";
+
+<HexTool mode="decode" />
+
+Paste hex in whatever shape you copied it. Leading `0x`, spaces between bytes, newlines, and mixed case are all accepted.
+
+```
+48656c6c6f
+48 65 6c 6c 6f
+0x48656C6C6F
+```
+
+All three decode to `Hello`.
+
+## When the output looks like nonsense
+
+Hex often encodes bytes that are not text at all: a hash, a signature, or a compressed public key. Those decode to unprintable characters, which is expected. Only decode to text when you know the bytes started as text.
+
+An odd number of hex characters is always an error: every byte needs exactly two.
+
+## Decoding in code
+
+```javascript
+Buffer.from(hex.replace(/^0x/, "").replace(/\s+/g, ""), "hex").toString("utf8");
+```
+
+```python
+bytes.fromhex(hex_string.removeprefix("0x").replace(" ", "")).decode()
+```

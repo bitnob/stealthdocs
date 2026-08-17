@@ -1,0 +1,80 @@
+---
+title: "Errors and retries"
+description: "The error semantics shared by every Bitnob API: HTTP status meanings, the error body, rate limits, and the retry discipline that never duplicates money movement."
+related:
+  - /docs/getting-started/api-best-practices/idempotency-and-reference-integrity
+  - /docs/getting-started/api-best-practices/observability-logging-and-traceability
+---
+
+Every Bitnob API shares one error model. Product sections document their own failure scenarios, [payouts](/docs/payouts/error-handling), [stablecoins](/docs/stablecoins/error-handling-and-failure-scenarios), [trading](/docs/trading/error-handling-patterns), [cards](/docs/card-issuing/card-fees); this page covers what they all have in common.
+
+## Status codes
+
+| Status | Meaning | Retry? |
+|---|---|---|
+| `400` | Invalid request: missing fields, malformed values, unsupported pairs. | After fixing the request. |
+| `401` | Authentication failed: missing header, bad signature, stale timestamp. | After fixing signing; see [Quickstart](/docs/getting-started/quickstart). |
+| `403` | Authenticated but not permitted: feature not enabled, IP not whitelisted. | No; resolve the permission. |
+| `404` | No such resource, or a reference that does not exist on your account. | No; check the identifier. |
+| `409` | Conflict, typically a duplicate `reference`. | No; fetch the original result. |
+| `410` | Gone, typically an expired quote. | With a fresh quote. |
+| `422` | Semantically invalid: insufficient balance, out-of-limits amount. | After the condition changes. |
+| `429` | Rate limited. | Yes, with backoff; respect `Retry-After`. |
+| `5xx` | Temporary problem on Bitnob's side. | Yes, with backoff. |
+
+## The error body
+
+Error responses follow [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807).
+
+```json
+{
+  "type": "https://api.bitnob.com/errors/UNAUTHORIZED",
+  "title": "Unauthorized",
+  "status": 401,
+  "detail": "Invalid HMAC signature",
+  "code": "UNAUTHORIZED",
+  "correlation_id": "req_019d9b7e-9e76-711e-afbe-aba9b9455412",
+  "timestamp": "2026-04-17T12:50:59.850532036Z"
+}
+```
+
+| Field | Use |
+|---|---|
+| `title` | Short, stable description of the error class. |
+| `detail` | What went wrong on this specific request. Safe to log; do not parse it. |
+| `code` | Machine-readable identifier. Branch on this, not on `detail`. |
+| `correlation_id` | Identifies the exact request in our systems. |
+
+Log `correlation_id` on every failure. Quote it along with your `reference` when you contact support, because together they locate the request without a search.
+
+## Rate limits
+
+Keys are rate limited, 60 requests per minute by default, with brief bursts tolerated. On `429`, back off exponentially and respect `Retry-After`. Enterprise volumes can be raised through support. Design batch jobs to pace themselves rather than racing the limiter; see [Send payouts in bulk](/docs/payouts/mass-payouts) for the pattern.
+
+## The retry discipline
+
+Money movement makes naive retries dangerous, and one habit removes the danger:
+
+<Steps>
+  <Step title="One reference per business action">
+    Generate a unique `reference` per payout, transfer, trade, or card operation, before the first attempt, and persist it with the intent.
+  </Step>
+  <Step title="Retry with the same reference">
+    On timeout or `5xx`, re-submit the identical request. If the original succeeded, you get its result back; nothing executes twice. This is why a timeout is never a reason to panic or to mint a new reference.
+  </Step>
+  <Step title="Treat 409 as an answer, not an error">
+    A duplicate-reference conflict means the action already exists. Fetch it by reference and continue as success.
+  </Step>
+  <Step title="Confirm outcomes from webhooks">
+    The synchronous response says "accepted", the webhook says "done". Reconcile on a schedule against the relevant list endpoint so a missed delivery cannot strand a record. See [Webhooks and event handling](/docs/getting-started/api-best-practices/webhook-best-practices).
+  </Step>
+</Steps>
+
+More on reference design in [Idempotency and reference integrity](/docs/getting-started/api-best-practices/idempotency-and-reference-integrity).
+
+## Backoff that behaves
+
+- Exponential with jitter: 1s, 2s, 4s, 8s, capped.
+- Bounded attempts, then a human: pages that alert your ops channel beat infinite loops.
+- No retry storms: when everything fails at once, the cause is systemic; hammering makes it worse.
+- Never blind-retry a **failed** (as opposed to timed-out) money movement; read the failure reason first, because some causes, like compliance blocks, do not resolve by retrying.

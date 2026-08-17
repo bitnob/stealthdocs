@@ -1,0 +1,146 @@
+---
+title: "Module 5: Error handling in money movement products"
+description: "Anticipate and handle failures across quoting, funding, and settlement without losing user trust."
+---
+## Introduction
+
+Every part of the payout lifecycle (quoting, funding, settlement), can fail in ways that affect user trust, financial risk, operational load, and compliance obligations.
+
+Building resilient payout products requires anticipating failure paths and designing recovery mechanisms that protect both the user and the platform.
+
+### Common categories of errors
+
+| Category | Description |
+|---|---|
+| Funding Errors | Problems before payout processing begins: expired quotes, underpayment, overpayment, wrong asset sent. |
+| Processing Errors | Issues during fiat payout phase: bank rejection, mobile money downtime, liquidity shortages. |
+| System Errors | Internal platform failures: service downtime, webhook delivery failures, delayed monitoring. |
+| Compliance Errors | Payouts blocked by risk or regulatory controls: flagged beneficiary, sanctions screening failures. |
+
+## Funding errors
+
+### Expired quotes
+
+User delays funding beyond the quote expiry time.
+
+Funding received late may trigger payout expiry or manual reconciliation.
+
+**Best practices:**
+
+- Display countdown timers for funding expiry.
+- Alert users before expiry.
+- If payment is detected post-expiry, hold funds securely and notify the operations team.
+
+### Underpayment
+
+User sends less than the quoted amount.
+
+Platform detects shortfall.
+
+**Best practices:**
+
+- Allow partial payouts based on actual amount received, where possible.
+- Notify users of adjusted payouts transparently.
+- Build system reconciliation for underpayment tracking.
+
+### Overpayment
+
+User sends more than required.
+
+**Best practices:**
+
+- Process the intended payout amount.
+- Credit excess funds to internal balance or flag for refund handling.
+- Inform users proactively about overpayment and options.
+
+## Processing errors
+
+### Bank or mobile money rejections
+
+- Beneficiary account invalid.
+- Mobile money wallet closed or dormant.
+- Wrong bank codes provided.
+
+**Best practices:**
+
+- Validate beneficiary details at input where possible.
+- Build retry policies for transient errors.
+- Separate hard failures (invalid account) from soft failures (temporary system errors).
+
+### Liquidity shortages
+
+Platform does not have enough local currency or stablecoin liquidity at payout moment.
+
+**Best practices:**
+
+- Monitor treasury buffers dynamically.
+- Build alerting for low liquidity thresholds.
+- Pause new payout initiation in corridors facing liquidity stress.
+
+## System errors
+
+### Internal service downtime
+
+API services, blockchain nodes, liquidity providers become unavailable.
+
+**Best practices:**
+
+- Build health monitoring for all critical dependencies.
+- Gracefully degrade service with clear user messages ("Temporary processing delays").
+- Auto-retry failed internal processes where safe.
+
+### Webhook delivery failures
+
+Customer servers fail to receive or acknowledge webhooks.
+
+**Best practices:**
+
+- Implement retry logic with exponential backoff.
+- Mark retries clearly in logs.
+- Provide manual webhook resend option via dashboard or API.
+
+## Compliance errors
+
+### Beneficiary sanctions or risk flags
+
+Beneficiary or sending party matches a sanctions list or internal risk rules.
+
+**Best practices:**
+
+- Screen beneficiaries at payout initiation, not only at funding.
+- Build soft holds and review queues for flagged transactions.
+- Communicate clearly to users about necessary compliance reviews.
+
+## Error detection points in the payout lifecycle
+
+| Stage | Error Examples |
+|---|---|
+| Quoting | FX rate volatility, quote expiry. |
+| Funding | Underpayment, overpayment, wrong chain, payment delays. |
+| Fiat Processing | Bank rejection, mobile wallet outage, cash pickup agent downtime. |
+| Final Settlement | Wrong payout status updates, webhook failures, user notification gaps. |
+
+## Error recovery strategies
+
+| Strategy | Application |
+|---|---|
+| Real-Time Monitoring | Detect funding lags, payout processing delays immediately. |
+| Alerting | Alert operational teams on critical trip errors automatically. |
+| User Communication | Inform users transparently when payout delays or corrections occur. |
+| Internal Retry Mechanisms | Auto-retry payouts in transient failure cases (e.g., network downtime). |
+| Manual Ops Flows | Provide support agents with tools to manually push, refund, or adjust payouts. |
+| Dispute Handling Processes | Build clear playbooks for investigating user-reported payout failures. |
+
+## PM action checklist
+
+- Document expected failure points at each payout lifecycle stage.
+- Define alerting thresholds for funding expiry, payout failure, and liquidity risks.
+- Work with engineering to design robust webhook receipt and retry systems.
+- Build fallback user messaging for each major error type.
+- Monitor payout error rates and mean-time-to-recovery (MTTR) internally.
+
+## Closing reflection
+
+Error handling is not a defensive task. It is a core part of the user experience, brand trust, and operational survival for any money movement product.
+
+In the next module, we will address Managing User Expectations: Speed, Fees, Success Rates.

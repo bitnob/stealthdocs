@@ -1,0 +1,80 @@
+---
+title: "Enterprise overview"
+description: "What Enterprise offers banks, exchanges, and platforms that need multi-chain custody under policy control."
+related:
+  - /docs/enterprise/core-concepts
+  - /docs/enterprise/exchange-integration-guide
+---
+Policy-governed, multi-chain wallet infrastructure for banks, exchanges, and fintech platforms.
+
+## Why Enterprise belongs in your stack
+
+Whether you're running a crypto exchange, a neo-bank, or a fintech treasury desk, you need wallet infrastructure that can operate at scale without compromising on security or compliance.
+
+Managing private keys, signing transactions, enforcing spending limits, and coordinating multi-party approvals across multiple blockchains is a hard engineering problem. You need:
+
+- Hardware-isolated key management that your own team cannot access unilaterally
+- A declarative policy engine that runs before every signing event
+- Multi-chain support across EVM, Bitcoin, Solana, Tron, and more
+- Gas abstraction so your customers never worry about fee tokens
+- Batch transfers and HD wallets that scale from one customer to millions
+
+The Bitnob Enterprise API gives you all of that, a production-ready wallet-as-a-service built on the Bitnob Secure Enclave, with 50–100 ms signing latency and no volume caps.
+
+## What Bitnob Enterprise offers
+
+The Enterprise API allows you to:
+
+- [Create unlimited wallets](/api-reference/wallet-infrastructure/wallets/create-wallet) and [addresses](/api-reference/wallet-infrastructure/wallets/create-address) across 10+ blockchains using [HD vault](/api-reference/wallet-infrastructure/vaults/list-vaults) infrastructure
+- Govern every signing event with a declarative policy engine, spending limits, whitelists, velocity caps, and multi-party approvals
+- Sponsor transaction fees for your users automatically using [gas stations](/api-reference/wallet-infrastructure/gas-stations/list-gas-stations), including Tron energy and bandwidth delegation
+- Send up to 100 transfers in a single batch call, with atomic policy evaluation on each one
+- Monitor deposits and transaction state changes in real time via per-address subscriptions and webhooks
+- Export transactions, query asset prices, and track gas station health through dedicated analytics endpoints
+
+There are no volume caps. Whether you're processing \$500 or \$50 million, the integration stays the same.
+
+## Supported chains
+
+The live list for your organisation is returned by [List Chains](/api-reference/wallet-infrastructure/assets/list-chains), with per-asset detail in [List Assets](/api-reference/wallet-infrastructure/assets/list-assets).
+
+| Chain | Identifier | Native asset | Networks |
+|---|---|---|---|
+| Ethereum | `ethereum` | ETH | mainnet, sepolia |
+| Bitcoin | `bitcoin` | BTC | mainnet, testnet |
+| Solana | `solana` | SOL | mainnet-beta, devnet |
+| Tron | `tron` | TRX | mainnet, shasta |
+| Polygon | `polygon` | POL | mainnet, amoy |
+| Base | `base` | ETH | mainnet, sepolia |
+| Arbitrum | `arbitrum` | ETH | one, sepolia |
+| BSC | `bsc` | BNB | mainnet, testnet |
+| Optimism | `optimism` | ETH | mainnet, sepolia |
+| Avalanche | `avalanche` | AVAX | mainnet, fuji |
+
+## Key features
+
+- **Bitnob Secure Enclave.** Private keys are generated and stored inside AWS Nitro Enclaves, hardware-isolated memory that never exposes key material, not even to Bitnob engineers. Every signing event is logged as an immutable audit trail.
+- **Declarative policy engine.** Set spending limits, address whitelists, velocity caps, time locks, and multi-signature approval thresholds as declarative rules. Policies run before every signing event. The Enclave only releases a signature when every rule passes.
+- **HD vault hierarchy.** A single BIP-39 seed generates unlimited wallets and addresses across all supported chains. Use a dedicated [vault](/api-reference/wallet-infrastructure/vaults/list-vaults) for treasury wallets or a pool vault to assign one [wallet](/api-reference/wallet-infrastructure/wallets/list-wallets) per customer.
+- **Gas station abstraction.** Pre-fund gas stations once per chain and let Bitnob sponsor fees automatically on every outbound transaction. On Tron, stake TRX for energy and bandwidth to minimise costs further.
+- **50–100 ms signing latency.** The Bitnob Secure Enclave is optimised for low-latency signing. Fully governed transactions are signed and broadcast within milliseconds of request.
+
+## Common use cases
+
+- A crypto exchange that needs [one deposit address per customer per chain](/api-reference/wallet-infrastructure/wallets/create-address), with automated withdrawal governance: see the [Exchange integration guide](/docs/enterprise/exchange-integration-guide)
+- A neo-bank that holds customer balances in Bitcoin and stablecoins and needs to enforce daily spend caps
+- A treasury management product that rebalances across chains and requires dual-admin approval for large transfers
+- A fintech platform that processes cross-border payments and must comply with address-whitelist requirements
+- A DeFi aggregator that [sponsors gas fees](/api-reference/wallet-infrastructure/gas-stations/sponsor-and-broadcast-external-tron-transaction) for its users using USDC and ETH across multiple L2s
+
+## Designed for institutions
+
+Bitnob Enterprise is built with:
+
+- **Non-custodial by design**: keys never leave the hardware boundary; Bitnob cannot move funds unilaterally
+- **Root quorum governance**: a configurable set of senior approvers must sign off on policy changes themselves
+- **Immutable audit logs** for every signing event, policy change, and approval decision
+- **Per-day RPC quotas** on managed blockchain nodes so you don't need to run your own infrastructure
+- **Idempotency keys** on all mutation endpoints, such as [Create Transaction](/api-reference/wallet-infrastructure/transactions/create-transaction), to guarantee safe retries under network failures
+
+You focus on the product experience. We handle key management, signing infrastructure, policy enforcement, and chain connectivity.
