@@ -1,112 +1,95 @@
 ---
 title: "Module 1: Why moving money is different from moving data"
-description: "Why money movement fails differently from data movement, and what that demands of your product."
+description: "Money movement fails differently from data movement. This module explains the difference and what it demands of your product."
 ---
-## Introduction
 
-Messages, images, account updates, videos, notifications.
+Most software moves data: messages, images, account updates, videos, and notifications. When data moves incorrectly, you resend it. The cost of a mistake is low.
 
-When you move data:
+Money behaves differently. When a payout goes to the wrong account, you cannot resend it. The money is gone, and you must recover it from a person who did not expect to receive it.
 
-Mistakes are annoying but rarely fatal.
+This module explains that difference, and what it demands from the product you build.
 
-Systems can be "eventually consistent."
+## What you will learn
 
-Errors can often be quietly fixed.
+- Why a payout failure costs more than a data failure
+- Which product decisions this changes
+- How to measure whether your payout product is reliable
 
-When you build products that move money (Bitcoin, stablecoins, or fiat), everything changes.
+## Data movement and money movement
 
-Mistakes are expensive.
+The two differ in eight ways. Each row changes a decision you make later in this course.
 
-They destroy trust.
-
-They create legal exposure.
-
-They can kill companies.
-
-## Fundamental differences between data movement and money movement
-
-| Feature | Data Movement | Money Movement |
+| Property | Data movement | Money movement |
 |---|---|---|
-| Error Recovery | You can resend or edit easily. | Often irreversible. Funds may be permanently lost. |
-| Finality | Eventual consistency is acceptable | Settlement must be final and correctly recorded. |
-| User Trust | Small mistakes are tolerated | Single payout error can lose a customer forever. |
-| Legal Compliance | Often minimal. | Heavy: KYC, AML, sanctions screening, reporting obligations. |
-| System Latency | Flexible | Strict service-level expectations per corridor. |
-| Risk Exposure | Low operational risk. | Financial, regulatory, and reputational risk |
-| Monitoring | Optional enhancement. | Critical for survival |
-| Support Load | Tolerable delays. | Urgent escalations required |
+| Error recovery | You resend or edit the record. | The transfer is often final. The funds can be lost. |
+| Finality | Eventual consistency is acceptable. | Settlement must be final and recorded correctly. |
+| User trust | Users tolerate small mistakes. | One failed payout can lose a customer permanently. |
+| Compliance | Requirements are usually light. | KYC, AML, sanctions screening, and reporting apply. |
+| Latency | Delivery time is flexible. | Each corridor has an expected settlement time. |
+| Risk | Operational risk only. | Financial, regulatory, and reputational risk. |
+| Monitoring | An improvement. | A requirement. |
+| Support | Users accept delays. | Users escalate quickly. |
 
-## Real-world payout examples
+## The same delay, two different outcomes
 
-If an email is delayed by thirty minutes, no major harm is done.
+Compare a data product and a payout product under the same conditions.
 
-If a Bitcoin payout is delayed by thirty minutes, your user may panic, escalate, leave bad reviews, or file legal complaints.
+| Event | In a data product | In a payout product |
+|---|---|---|
+| The action is delayed 30 minutes | The user waits. | The user panics, contacts support, and writes a review. |
+| The action fails | The user retries it. | The money can be in transit, and nobody knows where. |
+| The destination is wrong | You correct the record. | A stranger received the funds. You must ask for them back. |
 
-If a social media post fails to upload, the user can retry later.
+A failed payout is not only a bad experience. The user gave you money and did not get the result you promised. That is a failure of trust, and users rarely give a second chance.
 
-If a fiat payout to Ghana fails because the wrong mobile money operator was selected, you have lost user trust and possibly funds.
+## What this demands of your product
 
-Payout product failure is not just a user experience issue.
+Six rules follow from the table above. Apply each one from the first release.
 
-It is a fundamental breach of financial trust.
+1. **Make the system reliable before you make it larger.** Scale multiplies failures that already exist.
+2. **Design for final transfers.** Do not depend on a retry to correct a mistake.
+3. **Treat settlement as a feature.** Users care when the money arrives, not when the API responded.
+4. **Monitor every payout.** You must detect a failure before the user reports it.
+5. **Manage liquidity as part of the product.** An empty balance stops payouts, whatever the code does.
+6. **Tell users the truth about timing.** An honest estimate creates fewer tickets than an optimistic one.
 
-## New operating rules
+<Note>
+  Rule 4 is the one teams add last and need first. If your user tells you that a payout failed, you already lost the trust that the alert was there to protect.
+</Note>
 
-Payout systems must be reliable before they are scalable.
+## Exercise: calculate the cost of failure
 
-You must think in terms of irreversible consequences.
+Assume your product sends \$1,000,000 each day across bitcoin and fiat corridors.
 
-Settlement and finality are core product features.
+If 0.5% of that volume fails, \$5,000 fails each day. The direct cost is not the loss. The cost is the support work, the refunds, and the users who leave.
 
-Monitoring is not optional. It is survival.
+Answer these five questions about your own system:
 
-Treasury and liquidity are product responsibilities, not just finance tasks.
+1. Does the system detect a failed payout automatically?
+2. Can your team respond in minutes rather than hours?
+3. Do users see an accurate delivery estimate before they confirm?
+4. Do you hold enough liquidity for tomorrow's volume?
+5. Do you measure the success rate and the delivery time of every corridor?
 
-User communication must be honest, especially about speed, volatility, and settlement risks.
+If you answered no to any question, the product still moves money. It does not yet control what happens when the money does not arrive.
 
-## Practical exercise
+## Checklist for product managers
 
-Imagine your app is moving one million dollars per day through Bitcoin and fiat payout corridors.
+- Measure trust and reliability, not engagement.
+- Treat every payout as a transaction that you cannot reverse.
+- Build for finality first, and retries second.
+- Track liquidity, settlement success, and delivery time as product metrics.
+- Own treasury risk, compliance events, and payout delays. They are product problems.
 
-If 0.5% of transactions fail each day, you are losing five thousand dollars per day in unresolved trust incidents.
+## Summary
 
-Ask yourself:
+You can copy data. You cannot copy money. A payout product earns trust one final transfer at a time, and loses it the same way.
 
-Is your system designed to detect failures instantly?
-
-Is your team prepared to intervene in minutes, not hours?
-
-Are users informed accurately about possible payout delays or settlement times?
-
-Are liquidity buffers managed proactively?
-
-Are success rates and payout timelines measured rigorously?
-
-If not, you do not have a payout product.
-
-You have a payout risk generator.
-
-## Product manager action checklist
-
-Shift from thinking about "user engagement" to "trust and financial reliability."
-
-Think of every payout as a high-risk transaction demanding precision.
-
-Build for finality, not retries.
-
-Measure and monitor liquidity, settlement success, and transaction finality.
-
-Accept that treasury risk, compliance events, and payout delays are part of your product responsibility.
-
-## Closing reflection
-
-Data can be duplicated.
-
-Money cannot.
-
-In money movement products, survival is earned one irreversible transaction at a time.
-
-In the next module, we will deepen this foundation by examining Bitcoin and stablecoins:
-
-their opportunities, risks, and how they reshape payout products.
+<Columns cols={2}>
+  <Card title="Next: Bitcoin and stablecoins" icon="arrow-right" href="/learn/courses/payouts-for-product-managers/module-2">
+    The opportunities and risks each asset brings to a payout product.
+  </Card>
+  <Card title="See it in the API" icon="code" href="/docs/payouts/payouts-lifecycle">
+    The states a real payout moves through, and where it can stop.
+  </Card>
+</Columns>

@@ -1,99 +1,101 @@
 ---
-title: "Module 2: Bitcoin and stablecoins: Product opportunities and risks"
-description: "What Bitcoin and stablecoin settlement makes possible, and the risks that come attached."
+title: "Module 2: Bitcoin and stablecoins as settlement tools"
+description: "What bitcoin and stablecoin settlement makes possible for a payout product, and the risks that come with it."
 ---
-## Introduction
 
-Bitcoin and stablecoins are not just "alternative currencies." They are fundamentally new settlement tools, faster, more global, and more decentralized than traditional money rails.
+Bitcoin and stablecoins are not alternative currencies that you add beside a bank transfer. They are different settlement tools. They move faster, they reach further, and they do not depend on a bank to complete a transfer.
 
-As a product manager, you must understand:
+That difference creates opportunities. It also creates risks that a bank rail does not have. This module covers both.
 
-- What opportunities Bitcoin and stablecoins create for payout products
-- What risks they introduce
-- How they reshape liquidity, settlement, and user behavior
+## What you will learn
 
-Treating them like "just another payment method" is a recipe for failure.
+- What bitcoin changes about settlement, and what stablecoins change
+- Which opportunities each one opens for a payout product
+- Which risks you must design for before you launch
 
-Treating them properly unlocks faster, safer, cheaper payout products for the world.
+## What bitcoin changes
 
-## What Bitcoin changes
-
-| Feature | Traditional Money | Bitcoin |
+| Property | Bank rails | Bitcoin |
 |---|---|---|
-| Custody | Always externalized (banks) | Can be internalized (you custody value yourself). |
-| Settlement Finality | Depends on intermediaries, subject to reversals. | Final once confirmed; cannot be reversed. |
-| Network Availability | Banking hours, holidays, cutoffs. | 24/7/365. Bitcoin never sleeps. |
-| Cross-Border Reach | Slow, expensive, regulated corridors. | Open access globally, without needing correspondent banks. |
-| Volatility | Stable against USD for fiat. | Volatile in fiat terms, unpredictable short-term. |
+| Custody | A bank holds the value. | You can hold the value yourself. |
+| Finality | An intermediary can reverse a transfer. | A confirmed transfer is final. |
+| Availability | Banking hours, holidays, and cut-offs apply. | The network runs every day, at all hours. |
+| Reach | Each corridor needs a bank relationship. | Any address on the network can receive. |
+| Price stability | Stable against the local currency. | The fiat value moves, sometimes within minutes. |
 
-### Practical impact of Bitcoin on payouts
+Three consequences follow for a payout product:
 
-- No reliance on centralized banks to move money across borders.
-- Real 24/7 liquidity but must handle confirmation times and volatility exposure.
-- Finality without recourse means payout errors must be caught before execution, not after.
+1. You can move value across a border without a correspondent bank.
+2. You get liquidity at any hour, but you must wait for confirmations and carry price risk.
+3. You must catch an error before you send, because you cannot reverse the transfer afterwards.
 
 ## What stablecoins change
 
-| Feature | Traditional Money | Stablecoins |
+| Property | Bank rails | Stablecoins |
 |---|---|---|
-| Currency Volatility | Local currencies often unstable. | Pegged to USD or other stable assets. |
-| Settlement Finality | Bank clearing can take days. | Transfers complete in minutes or less, across chains. |
-| Treasury Management | Requires multiple bank relationships. | Manage one stablecoin treasury for global payouts |
-| User Access | SBank accounts required | Mobile wallets or crypto apps are sufficient |
+| Price stability | Local currencies can move sharply. | The token tracks a reference asset, usually the US dollar. |
+| Settlement time | Clearing can take days. | A transfer completes in minutes. |
+| Treasury | You need a bank account in each market. | You hold one balance and pay out from it. |
+| User access | The recipient needs a bank account. | The recipient needs a mobile wallet. |
 
-### Practical impact of stablecoins on payouts
+Three consequences follow:
 
-- Global dollarized liquidity without needing multiple bank accounts.
-- Faster reconciliation and movement across regions.
-- Easier payout construction for users with mobile-first wallets in emerging markets.
+1. You hold dollar liquidity without a bank account in every market.
+2. You reconcile faster, because the transfer and the record arrive together.
+3. You can pay users who have a phone but no bank account.
 
-## Product opportunities Bitcoin and stablecoins unlock
+## The opportunities
 
-- Global Payout Coverage: Reach users in Africa, Asia, LATAM without needing local bank partnerships.
-- Faster Time to Settlement: Move assets in hours instead of days.
-- Reduced Operational Costs: Eliminate expensive correspondent banking layers.
-- New User Segments: Serve unbanked and mobile-money-first populations.
-- Always-On Operations: No holidays, no banking hours, no wire cutoffs.
+- **Wider coverage.** Reach users in Africa, Asia, and Latin America without a local bank partner.
+- **Faster settlement.** Deliver in hours rather than days.
+- **Lower cost.** Remove the correspondent banking layer and its fees.
+- **New users.** Serve people who use mobile money and have no bank account.
+- **Continuous operation.** No holidays, no cut-off times.
 
-## Product risks Bitcoin and stablecoins introduce
+## The risks
 
-- Volatility Risk (Bitcoin): If you accept bitcoin to fund fiat payouts, you must manage asset price risk during funding windows.
-- Liquidity Risk: On-chain congestion, Lightning channel depletion, or stablecoin bridge outages can delay funding.
-- Compliance Complexity: Even if Bitcoin or stablecoin flows are faster, regulatory KYC/KYB checks still apply.
-- Irreversible Error Risk: Bitcoin and most stablecoin transfers cannot be reversed. Mistakes are final.
-- User Education Challenge: Many users will not understand transaction finality, fees, confirmation times. Your product must educate them simply and honestly.
+- **Price risk.** If a user funds with bitcoin and you pay out fiat, the price can move before you settle.
+- **Liquidity risk.** Chain congestion, a depleted Lightning channel, or a bridge outage can delay funding.
+- **Compliance still applies.** Faster settlement does not remove KYC, KYB, or sanctions screening.
+- **Errors are final.** You cannot reverse a bitcoin transfer or most stablecoin transfers.
+- **Users need teaching.** Most users do not know what a confirmation is, or why a fee changes.
 
-## Practical examples
+<Warning>
+  Price risk and finality combine badly. If you quote a fiat amount, wait for three confirmations, and the price falls in between, you pay the difference. Decide who carries that risk before you launch, not after the first loss.
+</Warning>
 
-**Example 1:** A user funds a payout with bitcoin. Bitcoin price drops 3% before you settle the fiat payout. If you priced the payout without a proper buffer, you either lose money or have to underpay the recipient.
+## Three failures to design against
 
-**Example 2:** A user funds a payout with USDT (stablecoin) on the wrong chain (ERC20 instead of TRC20). If your product does not validate chains properly, you lose the funding or have major delays.
+**A price move during the funding window.** A user funds a payout with bitcoin. The price falls 3% before you settle the fiat side. Without a buffer in your pricing, you absorb the loss or underpay the recipient.
 
-**Example 3:** A payout is funded via Bitcoin at 11 PM local time on a holiday. Your system must detect, confirm, and process payout within SLA. There are no holidays on Bitcoin.
+**A transfer on the wrong chain.** A user sends USDT on Ethereum when your address is on Tron. If you do not validate the chain before you show the address, the funds are delayed or lost. See [Supported chains](/docs/stablecoins/supported-chains).
 
-## Product manager mental shifts
+**A payout at 11pm on a public holiday.** Bitcoin does not observe holidays, so the funding arrives. Your system must detect it, confirm it, and pay out within the time you promised, without a person on duty.
 
-- You must model volatility in funding windows.
-- You must build for network finality, not refund workflows.
-- You must monitor liquidity levels actively like a real treasury manager.
-- You must educate users upfront about what Bitcoin and stablecoin funding means, confirmation times, fees, risks.
+## What this changes for you
 
-Building a Bitcoin or stablecoin payout system without these mental shifts will result in operational fragility, broken user trust, and financial losses.
+- Model the price movement across the whole funding-to-settlement window.
+- Build for finality. Do not design a refund flow as your main error path.
+- Monitor liquidity the way a treasury desk does, continuously.
+- Explain confirmation time, fees, and finality to users before they commit.
 
-## PM action checklist
+## Checklist for product managers
 
-- Map out how Bitcoin or stablecoin volatility could impact your payout funding-to-settlement window.
-- Decide early whether your product will accept bitcoin funding, stablecoin funding, or both.
-- Define liquidity monitoring and volatility buffer policies before launch.
-- Build user flows that explain payment speed, network confirmations, and irreversibility clearly.
-- Work with Treasury/Ops teams early. Product and liquidity must align.
+- Decide whether you accept bitcoin funding, stablecoin funding, or both.
+- Measure your funding-to-settlement window, and set a price buffer that covers it.
+- Write a liquidity policy and an alert threshold before launch.
+- Design the user flow to state speed, confirmations, and finality in plain words.
+- Agree the liquidity plan with your treasury and operations teams early.
 
-## Closing reflection
+## Summary
 
-Bitcoin and stablecoins do not just move faster.
+Bitcoin and stablecoins do not only move faster than bank rails. They move differently. They give you freedom from banking hours and correspondent banks, and in exchange they require tighter discipline, clearer communication, and active liquidity management.
 
-They move differently.
-
-They are freer, but demand tighter discipline, clearer communication, and smarter liquidity management.
-
-In the next module, we will dive deeper into Custodial vs Dynamic Funding Models: Core Product Decisions.
+<Columns cols={2}>
+  <Card title="Next: Funding models" icon="arrow-right" href="/learn/courses/payouts-for-product-managers/module-3">
+    Custodial or dynamic funding, and how the choice shapes the product.
+  </Card>
+  <Card title="See it in the API" icon="code" href="/docs/payouts/settlement-models">
+    How the two funding models work on Bitnob.
+  </Card>
+</Columns>
