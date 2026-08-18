@@ -67,7 +67,7 @@ related:
 
 Rules the metadata has to hold to:
 
-- `title` is the page's `<h1>` and its SEO title, which Mintlify renders as `Title - Bitnob Docs`. Aim for roughly 40 to 60 characters including that suffix, and make it specific enough to stand alone in a search result. `Overview` is not a page title, `Virtual card issuing on Bitnob` is.
+- `title` is the page's `<h1>` and its SEO title, which Mintlify renders as `Title - Bitnob`. Aim for roughly 40 to 60 characters including that suffix, and make it specific enough to stand alone in a search result. `Overview` is not a page title, `Virtual card issuing on Bitnob` is.
 - `sidebarTitle` carries the short label when the SEO title is too long for the sidebar. Every section entry page uses this pair, so the sidebar still reads `Overview` while the title does the SEO work.
 - `description` stays at 160 characters or fewer. Google truncates past that, and social previews truncate earlier still. It also feeds the auto-generated social card, so write it as a standalone sentence rather than a lead-in.
 - No two pages share a title.
