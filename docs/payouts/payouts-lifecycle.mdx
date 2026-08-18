@@ -1,6 +1,6 @@
 ---
 title: "The payout lifecycle"
-description: "A payout is a record that moves from `QUOTE` to `COMPLETED` or `FAILED`. This page explains what moves it forward, where it can stall, and which transitions emit a webhook."
+description: "A payout moves from `QUOTE` to `COMPLETED` or `FAILED`. What moves it forward, where it can stall, and which transitions emit a webhook."
 ---
 
 A payout is not a single API call. It is a record that moves through states, and your integration has to handle each one. Two states are terminal.

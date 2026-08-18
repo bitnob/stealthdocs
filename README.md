@@ -65,7 +65,14 @@ related:
 ---
 ```
 
-`related` renders the **Related topics** list at the bottom of the page. Entries are root-relative paths, and Mintlify infers the label from the target page's title. Use the `"Label": /path` form only when the target title is ambiguous out of context, such as a page titled `Overview`. Set `related: false` to hide the section on a page.
+Rules the metadata has to hold to:
+
+- `title` is the page's `<h1>` and its SEO title, which Mintlify renders as `Title - Bitnob Docs`. Aim for roughly 40 to 60 characters including that suffix, and make it specific enough to stand alone in a search result. `Overview` is not a page title, `Virtual card issuing on Bitnob` is.
+- `sidebarTitle` carries the short label when the SEO title is too long for the sidebar. Every section entry page uses this pair, so the sidebar still reads `Overview` while the title does the SEO work.
+- `description` stays at 160 characters or fewer. Google truncates past that, and social previews truncate earlier still. It also feeds the auto-generated social card, so write it as a standalone sentence rather than a lead-in.
+- No two pages share a title.
+
+`related` renders the **Related topics** list at the bottom of the page. Entries are root-relative paths, and Mintlify infers the label from the target page's title. Use the `"Label": /path` form only when the target has no title to infer, such as an endpoint page generated from an OpenAPI spec. Set `related: false` to hide the section on a page.
 
 This section needs **Show related topics** enabled on the [Add-ons](https://app.mintlify.com/settings/deployment/addons) page in the Mintlify dashboard. Set the mode to Manual so only curated links appear.
 
@@ -80,6 +87,23 @@ This section needs **Show related topics** enabled on the [Add-ons](https://app.
 ### Components
 
 The set in use across the docs is `Steps`, `Columns`, `Card`, `Note`, `Tip`, `Info`, `Warning`, `Accordion`, `CodeGroup`, `ParamField`, `ResponseField`, and `Update` in the changelog. Use `Columns` rather than the deprecated `CardGroup`, and prefer `related` frontmatter over a hand-built card grid for onward navigation.
+
+## Social previews
+
+Mintlify generates the Open Graph image for every page at 1200x630, overlaying the site logo, the page `title`, and the page `description` on a background. The overlay is automatic, so a page with a good title and description gets a good social card for free.
+
+The background behind that overlay is `images/og-background.png`, wired up in `docs.json`:
+
+```json
+"thumbnails": {
+  "appearance": "dark",
+  "background": "/images/og-background.png"
+}
+```
+
+Do not set a global `og:image` in `seo.metatags`. That replaces the generated card with one static image on every page, so every link unfurls with the same title. Set `og:image` in a single page's frontmatter only when that page needs a bespoke card.
+
+Social previews served from `mint dev`, including through a tunnel, do not always resolve the generated image. Verify unfurls against the deployed site.
 
 ## Deployment
 
