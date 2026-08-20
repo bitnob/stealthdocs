@@ -8,7 +8,7 @@ related:
 
 Outbound transfers go through one endpoint regardless of chain. You name the destination, amount, token, and chain; Bitnob broadcasts, tracks confirmations, and reports the outcome as a webhook.
 
-The minimum send is $1. Sends draw on your balance, checked with [List balances](/api-reference/balances/list-balances), and network fees are deducted from it too.
+The minimum send is \$1. Sends draw on your balance, checked with [List balances](/api-reference/balances/list-balances), and network fees are deducted from it too.
 
 <Steps>
   <Step title="Validate the destination">
@@ -69,6 +69,6 @@ Forward any memo the destination gives you exactly as provided; exchanges routin
 
 ## Keep fees legible
 
-Fees are dynamic per chain and visible per send in `centFees`. Two habits keep users happy: prefer low-fee chains, such as Tron or Polygon, for small amounts, and show the arithmetic in your UI: sending $1.00, network fee $0.01, recipient gets $0.99.
+Fees are dynamic per chain and visible per send in `centFees`. Two habits keep users happy: prefer low-fee chains, such as Tron or Polygon, for small amounts, and show the arithmetic in your UI: sending \$1.00, network fee \$0.01, recipient gets \$0.99.
 
 For transfers between wallets on your own Bitnob account, skip the chain entirely: [internal transfers](/docs/stablecoins/internal-wallet-to-wallet-transfers) settle instantly with no gas.

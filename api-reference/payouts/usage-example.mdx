@@ -16,27 +16,26 @@ A payout delivers local fiat (e.g. NGN, KES, GHS) to a beneficiary's bank or mob
 
 You will need:
 
-| What | Where to Get It |
+| What | Where to get it |
 |---|---|
-| Base URL (live) | https://api.bitnob.com |
-| Base URL (sandbox) | Provided with your account: use it for testing. |
-| Client ID | From your dashboard, under API keys. |
-| Client Secret | Shown once when you generate your API key: store it securely. |
+| Base URL | `https://api.bitnob.com` for both sandbox and production. |
+| Client ID | From your dashboard, under API keys. The same value in both environments. |
+| Client Secret | Shown once when you generate your API key. Sandbox and production have different secrets. |
 
 ### Test in sandbox first
 
-Always test end-to-end in sandbox first. Sandbox lets you complete a full payout (including funding) without moving real money. Then switch the base URL to `https://api.bitnob.com` and your live API keys for production.
+Always test end-to-end in sandbox first. Sandbox lets you complete a full payout, including funding, without moving real money.
 
-Throughout this guide, `{BASE_URL}` stands for your environment's base URL, `https://api.bitnob.com` for live, or your sandbox URL for testing.
+There is no separate sandbox host. Both environments use `https://api.bitnob.com`, and the secret you sign with selects the environment. To go live, swap the secret, not the URL.
 
 ```bash
-# Base URLs
-BASE_URL_LIVE="https://api.bitnob.com"
-BASE_URL_SANDBOX="<your-sandbox-url>"     # provided with your account
+# One base URL for both environments
+BASE_URL="https://api.bitnob.com"
 
-# API credentials — from your dashboard, under API keys
+# From your dashboard, under API keys.
+# CLIENT_ID is the same in both environments; the secret is not.
 CLIENT_ID="<your-client-id>"
-CLIENT_SECRET="<your-client-secret>"      # shown once — store it securely
+CLIENT_SECRET="<your-sandbox-or-production-secret>"   # shown once, store it securely
 ```
 
 ## Authentication
@@ -317,7 +316,7 @@ Handle pending → processing → completed / failed in your system.
 
 Client Secret stored securely (never in client-side code or version control).
 
-Switched Base URL and API keys from sandbox to live.
+Switched from the sandbox secret to the production secret.
 
 ## Support
 

@@ -48,12 +48,12 @@ Use the following sequence for User A:
 
 | Action | Details |
 |---|---|
-| Top-Up | $100 at 09:11 UTC |
+| Top-Up | \$100 at 09:11 UTC |
 | Spend | Attempted authorization at MCC 6051 (declined) |
 | Termination | Card auto-terminated after 3 failed transactions |
-| Refund Received | $100 at 11:07 UTC |
+| Refund Received | \$100 at 11:07 UTC |
 | Float Credited | No matching spendRef: went to float |
-| Withdrawal | $100 moved to user's main wallet at 11:10 UTC |
+| Withdrawal | \$100 moved to user's main wallet at 11:10 UTC |
 
 Initial Loss to Platform: \$100 x 3 users = \$300
 
@@ -85,7 +85,7 @@ Initial Loss to Platform: \$100 x 3 users = \$300
 | Category | Insight |
 |---|---|
 | Root Cause | Refunds from a high-risk merchant routed to float due to card termination timing |
-| Exposure | $300 float loss (refunded without valid spend) |
+| Exposure | \$300 float loss (refunded without valid spend) |
 | Vector | Refund laundering via top-up and MCC 6051 |
 | Prevention Gaps | No enforcement of refund → spend mapping |
 | Risk Score | Medium-High (contained early) |

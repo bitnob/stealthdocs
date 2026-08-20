@@ -12,14 +12,14 @@ Cards are prepaid, so they hold nothing until you load them. Funding draws on yo
 
 | Constraint | Value |
 |---|---|
-| Minimum per top-up | $2 |
-| Maximum per transaction | $2,500 |
-| Maximum card balance | $50,000 |
+| Minimum per top-up | \$2 |
+| Maximum per transaction | \$2,500 |
+| Maximum card balance | \$50,000 |
 | Card status | Must be `active`. Frozen and terminated cards cannot be funded. |
 | Source balance | The debit fails if your balance cannot cover amount plus fee. |
 | FX tolerance | Funding fails if the source asset's value moves too far between quote and execution. Retry to get a fresh rate. |
 
-Funding fees are on [Fees and decline rules](/docs/card-issuing/card-fees): $1 flat below $100, 1% at $100 and above.
+Funding fees are on [Fees and decline rules](/docs/card-issuing/card-fees): \$1 flat below \$100, 1% at \$100 and above.
 
 ## Make the call
 
@@ -38,7 +38,7 @@ POST /api/cards/{cardId}/balance
 ```
 
 <ParamField body="amount" type="integer" required>
-  The amount to move, in micro-units of the card currency. `2000000` is $2.00.
+  The amount to move, in micro-units of the card currency. `2000000` is \$2.00.
 </ParamField>
 
 <ParamField body="type" type="string" required>

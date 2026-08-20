@@ -71,7 +71,7 @@ Requests take `quantity` in major units of the base currency: `"0.0001"` BTC, `"
 A user holds 100,000 sats and wants stablecoins:
 
 1. [Create a quote](/api-reference/trading/create-quote) for the BTC → USDT pair.
-2. Show "You'll receive $45.12" with a countdown from `expires_at`.
+2. Show "You'll receive \$45.12" with a countdown from `expires_at`.
 3. On confirmation, [submit the order](/api-reference/trading/submit-order) with the quote `id`, `price`, and your `reference`.
 4. On `trade.completed`, credit your ledger and show success.
 5. Optionally continue into a [payout](/docs/payouts/overview) to a bank or mobile money account.
