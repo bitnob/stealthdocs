@@ -2,15 +2,15 @@
 title: "Exchange integration guide"
 description: "An end-to-end exchange build, from vault topology and customer onboarding through deposits, gas sponsorship, withdrawals, and policy hardening."
 related:
-  - /docs/enterprise/core-concepts
+  - /docs/wallet-infrastructure/core-concepts
   - "Wallet infrastructure reference": /api-reference/wallet-infrastructure/meta/get-api-key-info
 ---
-A complete walkthrough for building a production exchange on top of Bitnob Enterprise, from customer onboarding to policy-governed withdrawals.
+A complete walkthrough for building a production exchange on Bitnob Wallet Infrastructure, from customer onboarding to policy-governed withdrawals.
 
 This guide covers the full integration lifecycle: creating the vault topology, onboarding customers, detecting deposits, setting up gas sponsorship, processing withdrawals, and locking down the system with layered policies.
 
 <Note>
-  You need a Bitnob Enterprise API key with admin permissions. All requests use the `X-API-Key` header. See [Authentication](/docs/enterprise/authentication) for details.
+  You need a Wallet Infrastructure API key with admin permissions. All requests use the `X-API-Key` header. See [Authentication](/docs/wallet-infrastructure/authentication) for details.
 </Note>
 
 ## Step 1: Create a pool vault
@@ -293,7 +293,7 @@ Content-Type: application/json
 
 ## Step 7: Populate the address book
 
-Add known safe addresses (exchange hot wallets, partner addresses, institutional counterparties), to the address book. Then create a `whitelist` category policy to block transfers to any non-listed destination. Address book entries are immutable and validated against their chain at creation; see [Core concepts](/docs/enterprise/core-concepts#address-book).
+Add known safe addresses (exchange hot wallets, partner addresses, institutional counterparties), to the address book. Then create a `whitelist` category policy to block transfers to any non-listed destination. Address book entries are immutable and validated against their chain at creation; see [Core concepts](/docs/wallet-infrastructure/core-concepts#address-book).
 
 ```http
 POST /addressbook

@@ -1,12 +1,16 @@
 ---
 title: "Wallet infrastructure authentication"
 sidebarTitle: "Authentication"
-description: "How Enterprise API keys are issued, scoped to a permission set, and used to sign requests."
+description: "How Wallet Infrastructure API keys are issued, scoped to a permission set, and used to sign requests."
 related:
-  - /docs/enterprise/core-concepts
-  - /docs/enterprise/exchange-integration-guide
+  - /docs/wallet-infrastructure/core-concepts
+  - /docs/wallet-infrastructure/exchange-integration-guide
 ---
-Every request to the Enterprise API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
+<Note>
+  This page covers **Wallet Infrastructure**, the non-custodial product. The custodial Bitnob API used for payouts, cards, and trading signs requests with HMAC instead. See [API authentication](/api-reference/authentication/authentication).
+</Note>
+
+Every request to the Wallet Infrastructure API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
 
 ## Base URL
 
@@ -27,7 +31,7 @@ Content-Type: application/json
 The organisation context is resolved automatically from the key. You never need to send an org ID header.
 
 <Warning>
-  Keep keys server-side. Never expose an Enterprise API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
+  Keep keys server-side. Never expose a Wallet Infrastructure API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
 </Warning>
 
 ## Required headers
@@ -53,7 +57,7 @@ A leaked key cannot exfiltrate funds beyond what its policies permit. Spending l
 
 ## API versioning
 
-The Enterprise API supports two versioning strategies. Both are valid and can be used interchangeably.
+The Wallet Infrastructure API supports two versioning strategies. Both are valid and can be used interchangeably.
 
 **Header-based (recommended)**
 

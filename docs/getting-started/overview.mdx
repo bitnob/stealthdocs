@@ -47,7 +47,22 @@ Each product is a separate lane with its own guides and endpoints. Most integrat
   </Card>
 </Columns>
 
-Running at scale with your own key custody and signing policies? See [Wallet infrastructure](/docs/enterprise/overview), which uses a separate base URL and authentication model.
+## Two products, two custody models
+
+Everything above is the **Bitnob API**: Bitnob holds the balance and settles on your behalf. That is the right choice for payouts, cards, trading, and virtual accounts.
+
+If you need to hold the assets yourself, that is a different product.
+
+| | Bitnob API | Wallet Infrastructure |
+|---|---|---|
+| Who holds the funds | Bitnob | You |
+| Built for | Payouts, cards, trading, virtual accounts | Wallets, addresses, and governed signing across chains |
+| Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
+| Authentication | HMAC request signing | `X-API-Key` header |
+
+<Card title="Wallet Infrastructure" icon="wallet" href="/docs/wallet-infrastructure/overview">
+  Non-custodial, policy-governed wallets. Keys are generated in hardware enclaves and Bitnob cannot move funds on your behalf.
+</Card>
 
 ## A typical integration
 

@@ -1,16 +1,16 @@
 ---
 title: "Wallet infrastructure core concepts"
 sidebarTitle: "Core concepts"
-description: "Vaults, wallets, policies, and approvals: the objects to model your Enterprise integration around."
+description: "Vaults, wallets, policies, and approvals: the objects to model your wallet infrastructure integration around."
 related:
-  - /docs/enterprise/authentication
-  - /docs/enterprise/exchange-integration-guide
+  - /docs/wallet-infrastructure/authentication
+  - /docs/wallet-infrastructure/exchange-integration-guide
 ---
-These are the building blocks behind Bitnob Enterprise wallet infrastructure. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
+These are the building blocks behind Bitnob Wallet Infrastructure. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
 
 ## Custody model
 
-Bitnob Enterprise is non-custodial by default. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
+Bitnob Wallet Infrastructure is non-custodial. You hold the assets, and Bitnob cannot move them. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
 
 The platform itself cannot move funds without an authenticated API call that satisfies every configured policy. Every signing event is recorded as an immutable activity entry for compliance and audit.
 

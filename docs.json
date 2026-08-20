@@ -478,10 +478,10 @@
             "icon": "book",
             "expanded": true,
             "pages": [
-              "docs/enterprise/overview",
-              "docs/enterprise/core-concepts",
-              "docs/enterprise/authentication",
-              "docs/enterprise/exchange-integration-guide"
+              "docs/wallet-infrastructure/overview",
+              "docs/wallet-infrastructure/core-concepts",
+              "docs/wallet-infrastructure/authentication",
+              "docs/wallet-infrastructure/exchange-integration-guide"
             ]
           },
           {
@@ -1078,10 +1078,6 @@
       "destination": "/docs/developer-resources/overview"
     },
     {
-      "source": "/docs/enterprise",
-      "destination": "/docs/enterprise/overview"
-    },
-    {
       "source": "/docs/marketplace",
       "destination": "/docs/getting-started/overview"
     },
@@ -1272,6 +1268,14 @@
     {
       "source": "/learn/courses/bitcoin-core-cli/Capstone-Project-Bitcoin-Core-CLI-Automation",
       "destination": "/learn/courses/bitcoin-core-cli/capstone-project"
+    },
+    {
+      "source": "/docs/enterprise",
+      "destination": "/docs/wallet-infrastructure/overview"
+    },
+    {
+      "source": "/docs/enterprise/:slug*",
+      "destination": "/docs/wallet-infrastructure/:slug*"
     }
   ]
 }
