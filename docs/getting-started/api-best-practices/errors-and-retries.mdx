@@ -45,7 +45,7 @@ Error responses follow [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)
 | `code` | Machine-readable identifier. Branch on this, not on `detail`. |
 | `correlation_id` | Identifies the exact request in our systems. |
 
-Log `correlation_id` on every failure. Quote it along with your `reference` when you contact support, because together they locate the request without a search.
+Every error body carries `correlation_id`, and repeats it as `request_id`. Log `correlation_id` on every failure. Quote it along with your `reference` when you contact support, because together they locate the request without a search.
 
 ## Rate limits
 

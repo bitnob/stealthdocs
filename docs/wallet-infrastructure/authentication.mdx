@@ -76,6 +76,33 @@ X-API-Key: <your_api_key>
 
 Routes in the API reference are shown without a version prefix. Prepend `/v1/` or set the `X-API-VERSION: v1` header as needed.
 
+## Errors
+
+Wallet Infrastructure returns a nested `error` object. This differs from the Bitnob API, which uses a flat RFC 7807 body, so do not share one error handler between the two products.
+
+```json
+{
+  "error": {
+    "type": "authentication_error",
+    "code": "not_authenticated",
+    "message": "X-API-Key header is required"
+  }
+}
+```
+
+| Field | Use |
+|---|---|
+| `error.type` | The error class, for example `authentication_error` or `not_found_error`. |
+| `error.code` | The stable machine-readable code. Branch on this. |
+| `error.message` | A human-readable explanation. Do not parse it. |
+
+Common authentication codes:
+
+| Code | Meaning |
+|---|---|
+| `not_authenticated` | The `X-API-Key` header is missing, or the key format is invalid. |
+| `route_not_found` | The endpoint does not exist. Check the path and the version prefix. |
+
 ## Idempotency
 
 All mutation endpoints that create resources (vaults, [wallets](/api-reference/wallet-infrastructure/wallets/create-wallet), [transactions](/api-reference/wallet-infrastructure/transactions/create-transaction)) require an `idempotency_key` in the request body. This is a client-generated string of 1–64 characters that identifies the request uniquely.

@@ -111,7 +111,9 @@ The secret you sign with selects the environment. Keep the two secrets in separa
 
 ## Errors
 
-All products share one error model, and error bodies follow RFC 7807. Each body carries a `correlation_id`. Quote that value when you contact support, because it identifies the exact request.
+The Bitnob API uses one error model across payouts, cards, trading, and virtual accounts. Bodies follow RFC 7807 and carry a `correlation_id`. Quote that value when you contact support, because it identifies the exact request.
+
+Wallet Infrastructure is a separate product and returns a different shape: a nested `error` object with `type`, `code`, and `message`. Handle the two separately if you integrate both.
 
 See [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries) for the status codes and the retry rules.
 

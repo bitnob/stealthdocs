@@ -288,7 +288,7 @@ Use your `reference` to reconcile events against your own records.
 
 ## Error handling
 
-Errors use standard HTTP status codes with a consistent JSON body. Include the `request_id` from the response when contacting support, it helps us trace the exact request.
+Errors use standard HTTP status codes with a consistent JSON body. Include the `correlation_id` from the response when contacting support, it identifies the exact request. Responses also carry `request_id` with the same value.
 
 | Status | Meaning |
 |---|---|
@@ -320,4 +320,4 @@ Switched from the sandbox secret to the production secret.
 
 ## Support
 
-Include the `request_id` from the failing response and your payout `reference` when reaching out. Reach your Bitnob integration contact or the support channel provided with your account.
+Include the `correlation_id` from the failing response and your payout `reference` when reaching out. Reach your Bitnob integration contact or the support channel provided with your account.
