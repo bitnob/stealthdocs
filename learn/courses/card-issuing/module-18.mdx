@@ -125,7 +125,17 @@ You don’t control this layer, but it heavily impacts how your cards are used a
 
 Every dollar spent through your card goes through this chain:
 
-`Cardholder → You → API → Processor → Issuer → Network → Merchant → Acquirer`
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#E6F7F2','primaryTextColor':'#004233','primaryBorderColor':'#00A57F','lineColor':'#00A57F','secondaryColor':'#CCEEE5','tertiaryColor':'#F2FCF9','fontFamily':'inherit'}}}%%
+flowchart LR
+    C[Cardholder] --> Y[You]
+    Y --> A[API]
+    A --> P[Processor]
+    P --> I[Issuer]
+    I --> N[Network]
+    N --> M[Merchant]
+    M --> Q[Acquirer]
+```
 
 Every dollar also incurs cost and revenue at different stages:
 

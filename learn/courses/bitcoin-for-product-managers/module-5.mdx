@@ -61,18 +61,21 @@ A block reorg happens when:
 - Nodes switch to a longer chain that excludes certain previously confirmed blocks.
 - Transactions in orphaned blocks go back to the mempool. They become unconfirmed again.
 
-**Diagram:**
-
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#E6F7F2','primaryTextColor':'#004233','primaryBorderColor':'#00A57F','lineColor':'#00A57F','secondaryColor':'#CCEEE5','tertiaryColor':'#F2FCF9','fontFamily':'inherit'}}}%%
+flowchart LR
+    B100[Block 100] --> B101[Block 101]
+    B101 --> B102[Block 102]
+    B102 --> B103[Block 103]
+    B101 --> C102["Block 102'"]
+    C102 --> C103["Block 103'"]
+    C103 --> C104["Block 104'"]
 ```
-Chain A: Block 100 → Block 101 → Block 102 → Block 103
 
-  ↘ Block 102' → Block 103' → Block 104'
-
-(Competing chains emerge)
+Two branches compete from block 101 onward.
 
 - If the competing branch grows longer (more accumulated work) → Block 102 and Block 103 are orphaned
 - Transactions from orphaned blocks return to the mempool and are re-mined; they are only lost if deliberately double-spent.
-```
 
 ## 5.6 How common are reorgs?
 

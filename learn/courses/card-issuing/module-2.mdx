@@ -13,7 +13,16 @@ description: "The lifecycle states of a card, who controls each transition, and 
 
 Virtual cards follow a strict, state-based lifecycle:
 
-`[ACTIVE] ⇄ [FROZEN] → [TERMINATED]`
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#E6F7F2','primaryTextColor':'#004233','primaryBorderColor':'#00A57F','lineColor':'#00A57F','secondaryColor':'#CCEEE5','tertiaryColor':'#F2FCF9','fontFamily':'inherit'}}}%%
+flowchart LR
+    A[ACTIVE] -->|freeze| F[FROZEN]
+    F -->|unfreeze| A
+    A -->|terminate| T[TERMINATED]
+    F -->|terminate| T
+```
+
+Freezing is reversible. Termination is not.
 
 Let’s define each state clearly and explore why it exists, how transitions happen, and what you need to do at each step.
 
