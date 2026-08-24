@@ -1,0 +1,49 @@
+---
+title: "Troubleshooting: payout stuck in pending"
+description: "Why a payout sits in pending or processing, how to tell a funding delay from a real failure, and what to check before contacting support."
+---
+
+A payout that stays in `pending` is almost always waiting on one thing: funding. This page walks through what each status actually means, where payouts commonly stall, and how to confirm final state instead of guessing.
+
+## What the statuses mean
+
+| Status | Meaning |
+|---|---|
+| pending | Created and awaiting funding. |
+| processing | Funded; settlement to the beneficiary is in progress. |
+| completed | Funds delivered to the beneficiary. |
+| failed | The payout could not be completed. |
+
+`pending` is not an error state. It is the normal resting state of a payout that has been created but not yet funded.
+
+## Cause 1: the payout was never funded
+
+For **offchain** payouts, your account balance is charged at finalize. If finalize succeeded, the payout proceeds automatically and should move to `processing` quickly.
+
+For **onchain** payouts, nothing happens until your crypto deposit arrives at the address returned during initialization. The payout waits in `pending` until:
+
+- the deposit confirms on-chain (BTC), or
+- the Lightning payment settles, or
+- the stablecoin deposit confirms.
+
+**Check:** in sandbox you cannot broadcast a real deposit. Simulate it with `POST /api/payouts/quotes/{quoteId}/deposits` and a body of `{ "amount": "50000" }`. A sandbox onchain payout left without a simulated deposit will sit in `pending` forever, which is expected behavior, not a bug.
+
+## Cause 2: you are reading the wrong status field
+
+Webhook payloads and status lookups do not always use the same vocabulary for the same state. If your code compares a webhook's `data.status` value against the values documented for Get Payout, a valid transition can look like "no change" to your system even though the payout moved forward.
+
+**Check:** log the raw webhook body and the raw response from `GET /api/payouts/{id}` side by side for the same payout. Map both vocabularies explicitly in your integration rather than assuming they match.
+
+## Cause 3: it is genuinely still processing
+
+Settlement to banks and mobile-money operators is not instant and varies by corridor. A payout in `processing` is funded and moving; there is nothing to retry.
+
+**Check:** poll `GET /api/payouts/{id}` or rely on webhooks at your `callback_url`. Treat `completed` as the only success state and confirm it via lookup or webhook rather than assuming success from the finalize response.
+
+## Escalating to support
+
+If a payout has been in `pending` well past your deposit's confirmation, or in `processing` far longer than the corridor's normal settlement time, contact support with:
+
+- the payout `reference` you set at initialization,
+- the `correlation_id` from the relevant API response,
+- the quote ID and, for onchain payouts, the deposit transaction hash.

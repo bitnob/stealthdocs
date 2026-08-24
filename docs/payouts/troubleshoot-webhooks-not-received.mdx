@@ -1,0 +1,66 @@
+---
+title: "Troubleshooting: webhooks not received"
+description: "Why Bitnob webhook events fail to arrive, from non-public URLs and firewall rules to missed retries, and why polling remains your safety net."
+---
+
+When a webhook does not arrive, the cause is almost always on the delivery path: the URL is not publicly reachable, a firewall blocks our sender, or your endpoint answered with something other than a 200 and the retries were spent. Work through these in order.
+
+## 1. Your endpoint must be publicly reachable
+
+Webhook notifications are only delivered to a publicly accessible URL. While building locally, events cannot reach `localhost`.
+
+**Fix:** expose your local server with a tunnel such as [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/), then update the webhook URL setting on your dashboard. Only do this in your test environment to avoid leaking data to the public.
+
+## 2. Your firewall may be blocking us
+
+If your infrastructure restricts inbound traffic, allow requests from our webhook delivery addresses:
+
+| IP address | Use |
+|---|---|
+| 18.171.51.218 | Webhook delivery |
+| 13.134.154.133 | Webhook delivery |
+
+These addresses can change; we announce changes ahead of time. An allowlist is not a substitute for verifying the **x-bitnob-signature** header, which stays correct even if our infrastructure moves.
+
+<Warning>
+  **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
+</Warning>
+
+## 3. You get exactly 3 retries, then silence
+
+We expect a `200` response when posting a notification. If your endpoint returns anything else, we retry the event 3 times after the first failure. After that, the event is not sent again.
+
+Common ways to burn all three retries:
+
+- your endpoint was down or redeploying,
+- it did heavy processing synchronously before responding, and timed out,
+- it returned a redirect, a 404 from a route mismatch, or a 5xx.
+
+**Fix:** respond with a `2xx` immediately and process asynchronously. Make handling idempotent, since the same event can be delivered more than once.
+
+## 4. Verify the signature while debugging
+
+If events arrive but appear to be dropped by your own handler, check signature verification. Validate the **x-bitnob-signature** header: an HMAC SHA512 of the event payload signed with your secret key.
+
+```javascript
+const crypto = require('crypto');
+const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
+app.post("/webhook_url", function(req, res) {
+  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
+  if (hash == req.headers['x-bitnob-signature']) {
+    const event = req.body;
+    // Do something with event
+  }
+  res.send(200);
+});
+```
+
+A handler that silently skips unverified events looks identical to "no webhook received". Log verification failures explicitly.
+
+## Don't rely on webhooks entirely
+
+<Note>
+  We recommend that you set up a service to always query transactions, in the event that webhooks keep failing.
+</Note>
+
+Polling is your safety net, not a fallback you add later. For payouts specifically, track status via `GET /api/payouts/{id}` or by your `reference`, so a missed webhook never leaves a transaction in an unknown state.

@@ -180,14 +180,18 @@
                   "docs/payouts/swift-payout",
                   "docs/payouts/mass-payouts",
                   "docs/payouts/webhook-payout",
-                  "docs/payouts/error-handling"
+                  "docs/payouts/error-handling",
+                  "api-reference/payouts/usage-example",
+                  "docs/payouts/understanding-trip-timeline",
+                  "docs/payouts/payout-incident-postmortem",
+                  "docs/payouts/troubleshoot-payout-stuck",
+                  "docs/payouts/troubleshoot-webhooks-not-received"
                 ]
               },
               {
                 "group": "Reference",
                 "pages": [
                   "docs/payouts/statuses-and-webhook-events",
-                  "docs/payouts/understanding-trip-timeline",
                   "docs/payouts/supported-currencies",
                   {
                     "group": "Corridors",
@@ -198,8 +202,7 @@
                       "docs/payouts/corridor-specific-behavior/kenya-payout"
                     ]
                   },
-                  "docs/payouts/glossary-terms",
-                  "docs/payouts/payout-incident-postmortem"
+                  "docs/payouts/glossary-terms"
                 ]
               }
             ]
@@ -402,7 +405,6 @@
               "GET /api/payouts/banks/{countryCode}",
               "GET /api/payouts",
               "GET /api/payouts/{id}",
-              "api-reference/payouts/usage-example",
               "api-reference/payouts/swift-payouts",
               "api-reference/payouts/webhooks"
             ]
@@ -702,6 +704,7 @@
                 "group": "Card issuing",
                 "icon": "credit-card",
                 "pages": [
+                  "learn/courses/card-issuing",
                   "learn/courses/card-issuing/module-1",
                   "learn/courses/card-issuing/module-2",
                   "learn/courses/card-issuing/module-3",
@@ -731,6 +734,7 @@
                 "group": "Card fraud",
                 "icon": "user-secret",
                 "pages": [
+                  "learn/courses/card-fraud",
                   "learn/courses/card-fraud/module-1",
                   "learn/courses/card-fraud/module-2",
                   "learn/courses/card-fraud/module-3",
@@ -747,6 +751,7 @@
                 "group": "Payouts for product managers",
                 "icon": "money-bill-transfer",
                 "pages": [
+                  "learn/courses/payouts-for-product-managers",
                   "learn/courses/payouts-for-product-managers/module-1",
                   "learn/courses/payouts-for-product-managers/module-2",
                   "learn/courses/payouts-for-product-managers/module-3",
@@ -757,7 +762,7 @@
                   "learn/courses/payouts-for-product-managers/module-8",
                   "learn/courses/payouts-for-product-managers/module-9",
                   "learn/courses/payouts-for-product-managers/module-10",
-                  "learn/courses/payouts-for-product-managers/module-11-circular",
+                  "learn/courses/payouts-for-product-managers/module-11",
                   "learn/courses/payouts-for-product-managers/module-12",
                   "learn/courses/payouts-for-product-managers/capstone-project",
                   "learn/courses/payouts-for-product-managers/payouts-use-cases-unlocking-the-potential-of-bitcoin-and-stablecoin-settlement"
@@ -767,6 +772,7 @@
                 "group": "Bitcoin Core from the CLI",
                 "icon": "terminal",
                 "pages": [
+                  "learn/courses/bitcoin-core-cli",
                   "learn/courses/bitcoin-core-cli/module-1",
                   "learn/courses/bitcoin-core-cli/module-2",
                   "learn/courses/bitcoin-core-cli/module-3",

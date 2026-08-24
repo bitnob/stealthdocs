@@ -112,23 +112,23 @@ This webhook is fired when a stablecoin deposit is successfully confirmed on the
 
 <ResponseField name="timestamp" type="string">
   The ISO 8601 timestamp of when the deposit was recorded, indicating when the transaction was detected on the blockchain.
-
-  ```json
-  {
-    "event": "deposit.success",
-    "data": {
-      "address": "Cev6GkmDnwSY3PvwhwBofwv65FrwcU1RxvF9Zt9aTJq4",
-      "amount": "9000000",
-      "chain": "tron",
-      "currency": "USDT",
-      "fee": "0",
-      "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
-      "reference": "RCV_SBLNC_cc309ba8c361",
-      "timestamp": "2025-12-12T20:38:23Z"
-    }
-  }
-  ```
 </ResponseField>
+
+```json
+{
+  "event": "deposit.success",
+  "data": {
+    "address": "Cev6GkmDnwSY3PvwhwBofwv65FrwcU1RxvF9Zt9aTJq4",
+    "amount": "9000000",
+    "chain": "tron",
+    "currency": "USDT",
+    "fee": "0",
+    "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
+    "reference": "RCV_SBLNC_cc309ba8c361",
+    "timestamp": "2025-12-12T20:38:23Z"
+  }
+}
+```
 
 ### Transfer stablecoin success
 

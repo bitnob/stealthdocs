@@ -6,11 +6,7 @@ This guide walks you through everything needed to send a payout, from authentica
 
 A payout delivers local fiat (e.g. NGN, KES, GHS) to a beneficiary's bank or mobile-money account, funded from crypto. You create payouts through a simple, quote-based flow.
 
-```json
-{
-  "amount": "50000"
-}
-```
+The authentication scheme on this page is a summary. [API authentication](/api-reference/authentication/authentication) is the source of truth for the signing spec.
 
 ## Before you begin
 
@@ -48,13 +44,13 @@ Every API request is authenticated with an HMAC-SHA256 signature. You sign each 
 |---|---|
 | X-Auth-Client | Your Client ID |
 | X-Auth-Timestamp | Current Unix time, in seconds |
-| X-Auth-Nonce | A unique random value per request (a UUID works well) |
+| X-Auth-Nonce | 16 cryptographically random bytes, hex-encoded |
 | X-Auth-Signature | HMAC-SHA256 signature (hex-encoded): see below |
 
 ```http
 X-Auth-Client:    <your-client-id>
 X-Auth-Timestamp: 1751452800
-X-Auth-Nonce:     3f9a1c2e-7b90-4d21-9e5a-2c8f6b1d0a4e
+X-Auth-Nonce:     3f9a1c2e7b904d219e5a2c8f6b1d0a4e
 X-Auth-Signature: 9c1f4b2e8a7d6c5f0e3b1a9d8c7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f
 ```
 
@@ -82,11 +78,25 @@ signature = HMAC-SHA256(CLIENT_SECRET, payload)   →  hex
 | 401 Unauthorized | A header is missing or the signature is wrong. |
 | 403 Forbidden | Authenticated, but your key lacks permission for this action. |
 
+```json
+// Invalid signature — secret wrong or body re-serialized after signing
+{ "error": { "code": "INVALID_SIGNATURE", "message": "Invalid signature" } }
+
+// Timestamp outside acceptable range — clock skew (use seconds, not ms)
+{ "error": { "code": "TIMESTAMP_OUT_OF_RANGE", "message": "Timestamp outside acceptable range" } }
+
+// 401 Unauthorized — a header is missing or the signature is wrong
+{ "error": { "code": "UNAUTHORIZED", "message": "Authentication required" } }
+
+// 403 Forbidden — key lacks permission for this action
+{ "error": { "code": "FORBIDDEN", "message": "Not permitted for this action" } }
+```
+
 ```bash
 CLIENT_ID="your_client_id"
 CLIENT_SECRET="your_client_secret"
 TIMESTAMP=$(date +%s)
-NONCE=$(uuidgen)
+NONCE=$(openssl rand -hex 16)
 REQUEST_BODY='{"from_asset":"BTC","to_currency":"NGN","source":"offchain","country":"NG","settlement_amount":"50000","reference":"ref-123"}'
 
 PAYLOAD="${CLIENT_ID}:${TIMESTAMP}:${NONCE}:${REQUEST_BODY}"
@@ -117,7 +127,7 @@ const crypto = require("crypto");
 
 function signedHeaders(clientId, clientSecret, body = "") {
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const nonce = crypto.randomUUID();
+  const nonce = crypto.randomBytes(16).toString("hex");
   const payload = `${clientId}:${timestamp}:${nonce}:${body}`;
   const signature = crypto
     .createHmac("sha256", clientSecret)
@@ -140,18 +150,14 @@ Use these read-only calls to build a valid request. They help you pick a support
 
 Verify a beneficiary account before paying it. The lookup returns the resolved account name.
 
-```json
-// Invalid signature — secret wrong or body re-serialized after signing
-{ "error": { "code": "INVALID_SIGNATURE", "message": "Invalid signature" } }
+```http
+GET {BASE_URL}/api/payouts/supported-countries          # countries you can pay out to
+GET {BASE_URL}/api/payouts/supported-countries/NG       # required beneficiary fields for Nigeria
+GET {BASE_URL}/api/payouts/banks/NG                      # bank names + codes for Nigeria
+GET {BASE_URL}/api/payouts/limits?country=NG&currency=NGN
 
-// Timestamp outside acceptable range — clock skew (use seconds, not ms)
-{ "error": { "code": "TIMESTAMP_OUT_OF_RANGE", "message": "Timestamp outside acceptable range" } }
-
-// 401 Unauthorized — a header is missing or the signature is wrong
-{ "error": { "code": "UNAUTHORIZED", "message": "Authentication required" } }
-
-// 403 Forbidden — key lacks permission for this action
-{ "error": { "code": "FORBIDDEN", "message": "Not permitted for this action" } }
+# Verify a beneficiary account
+GET {BASE_URL}/api/payouts/account-lookup?country=NG&account_number=0123456789&bank_code=058
 ```
 
 ## Step 1: create a quote
@@ -182,6 +188,11 @@ Locks in the exchange rate and fees for your payout. The response returns a `quo
 }
 ```
 
+```http
+POST {BASE_URL}/api/payouts/quotes
+Content-Type: application/json
+```
+
 ## Step 2: add the beneficiary (initialize)
 
 Attach the recipient's details to the quote. The exact `beneficiary` fields depend on the country (see Reference Lookups).
@@ -190,14 +201,22 @@ callback_url is where we'll notify your system of status changes. Recommended.
 
 customer_id (optional) links the payout to a customer in your account.
 
-```http
-GET {BASE_URL}/api/payouts/supported-countries          # countries you can pay out to
-GET {BASE_URL}/api/payouts/supported-countries/NG       # required beneficiary fields for Nigeria
-GET {BASE_URL}/api/payouts/banks/NG                      # bank names + codes for Nigeria
-GET {BASE_URL}/api/payouts/limits?country=NG&currency=NGN
+```json
+{
+  "beneficiary": {
+    "account_number": "0123456789",
+    "bank_code": "058",
+    "account_name": "Jane Doe"
+  },
+  "reference": "your-unique-ref-123",
+  "payment_reason": "Invoice payment",
+  "callback_url": "https://your-app.example.com/webhooks/payout"
+}
+```
 
-# Verify a beneficiary account
-GET {BASE_URL}/api/payouts/account-lookup?country=NG&account_number=0123456789&bank_code=058
+```http
+POST {BASE_URL}/api/payouts/{quoteId}/initialize
+Content-Type: application/json
 ```
 
 ## Step 3: finalize (approve and submit)
@@ -207,8 +226,7 @@ Approves the payout and submits it for processing. No request body: remember to 
 For `offchain` payouts, your account balance is charged at this step.
 
 ```http
-POST {BASE_URL}/api/payouts/quotes
-Content-Type: application/json
+POST {BASE_URL}/api/payouts/{quoteId}/finalize
 ```
 
 ## Step 4: fund the payout
@@ -219,6 +237,18 @@ Content-Type: application/json
 
 <Tip>
   **Sandbox tip (onchain):** you can't broadcast a real deposit in sandbox, so simulate it with `POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits` and a body of `{ "amount": "50000" }`.
+
+  ```http
+  # Sandbox only — simulate an onchain deposit
+  POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits
+  Content-Type: application/json
+  ```
+
+  ```json
+  {
+    "amount": "50000"
+  }
+  ```
 </Tip>
 
 ```json
@@ -237,11 +267,6 @@ Content-Type: application/json
 
 We settle the fiat to the beneficiary and update the payout status. Track it by polling, or (preferred) by receiving webhooks at your `callback_url`.
 
-```http
-POST {BASE_URL}/api/payouts/{quoteId}/initialize
-Content-Type: application/json
-```
-
 ## Payout statuses
 
 A payout moves through these states:
@@ -255,25 +280,20 @@ A payout moves through these states:
 
 Treat completed as the only success state. Always confirm final status via a status lookup or webhook: don't assume success from the finalize response alone.
 
-```json
-{
-  "beneficiary": {
-    "account_number": "0123456789",
-    "bank_code": "058",
-    "account_name": "Jane Doe"
-  },
-  "reference": "your-unique-ref-123",
-  "payment_reason": "Invoice payment",
-  "callback_url": "https://your-app.example.com/webhooks/payout"
-}
-```
-
 ## Full worked example (offchain)
 
 The sequence on the right assumes a signed-request helper that sets the `X-Auth-*` headers for each call. It creates a quote, attaches the beneficiary, finalizes, and tracks by `reference`, reusing one reference throughout.
 
-```http
-POST {BASE_URL}/api/payouts/{quoteId}/finalize
+```json
+{
+  "from_asset": "BTC",
+  "to_currency": "NGN",
+  "source": "offchain",
+  "country": "NG",
+  "settlement_amount": "50000",
+  "payment_reason": "Invoice payment",
+  "reference": "your-unique-ref-123"
+}
 ```
 
 ## Webhooks
@@ -297,12 +317,6 @@ Errors use standard HTTP status codes with a consistent JSON body. Include the `
 | 403 | Authenticated but not permitted for this action. |
 | 429 | Rate limited: slow down and retry with backoff. |
 | 5xx | Temporary issue on our side: retry with backoff. |
-
-```http
-# Sandbox only — simulate an onchain deposit
-POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits
-Content-Type: application/json
-```
 
 ## Go-live checklist
 
