@@ -1,0 +1,84 @@
+export const lanes = [
+  {
+    id: 'bitnob-api',
+    label: 'Bitnob API · custodial',
+    tagline:
+      'Bitnob holds the balance and settles on your behalf. Every lane below is one HMAC-signed integration against api.bitnob.com.',
+    items: [
+      {
+        title: 'Payouts',
+        description: 'Pay bank accounts, mobile money wallets, and cash pickup points.',
+        icon: 'money-bill-transfer',
+        href: '/docs/payouts/overview'
+      },
+      {
+        title: 'Card issuing',
+        description: 'Issue and fund USD virtual Visa cards on demand.',
+        icon: 'credit-card',
+        href: '/docs/card-issuing/overview'
+      },
+      {
+        title: 'Trading',
+        description: 'Quote and execute conversions between BTC, USDT, USDC, and NGN.',
+        icon: 'arrow-right-arrow-left',
+        href: '/docs/trading/overview'
+      },
+      {
+        title: 'Virtual accounts',
+        description: 'Dedicated Nigerian account numbers for NGN deposits.',
+        icon: 'building-columns',
+        href: '/docs/virtual-accounts/overview'
+      },
+      {
+        title: 'Bitcoin',
+        description: 'On-chain and Lightning, custodial by default.',
+        icon: 'bitcoin',
+        href: '/docs/bitcoin/overview'
+      },
+      {
+        title: 'Stablecoins',
+        description: 'Issue addresses and move USDT and USDC across multiple chains.',
+        icon: 'coins',
+        href: '/docs/stablecoins/overview'
+      }
+    ]
+  },
+  {
+    id: 'platform',
+    label: 'Platform · non-custodial',
+    tagline:
+      'You hold the funds. Keys live in hardware-isolated enclaves and every signature is governed by policies you write.',
+    items: [
+      {
+        title: 'Overview',
+        description: 'The custody model and what non-custodial means here.',
+        icon: 'vault',
+        href: '/docs/platform/overview'
+      },
+      {
+        title: 'Core concepts',
+        description: 'Vaults, wallets, policies, and approvals.',
+        icon: 'cubes',
+        href: '/docs/platform/core-concepts'
+      },
+      {
+        title: 'Authentication',
+        description: 'API keys, permission sets, and versioning.',
+        icon: 'key',
+        href: '/docs/platform/authentication'
+      },
+      {
+        title: 'Exchange integration guide',
+        description: 'Build a production exchange, from onboarding to governed withdrawals.',
+        icon: 'book',
+        href: '/docs/platform/exchange-integration-guide'
+      },
+      {
+        title: 'Platform reference',
+        description: 'Every endpoint, with schemas and an interactive playground.',
+        icon: 'code',
+        href: '/api-reference/platform/meta/get-api-key-info'
+      }
+    ]
+  }
+]

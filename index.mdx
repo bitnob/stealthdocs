@@ -1,77 +1,114 @@
 ---
+mode: "frame"
 title: "Bitnob documentation"
 sidebarTitle: "Home"
-description: "Bitnob ships two developer products with different custody models. Pick the one you are integrating and the docs will take you there."
+description: "One custodial API for moving money across Africa, and a non-custodial platform for holding assets yourself. Pick the product and the docs will take you there."
 ---
-<img
-  src="/images/hero.jpg"
-  alt="Bitnob"
-  className="w-full !mt-0 rounded-2xl border border-gray-200 dark:border-white/10"
-/>
 
-Bitnob ships two developer products, and the right docs depend on one question: **who holds the funds?**
+import { Container, Title, SectionIntro } from '/snippets/home/utility.mdx';
+import { ProductPanel } from '/snippets/home/product-panels.mdx';
+import { LaneSwitcher } from '/snippets/home/lane-switcher.mdx';
+import { lanes } from '/snippets/home/data.mdx';
 
-<Columns cols={2}>
-  <Card title="Bitnob API" icon="building-columns" href="/docs/getting-started/overview">
-    **Custodial.** Bitnob holds the balance and settles on your behalf. Payouts, virtual cards, trading, virtual accounts, and managed bitcoin and stablecoin flows. Requests are HMAC-signed against `api.bitnob.com`.
-  </Card>
-  <Card title="Platform" icon="vault" href="/docs/platform/overview">
-    **Non-custodial.** You hold the funds. Vaults, wallets, and policy-governed signing, with keys generated in hardware-isolated enclaves. Requests use an `X-API-Key` header against `api.platform.bitnob.com`.
-  </Card>
-</Columns>
+<div className="px-5 divide-y divide-gray-100 dark:divide-white/10">
+  <Container>
+    <div className="flex flex-col items-start justify-center w-full max-w-4xl text-left">
+      <div className="text-gray-900 dark:text-gray-200 text-4xl tracking-tight">
+        Bitnob Developer Documentation
+      </div>
+      <p className="text-md text-gray-600 dark:text-gray-400 text-left mt-3 mb-4">
+        One custodial API for moving money between bitcoin, stablecoins, and local African currencies, and a separate non-custodial platform for holding assets yourself.
+      </p>
+      <div className="flex flex-row flex-wrap gap-4 mt-5">
+        <a href="/docs/getting-started/quickstart">
+          <button
+            type="button"
+            className="px-5 flex items-center font-medium text-sm rounded-full py-2 shadow-sm text-white dark:text-gray-900 bg-primary-dark dark:bg-primary-light hover:opacity-[0.9] justify-center"
+          >
+            Start with the Bitnob API
+            <Icon icon="arrow-right" size="12" className="ml-2" />
+          </button>
+        </a>
+        <a href="/docs/platform/overview">
+          <button
+            type="button"
+            className="px-5 flex items-center font-medium text-sm rounded-full py-2 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 justify-center"
+          >
+            Explore Platform
+          </button>
+        </a>
+      </div>
+    </div>
+  </Container>
 
-## Which product do I need
+  <Container>
+    <Title>Two products, one question</Title>
+    <SectionIntro>
+      Which product you integrate comes down to who holds the funds.
+    </SectionIntro>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <ProductPanel
+        badge="Custodial"
+        badgeClass="bg-primary/10 text-primary-dark dark:text-primary-light border border-primary/20"
+        title="Bitnob API"
+        description="Bitnob holds the balance and settles on your behalf. Payouts, virtual cards, trading, virtual accounts, and managed bitcoin and stablecoin flows."
+        facts={[
+          ['Who holds the funds', 'Bitnob'],
+          ['Base URL', <code>api.bitnob.com</code>],
+          ['Authentication', 'HMAC request signing'],
+          ['Errors', 'Flat RFC 7807 body']
+        ]}
+        links={[
+          { label: 'Introduction', href: '/docs/getting-started/overview' },
+          { label: 'Quickstart', href: '/docs/getting-started/quickstart' },
+          { label: 'API reference', href: '/api-reference/authentication/authentication' }
+        ]}
+      />
+      <ProductPanel
+        badge="Non-custodial"
+        badgeClass="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+        title="Platform"
+        description="You hold the funds. Vaults, wallets, and policy-governed signing, with keys generated in hardware-isolated enclaves. Bitnob cannot move funds on your behalf."
+        facts={[
+          ['Who holds the funds', 'You'],
+          ['Base URL', <code>api.platform.bitnob.com</code>],
+          ['Authentication', <code>X-API-Key</code>],
+          ['Errors', <span>Nested <code>error</code> object</span>]
+        ]}
+        links={[
+          { label: 'Overview', href: '/docs/platform/overview' },
+          { label: 'Authentication', href: '/docs/platform/authentication' },
+          { label: 'Platform reference', href: '/api-reference/platform/meta/get-api-key-info' }
+        ]}
+      />
+    </div>
+    <p className="text-sm text-gray-600 dark:text-gray-400 mt-6">
+      They are separate integrations with different base URLs, authentication, and error shapes, so do not share a client between them. Some companies use both: Platform to hold and govern assets, and the Bitnob API to pay out in local currency.
+    </p>
+  </Container>
 
-| You are building | Start here |
-|---|---|
-| Disbursements to bank accounts, mobile money, or cash pickup | [Payouts](/docs/payouts/overview) on the Bitnob API |
-| USD virtual Visa cards for your users | [Card issuing](/docs/card-issuing/overview) on the Bitnob API |
-| Accept bitcoin or stablecoins and settle in local currency | [Stablecoins](/docs/stablecoins/overview) and [Trading](/docs/trading/overview) on the Bitnob API |
-| NGN collections with dedicated account numbers | [Virtual accounts](/docs/virtual-accounts/overview) on the Bitnob API |
-| Bitcoin wallets, on-chain and Lightning | [Bitcoin](/docs/bitcoin/overview) on the Bitnob API |
-| An exchange, bank, or fintech that must hold assets itself | [Platform](/docs/platform/overview) |
-| Hardware-backed key custody with approval policies | [Platform](/docs/platform/overview) |
+  <Container>
+    <Title>What are you building?</Title>
+    <SectionIntro>
+      Each lane has its own guides, endpoints, and webhooks. Most integrations use two or three.
+    </SectionIntro>
+    <LaneSwitcher lanes={lanes} />
+  </Container>
 
-Some companies use both: Platform to hold and govern assets, and the Bitnob API to pay out in local currency.
-
-## How they differ
-
-The two products are separate integrations. They use different base URLs, different authentication, and different error shapes, so do not share a client between them.
-
-| | Bitnob API | Platform |
-|---|---|---|
-| Custody | Bitnob holds the funds | You hold the funds |
-| Built for | Payouts, cards, trading, virtual accounts | Wallets, addresses, and governed signing across chains |
-| Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
-| Authentication | HMAC request signing | `X-API-Key` header |
-| Errors | Flat RFC 7807 body | Nested `error` object |
-| Comparable to | A payments API | Fireblocks and similar wallet platforms |
-
-## Start building
-
-<Columns cols={2}>
-  <Card title="Bitnob API in three steps" icon="bolt">
-    1. [Set up your account](/docs/getting-started/account-setup) and issue sandbox credentials.
-    2. [Sign your first request](/docs/getting-started/quickstart) and get a `200` back.
-    3. Explore the [API reference](/api-reference/authentication/authentication).
-  </Card>
-  <Card title="Platform in three steps" icon="key">
-    1. Read the [overview](/docs/platform/overview) and custody model.
-    2. Issue a key and follow [authentication](/docs/platform/authentication).
-    3. Build against the [exchange integration guide](/docs/platform/exchange-integration-guide) and [Platform reference](/api-reference/platform/meta/get-api-key-info).
-  </Card>
-</Columns>
-
-## Beyond the APIs
-
-<Columns cols={3}>
-  <Card title="Developer resources" icon="download" href="/docs/developer-resources/overview">
-    OpenAPI specs and Postman collections for both products.
-  </Card>
-  <Card title="Learn" icon="graduation-cap" href="/learn/overview">
-    Courses and playbooks on bitcoin, stablecoins, and payments engineering.
-  </Card>
-  <Card title="Playground" icon="flask" href="/docs/playground/overview">
-    Interactive tools for keys, hashes, and transaction anatomy.
-  </Card>
-</Columns>
+  <Container>
+    <div className="mb-8">
+      <Title>Resources</Title>
+    </div>
+    <Columns cols={3}>
+      <Card title="Developer resources" icon="download" href="/docs/developer-resources/overview">
+        OpenAPI specs and Postman collections for both products.
+      </Card>
+      <Card title="Learn" icon="graduation-cap" href="/learn/overview">
+        Courses and playbooks on bitcoin, stablecoins, and payments engineering.
+      </Card>
+      <Card title="Playground" icon="flask" href="/docs/playground/overview">
+        Interactive tools for keys, hashes, and transaction anatomy.
+      </Card>
+    </Columns>
+  </Container>
+</div>

@@ -1,0 +1,42 @@
+export const LaneSwitcher = ({ lanes }) => {
+  const [activeLane, setActiveLane] = useState(lanes[0].id)
+  const lane = lanes.find((l) => l.id === activeLane)
+
+  return (
+    <div className="not-prose space-y-6">
+      <div className="flex flex-wrap gap-2">
+        {lanes.map((l) => (
+          <button
+            key={l.id}
+            onClick={() => setActiveLane(l.id)}
+            className={`px-4 py-2 text-sm rounded-full font-medium transition-colors ${
+              activeLane === l.id
+                ? 'bg-[#0A0B0D] text-white dark:bg-white dark:text-[#0A0B0D]'
+                : 'bg-gray-100 dark:bg-white/10 text-black dark:text-white'
+            }`}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{lane.tagline}</p>
+      <div className="grid sm:grid-cols-2 gap-2">
+        {lane.items.map((item) => (
+          <a
+            key={item.href}
+            className="group flex items-start gap-4 hover:bg-gray-100 dark:hover:bg-white/5 p-3 rounded-xl"
+            href={item.href}
+          >
+            <div className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 bg-background-light dark:bg-background-dark">
+              <Icon icon={item.icon} size="18" />
+            </div>
+            <div>
+              <div className="font-semibold text-sm text-gray-900 dark:text-gray-200">{item.title}</div>
+              <div className="mt-1 text-gray-500 text-sm dark:text-gray-400">{item.description}</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
