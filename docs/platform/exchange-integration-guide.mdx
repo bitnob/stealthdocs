@@ -2,20 +2,20 @@
 title: "Exchange integration guide"
 description: "An end-to-end exchange build, from vault topology and customer onboarding through deposits, gas sponsorship, withdrawals, and policy hardening."
 related:
-  - /docs/wallets/core-concepts
-  - "Wallets reference": /api-reference/wallets/meta/get-api-key-info
+  - /docs/platform/core-concepts
+  - "Platform reference": /api-reference/platform/meta/get-api-key-info
 ---
-A complete walkthrough for building a production exchange on Bitnob Wallets, from customer onboarding to policy-governed withdrawals.
+A complete walkthrough for building a production exchange on Bitnob Platform, from customer onboarding to policy-governed withdrawals.
 
 This guide covers the full integration lifecycle: creating the vault topology, onboarding customers, detecting deposits, setting up gas sponsorship, processing withdrawals, and locking down the system with layered policies.
 
 <Note>
-  You need a Wallets API key with admin permissions. All requests use the `X-API-Key` header. See [Authentication](/docs/wallets/authentication) for details.
+  You need a Platform API key with admin permissions. All requests use the `X-API-Key` header. See [Authentication](/docs/platform/authentication) for details.
 </Note>
 
 ## Step 1: Create a pool vault
 
-Create one pool vault per chain your exchange supports. A pool vault holds unlimited wallets, which makes it the correct choice for assigning a dedicated deposit wallet to each customer. See [Vaults](/api-reference/wallets/vaults/list-vaults) for the vault model, and [List Vaults](/api-reference/wallets/vaults/list-vaults) to enumerate the ones you have created.
+Create one pool vault per chain your exchange supports. A pool vault holds unlimited wallets, which makes it the correct choice for assigning a dedicated deposit wallet to each customer. See [Vaults](/api-reference/platform/vaults/list-vaults) for the vault model, and [List Vaults](/api-reference/platform/vaults/list-vaults) to enumerate the ones you have created.
 
 ```http
 POST /vaults
@@ -42,11 +42,11 @@ X-API-Key: <api_key>
 }
 ```
 
-Repeat this for each chain you support, Bitcoin, Solana, Tron, Base, and so on. Which chains are available is returned by [List Chains](/api-reference/wallets/assets/list-chains). Store the vault `id` for each chain, [Get Vault](/api-reference/wallets/vaults/get-vault) reads one back, you will use it in the next step.
+Repeat this for each chain you support, Bitcoin, Solana, Tron, Base, and so on. Which chains are available is returned by [List Chains](/api-reference/platform/assets/list-chains). Store the vault `id` for each chain, [Get Vault](/api-reference/platform/vaults/get-vault) reads one back, you will use it in the next step.
 
 ## Step 2: Onboard customers
 
-For each customer, [create a wallet](/api-reference/wallets/wallets/create-wallet) inside the pool vault using `customer_ref_id` to link it to your internal customer ID. The response includes pre-derived deposit addresses for every asset you specify. You can also [list](/api-reference/wallets/wallets/list-addresses) or [add](/api-reference/wallets/wallets/create-address) addresses later.
+For each customer, [create a wallet](/api-reference/platform/wallets/create-wallet) inside the pool vault using `customer_ref_id` to link it to your internal customer ID. The response includes pre-derived deposit addresses for every asset you specify. You can also [list](/api-reference/platform/wallets/list-addresses) or [add](/api-reference/platform/wallets/create-address) addresses later.
 
 ```http
 POST /vaults/:vault_id/wallets
@@ -89,7 +89,7 @@ Show the customer their deposit address from `primary_addresses`. Store the wall
 
 ## Step 3: Detect deposits
 
-Poll for inbound transactions with [List Transactions](/api-reference/wallets/transactions/list-transactions), or use [Subscriptions](/api-reference/wallets/subscriptions/list-subscriptions) to receive real-time notifications for each deposit.
+Poll for inbound transactions with [List Transactions](/api-reference/platform/transactions/list-transactions), or use [Subscriptions](/api-reference/platform/subscriptions/list-subscriptions) to receive real-time notifications for each deposit.
 
 ```http
 GET /transactions
@@ -122,7 +122,7 @@ X-API-Key: <api_key>
 Credit the customer's exchange balance when a deposit reaches `completed` status with sufficient confirmations. Always reconcile against `amount_decimal` and `asset_symbol`: do not rely on internal accounting alone.
 
 <Tip>
-  For production, subscribe to `incoming_token_tx` and `confirmation_threshold_met` events with [Create Subscription](/api-reference/wallets/subscriptions/create-subscription) instead of polling. Delivery can be audited with [List Delivery Events](/api-reference/wallets/subscriptions/list-subscription-delivery-events).
+  For production, subscribe to `incoming_token_tx` and `confirmation_threshold_met` events with [Create Subscription](/api-reference/platform/subscriptions/create-subscription) instead of polling. Delivery can be audited with [List Delivery Events](/api-reference/platform/subscriptions/list-subscription-delivery-events).
 
   ```http
   POST /subscriptions
@@ -142,7 +142,7 @@ Credit the customer's exchange balance when a deposit reaches `completed` status
 
 ## Step 4: Set up gas stations
 
-[Create one gas station](/api-reference/wallets/gas-stations/create-gas-station) per chain to sponsor withdrawal fees automatically. Without a gas station, your customers would need to hold native tokens (ETH, TRX, SOL, etc.) alongside their assets.
+[Create one gas station](/api-reference/platform/gas-stations/create-gas-station) per chain to sponsor withdrawal fees automatically. Without a gas station, your customers would need to hold native tokens (ETH, TRX, SOL, etc.) alongside their assets.
 
 ```http
 POST /gasstations
@@ -175,11 +175,11 @@ X-API-Key: <api_key>
   ```
 </Note>
 
-Monitor gas station health with `GET /gasstations/stats`, or read a single station with [Get Gas Station](/api-reference/wallets/gas-stations/get-gas-station). Set up alerting when `health_status` is `low`, and top up with [Refill Gas Station](/api-reference/wallets/gas-stations/refill-gas-station).
+Monitor gas station health with `GET /gasstations/stats`, or read a single station with [Get Gas Station](/api-reference/platform/gas-stations/get-gas-station). Set up alerting when `health_status` is `low`, and top up with [Refill Gas Station](/api-reference/platform/gas-stations/refill-gas-station).
 
 ## Step 5: Process withdrawals
 
-When a customer requests a withdrawal, [create a transaction](/api-reference/wallets/transactions/create-transaction) with gas sponsorship enabled: see [Sponsor and Broadcast](/api-reference/wallets/gas-stations/sponsor-and-broadcast-external-tron-transaction). As long as every configured policy passes, the transaction is signed by the Enclave and broadcast automatically.
+When a customer requests a withdrawal, [create a transaction](/api-reference/platform/transactions/create-transaction) with gas sponsorship enabled: see [Sponsor and Broadcast](/api-reference/platform/gas-stations/sponsor-and-broadcast-external-tron-transaction). As long as every configured policy passes, the transaction is signed by the Enclave and broadcast automatically.
 
 ```http
 POST /transactions
@@ -212,7 +212,7 @@ X-API-Key: <api_key>
 }
 ```
 
-If a policy requires multi-party approval, the response status will be `pending_authorization` instead of `signed`. Always wait for `completed` status, confirmed via a [subscription](/api-reference/wallets/subscriptions/create-subscription) or by polling [Get Transaction](/api-reference/wallets/transactions/get-transaction), before crediting or debiting exchange balances.
+If a policy requires multi-party approval, the response status will be `pending_authorization` instead of `signed`. Always wait for `completed` status, confirmed via a [subscription](/api-reference/platform/subscriptions/create-subscription) or by polling [Get Transaction](/api-reference/platform/transactions/get-transaction), before crediting or debiting exchange balances.
 
 ## Step 6: Configure policy layers
 
@@ -293,7 +293,7 @@ Content-Type: application/json
 
 ## Step 7: Populate the address book
 
-Add known safe addresses (exchange hot wallets, partner addresses, institutional counterparties), to the address book. Then create a `whitelist` category policy to block transfers to any non-listed destination. Address book entries are immutable and validated against their chain at creation; see [Core concepts](/docs/wallets/core-concepts#address-book).
+Add known safe addresses (exchange hot wallets, partner addresses, institutional counterparties), to the address book. Then create a `whitelist` category policy to block transfers to any non-listed destination. Address book entries are immutable and validated against their chain at creation; see [Core concepts](/docs/platform/core-concepts#address-book).
 
 ```http
 POST /addressbook
@@ -332,7 +332,7 @@ Content-Type: application/json
 
 ## Step 8: Monitor and export
 
-Use these endpoints to power your operational dashboards and run daily reconciliation. The documented reads are [List Transactions](/api-reference/wallets/transactions/list-transactions), [List Gas Stations](/api-reference/wallets/gas-stations/list-gas-stations), and [List Delivery Events](/api-reference/wallets/subscriptions/list-subscription-delivery-events) for notification health.
+Use these endpoints to power your operational dashboards and run daily reconciliation. The documented reads are [List Transactions](/api-reference/platform/transactions/list-transactions), [List Gas Stations](/api-reference/platform/gas-stations/list-gas-stations), and [List Delivery Events](/api-reference/platform/subscriptions/list-subscription-delivery-events) for notification health.
 
 ```http
 # Gas station health
@@ -358,6 +358,6 @@ Run daily reconciliation by matching your internal ledger against the exported t
 
 - Match `idempotency_key` against your internal withdrawal records.
 - Verify `amount_decimal` and `asset_symbol` against customer ledger entries.
-- Alert on any transaction stuck in `pending_authorization` beyond your SLA window: confirm state with [Get Transaction](/api-reference/wallets/transactions/get-transaction).
-- Track gas station health daily and [refill](/api-reference/wallets/gas-stations/refill-gas-station) before `health_status` reaches `low`.
-- Retry any failed notification with [Retry Delivery Event](/api-reference/wallets/subscriptions/retry-subscription-delivery).
+- Alert on any transaction stuck in `pending_authorization` beyond your SLA window: confirm state with [Get Transaction](/api-reference/platform/transactions/get-transaction).
+- Track gas station health daily and [refill](/api-reference/platform/gas-stations/refill-gas-station) before `health_status` reaches `low`.
+- Retry any failed notification with [Retry Delivery Event](/api-reference/platform/subscriptions/retry-subscription-delivery).

@@ -10,7 +10,7 @@ import { PrivateKeyGenerator } from "/snippets/playground/hash-crypto.jsx";
 <Warning>
   **Educational use only. Never put real funds behind a key generated in a web browser.**
 
-  Browser memory can be read by extensions, the page can be cached, and you cannot audit what the page did with the key. Real keys belong in a hardware wallet or an audited offline generator. For production custody, see [Bitnob Wallets](/docs/wallets/overview), where keys are generated inside a hardware-isolated enclave and never exported.
+  Browser memory can be read by extensions, the page can be cached, and you cannot audit what the page did with the key. Real keys belong in a hardware wallet or an audited offline generator. For production custody, see [Bitnob Platform](/docs/platform/overview), where keys are generated inside a hardware-isolated enclave and never exported.
 </Warning>
 
 A Bitcoin private key is simply a 256-bit number below the secp256k1 curve order. Its public key is derived by multiplying the curve's generator point by that number, and the address is a hash of the public key. Each step goes one way only: you can derive an address from a key, never the reverse.

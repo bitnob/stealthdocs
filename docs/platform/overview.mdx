@@ -1,30 +1,30 @@
 ---
-title: "Wallets overview"
+title: "Platform overview"
 sidebarTitle: "Overview"
 description: "Non-custodial, policy-governed wallets. Keys are generated in hardware you control access to, and Bitnob cannot move funds on your behalf."
 related:
-  - /docs/wallets/core-concepts
-  - /docs/wallets/exchange-integration-guide
+  - /docs/platform/core-concepts
+  - /docs/platform/exchange-integration-guide
 ---
 
-Bitnob Wallets is a **non-custodial** wallet platform for banks, exchanges, and fintech companies. You hold the assets. Private keys are generated inside hardware-isolated enclaves, every signature is governed by policies you write, and Bitnob cannot move funds on your behalf.
+Bitnob Platform provides **non-custodial**, policy-governed wallets for banks, exchanges, and fintech companies. You hold the assets. Private keys are generated inside hardware-isolated enclaves, every signature is governed by policies you write, and Bitnob cannot move funds on your behalf.
 
 <Note>
-  **This is a separate product from the Bitnob API.** The Bitnob API is custodial: Bitnob holds the balance and settles payouts, cards, and trades for you. Wallets is non-custodial: you hold the keys and Bitnob provides the signing, policy, and chain infrastructure around them. They use different base URLs and different authentication. See [Which product do I need](#which-product-do-i-need) below.
+  **This is a separate product from the Bitnob API.** The Bitnob API is custodial: Bitnob holds the balance and settles payouts, cards, and trades for you. Platform is non-custodial: you hold the keys and Bitnob provides the signing, policy, and chain infrastructure around them. They use different base URLs and different authentication. See [Which product do I need](#which-product-do-i-need) below.
 </Note>
 
 ## Which product do I need
 
-| | Bitnob API | Wallets |
+| | Bitnob API | Platform |
 |---|---|---|
 | Custody | Bitnob holds the funds. | You hold the funds. |
 | What you build | Payouts, cards, trading, virtual accounts. | Wallets, addresses, and governed signing across chains. |
 | Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
 | Authentication | HMAC request signing. | `X-API-Key` header. |
 | Comparable to | A payments API. | Fireblocks and similar wallet platforms. |
-| Reference | [API reference](/api-reference/authentication/authentication) | [Wallets reference](/api-reference/wallets/meta/get-api-key-info) |
+| Reference | [API reference](/api-reference/authentication/authentication) | [Platform reference](/api-reference/platform/meta/get-api-key-info) |
 
-Some companies use both: Wallets to hold and govern assets, and the Bitnob API to pay out in local currency.
+Some companies use both: Platform to hold and govern assets, and the Bitnob API to pay out in local currency.
 
 ## What non-custodial means here
 
@@ -48,7 +48,7 @@ Signing latency is 50 to 100 ms, and there are no volume caps.
 
 ## Supported chains
 
-The live list for your organisation is returned by [List Chains](/api-reference/wallets/assets/list-chains), with per-asset detail in [List Assets](/api-reference/wallets/assets/list-assets).
+The live list for your organisation is returned by [List Chains](/api-reference/platform/assets/list-chains), with per-asset detail in [List Assets](/api-reference/platform/assets/list-assets).
 
 | Chain | Identifier | Native asset | Networks |
 |---|---|---|---|
@@ -67,26 +67,26 @@ The live list for your organisation is returned by [List Chains](/api-reference/
 
 - **Bitnob Secure Enclave.** Private keys are generated and stored inside AWS Nitro Enclaves, hardware-isolated memory that never exposes key material, not even to Bitnob engineers. Every signing event is logged as an immutable audit trail.
 - **Declarative policy engine.** Set spending limits, address whitelists, velocity caps, time locks, and multi-signature approval thresholds as declarative rules. Policies run before every signing event. The Enclave only releases a signature when every rule passes.
-- **HD vault hierarchy.** A single BIP-39 seed generates unlimited wallets and addresses across all supported chains. Use a dedicated [vault](/api-reference/wallets/vaults/list-vaults) for treasury wallets or a pool vault to assign one [wallet](/api-reference/wallets/wallets/list-wallets) per customer.
+- **HD vault hierarchy.** A single BIP-39 seed generates unlimited wallets and addresses across all supported chains. Use a dedicated [vault](/api-reference/platform/vaults/list-vaults) for treasury wallets or a pool vault to assign one [wallet](/api-reference/platform/wallets/list-wallets) per customer.
 - **Gas station abstraction.** Pre-fund gas stations once per chain and let Bitnob sponsor fees automatically on every outbound transaction. On Tron, stake TRX for energy and bandwidth to minimise costs further.
 - **50–100 ms signing latency.** The Bitnob Secure Enclave is optimised for low-latency signing. Fully governed transactions are signed and broadcast within milliseconds of request.
 
 ## Common use cases
 
-- A crypto exchange that needs [one deposit address per customer per chain](/api-reference/wallets/wallets/create-address), with automated withdrawal governance: see the [Exchange integration guide](/docs/wallets/exchange-integration-guide)
+- A crypto exchange that needs [one deposit address per customer per chain](/api-reference/platform/wallets/create-address), with automated withdrawal governance: see the [Exchange integration guide](/docs/platform/exchange-integration-guide)
 - A neo-bank that holds customer balances in Bitcoin and stablecoins and needs to enforce daily spend caps
 - A treasury management product that rebalances across chains and requires dual-admin approval for large transfers
 - A fintech platform that processes cross-border payments and must comply with address-whitelist requirements
-- A DeFi aggregator that [sponsors gas fees](/api-reference/wallets/gas-stations/sponsor-and-broadcast-external-tron-transaction) for its users using USDC and ETH across multiple L2s
+- A DeFi aggregator that [sponsors gas fees](/api-reference/platform/gas-stations/sponsor-and-broadcast-external-tron-transaction) for its users using USDC and ETH across multiple L2s
 
 ## Designed for institutions
 
-Wallets is built with:
+Platform is built with:
 
 - **Non-custodial by design**: keys never leave the hardware boundary; Bitnob cannot move funds unilaterally
 - **Root quorum governance**: a configurable set of senior approvers must sign off on policy changes themselves
 - **Immutable audit logs** for every signing event, policy change, and approval decision
 - **Per-day RPC quotas** on managed blockchain nodes so you don't need to run your own infrastructure
-- **Idempotency keys** on all mutation endpoints, such as [Create Transaction](/api-reference/wallets/transactions/create-transaction), to guarantee safe retries under network failures
+- **Idempotency keys** on all mutation endpoints, such as [Create Transaction](/api-reference/platform/transactions/create-transaction), to guarantee safe retries under network failures
 
 You focus on the product experience. We handle key management, signing infrastructure, policy enforcement, and chain connectivity.
