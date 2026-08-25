@@ -1,16 +1,16 @@
 ---
-title: "Wallet infrastructure core concepts"
+title: "Wallets core concepts"
 sidebarTitle: "Core concepts"
-description: "Vaults, wallets, policies, and approvals: the objects to model your wallet infrastructure integration around."
+description: "Vaults, wallets, policies, and approvals: the objects to model your Wallets integration around."
 related:
-  - /docs/wallet-infrastructure/authentication
-  - /docs/wallet-infrastructure/exchange-integration-guide
+  - /docs/wallets/authentication
+  - /docs/wallets/exchange-integration-guide
 ---
-These are the building blocks behind Bitnob Wallet Infrastructure. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
+These are the building blocks behind Bitnob Wallets. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
 
 ## Custody model
 
-Bitnob Wallet Infrastructure is non-custodial. You hold the assets, and Bitnob cannot move them. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
+Bitnob Wallets is non-custodial. You hold the assets, and Bitnob cannot move them. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
 
 The platform itself cannot move funds without an authenticated API call that satisfies every configured policy. Every signing event is recorded as an immutable activity entry for compliance and audit.
 
@@ -25,13 +25,13 @@ All resources are strictly nested. Understanding this hierarchy is essential for
 ![Resource Hierarchy](/images/resource-hierarchy.png)
 
 - **Organisation**: the top-level tenant. All resources are scoped to your organisation, derived automatically from your API key.
-- **Vault**: an HD seed container. A dedicated vault maps 1-to-1 with a single wallet per chain. A pool vault holds unlimited wallets, ideal for assigning one per customer. See [Vaults](/api-reference/wallet-infrastructure/vaults/list-vaults).
-- **Wallet**: a logical account derived from a vault's seed, scoped to a specific chain. Holds multiple asset balances and owns all addresses derived from it. See [Wallets](/api-reference/wallet-infrastructure/wallets/list-wallets).
-- **Address**: a blockchain address derived from the wallet's HD path. Each wallet gets one primary address per chain; additional addresses can be [derived on demand](/api-reference/wallet-infrastructure/wallets/create-address) and [listed](/api-reference/wallet-infrastructure/wallets/list-addresses).
+- **Vault**: an HD seed container. A dedicated vault maps 1-to-1 with a single wallet per chain. A pool vault holds unlimited wallets, ideal for assigning one per customer. See [Vaults](/api-reference/wallets/vaults/list-vaults).
+- **Wallet**: a logical account derived from a vault's seed, scoped to a specific chain. Holds multiple asset balances and owns all addresses derived from it. See [Wallets](/api-reference/wallets/wallets/list-wallets).
+- **Address**: a blockchain address derived from the wallet's HD path. Each wallet gets one primary address per chain; additional addresses can be [derived on demand](/api-reference/wallets/wallets/create-address) and [listed](/api-reference/wallets/wallets/list-addresses).
 
 ## Vault types
 
-Choose the vault type that matches your use case. The choice is irreversible, upgrading a dedicated vault to a pool vault cannot be undone. Existing vaults can be inspected with [List Vaults](/api-reference/wallet-infrastructure/vaults/list-vaults) and [Get Vault](/api-reference/wallet-infrastructure/vaults/get-vault).
+Choose the vault type that matches your use case. The choice is irreversible, upgrading a dedicated vault to a pool vault cannot be undone. Existing vaults can be inspected with [List Vaults](/api-reference/wallets/vaults/list-vaults) and [Get Vault](/api-reference/wallets/vaults/get-vault).
 
 | Type | Wallets per chain | Best for |
 |---|---|---|
@@ -40,7 +40,7 @@ Choose the vault type that matches your use case. The choice is irreversible, up
 
 ## Wallet types
 
-The type is set on [Create Wallet](/api-reference/wallet-infrastructure/wallets/create-wallet) and can be reviewed with [List Wallets](/api-reference/wallet-infrastructure/wallets/list-wallets) or changed with [Update Wallet](/api-reference/wallet-infrastructure/wallets/update-wallet).
+The type is set on [Create Wallet](/api-reference/wallets/wallets/create-wallet) and can be reviewed with [List Wallets](/api-reference/wallets/wallets/list-wallets) or changed with [Update Wallet](/api-reference/wallets/wallets/update-wallet).
 
 | Type | Description |
 |---|---|
@@ -84,7 +84,7 @@ A root quorum is a special policy of category `quorum` that protects policy chan
 
 ## Gas stations
 
-A gas station is a pre-funded, organisation-owned account whose sole job is to sponsor transaction fees on behalf of customer wallets: see [Gas Stations](/api-reference/wallet-infrastructure/gas-stations/list-gas-stations) and [Sponsor and Broadcast](/api-reference/wallet-infrastructure/gas-stations/sponsor-and-broadcast-external-tron-transaction).
+A gas station is a pre-funded, organisation-owned account whose sole job is to sponsor transaction fees on behalf of customer wallets: see [Gas Stations](/api-reference/wallets/gas-stations/list-gas-stations) and [Sponsor and Broadcast](/api-reference/wallets/gas-stations/sponsor-and-broadcast-external-tron-transaction).
 
 - Gas stations are scoped per chain and network.
 - When a customer wallet has insufficient native gas, the gas station tops it up automatically before broadcasting.
@@ -103,7 +103,7 @@ The address book is an organisation-level allowlist of named, validated recipien
 
 ## Transaction lifecycle
 
-Every outbound transaction moves through a defined set of statuses. Understanding these helps you design correct notification handlers and UI states. The calls involved are [Create Transaction](/api-reference/wallet-infrastructure/transactions/create-transaction), [Get Transaction](/api-reference/wallet-infrastructure/transactions/get-transaction), and [List Transactions](/api-reference/wallet-infrastructure/transactions/list-transactions).
+Every outbound transaction moves through a defined set of statuses. Understanding these helps you design correct notification handlers and UI states. The calls involved are [Create Transaction](/api-reference/wallets/transactions/create-transaction), [Get Transaction](/api-reference/wallets/transactions/get-transaction), and [List Transactions](/api-reference/wallets/transactions/list-transactions).
 
 | Status | Description |
 |---|---|

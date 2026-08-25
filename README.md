@@ -1,6 +1,6 @@
 # Bitnob docs
 
-Source for the Bitnob developer documentation, built with [Mintlify](https://mintlify.com). It covers the product guides, the API reference generated from OpenAPI, the wallet infrastructure API, the learning courses and playbooks, and the developer playground.
+Source for the Bitnob developer documentation, built with [Mintlify](https://mintlify.com). It covers the product guides, the API reference generated from OpenAPI, the Wallets API, the learning courses and playbooks, and the developer playground.
 
 ## Local development
 
@@ -38,16 +38,16 @@ Run `make broken-links` before opening a pull request. It resolves every interna
 
 Every page must be listed in `docs.json` under `navigation.tabs`. A page that is not listed will build but stays unreachable, so add the entry in the same change as the page.
 
-Tabs: Docs, API reference, Wallet infrastructure, Playground, Learn, Changelog.
+Tabs: Docs, API reference, Wallets, Playground, Learn, Changelog.
 
 When a page moves or is renamed, add an entry to the `redirects` array in `docs.json` rather than leaving the old URL dead.
 
 ## API reference
 
-The endpoint pages under `api-reference/` and the Wallet infrastructure tab are generated at build time from the specs in `api-collections/swagger/`:
+The endpoint pages under `api-reference/` and the Wallets tab are generated at build time from the specs in `api-collections/swagger/`:
 
 - `bitnob-api-v2.openapi.json` renders into `api-reference/`
-- `bitnob-wallet-infrastructure.openapi.json` renders into `api-reference/wallet-infrastructure/`
+- `bitnob-wallets.openapi.json` renders into `api-reference/wallets/`
 
 Edit the spec, not the generated page. Only the hand-written pages checked into `api-reference/` are edited directly.
 

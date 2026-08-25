@@ -16,7 +16,7 @@ No downloads needed. The reference tabs render every endpoint, schema, and error
   <Card title="API v2 reference and playground" icon="play" href="/api-reference/authentication/authentication">
     Payouts, trading, cards, lightning, virtual accounts, and more. Uses HMAC request signing.
   </Card>
-  <Card title="Wallet infrastructure reference and playground" icon="wallet" href="/api-reference/wallet-infrastructure/meta/get-api-key-info">
+  <Card title="Wallets reference and playground" icon="wallet" href="/api-reference/wallets/meta/get-api-key-info">
     Non-custodial wallets, transactions, gas stations, and subscriptions. Uses `X-API-Key` auth.
   </Card>
 </Columns>
@@ -32,11 +32,11 @@ Both specs are OpenAPI 3.0, served publicly with no authentication. JSON is best
   <Card title="bitnob-api-v2.openapi.yaml" icon="download" href="/api-collections/swagger/bitnob-api-v2.openapi.yaml">
     The same v2 spec in YAML, for review and pull-request diffs.
   </Card>
-  <Card title="bitnob-wallet-infrastructure.openapi.json" icon="download" href="/api-collections/swagger/bitnob-wallet-infrastructure.openapi.json">
-    Wallet infrastructure spec in JSON.
+  <Card title="bitnob-wallets.openapi.json" icon="download" href="/api-collections/swagger/bitnob-wallets.openapi.json">
+    Wallets spec in JSON.
   </Card>
-  <Card title="bitnob-wallet-infrastructure.openapi.yaml" icon="download" href="/api-collections/swagger/bitnob-wallet-infrastructure.openapi.yaml">
-    Wallet infrastructure spec in YAML.
+  <Card title="bitnob-wallets.openapi.yaml" icon="download" href="/api-collections/swagger/bitnob-wallets.openapi.yaml">
+    Wallets spec in YAML.
   </Card>
 </Columns>
 
@@ -44,7 +44,7 @@ Or pull them straight from the command line:
 
 ```bash
 curl -O https://bitnob.dev/api-collections/swagger/bitnob-api-v2.openapi.json
-curl -O https://bitnob.dev/api-collections/swagger/bitnob-wallet-infrastructure.openapi.json
+curl -O https://bitnob.dev/api-collections/swagger/bitnob-wallets.openapi.json
 ```
 
 If you want the classic Swagger view instead, download a spec and drag it into [Swagger Editor](https://editor-next.swagger.io). The editor cannot fetch the hosted URL directly from the browser, but a downloaded file drops straight in.
@@ -60,10 +60,10 @@ Download a ready-made collection and its environment, then drag both into Postma
   <Card title="API v2 environment" icon="download" href="/api-collections/postman/bitnob_environment.postman_environment.json">
     Base URL plus empty `client_id` and `client_secret` variables to fill in.
   </Card>
-  <Card title="Wallet infrastructure collection" icon="download" href="/api-collections/postman/bitnob_wallet_infrastructure.postman_collection.json">
-    Every wallet infrastructure endpoint. No signing script needed.
+  <Card title="Wallets collection" icon="download" href="/api-collections/postman/bitnob_wallets.postman_collection.json">
+    Every Wallets endpoint. No signing script needed.
   </Card>
-  <Card title="Wallet infrastructure environment" icon="download" href="/api-collections/postman/bitnob_wallet_infrastructure.postman_environment.json">
+  <Card title="Wallets environment" icon="download" href="/api-collections/postman/bitnob_wallets.postman_environment.json">
     Base URL plus an empty `api_key` variable that fills the `X-API-Key` header.
   </Card>
 </Columns>

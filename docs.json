@@ -472,7 +472,7 @@
         }
       },
       {
-        "tab": "Wallet infrastructure",
+        "tab": "Wallets",
         "icon": "wallet",
         "groups": [
           {
@@ -480,10 +480,10 @@
             "icon": "book",
             "expanded": true,
             "pages": [
-              "docs/wallet-infrastructure/overview",
-              "docs/wallet-infrastructure/core-concepts",
-              "docs/wallet-infrastructure/authentication",
-              "docs/wallet-infrastructure/exchange-integration-guide"
+              "docs/wallets/overview",
+              "docs/wallets/core-concepts",
+              "docs/wallets/authentication",
+              "docs/wallets/exchange-integration-guide"
             ]
           },
           {
@@ -593,8 +593,8 @@
           }
         ],
         "openapi": {
-          "source": "api-collections/swagger/bitnob-wallet-infrastructure.openapi.json",
-          "directory": "api-reference/wallet-infrastructure"
+          "source": "api-collections/swagger/bitnob-wallets.openapi.json",
+          "directory": "api-reference/wallets"
         }
       },
       {
@@ -1277,11 +1277,39 @@
     },
     {
       "source": "/docs/enterprise",
-      "destination": "/docs/wallet-infrastructure/overview"
+      "destination": "/docs/wallets/overview"
     },
     {
       "source": "/docs/enterprise/:slug*",
-      "destination": "/docs/wallet-infrastructure/:slug*"
+      "destination": "/docs/wallets/:slug*"
+    },
+    {
+      "source": "/docs/wallet-infrastructure",
+      "destination": "/docs/wallets/overview"
+    },
+    {
+      "source": "/docs/wallet-infrastructure/:slug*",
+      "destination": "/docs/wallets/:slug*"
+    },
+    {
+      "source": "/api-reference/wallet-infrastructure/:slug*",
+      "destination": "/api-reference/wallets/:slug*"
+    },
+    {
+      "source": "/api-collections/swagger/bitnob-wallet-infrastructure.openapi.json",
+      "destination": "/api-collections/swagger/bitnob-wallets.openapi.json"
+    },
+    {
+      "source": "/api-collections/swagger/bitnob-wallet-infrastructure.openapi.yaml",
+      "destination": "/api-collections/swagger/bitnob-wallets.openapi.yaml"
+    },
+    {
+      "source": "/api-collections/postman/bitnob_wallet_infrastructure.postman_collection.json",
+      "destination": "/api-collections/postman/bitnob_wallets.postman_collection.json"
+    },
+    {
+      "source": "/api-collections/postman/bitnob_wallet_infrastructure.postman_environment.json",
+      "destination": "/api-collections/postman/bitnob_wallets.postman_environment.json"
     }
   ]
 }

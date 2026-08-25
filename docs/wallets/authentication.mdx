@@ -1,16 +1,16 @@
 ---
-title: "Wallet infrastructure authentication"
+title: "Wallets authentication"
 sidebarTitle: "Authentication"
-description: "How Wallet Infrastructure API keys are issued, scoped to a permission set, and used to sign requests."
+description: "How Wallets API keys are issued, scoped to a permission set, and used to sign requests."
 related:
-  - /docs/wallet-infrastructure/core-concepts
-  - /docs/wallet-infrastructure/exchange-integration-guide
+  - /docs/wallets/core-concepts
+  - /docs/wallets/exchange-integration-guide
 ---
 <Note>
-  This page covers **Wallet Infrastructure**, the non-custodial product. The custodial Bitnob API used for payouts, cards, and trading signs requests with HMAC instead. See [API authentication](/api-reference/authentication/authentication).
+  This page covers **Wallets**, the non-custodial product. The custodial Bitnob API used for payouts, cards, and trading signs requests with HMAC instead. See [API authentication](/api-reference/authentication/authentication).
 </Note>
 
-Every request to the Wallet Infrastructure API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
+Every request to the Wallets API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
 
 ## Base URL
 
@@ -20,7 +20,7 @@ https://api.platform.bitnob.com
 
 ## Send your API key
 
-Pass your key on the `X-API-Key` header with every request. To confirm a key works, call [Get API Key Info](/api-reference/wallet-infrastructure/meta/get-api-key-info). A 200 means the key is valid, and the response lists the organisation and granted scopes:
+Pass your key on the `X-API-Key` header with every request. To confirm a key works, call [Get API Key Info](/api-reference/wallets/meta/get-api-key-info). A 200 means the key is valid, and the response lists the organisation and granted scopes:
 
 ```http
 POST /wallets HTTP/1.1
@@ -31,7 +31,7 @@ Content-Type: application/json
 The organisation context is resolved automatically from the key. You never need to send an org ID header.
 
 <Warning>
-  Keep keys server-side. Never expose a Wallet Infrastructure API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
+  Keep keys server-side. Never expose a Wallets API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
 </Warning>
 
 ## Required headers
@@ -48,7 +48,7 @@ API key calls never receive a WebAuthn or MFA challenge. When the key has the re
 
 The authorization flow for every transaction is:
 
-1. **API key is verified.** The key must exist, be active, and carry the permission required for the requested operation: inspect scopes on [Get API Key Info](/api-reference/wallet-infrastructure/meta/get-api-key-info) to check.
+1. **API key is verified.** The key must exist, be active, and carry the permission required for the requested operation: inspect scopes on [Get API Key Info](/api-reference/wallets/meta/get-api-key-info) to check.
 2. **Policies are evaluated.** Every active policy is checked against the transaction parameters, spending limits, address whitelists, velocity caps, and approval thresholds all run before signing.
 3. **Enclave signs or holds.** If every policy passes, the Enclave signs immediately. If a policy fires `require_approval`, the transaction is held in `pending_authorization` until approvers vote.
 4. **Transaction is broadcast.** After signing, the transaction is broadcast to the network. If gas sponsorship is needed, the gas station tops up the wallet first.
@@ -57,7 +57,7 @@ A leaked key cannot exfiltrate funds beyond what its policies permit. Spending l
 
 ## API versioning
 
-The Wallet Infrastructure API supports two versioning strategies. Both are valid and can be used interchangeably.
+The Wallets API supports two versioning strategies. Both are valid and can be used interchangeably.
 
 **Header-based (recommended)**
 
@@ -78,7 +78,7 @@ Routes in the API reference are shown without a version prefix. Prepend `/v1/` o
 
 ## Errors
 
-Wallet Infrastructure returns a nested `error` object. This differs from the Bitnob API, which uses a flat RFC 7807 body, so do not share one error handler between the two products.
+Wallets returns a nested `error` object. This differs from the Bitnob API, which uses a flat RFC 7807 body, so do not share one error handler between the two products.
 
 ```json
 {
@@ -105,7 +105,7 @@ Common authentication codes:
 
 ## Idempotency
 
-All mutation endpoints that create resources (vaults, [wallets](/api-reference/wallet-infrastructure/wallets/create-wallet), [transactions](/api-reference/wallet-infrastructure/transactions/create-transaction)) require an `idempotency_key` in the request body. This is a client-generated string of 1–64 characters that identifies the request uniquely.
+All mutation endpoints that create resources (vaults, [wallets](/api-reference/wallets/wallets/create-wallet), [transactions](/api-reference/wallets/transactions/create-transaction)) require an `idempotency_key` in the request body. This is a client-generated string of 1–64 characters that identifies the request uniquely.
 
 - If a request succeeds, resubmitting the same `idempotency_key` returns the original result without re-executing.
 - If the original request is still in-flight, resubmitting returns `409 Conflict`.

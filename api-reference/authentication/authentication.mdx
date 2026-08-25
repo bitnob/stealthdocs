@@ -5,7 +5,7 @@ description: "Base URL, HMAC signing scheme, and the headers every Bitnob API re
 ---
 
 <Note>
-  This page covers the **Bitnob API**, the custodial product behind payouts, cards, trading, and virtual accounts. Wallet Infrastructure is a separate, non-custodial product with its own base URL and a simpler `X-API-Key` scheme. See [Wallet infrastructure authentication](/docs/wallet-infrastructure/authentication).
+  This page covers the **Bitnob API**, the custodial product behind payouts, cards, trading, and virtual accounts. Wallets is a separate, non-custodial product with its own base URL and a simpler `X-API-Key` scheme. See [Wallets authentication](/docs/wallets/authentication).
 </Note>
 
 Every request goes to `https://api.bitnob.com` and is signed with HMAC-SHA256. There is one authentication mode, and it needs both your `CLIENT_ID` and `CLIENT_SECRET`. Signing binds each request to a timestamp and a nonce, so a captured request cannot be replayed or altered.
