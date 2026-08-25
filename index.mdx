@@ -1,0 +1,77 @@
+---
+title: "Bitnob documentation"
+sidebarTitle: "Home"
+description: "Bitnob ships two developer products with different custody models. Pick the one you are integrating and the docs will take you there."
+---
+<img
+  src="/images/hero.jpg"
+  alt="Bitnob"
+  className="w-full !mt-0 rounded-2xl border border-gray-200 dark:border-white/10"
+/>
+
+Bitnob ships two developer products, and the right docs depend on one question: **who holds the funds?**
+
+<Columns cols={2}>
+  <Card title="Bitnob API" icon="building-columns" href="/docs/getting-started/overview">
+    **Custodial.** Bitnob holds the balance and settles on your behalf. Payouts, virtual cards, trading, virtual accounts, and managed bitcoin and stablecoin flows. Requests are HMAC-signed against `api.bitnob.com`.
+  </Card>
+  <Card title="Platform" icon="vault" href="/docs/platform/overview">
+    **Non-custodial.** You hold the funds. Vaults, wallets, and policy-governed signing, with keys generated in hardware-isolated enclaves. Requests use an `X-API-Key` header against `api.platform.bitnob.com`.
+  </Card>
+</Columns>
+
+## Which product do I need
+
+| You are building | Start here |
+|---|---|
+| Disbursements to bank accounts, mobile money, or cash pickup | [Payouts](/docs/payouts/overview) on the Bitnob API |
+| USD virtual Visa cards for your users | [Card issuing](/docs/card-issuing/overview) on the Bitnob API |
+| Accept bitcoin or stablecoins and settle in local currency | [Stablecoins](/docs/stablecoins/overview) and [Trading](/docs/trading/overview) on the Bitnob API |
+| NGN collections with dedicated account numbers | [Virtual accounts](/docs/virtual-accounts/overview) on the Bitnob API |
+| Bitcoin wallets, on-chain and Lightning | [Bitcoin](/docs/bitcoin/overview) on the Bitnob API |
+| An exchange, bank, or fintech that must hold assets itself | [Platform](/docs/platform/overview) |
+| Hardware-backed key custody with approval policies | [Platform](/docs/platform/overview) |
+
+Some companies use both: Platform to hold and govern assets, and the Bitnob API to pay out in local currency.
+
+## How they differ
+
+The two products are separate integrations. They use different base URLs, different authentication, and different error shapes, so do not share a client between them.
+
+| | Bitnob API | Platform |
+|---|---|---|
+| Custody | Bitnob holds the funds | You hold the funds |
+| Built for | Payouts, cards, trading, virtual accounts | Wallets, addresses, and governed signing across chains |
+| Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
+| Authentication | HMAC request signing | `X-API-Key` header |
+| Errors | Flat RFC 7807 body | Nested `error` object |
+| Comparable to | A payments API | Fireblocks and similar wallet platforms |
+
+## Start building
+
+<Columns cols={2}>
+  <Card title="Bitnob API in three steps" icon="bolt">
+    1. [Set up your account](/docs/getting-started/account-setup) and issue sandbox credentials.
+    2. [Sign your first request](/docs/getting-started/quickstart) and get a `200` back.
+    3. Explore the [API reference](/api-reference/authentication/authentication).
+  </Card>
+  <Card title="Platform in three steps" icon="key">
+    1. Read the [overview](/docs/platform/overview) and custody model.
+    2. Issue a key and follow [authentication](/docs/platform/authentication).
+    3. Build against the [exchange integration guide](/docs/platform/exchange-integration-guide) and [Platform reference](/api-reference/platform/meta/get-api-key-info).
+  </Card>
+</Columns>
+
+## Beyond the APIs
+
+<Columns cols={3}>
+  <Card title="Developer resources" icon="download" href="/docs/developer-resources/overview">
+    OpenAPI specs and Postman collections for both products.
+  </Card>
+  <Card title="Learn" icon="graduation-cap" href="/learn/overview">
+    Courses and playbooks on bitcoin, stablecoins, and payments engineering.
+  </Card>
+  <Card title="Playground" icon="flask" href="/docs/playground/overview">
+    Interactive tools for keys, hashes, and transaction anatomy.
+  </Card>
+</Columns>

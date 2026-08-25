@@ -20,6 +20,7 @@
             "icon": "rocket",
             "expanded": true,
             "pages": [
+              "index",
               "docs/getting-started/overview",
               "docs/getting-started/account-setup",
               "docs/getting-started/quickstart",
