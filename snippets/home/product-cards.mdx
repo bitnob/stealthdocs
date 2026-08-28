@@ -1,0 +1,34 @@
+export const ProductCard = ({ img, href, title, description, tag, custody, custodyClass }) => {
+  return (
+    <a href={href} className="group border-none">
+      <div className="flex flex-col gap-4 rounded-xl md:p-1">
+        <div className="w-full h-44 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+          <img
+            src={`${img}-light.svg`}
+            className="w-full h-full object-cover transition-transform scale-105 duration-300 group-hover:scale-110 m-0 block dark:hidden"
+            alt={title}
+            loading="lazy"
+          />
+          <img
+            src={`${img}-dark.svg`}
+            className="w-full h-full object-cover transition-transform scale-105 duration-300 group-hover:scale-110 m-0 hidden dark:block"
+            alt={title}
+            loading="lazy"
+          />
+        </div>
+        <div className="flex flex-col gap-3 pb-2">
+          <h2 className="!text-[16px] font-medium text-gray-900 mt-0 dark:text-gray-200 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors mb-[-8px]">
+            {title}
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+            {description}
+          </p>
+          <div className="flex gap-2 mt-2 mb-1">
+            <span className="bg-gray-100 dark:bg-[#181817] text-gray-600 dark:text-white rounded-lg px-2 py-1 text-sm font-medium">{tag}</span>
+            <span className={`rounded-lg px-2 py-1 text-sm font-medium ${custodyClass}`}>{custody}</span>
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+};

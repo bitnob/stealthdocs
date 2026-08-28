@@ -6,7 +6,7 @@ description: "One custodial API for moving money across Africa, and a non-custod
 ---
 
 import { Container, Title, SectionIntro } from '/snippets/home/utility.mdx';
-import { ProductPanel } from '/snippets/home/product-panels.mdx';
+import { ProductCard } from '/snippets/home/product-cards.mdx';
 import { LaneSwitcher } from '/snippets/home/lane-switcher.mdx';
 import { lanes } from '/snippets/home/data.mdx';
 
@@ -46,46 +46,28 @@ import { lanes } from '/snippets/home/data.mdx';
     <SectionIntro>
       Which product you integrate comes down to who holds the funds.
     </SectionIntro>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <ProductPanel
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <ProductCard
         img="/images/home/tile-api"
-        badge="Custodial"
-        badgeClass="bg-primary/10 text-primary-dark dark:text-primary-light border border-primary/20"
+        href="/docs/getting-started/overview"
         title="Bitnob API"
-        description="Bitnob holds the balance and settles on your behalf. Payouts, virtual cards, trading, virtual accounts, and managed bitcoin and stablecoin flows."
-        facts={[
-          ['Who holds the funds', 'Bitnob'],
-          ['Base URL', <code>api.bitnob.com</code>],
-          ['Authentication', 'HMAC request signing'],
-          ['Errors', 'Flat RFC 7807 body']
-        ]}
-        links={[
-          { label: 'Introduction', href: '/docs/getting-started/overview' },
-          { label: 'Quickstart', href: '/docs/getting-started/quickstart' },
-          { label: 'API reference', href: '/api-reference/authentication/authentication' }
-        ]}
+        description="Payouts, cards, trading, and virtual accounts. Bitnob holds the balance and settles for you."
+        tag="Payments"
+        custody="Custodial"
+        custodyClass="bg-primary-light dark:bg-primary-dark text-white"
       />
-      <ProductPanel
+      <ProductCard
         img="/images/home/tile-platform"
-        badge="Non-custodial"
-        badgeClass="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+        href="/docs/platform/overview"
         title="Platform"
-        description="You hold the funds. Vaults, wallets, and policy-governed signing, with keys generated in hardware-isolated enclaves. Bitnob cannot move funds on your behalf."
-        facts={[
-          ['Who holds the funds', 'You'],
-          ['Base URL', <code>api.platform.bitnob.com</code>],
-          ['Authentication', <code>X-API-Key</code>],
-          ['Errors', <span>Nested <code>error</code> object</span>]
-        ]}
-        links={[
-          { label: 'Overview', href: '/docs/platform/overview' },
-          { label: 'Authentication', href: '/docs/platform/authentication' },
-          { label: 'Platform reference', href: '/api-reference/platform/meta/get-api-key-info' }
-        ]}
+        description="Vaults, wallets, and policy-governed signing. You hold the keys, and Bitnob cannot move funds."
+        tag="Custody"
+        custody="Non-custodial"
+        custodyClass="bg-amber-500 text-white"
       />
     </div>
     <p className="text-sm text-gray-600 dark:text-gray-400 mt-6">
-      They are separate integrations with different base URLs, authentication, and error shapes, so do not share a client between them. Some companies use both: Platform to hold and govern assets, and the Bitnob API to pay out in local currency.
+      Some companies use both: Platform to hold assets, and the Bitnob API to pay out in local currency.
     </p>
   </Container>
 
