@@ -1,0 +1,21 @@
+<svg width="280" height="146" viewBox="0 0 280 146" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#tileclip)">
+<path d="M0 16C0 7.16344 7.16344 0 16 0H264C272.837 0 280 7.16344 280 16V130C280 138.837 272.837 146 264 146H16C7.16344 146 0 138.837 0 130V16Z" fill="#F7F7F8"/>
+<line x1="-26.354" y1="18.5" x2="306.354" y2="18.5" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="-26.354" y1="45.5" x2="306.354" y2="45.5" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="-26.354" y1="72.5" x2="306.354" y2="72.5" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="-26.354" y1="99.5" x2="306.354" y2="99.5" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="-26.354" y1="126.5" x2="306.354" y2="126.5" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="26.5" y1="239" x2="26.5" y2="-93" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="83" y1="239" x2="83" y2="-93" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="139.5" y1="239" x2="139.5" y2="-93" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="196" y1="239" x2="196" y2="-93" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<line x1="252.5" y1="239" x2="252.5" y2="-93" stroke="#E9EAEC" stroke-dasharray="5 5"/>
+<g transform="translate(124 57) scale(0.6667)" fill="none" stroke="#14151A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6l15 6v11c0 9-6.5 15.5-15 19-8.5-3.5-15-10-15-19V12z"/><path d="M17.5 24l4.5 4.5 9-9"/></g>
+</g>
+<defs>
+<clipPath id="tileclip">
+<path d="M0 16C0 7.16344 7.16344 0 16 0H264C272.837 0 280 7.16344 280 16V130C280 138.837 272.837 146 264 146H16C7.16344 146 0 138.837 0 130V16Z" fill="white"/>
+</clipPath>
+</defs>
+</svg>

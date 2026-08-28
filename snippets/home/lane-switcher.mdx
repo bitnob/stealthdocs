@@ -60,19 +60,12 @@ export const LaneSwitcher = ({ lanes }) => {
           ))}
         </div>
         <div className="w-full h-fit lg:w-1/2 rounded-2xl flex items-center justify-center overflow-hidden min-h-[320px] p-4">
-          {current?.image ? (
-            <>
-              <img
-                src={`${current.image}-light.svg`}
-                alt={current.title}
-                className="block dark:hidden w-full h-full object-cover rounded-xl"
-              />
-              <img
-                src={`${current.image}-dark.svg`}
-                alt={current.title}
-                className="hidden dark:block w-full h-full object-cover rounded-xl"
-              />
-            </>
+          {lane.image ? (
+            <img
+              src={lane.image}
+              alt={lane.label}
+              className="w-full h-full object-cover rounded-xl"
+            />
           ) : null}
         </div>
       </div>
