@@ -949,10 +949,6 @@
   },
   "redirects": [
     {
-      "source": "/",
-      "destination": "/docs/getting-started/overview"
-    },
-    {
       "source": "/changelog/overview",
       "destination": "/changelog"
     },
