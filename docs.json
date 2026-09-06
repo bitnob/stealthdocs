@@ -450,8 +450,7 @@
             "pages": [
               "POST /api/cards",
               "GET /api/cards",
-              "POST /api/cards/encryption-key",
-              "GET /api/cards/team-members",
+              "POST /api/cards/lite",
               "GET /api/cards/transactions",
               "GET /api/cards/{cardId}",
               "DELETE /api/cards/{cardId}",
@@ -462,6 +461,7 @@
               "POST /api/cards/{cardId}/status",
               "PUT /api/cards/{cardId}/spend-limits",
               "PATCH /api/cards/{cardId}/contact",
+              "POST /api/cards/{cardId}/simulate-webhook",
               "GET /api/customers/{customerId}/cards",
               "api-reference/virtual-cards/webhooks"
             ]

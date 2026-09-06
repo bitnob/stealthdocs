@@ -105,6 +105,31 @@ Do not set a global `og:image` in `seo.metatags`. That replaces the generated ca
 
 Social previews served from `mint dev`, including through a tunnel, do not always resolve the generated image. Verify unfurls against the deployed site.
 
+## Changelog
+
+`changelog.mdx` is a list of dated `Update` blocks, and `rss: true` in its frontmatter publishes them as a feed integrators can subscribe to.
+
+The published spec at `https://bitnob.dev/api-collections/swagger/` is the source of truth for the API, not the copy in this repository. The `Spec sync` workflow in `.github/workflows/spec-sync.yml` runs every weekday morning, fetches the published spec, and compares it to the committed copy:
+
+- Nothing differs, and the run ends.
+- Bytes differ but no endpoint or field moved, and it opens a pull request with the updated spec and no changelog entry.
+- The API surface changed, and it also diffs the two with [oasdiff](https://github.com/oasdiff/oasdiff), drafts a changelog entry from the changes, and puts the raw diff in the pull request body.
+
+Breaking changes tag the entry `Breaking`, added endpoints tag it `New`, and anything else tags it `Fix`. The tags and the date are derived by code, and the prose is drafted by a model, so read the entry before merging. Drafting is allowed to fail: if it does, the pull request still carries the spec update and says the entry needs writing by hand.
+
+Syncing the spec is not the whole job. A removed endpoint leaves a dead entry in `docs.json`, and a new one is unreachable until it is listed, so every sync pull request also runs `.github/scripts/check-navigation.mjs` and reports both kinds of drift in its body. Run it locally any time with `node .github/scripts/check-navigation.mjs`.
+
+Every run rebuilds the branch `automation/spec-sync` from the default branch, so an open sync pull request always shows the difference between the site and the published spec. Run it on demand from the Actions tab.
+
+Configure it once in the repository settings:
+
+- Secret `OPENROUTER_API_KEY`: an [OpenRouter](https://openrouter.ai) key. Every model in the default list is free, so a key with no credit works. Each model is tried up to three times before the next one, since a free model sometimes returns an empty response.
+- Variable `OPENROUTER_MODELS` (optional): a comma-separated list of model ids to try in order. Free model ids are retired from time to time, so this is the setting to change when drafting starts failing on every model.
+- Variable `SPEC_FILES` (optional): a comma-separated list of spec filenames to sync. It defaults to `bitnob-api-v2.openapi.json`, the only one currently published. Add `bitnob-platform.openapi.json` once that spec is served too.
+- Variable `SPEC_BASE_URL` (optional): the directory the specs are fetched from.
+
+Entries for documentation changes, such as new playground features, are still written by hand.
+
 ## Deployment
 
 Mintlify builds from this repository. Merging to `main` rebuilds the site once the repo is connected in the Mintlify dashboard. Preview a branch locally with `make dev` before merging.

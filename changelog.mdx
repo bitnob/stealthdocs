@@ -1,7 +1,30 @@
 ---
 title: "Changelog"
 description: "Dated entries for API changes, new products, and documentation updates."
+rss: true
 ---
+
+<Update label="September 6, 2026" tags={["Breaking","New"]}>
+  ## Cards API endpoints removed and added
+
+  Two card endpoints have been removed without deprecation. Remove them from your integration.
+
+  | Removed operation | Endpoint |
+  | --- | --- |
+  | Register encryption key | `POST /api/cards/encryption-key` |
+  | List team-member cards | `GET /api/cards/team-members` |
+
+  Two endpoints have been added.
+
+  | Added operation | Endpoint |
+  | --- | --- |
+  | Create lite card | `POST /api/cards/lite` |
+  | Simulate card webhook | `POST /api/cards/{cardId}/simulate-webhook` |
+
+  `POST /api/cards/lite` issues a card from a lightweight customer profile. The request body requires `type`, `amount`, `currency`, `name`, and `customer`, and `webhook_url` is optional.
+
+  `POST /api/cards/{cardId}/simulate-webhook` fires a synthetic card webhook at the card's configured callback URL, so you can verify a receiver end to end without real card activity. It is sandbox only, and the route is pinned to sandbox by middleware. The request body requires `card_id` and `event_type`, where `event_type` is one of `authorization`, `settlement`, `reversal`, or `decline`.
+</Update>
 
 <Update label="August 9, 2026" tags={["New"]}>
   ## Virtual Accounts API

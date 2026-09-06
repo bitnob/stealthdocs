@@ -1,0 +1,127 @@
+name: Spec sync
+
+on:
+  schedule:
+    - cron: "0 7 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  OASDIFF_VERSION: "1.30.0"
+  SYNC_BRANCH: automation/spec-sync
+  SPEC_BASE_URL: ${{ vars.SPEC_BASE_URL || 'https://bitnob.dev/api-collections/swagger' }}
+  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json' }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up the working directory
+        run: echo "CHANGES_DIR=$RUNNER_TEMP/changes" >> "$GITHUB_ENV"
+
+      - name: Install oasdiff
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSL "https://github.com/oasdiff/oasdiff/releases/download/v${OASDIFF_VERSION}/oasdiff_${OASDIFF_VERSION}_linux_amd64.tar.gz" | tar xz -C "$RUNNER_TEMP/bin" oasdiff
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch the published specs and diff them
+        id: diff
+        run: |
+          mkdir -p "$CHANGES_DIR/base"
+          changed=false
+          notable=false
+          for name in $(echo "$SPEC_FILES" | tr ',' ' '); do
+            local_path="api-collections/swagger/$name"
+            if [ ! -f "$local_path" ]; then
+              echo "::warning::$local_path is not in the repository, skipping"
+              continue
+            fi
+            if ! curl -fsSL --retry 3 --max-time 60 -o "$CHANGES_DIR/fetched-$name" "$SPEC_BASE_URL/$name"; then
+              echo "::warning::could not fetch $SPEC_BASE_URL/$name, skipping"
+              continue
+            fi
+            if ! jq empty "$CHANGES_DIR/fetched-$name" 2>/dev/null; then
+              echo "::warning::$SPEC_BASE_URL/$name is not valid json, skipping"
+              continue
+            fi
+            if cmp -s "$local_path" "$CHANGES_DIR/fetched-$name"; then
+              echo "$name is identical to the published spec"
+              continue
+            fi
+            changed=true
+            cp "$local_path" "$CHANGES_DIR/base/$name"
+            oasdiff changelog "$CHANGES_DIR/base/$name" "$CHANGES_DIR/fetched-$name" --format json > "$CHANGES_DIR/$name.json"
+            cp "$CHANGES_DIR/fetched-$name" "$local_path"
+            if [ "$(jq 'length' "$CHANGES_DIR/$name.json" 2>/dev/null || echo 0)" = "0" ]; then
+              echo "$name changed, but no notable api changes"
+              rm -f "$CHANGES_DIR/$name.json"
+              echo "## $name" >> "$CHANGES_DIR/summary.md"
+              echo "Text or schema detail changed with no change to the API surface." >> "$CHANGES_DIR/summary.md"
+              continue
+            fi
+            notable=true
+            echo "## $name" >> "$CHANGES_DIR/summary.md"
+            oasdiff changelog "$CHANGES_DIR/base/$name" "$local_path" --format markdown | sed '1d;s/^#/##/' | cat -s >> "$CHANGES_DIR/summary.md"
+          done
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "notable=$notable" >> "$GITHUB_OUTPUT"
+
+      - name: Draft the changelog entry
+        id: draft
+        if: steps.diff.outputs.notable == 'true'
+        continue-on-error: true
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODELS: ${{ vars.OPENROUTER_MODELS }}
+        run: node .github/scripts/generate-changelog-entry.mjs
+
+      - name: Check the navigation against the specs
+        if: steps.diff.outputs.changed == 'true'
+        run: node .github/scripts/check-navigation.mjs > "$CHANGES_DIR/navigation.md"
+
+      - name: Open or update the pull request
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$SYNC_BRANCH"
+          git add api-collections/swagger changelog.mdx
+          git commit -m "docs(api): sync the published openapi spec"
+          git push --force origin "$SYNC_BRANCH"
+
+          if [ "${{ steps.diff.outputs.notable }}" != "true" ]; then
+            entry_note="No endpoint or field changed, so no changelog entry was drafted."
+          elif [ "${{ steps.draft.outcome }}" = "success" ]; then
+            entry_note="A draft changelog entry is included. Review the wording before merging."
+          else
+            entry_note="The changelog entry could not be drafted, so write one by hand before merging."
+          fi
+
+          {
+            echo "The published spec at \`$SPEC_BASE_URL\` no longer matches the copy in this repository, so this pull request brings it up to date."
+            echo
+            echo "$entry_note"
+            echo
+            cat "$CHANGES_DIR/summary.md"
+            if [ -s "$CHANGES_DIR/navigation.md" ] && grep -q "Navigation drift" "$CHANGES_DIR/navigation.md"; then
+              echo
+              cat "$CHANGES_DIR/navigation.md"
+            fi
+          } > "$CHANGES_DIR/body.md"
+
+          if [ -z "$(gh pr list --head "$SYNC_BRANCH" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --head "$SYNC_BRANCH" --base "${{ github.ref_name }}" --title "docs(api): sync the published openapi spec" --body-file "$CHANGES_DIR/body.md"
+          else
+            gh pr edit "$SYNC_BRANCH" --body-file "$CHANGES_DIR/body.md"
+          fi

@@ -6317,17 +6317,58 @@
         }
       }
     },
-    "/api/cards/encryption-key": {
+    "/api/cards/lite": {
       "post": {
         "tags": [
           "Cards"
         ],
-        "summary": "Register encryption key",
-        "description": "Registers a workspace-wide public key. Secure-details endpoints return card PAN/CVV encrypted with this key.",
-        "operationId": "post_api_cards_encryption_key",
+        "summary": "Create lite card",
+        "description": "Issues a lite card with a lightweight customer profile — only the cardholder's basic contact details are needed. The `customer` block creates the customer record as part of issuance. Lite cards can be spent and terminated but not funded, and the maximum top-up is $250.",
+        "operationId": "post_api_cards_lite",
         "responses": {
-          "200": {
-            "description": "Successful response"
+          "201": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Lite card created successfully",
+                  "data": {
+                    "card": {
+                      "id": "019ef004-c182-78c0-a265-6f9c5ea3e547",
+                      "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+                      "customer_id": "019eeebe-5838-7a52-b94a-4784f6557da2",
+                      "card_type": "lite",
+                      "status": "pending",
+                      "created_status": "processing",
+                      "name": "Alice Quick Card",
+                      "preferred_name": "Alice Quick Card",
+                      "masked_pan": "",
+                      "balance_amount": "0",
+                      "balance_currency": "USD",
+                      "display_amount": 0,
+                      "contactless_payment": false,
+                      "card_limits": {},
+                      "reference": "CARD_CREATE_019EF004C182",
+                      "webhook_url": "https://rgod.top/webhook/tough-urban-wheel",
+                      "user_metadata": "{}",
+                      "billing_address": {
+                        "line1": "3401 N. Miami, Ave. Ste 230",
+                        "line2": "",
+                        "city": "Miami",
+                        "state": "Florida",
+                        "postal_code": "33127",
+                        "country": "United States"
+                      },
+                      "created_by": "7a3f909c-1208-42d5-927a-583c41281d8a",
+                      "created_at": "2026-06-22T15:48:24Z",
+                      "updated_at": "2026-06-22T15:48:24Z"
+                    }
+                  },
+                  "timestamp": "2026-06-22T15:48:24.073616886Z"
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation error",
@@ -6387,99 +6428,52 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "public_key_pem": {
+                  "type": {
                     "type": "string",
-                    "example": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+                    "example": "lite"
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "example": 2000000
+                  },
+                  "currency": {
+                    "type": "string",
+                    "example": "USD"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "Alice Quick Card"
+                  },
+                  "webhook_url": {
+                    "type": "string",
+                    "example": "https://rgod.top/webhook/tough-urban-wheel"
+                  },
+                  "customer": {
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "public_key_pem"
+                  "type",
+                  "amount",
+                  "currency",
+                  "name",
+                  "customer"
                 ]
               },
               "example": {
-                "public_key_pem": "-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/cards/team-members": {
-      "get": {
-        "tags": [
-          "Cards"
-        ],
-        "summary": "List team-member cards",
-        "description": "Cards owned by workspace team members (distinct from customer-issued cards).",
-        "operationId": "get_api_cards_team_members",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "example": {
-                  "success": true,
-                  "message": "Team member cards retrieved successfully",
-                  "data": {
-                    "cards": [],
-                    "page_info": {
-                      "has_next_page": false,
-                      "has_previous_page": false,
-                      "total": 0
-                    }
-                  },
-                  "timestamp": "2026-06-19T10:46:59.204792768Z"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized (bad HMAC signature or client id)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Semantic validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
+                "type": "lite",
+                "webhook_url": "https://rgod.top/webhook/tough-urban-wheel",
+                "customer": {
+                  "customer_type": "individual",
+                  "first_name": "Alice",
+                  "last_name": "Johnson",
+                  "email": "alicejo@gmail.com",
+                  "phone_number": "08012345678",
+                  "dial_code": "+234"
+                },
+                "currency": "USD",
+                "name": "Alice Quick Card",
+                "amount": 2000000
               }
             }
           }
@@ -6864,7 +6858,7 @@
           "Cards"
         ],
         "summary": "Get secure card details",
-        "description": "Full PAN/CVV/expiry encrypted with the workspace public key registered via **Register encryption key**.",
+        "description": "Full PAN, CVV and expiry returned as plain JSON. Treat the response as PCI-regulated.",
         "operationId": "get_api_cards_cardId_secure",
         "parameters": [
           {
@@ -7719,6 +7713,142 @@
               "example": {
                 "email": "admin@co.com",
                 "mobile": "0249024564"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cards/{cardId}/simulate-webhook": {
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Simulate card webhook (sandbox)",
+        "description": "Fires a synthetic card webhook at the card's configured callback URL so receivers can be verified end-to-end without real card activity. Sandbox only — the route is pinned to sandbox by middleware and the downstream org-service refuses non-sandbox requests.",
+        "operationId": "post_api_cards_cardId_simulate_webhook",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "cardId identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Card webhook simulated",
+                  "data": {
+                    "event_type": "virtualcard.transaction.authorization",
+                    "reference": "SIMULATE_AUTH_9afbc353-6ead-41d4-b046-78fa23b1cf03",
+                    "callback_url": ":///***",
+                    "dispatched": false,
+                    "skip_reason": "no callback URL configured on card and no provider URL resolved"
+                  },
+                  "timestamp": "2026-05-26T11:58:59.285804528Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (bad HMAC signature or client id)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (called outside sandbox)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "card_id": {
+                    "type": "string",
+                    "example": "62052bee-f20e-4b59-8a5d-d0c50f16d"
+                  },
+                  "event_type": {
+                    "type": "string",
+                    "enum": [
+                      "authorization",
+                      "settlement",
+                      "reversal",
+                      "decline"
+                    ],
+                    "example": "authorization"
+                  }
+                },
+                "required": [
+                  "card_id",
+                  "event_type"
+                ]
+              },
+              "example": {
+                "card_id": "62052bee-f20e-4b59-8a5d-d0c50f16d",
+                "event_type": "authorization"
               }
             }
           }
