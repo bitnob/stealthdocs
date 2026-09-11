@@ -4,6 +4,19 @@ description: "Dated entries for API changes, new products, and documentation upd
 rss: true
 ---
 
+<Update label="September 11, 2026" tags={["Breaking","New"]}>
+  ## Cards API: KYC split and customer_id required
+
+  The Create card endpoint now requires a `customer_id` instead of the nested `customer` object. The `customer` property has been removed, and `card_limits`, `created_by`, and `webhook_url` are now optional. You must first verify the customer with the new KYC endpoint to obtain a `customer_id` before calling Create card.
+
+  A new Card KYC endpoint has been added to submit customer details for identity verification. It returns a `customer_id` that you pass to the Create card request. The KYC request requires customer details, occupation, employment status, account purpose, annual salary, expected monthly volume, and acceptance of the terms of service.
+
+  | Operation | Endpoint |
+  | --- | --- |
+  | Create card | `POST /api/cards` |
+  | Card KYC | `POST /api/cards/kyc` |
+</Update>
+
 <Update label="September 6, 2026" tags={["Breaking","New"]}>
   ## Cards API endpoints removed and added
 
