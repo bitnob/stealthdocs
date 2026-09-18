@@ -5894,8 +5894,8 @@
         "tags": [
           "Cards"
         ],
-        "summary": "Create card (embedded customer)",
-        "description": "Issues a new card and creates the customer in the same call. For existing customers, pass `customer_id` instead of the nested `customer` block.",
+        "summary": "Create card",
+        "description": "Issues a new card for a customer who has already been verified through Card KYC. Pass the `customer_id` returned by `POST /api/cards/kyc` — identity details were captured and verified during KYC, so they are not sent again here. KYC is asynchronous, so wait until it is approved before issuing the card.",
         "operationId": "post_api_cards",
         "responses": {
           "201": {
@@ -6029,83 +6029,11 @@
                   "contactless_payment": {
                     "type": "boolean"
                   },
-                  "customer": {
-                    "type": "object",
-                    "properties": {
-                      "customer_type": {
-                        "type": "string",
-                        "example": "individual"
-                      },
-                      "first_name": {
-                        "type": "string",
-                        "example": "Ifeoma"
-                      },
-                      "last_name": {
-                        "type": "string",
-                        "example": "Okafor"
-                      },
-                      "date_of_birth": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "1993-07-08"
-                      },
-                      "id_type": {
-                        "type": "string",
-                        "example": "national_id"
-                      },
-                      "id_number": {
-                        "type": "string",
-                        "example": "NIN12345678901"
-                      },
-                      "email": {
-                        "type": "string",
-                        "example": "ifeoma.okafor@example.com"
-                      },
-                      "phone_number": {
-                        "type": "string",
-                        "example": "8034567890"
-                      },
-                      "dial_code": {
-                        "type": "string",
-                        "example": "+234"
-                      },
-                      "line1": {
-                        "type": "string",
-                        "example": "18 Wuse Zone 4"
-                      },
-                      "city": {
-                        "type": "string",
-                        "example": "Abuja"
-                      },
-                      "state": {
-                        "type": "string",
-                        "example": "FCT"
-                      },
-                      "postal_code": {
-                        "type": "string",
-                        "example": "900271"
-                      },
-                      "country": {
-                        "type": "string",
-                        "example": "NGA"
-                      }
-                    },
-                    "required": [
-                      "customer_type",
-                      "first_name",
-                      "last_name",
-                      "date_of_birth",
-                      "id_type",
-                      "id_number",
-                      "email",
-                      "phone_number",
-                      "dial_code",
-                      "line1",
-                      "city",
-                      "state",
-                      "postal_code",
-                      "country"
-                    ]
+                  "customer_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The customer returned by Card KYC. Identity details were captured and verified during KYC, so they are not sent again here.",
+                    "example": "01a015ec-dc11-76e9-9a5a-68bddb798c37"
                   },
                   "card_limits": {
                     "type": "object",
@@ -6157,10 +6085,7 @@
                   "name",
                   "currency",
                   "amount",
-                  "webhook_url",
-                  "created_by",
-                  "customer",
-                  "card_limits"
+                  "customer_id"
                 ]
               },
               "example": {
@@ -6172,22 +6097,7 @@
                 "amount": 2000000,
                 "card_brand": "visa",
                 "webhook_url": "https://rgod.top/webhook/tough-urban-wheel",
-                "customer": {
-                  "customer_type": "individual",
-                  "first_name": "Ifeoma",
-                  "last_name": "Okafor",
-                  "date_of_birth": "1993-07-08",
-                  "id_type": "national_id",
-                  "id_number": "NIN12347460901",
-                  "email": "ifeoma.okafor@example.com",
-                  "phone_number": "803456990",
-                  "dial_code": "+234",
-                  "line1": "18 Wuse Zone 4",
-                  "city": "Abuja",
-                  "state": "FCT",
-                  "postal_code": "900271",
-                  "country": "NGA"
-                },
+                "customer_id": "01a015ec-dc11-76e9-9a5a-68bddb798c37",
                 "card_limits": {
                   "transaction_limit": 19200000000,
                   "daily_limit": 300000000,
@@ -6311,6 +6221,271 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cards/kyc": {
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "Card KYC",
+        "description": "Submits a customer for identity verification before their first card is issued. A successful submission creates the customer and returns the `customer_id` you pass to `POST /api/cards`. Verification is instant for `bvn` and `nin`; document id types may take up to 10 minutes and resolve asynchronously, so listen on `webhook_url` rather than polling when a submission comes back pending.",
+        "operationId": "post_api_cards_kyc",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Card KYC initiated successfully",
+                  "data": {
+                    "customer_id": "01a01914-0000-7000-a000-000000000000",
+                    "status": "approved",
+                    "completion_link": "",
+                    "email": "ifeoma.okafor@example.com",
+                    "first_name": "Ifeoma",
+                    "last_name": "Okafor",
+                    "normalized_status": "approved"
+                  },
+                  "timestamp": "2026-04-18T13:01:06.145180019Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (bad HMAC signature or client id)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantic validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customer": {
+                    "type": "object",
+                    "description": "Complete identity details of the person being verified. `first_name` and `last_name` are checked against the identity document, so submit them exactly as they appear on it.",
+                    "properties": {
+                      "customer_type": {
+                        "type": "string",
+                        "example": "individual"
+                      },
+                      "first_name": {
+                        "type": "string",
+                        "example": "Ifeoma"
+                      },
+                      "last_name": {
+                        "type": "string",
+                        "example": "Okafor"
+                      },
+                      "date_of_birth": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "1990-01-15"
+                      },
+                      "id_type": {
+                        "type": "string",
+                        "description": "The type of ID being submitted for this customer.",
+                        "enum": [
+                          "bvn",
+                          "nin",
+                          "passport",
+                          "drivers_license",
+                          "national_id",
+                          "vnin",
+                          "voters_card",
+                          "ghana_card"
+                        ],
+                        "example": "bvn"
+                      },
+                      "id_number": {
+                        "type": "string",
+                        "description": "The value matching `id_type` — the BVN, NIN, or document number.",
+                        "example": "12345678901"
+                      },
+                      "email": {
+                        "type": "string",
+                        "example": "ifeoma.okafor@example.com"
+                      },
+                      "phone_number": {
+                        "type": "string",
+                        "example": "8034567890"
+                      },
+                      "dial_code": {
+                        "type": "string",
+                        "example": "+234"
+                      },
+                      "line1": {
+                        "type": "string",
+                        "example": "18 Wuse Zone 4"
+                      },
+                      "city": {
+                        "type": "string",
+                        "example": "Abuja"
+                      },
+                      "state": {
+                        "type": "string",
+                        "example": "FCT"
+                      },
+                      "postal_code": {
+                        "type": "string",
+                        "example": "900001"
+                      },
+                      "country": {
+                        "type": "string",
+                        "example": "NGA"
+                      }
+                    },
+                    "required": [
+                      "customer_type",
+                      "first_name",
+                      "last_name",
+                      "date_of_birth",
+                      "id_type",
+                      "id_number",
+                      "email",
+                      "phone_number",
+                      "dial_code",
+                      "line1",
+                      "city",
+                      "state",
+                      "postal_code",
+                      "country"
+                    ]
+                  },
+                  "occupation": {
+                    "type": "string",
+                    "description": "The customer's occupation, in lowercase snake_case.",
+                    "example": "business_consultant"
+                  },
+                  "employment_status": {
+                    "type": "string",
+                    "example": "employed"
+                  },
+                  "account_purpose": {
+                    "type": "string",
+                    "description": "The customer's intended use for the card.",
+                    "example": "business expenses"
+                  },
+                  "annual_salary": {
+                    "type": "string",
+                    "description": "Declared annual income, in whole major currency units and sent as a string.",
+                    "example": "9600000"
+                  },
+                  "expected_monthly_volume": {
+                    "type": "string",
+                    "description": "Anticipated monthly card spend, in whole major currency units and sent as a string.",
+                    "example": "850000"
+                  },
+                  "place_of_birth": {
+                    "type": "string",
+                    "example": "Enugu"
+                  },
+                  "terms_of_service_accepted": {
+                    "type": "boolean",
+                    "description": "Confirms the customer accepted your terms of service. Must be `true`; sending `false` or omitting the field returns \"Terms of service must be accepted\".",
+                    "example": true
+                  },
+                  "webhook_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Endpoint notified when the verification result changes. Use it in place of polling when a submission returns pending.",
+                    "example": "https://example.com/webhooks/card-kyc"
+                  },
+                  "id_front_image": {
+                    "type": "string",
+                    "description": "The front of the customer's ID document, base64-encoded, up to 1MB. Required for document id types — passport, drivers_license, national_id, vnin, voters_card and ghana_card — and must never be sent for bvn or nin.",
+                    "example": "/9j/4AAQSkZJRgABAQAAAQABAAD..."
+                  }
+                },
+                "required": [
+                  "customer",
+                  "occupation",
+                  "employment_status",
+                  "account_purpose",
+                  "annual_salary",
+                  "expected_monthly_volume",
+                  "terms_of_service_accepted"
+                ]
+              },
+              "example": {
+                "customer": {
+                  "customer_type": "individual",
+                  "first_name": "Ifeoma",
+                  "last_name": "Okafor",
+                  "date_of_birth": "1990-01-15",
+                  "id_type": "bvn",
+                  "id_number": "12345678901",
+                  "email": "ifeoma.okafor@example.com",
+                  "phone_number": "8034567890",
+                  "dial_code": "+234",
+                  "line1": "18 Wuse Zone 4",
+                  "city": "Abuja",
+                  "state": "FCT",
+                  "postal_code": "900001",
+                  "country": "NGA"
+                },
+                "occupation": "business_consultant",
+                "employment_status": "employed",
+                "account_purpose": "business expenses",
+                "annual_salary": "9600000",
+                "expected_monthly_volume": "850000",
+                "place_of_birth": "Enugu",
+                "terms_of_service_accepted": true,
+                "webhook_url": "https://example.com/webhooks/card-kyc"
               }
             }
           }
