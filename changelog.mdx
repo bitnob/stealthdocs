@@ -4,6 +4,23 @@ description: "Dated entries for API changes, new products, and documentation upd
 rss: true
 ---
 
+<Update label="September 25, 2026" tags={["Breaking","New"]}>
+  ## Card creation API updated and KYC endpoint added
+
+  The `POST /api/cards` endpoint now requires a `customer_id` instead of the nested `customer` object. Several other request properties (`card_limits`, `created_by`, `webhook_url`) are now optional. A new endpoint, `POST /api/cards/kyc`, has been added to submit a customer for identity verification and obtain the `customer_id` needed for card creation.
+
+  | Operation          | Endpoint               |
+  | ------------------ | ---------------------- |
+  | Create card        | `POST /api/cards`      |
+  | Submit card KYC    | `POST /api/cards/kyc`  |
+
+  **Before** | **After**
+  --- | ---
+  `customer` (object) required | `customer_id` (string) required
+
+  To create a card, first call `POST /api/cards/kyc` with the customer details and receive the returned `customer_id`. Then include that `customer_id` in the `POST /api/cards` request along with `card_type`, `name`, `currency`, and `amount`. The fields `card_limits`, `created_by`, and `webhook_url` may be omitted or left as empty strings. Reference continues to act as an optional idempotency key for retries.
+</Update>
+
 <Update label="September 6, 2026" tags={["Breaking","New"]}>
   ## Cards API endpoints removed and added
 
