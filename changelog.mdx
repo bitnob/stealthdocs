@@ -4,6 +4,26 @@ description: "Dated entries for API changes, new products, and documentation upd
 rss: true
 ---
 
+<Update label="October 9, 2026" tags={["Breaking","New"]}>
+  ## Cards API: customer_id required and customer object removed
+
+  The POST /api/cards endpoint now requires a `customer_id` instead of a nested `customer` object. The `customer_id` is the identifier returned by the new POST /api/cards/kyc endpoint. The nested `customer` block has been removed, and several previously required fields are now optional.
+
+  The POST /api/customers endpoint restricts `customer_type` to the enum values `individual` or `business` and adds optional `company_name` and `registration_number` fields. A new POST /api/cards/kyc endpoint has been added to verify a customer before card issuance.
+
+  | Operation | Endpoint |
+  | --- | --- |
+  | Create card | `POST /api/cards` |
+  | Create customer | `POST /api/customers` |
+  | Card KYC | `POST /api/cards/kyc` |
+
+  | Before | After |
+  | --- | --- |
+  | Required: `card_type`, `name`, `currency`, `amount`, `webhook_url`, `created_by`, `customer` (object with `customer_type`, `first_name`, `last_name`, `date_of_birth`, `id_type`, `id_number`, `email`, `phone_number`, `dial_code`, `line1`, `city`, `state`, `postal_code`, `country`) | Required: `card_type`, `name`, `currency`, `amount`, `customer_id` |
+  | `card_limits`, `created_by`, `webhook_url` required | `card_limits`, `created_by`, `webhook_url` optional |
+  | `customer` object required | `customer_id` string required |
+</Update>
+
 <Update label="September 6, 2026" tags={["Breaking","New"]}>
   ## Cards API endpoints removed and added
 
