@@ -68,7 +68,7 @@ Two ground rules:
 
 ## Retry discipline
 
-- Exponential backoff on network and `5xx` errors; respect `Retry-After` on `429`.
+- Exponential backoff on network and `5xx` errors; on `429`, wait for the time in `X-Ratelimit-Reset`.
 - No retry storms during congestion: cap attempts and escalate to a human.
 - Never blind-retry a failed send without checking the webhook outcome first; the failure reason decides whether retrying is safe.
 

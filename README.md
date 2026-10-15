@@ -80,7 +80,7 @@ This section needs **Show related topics** enabled on the [Add-ons](https://app.
 
 - Sentence case for titles and headings. Lowercase the article after a colon.
 - Lowercase `bitcoin` when it means the currency, capitalised `Bitcoin` when it means the network or protocol.
-- Amounts are integers in the smallest unit of the currency, satoshis for BTC and cents for fiat. Never floats.
+- Show amounts in the unit the endpoint actually uses. Units differ by product (trading and payouts use major-unit decimal strings, cards use micro-units), so check [currencies and amounts](docs/getting-started/core-concepts-and-architecture/currencies-and-amounts.mdx) before writing an example. Never floats.
 - Sandbox credentials in every example. Never a live key.
 - No em dashes.
 

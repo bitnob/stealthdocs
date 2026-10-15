@@ -62,11 +62,7 @@ curl --location 'https://api.bitnob.com/api/trading/quotes' \
 }'
 ```
 
-### Example request (NGN pair) preview
-
-<Note>
-  **Preview, enabled per account:** NGN (naira) trading is being rolled out gradually and is not enabled for all companies yet.
-</Note>
+### Example request (NGN pair)
 
 To quote a naira trade, set base_currency to what you are spending and use side: "sell". Here, 5000 means ₦5,000.
 
@@ -144,26 +140,24 @@ curl --location 'https://api.bitnob.com/api/trading/quotes' \
 
 ## Notes
 
-Quotes are valid for a short time (usually 30 seconds for development and 10 seconds in production)
-
-Use the `quoteId` in `/trading/quotes` to ensure price locking
-
-Use the `price` from the quote when [creating the order](/api-reference/trading/submit-order).
-
-Without `quoteId`, the trade executes at current market rate
-
-Fees depend on your integration tier (default is 0)
-
-For NGN pairs, one side of the pair must be NGN, amounts are in major units (whole naira), and a `quote_id` is required at execution. The rate must be locked before funds move
-
-NGN conversions are limited to ₦500–₦10,000,000 per trade and must be enabled on your account before use
+- **Quotes expire fast.** About 10 seconds in production. In sandbox, NGN quotes last 30 seconds and crypto quotes about 5 minutes. You can't extend the window, so drive your timer from the quote's `expires_at`, never a hard-coded value.
+- **Lock the price** by passing the quote's `id` as `quote_id` to [Create order](/api-reference/trading/submit-order).
+- **Without a `quote_id`,** a crypto-pair order executes at the current market rate. NGN pairs can't do this: they always need a `quote_id`.
+- **Fees** depend on your integration tier. The default is 0.
+- **NGN amounts** are in major units (naira, not kobo), and one side of the pair must be NGN.
+- **NGN limits:** ₦500 to ₦10,000,000 per trade, with no daily or monthly limit. An amount outside that range is rejected when you create the quote, with `400` and code `INVALID_AMOUNT`.
+- **NGN quotes are single-use:** one quote backs one order. A crypto quote can back several orders until `remaining_quantity` reaches zero.
+- **NGN quotes check your balance.** If the wallet you're spending from can't cover the amount, the quote is refused with `422` and "insufficient balance". Check [List balances](/api-reference/balances/list-balances) first.
 
 ## Errors
 
 | Code | Message | Fix |
 |---|---|---|
-| 400 | Invalid asset pair | Use a supported pair (USDT, USDC, BTC, NGN). Naira trades must have NGN on one side |
-| 400 | Missing or invalid amount | Must be a positive number in major units, within any pair limits |
-| 403 | NGN not enabled | Ask Bitnob to enable naira trading on your account |
-| 403 | Insufficient balance | Only applies if pre-balance checks are enabled |
-| 500 | Quote service unavailable | Retry or contact support if persistent |
+| 400 | Invalid quote_currency: ETH. Expected BTC, USDT, or USDC | Use a supported pair (USDT, USDC, BTC, NGN). Naira trades must have NGN on one side. |
+| 400 | Quote quantity must be greater than zero | Send a positive quantity in major units. |
+| 400 | Validation failed | A required field is missing or malformed. The error's `details` object names each field. |
+| 400 | amount below configured minimum / amount above configured maximum | NGN trades must be between ₦500 and ₦10,000,000. Code is `INVALID_AMOUNT`. |
+| 400 | Quote quantity too large: maximum 50 BTC | Reduce the quantity or split it across quotes. |
+| 403 | NGN not enabled | Ask Bitnob to enable naira trading on your account. Match on the `403` status, not the message text. |
+| 422 | insufficient balance | NGN pairs only: the wallet you're spending from can't cover the quote. Code is `PRECONDITION_FAILED`. |
+| 500 | Quote service unavailable | Retry, or contact support if it keeps happening. |

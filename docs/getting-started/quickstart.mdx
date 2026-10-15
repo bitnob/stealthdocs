@@ -26,7 +26,7 @@ You need the `CLIENT_ID` and `CLIENT_SECRET` you issued on the previous page, [S
     CLIENT_ID="${CLIENT_ID}"
     CLIENT_SECRET="${CLIENT_SECRET}"
     TIMESTAMP=$(date +%s)
-    NONCE=$(uuidgen)
+    NONCE=$(openssl rand -hex 16)
 
     PAYLOAD="${CLIENT_ID}:${TIMESTAMP}:${NONCE}:"
     SIGNATURE=$(printf '%s' "$PAYLOAD" | openssl dgst -sha256 -hmac "$CLIENT_SECRET" -hex | awk '{print $2}')

@@ -29,7 +29,7 @@ The `price` on a quote reflects live pricing across venues, routing optimised fo
 | Locked quote | Fetch a [quote](/docs/trading/create-quote) first, execute with its `id` and `price`. The user gets exactly the rate shown. |
 | Market rate | Submit the order without a `quote_id`. Executes at the best current rate; the output can vary slightly. |
 
-Lock the quote whenever a user sees a rate before confirming, whenever you promise a fixed price, and always for NGN pairs, where a `quote_id` is mandatory. Quotes expire fast, roughly 30 seconds in development and 10 in production, so drive a visible countdown from `expires_at` and disable the confirm action when it passes.
+Lock the quote whenever a user sees a rate before confirming, whenever you promise a fixed price, and always for NGN pairs, where a `quote_id` is mandatory. Quotes expire fast: about 10 seconds in production, and in sandbox 30 seconds for NGN pairs and about 5 minutes for crypto pairs, so drive a visible countdown from `expires_at` and disable the confirm action when it passes.
 
 ## What atomic execution buys you
 
@@ -56,7 +56,7 @@ Requests take `quantity` in major units of the base currency: `"0.0001"` BTC, `"
     From centralized exchanges, OTC desks, and internal routing. You do not manage any of it; the quote you receive is trusted and executable, and your system receives the promised output or nothing.
   </Accordion>
   <Accordion title="Can I fetch quotes without trading?">
-    Yes, quotes are free and non-committal. Build pricing calculators or remittance previews on them, and cache no longer than `expires_at`.
+    Yes, quotes are free and don't commit you to anything. But for browsing and pricing calculators, use indicative rates instead: [List all prices](/api-reference/trading/list-all-prices) for crypto pairs and [Get exchange rate](/api-reference/exchange-rates/get-single-pair-rate) for NGN pairs. Create a quote only when the user is ready to confirm. NGN quotes are checked against your balance and back a single order.
   </Accordion>
   <Accordion title="What happens during execution?">
     Quote validation, balance check, execution, credit to the destination balance, then the `trade.completed` event. Any failure along the way moves no funds.

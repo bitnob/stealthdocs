@@ -12,18 +12,15 @@ This table is a snapshot for planning. [Supported countries](/api-reference/payo
 
 | Currency | Settlement rail | Countries |
 |---|---|---|
-| USD | ACH, wire transfer | United States |
-| GBP | Faster Payments | United Kingdom |
-| EUR | SEPA, SWIFT | European Union |
-| NGN | NIP instant transfer | Nigeria |
-| GHS | Bank transfer, mobile money (MTN, Vodafone Cash) | Ghana |
-| KES | Bank transfer, M-Pesa | Kenya |
-| XAF | Bank transfer | Cameroon, Central African Republic, Chad, Congo-Brazzaville, Equatorial Guinea, Gabon |
-| XOF | Bank transfer, mobile money (Orange, MTN) | Benin, Burkina Faso, Guinea-Bissau, Ivory Coast, Mali, Niger, Senegal, Togo |
-| ZAR | Bank transfer, EFT | South Africa |
-| AUD | Bank transfer, SWIFT | Australia |
-| CNY | Bank transfer | China |
-| VND | Bank transfer | Vietnam |
+| GHS | Mobile money only (MTN MoMo) | Ghana |
+| GMD | Mobile money only (Afrimoney, Qmoney) | The Gambia |
+| KES | M-Pesa mobile money only (personal number, Paybill, Till) | Kenya |
+| NGN | NIP instant bank transfer | Nigeria |
+| RWF | Mobile money only (MTN MoMo, Airtel Money) | Rwanda |
+| UGX | Mobile money only (MTN MoMo, Airtel Money) | Uganda |
+| USD | ACH and wire (United States), local bank transfer (43 countries), SWIFT (about 100 countries) | United States, Europe, UAE, India, China, South Africa, and more |
+| XAF | Mobile money only (MTN in Cameroon; Airtel Money and Moov Money in Gabon) | Cameroon, Gabon |
+| XOF | Mobile money only (Orange Money, Free Money, Expresso and Wave in Senegal; Orange Money, MTN MoMo and Moov Money in Ivory Coast; Moov Money and Airtel Money in Niger) | Senegal, Ivory Coast, Niger |
 
 ## What each rail means for speed
 
@@ -32,12 +29,10 @@ The rail, not Bitnob, sets how long the fiat leg takes. Size your SLAs around th
 | Rail | Typical speed |
 |---|---|
 | NIP (Nigeria) | Seconds. Real-time interbank settlement via NIBSS. |
-| Mobile money | Seconds to minutes. Available in Ghana, Kenya, and parts of West and Central Africa. |
-| Faster Payments (UK) | Seconds to minutes. |
-| SEPA (EU and EEA) | Same day to next business day. |
+| Mobile money | Seconds to minutes. The only rail in Ghana, Kenya, The Gambia, Rwanda, Uganda, and the CFA franc countries listed above. |
+| Local bank transfer (USD) | Varies by country. |
 | ACH (US domestic) | One to three business days. Cheaper than wire. |
 | Wire and SWIFT | Same day to several business days. Used for high-value and urgent cross-border payouts. |
-| EFT (South Africa) | One to two business days. |
 
 Corridors differ in more than speed. See [Corridor behaviour](/docs/payouts/corridor-specific-behavior) for the operational detail per country.
 

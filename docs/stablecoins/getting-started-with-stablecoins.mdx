@@ -7,7 +7,7 @@ Before [issuing addresses](/api-reference/addresses/generate-address), [sending 
 
 <Steps>
   <Step title="Create your organization and keys">
-    Create an organization on the Bitnob dashboard and generate API keys, with separate keys for development and production. Keys are managed and revoked from the dashboard; if one leaks, revoke it immediately, since it can move funds. Never call the API from a frontend with a live key.
+    Create an organization on the Bitnob dashboard and generate API keys. Your `CLIENT_ID` is the same in sandbox and production; generate a separate `CLIENT_SECRET` for each, since the secret is what selects the environment. Keys are managed and revoked from the dashboard; if one leaks, revoke it immediately, since it can move funds. Never call the API from a frontend with a live key.
   </Step>
   <Step title="Wire up signed requests">
     Every request is HMAC-signed; see [Authentication](/api-reference/authentication/authentication) for the scheme and copy-paste signing helpers in Node.js, Go, and Python. Confirm your setup with a [validation request](/api-reference/authentication/usage-examples) before writing product code.
@@ -24,7 +24,7 @@ Before [issuing addresses](/api-reference/addresses/generate-address), [sending 
 
 **Idempotency.** Every state-changing request takes a unique `reference` you generate per business event. Retrying with the same reference returns the original result instead of repeating the action, so retries after timeouts are safe. Reusing a reference across different actions fails validation.
 
-**Rate limits.** Keys are rate limited, 60 requests per minute by default, with brief bursts tolerated. On `429 Too Many Requests`, back off exponentially. Contact support for enterprise throughput.
+**Rate limits.** 500 requests per minute per client IP address, on every route. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset` headers. On `429 Too Many Requests`, back off exponentially.
 
 **Confirmation-gated crediting.** Deposits credit only after the chain's confirmation threshold, so design UIs around a pending state from the start. The thresholds are on [Supported chains](/docs/stablecoins/supported-chains), and the reasoning is in [How stablecoins work on Bitnob](/docs/stablecoins/key-concepts).
 

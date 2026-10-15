@@ -6,15 +6,15 @@ related:
   - /docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows
 ---
 
-Trades fail for ordinary reasons: markets moved past a quote, a balance came up short, a reference was reused. Because execution is atomic, every failure is clean, no funds move, so handling them well is a UX and bookkeeping problem, not a recovery problem.
+Trades fail for ordinary reasons: markets moved past a quote, a balance came up short, a quote was already used. Because execution is atomic, every failure is clean, no funds move, so handling them well is a UX and bookkeeping problem, not a recovery problem.
 
-One rule governs everything: **never debit a user's view of their balance until `trade.completed` arrives**, and always retry with the same `reference`, which returns the original result instead of trading twice.
+One rule governs everything: **never debit a user's view of their balance until `trade.completed` arrives**, and generate the `reference` before the first attempt. On NGN pairs, retrying with the same `reference` returns the original order. On crypto pairs it does **not**: a repeat can execute a second trade, so look the order up before you retry.
 
 ## The failure cases
 
 <AccordionGroup>
-  <Accordion title="Quote expired (400)">
-    The quote was valid but not executed within its window.
+  <Accordion title="Quote expired (422)">
+    The quote was valid but wasn't used before its `expires_at`. The response is `422` with code `PRECONDITION_FAILED` and the detail `Quote <id> has expired`.
 
     **Respond:** show "This price has expired, refresh to get a new quote", fetch a fresh [quote](/api-reference/trading/create-quote), and never auto-retry an expired quote without the user seeing the new rate. Validate `expires_at` server-side before submitting; [Get quote status](/api-reference/trading/get-quote-status) re-reads a quote you hold.
   </Accordion>
@@ -27,21 +27,63 @@ One rule governs everything: **never debit a user's view of their balance until 
   <Accordion title="Invalid asset pair or amount (400)">
     Unsupported pair, or a missing, zero, or malformed `quantity`. Validate input in your own layer; amounts are major units of the base currency.
   </Accordion>
-  <Accordion title="Duplicate reference (409)">
-    Idempotency caught a replay. Fetch the existing trade with [Get order](/api-reference/trading/get-order-by-id-or-reference) and treat it as the result; log a conflict if the amounts differ, because that is a bug on your side.
+  <Accordion title="Quote already consumed (422, NGN pairs)">
+    Each NGN quote backs one order. Create a new quote and show the user the new rate.
+  </Accordion>
+  <Accordion title="Quote not found (404)">
+    The `quote_id` doesn't exist. Check you're passing the quote's `id`, not your own reference.
+  </Accordion>
+  <Accordion title="Repeated reference">
+    There is no `409` for trades. On NGN pairs, a repeated `reference` returns the original order with the same `id`. On crypto pairs, the reference isn't checked, so a blind retry can trade twice. After a timeout, look the crypto order up with `GET /api/trading/orders/{reference}` before resending.
   </Accordion>
   <Accordion title="Insufficient balance (422)">
     The source balance cannot cover the trade. Prevent it up front with a balance check, or queue the trade behind a top-up and notify the user.
   </Accordion>
   <Accordion title="Execution error (500)">
-    Internal routing or engine failure. Retry once with backoff using the same reference; alert your ops channel for trades above your size threshold if it persists.
+    Internal routing or engine failure. Look the order up before retrying, then retry once with backoff; alert your ops channel for trades above your size threshold if it persists.
   </Accordion>
 </AccordionGroup>
+
+## Error format
+
+Errors come back in one of two shapes. Business and authentication errors use an RFC 7807 problem object:
+
+```json
+{
+  "type": "https://api.bitnob.com/errors/PRECONDITION_FAILED",
+  "title": "Precondition Failed",
+  "status": 422,
+  "detail": "Quote 9b4397d4-0a39-4aa0-b11b-cdb837bd824f has expired",
+  "code": "PRECONDITION_FAILED",
+  "correlation_id": "req_01a11af9-16b3-7e8f-adf7-326d06c427f7",
+  "timestamp": "2026-10-08T10:04:54.34231887Z",
+  "request_id": "req_01a11af9-16b3-7e8f-adf7-326d06c427f7"
+}
+```
+
+A request with missing or malformed fields uses a validation envelope that names each field:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BAD_REQUEST",
+    "message": "Validation failed",
+    "details": {
+      "quantity": "Quantity is required"
+    }
+  },
+  "request_id": "req_01a11af4-7454-7218-93af-26d7e3af177f",
+  "timestamp": "2026-10-08T09:59:50.695856091Z"
+}
+```
+
+Branch on the HTTP status and `code`, not on message text.
 
 ## Monitoring and recovery
 
 - Track every `trade.failed` event with its `reason`; alert on spikes, for example 5 failures within a minute, which usually signal a systemic cause.
-- Sweep [List orders](/api-reference/trading/list-orders) on a schedule and flag trades initiated but never confirmed by a webhook.
+- Sweep [List orders](/api-reference/trading/list-orders) on a schedule and flag trades initiated but never confirmed by a webhook. The list returns crypto-pair orders only, so check NGN orders one at a time with [Get order](/api-reference/trading/get-order-by-id-or-reference).
 - Confirm an order's real state with [Get order](/api-reference/trading/get-order-by-id-or-reference) before any retry decision, and use [Cancel order](/api-reference/trading/cancel-order) where one is still cancellable.
 - Log `reference`, `quote_id`, pair, amounts, failure code, and timestamp on every attempt; that one habit powers dashboards, postmortems, and support.
 

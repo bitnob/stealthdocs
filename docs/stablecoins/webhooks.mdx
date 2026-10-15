@@ -61,9 +61,11 @@ All three events share one `data` shape. `amount` is in the token's smallest uni
     "chain": "tron",
     "currency": "USDT",
     "fee": "0",
+    "from_address": "TQrY8tryqsYVCYS3MFbtffiPp2ccyn4rkr",
     "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
     "reference": "RCV_SBLNC_cc309ba8c361",
-    "timestamp": "2025-12-12T20:38:23Z"
+    "timestamp": "2025-12-12T20:38:23Z",
+    "transaction_id": "8c3d1332-bd52-40f4-972f-768a2c4106f3"
   }
 }
 ```
@@ -108,7 +110,7 @@ Field-by-field documentation lives under the [deposit](/api-reference/addresses/
 
 ## Delivery semantics
 
-- Return `200` quickly; non-200 responses are retried 3 times after the first failure.
+- Return `200` quickly. Any other response, including a timeout, is retried up to 3 times with exponential backoff, and then delivery stops.
 - Retries mean duplicates: de-duplicate on `event_id`.
 - Endpoints must be HTTPS and respond within 5 seconds; process asynchronously.
 - Keep the backstop: sweep [List transactions](/api-reference/transactions/list-transactions) on a schedule so a missed delivery never becomes a wrong balance. [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a single reference.

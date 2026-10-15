@@ -15,9 +15,9 @@ To verify events, validate the **x-bitnob-signature** header sent with the event
 
 ### Notification retries
 
-When posting notifications, we expect to receive a 200 response code from you. If the response code is not 200, we retry sending the event 3 times after the first failure.
+We expect a `200` response to every delivery. Anything else, including a timeout or a `4xx`, counts as a failure. A failed delivery is retried up to 3 times with exponential backoff, and then delivery stops.
 
-This way, whenever you experience downtime on your end, your updates will still be sent.
+The same event can arrive more than once, even after you returned `200`, and events can arrive out of order. De-duplicate on `event_id`, and do not assume ordering. Because retries are finite, an endpoint that is down for long enough misses events for good, so reconcile against the API on a schedule.
 
 ***Don't rely on webhooks entirely***
 

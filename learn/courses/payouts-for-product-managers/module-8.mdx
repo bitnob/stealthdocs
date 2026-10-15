@@ -74,7 +74,7 @@ Build internal transaction previews with multi-party approval for high-risk payo
 
 Require HTTPS with verified certificates for all webhook endpoints.
 
-Sign all webhook payloads using your API secret with HMAC SHA-256.
+Verify every webhook payload against its HMAC SHA-512 signature, computed over the raw body with your webhook secret.
 
 Validate webhook signatures before processing any event.
 

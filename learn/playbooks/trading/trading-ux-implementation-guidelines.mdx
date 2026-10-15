@@ -8,8 +8,8 @@ Requirements:
 
 Show exact values returned from POST /api/trading/quotes: see [Quotes](/api-reference/trading/create-quote):
 
-- inputAmount, outputAmount, rate, fee, expiresAt
-- Display countdown timer (expiresAt - now) prominently
+- `exchange.send_quantity` and `exchange.receive_quantity`, `price`, and `expires_at`
+- Display a countdown timer (`expires_at` minus now) prominently
 
 Format monetary values:
 
@@ -28,7 +28,7 @@ UI Examples:
 
 ## Expiration logic
 
-Requirements: Disable “Confirm” button as soon as expiresAt \< now
+Requirements: Disable “Confirm” button as soon as `expires_at` has passed
 
 Show a non-blocking notification:
 
@@ -103,7 +103,7 @@ Required Error States:
 |---|---|
 | Quote expired | This quote has expired. Please request a new quote. |
 | Insufficient balance | You do not have enough balance to complete this trade. |
-| Duplicate reference | This trade has already been submitted. |
+| Quote already used (NGN) | This price has already been used. Please request a new quote. |
 | Execution failure | Trade failed. No funds were moved. Try again later. |
 
 Provide a dismissible alert and log internally with full context.

@@ -17,7 +17,8 @@ related:
 | Funding window | The period between quote creation and `expires_at`, during which funding must arrive. |
 | Payment asset | The asset funding a payout: BTC (on-chain or Lightning), USDT, or USDC. |
 | Payout status | The record's lifecycle state: `QUOTE`, `INITIATED`, `PENDING_ADDRESS_DEPOSIT`, `PROCESSING`, `COMPLETED`, or `FAILED`. `COMPLETED` is the only success state. See [Statuses and webhook events](/docs/payouts/statuses-and-webhook-events). |
-| Trip | The per-payout timeline object recording when each lifecycle stage was reached. See [The Trip timeline](/docs/payouts/understanding-trip-timeline). |
+| Payout ID | The UUID Bitnob assigns to a payout, returned as `id`. Pass it to [Get payout](/api-reference/payouts/get-payout) to read the current status and trip timeline. Track a payout by this `id` or by your own `reference`. |
+| Trip | The object of milestone timestamps on a payout: `quote_at`, `initialized_at`, `processing_start`, and `completion_time`, filled in as the payout progresses. It holds timestamps only and has no ID of its own. See [The Trip timeline](/docs/payouts/understanding-trip-timeline). |
 | Completion time | The Trip field set when a payout reaches a terminal state: success, failure, or expiry. |
 | Time to finish | Seconds between submission and completion, from the Trip. |
 | Settlement | Delivery of fiat funds to the beneficiary's account. |
@@ -27,6 +28,8 @@ related:
 | Underpayment | Funding that arrives short of the quoted amount. The payout is adjusted down proportionally. |
 | Overpayment | Funding that exceeds the quoted amount. The excess is credited to your balance. |
 | Expiry | A quote or funding window lapsing before payment arrives, cancelling the payout attempt. |
+| API key | Your `CLIENT_ID` and `CLIENT_SECRET`. The `CLIENT_ID` is the same in sandbox and production. The `CLIENT_SECRET` is issued per environment and decides which one a request runs against. See [Authentication](/api-reference/authentication/authentication). |
+| Request signature | The HMAC-SHA256 signature sent with every request, keyed with your `CLIENT_SECRET`. Bitnob authenticates with signed headers, not a bearer token. |
 | Callback URL | The URL where Bitnob delivers webhook events for a payout, set at initialize. |
 | Webhook | An event notification delivered to your server. Payouts emit four: see [Receive payout webhooks](/docs/payouts/webhook-payout). |
 | Corridor | A destination country and its rails, requirements, and behaviour. See [Corridor behaviour](/docs/payouts/corridor-specific-behavior). |

@@ -11,13 +11,13 @@ A webhook is a URL on your server where we send payloads for transaction events.
 
 Verifying that these events come from Bitnob is necessary to avoid creating transactions due to a fraudulent event.
 
-To verify events, validate the **x-bitnob-signature** header sent with the event. The HMAC SHA512 signature is the event payload signed with your **secret key.**
+To verify events, validate the **x-bitnob-signature** header sent with the event. The signature is an HMAC SHA-512 of the **raw request body**, keyed with your webhook secret. Compute it over the bytes you received, before parsing: re-serialising parsed JSON changes the bytes and the check fails.
 
 ### Notification retries
 
-When posting notifications, we expect to receive a 200 response code from you. If the response code is not 200, we retry sending the event 3 times after the first failure.
+We expect a `200` response to every delivery. Anything else, including a timeout or a `4xx`, counts as a failure. A failed delivery is retried up to 3 times with exponential backoff, and then delivery stops.
 
-This way, whenever you experience downtime on your end, your updates will still be sent.
+The same event can arrive more than once, even after you returned `200`, and events can arrive out of order. De-duplicate on `event_id`, and do not assume ordering. Because retries are finite, an endpoint that is down for long enough misses events for good, so reconcile against the API on a schedule.
 
 ***Don't rely on webhooks entirely***
 
@@ -33,17 +33,22 @@ Create a tunnel, and update the new webhook URL setting on your dashboard. Only 
 
 ```javascript
 const crypto = require('crypto');
+const express = require('express');
 const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
-// Using Express
-app.post("/webhook_url", function(req, res) {
-  //validate event
-  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
-  if (hash == req.headers['x-bitnob-signature']) {
-  // Retrieve the request's body
-  const event = req.body;
-  // Do something with event  
-  }
-  res.send(200);
+
+// Sign the raw body: re-serialising parsed JSON changes the bytes
+app.post('/webhook_url', express.raw({ type: 'application/json' }), (req, res) => {
+  const expected = crypto.createHmac('sha512', webhookSecret).update(req.body).digest('hex');
+  const received = req.headers['x-bitnob-signature'] || '';
+  const valid =
+    received.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected));
+  if (!valid) return res.sendStatus(401);
+
+  res.sendStatus(200);
+  // Parse the body only after the signature checks out
+  const event = JSON.parse(req.body);
+  // De-duplicate on event.event_id, then process
 });
 ```
 
@@ -78,6 +83,10 @@ Stablecoin webhooks are fired when a customer sends or receives stablecoin.
 
 This webhook is fired when a stablecoin deposit is successfully confirmed on the blockchain.
 
+<ResponseField name="event_id" type="string">
+  A unique identifier for this webhook event. Use it to de-duplicate deliveries, since the same event may be sent more than once.
+</ResponseField>
+
 <ResponseField name="event" type="string">
   The webhook event type indicating a successful stablecoin deposit. In this case, it is always 'deposit.success'.
 </ResponseField>
@@ -102,6 +111,10 @@ This webhook is fired when a stablecoin deposit is successfully confirmed on the
   The fee amount associated with the deposit, typically '0' for incoming payments.
 </ResponseField>
 
+<ResponseField name="from_address" type="string">
+  The sender's wallet address that the deposit came from.
+</ResponseField>
+
 <ResponseField name="hash" type="string">
   The blockchain transaction hash that uniquely identifies the deposit. Can be used to verify the transaction on a blockchain explorer.
 </ResponseField>
@@ -114,8 +127,13 @@ This webhook is fired when a stablecoin deposit is successfully confirmed on the
   The ISO 8601 timestamp of when the deposit was recorded, indicating when the transaction was detected on the blockchain.
 </ResponseField>
 
+<ResponseField name="transaction_id" type="string">
+  The unique identifier of the transaction in Bitnob. Use it to look up or reconcile the deposit through the API.
+</ResponseField>
+
 ```json
 {
+  "event_id": "0b7d6c1e-4f3a-4b8e-9a52-1c2d3e4f5a6b",
   "event": "deposit.success",
   "data": {
     "address": "Cev6GkmDnwSY3PvwhwBofwv65FrwcU1RxvF9Zt9aTJq4",
@@ -123,9 +141,11 @@ This webhook is fired when a stablecoin deposit is successfully confirmed on the
     "chain": "tron",
     "currency": "USDT",
     "fee": "0",
+    "from_address": "TQrY8tryqsYVCYS3MFbtffiPp2ccyn4rkr",
     "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
     "reference": "RCV_SBLNC_cc309ba8c361",
-    "timestamp": "2025-12-12T20:38:23Z"
+    "timestamp": "2025-12-12T20:38:23Z",
+    "transaction_id": "8c3d1332-bd52-40f4-972f-768a2c4106f3"
   }
 }
 ```

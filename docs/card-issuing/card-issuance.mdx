@@ -23,14 +23,13 @@ Your [Create card](/api-reference/cards/create-card-embedded-customer) call retu
 
 Treat the webhook, not the HTTP response, as the signal to show the card to a user.
 
-## Why the customer object exists
+## Verify the cardholder first
 
-Every card belongs to a customer, and the issuing bank requires that customer's identity: name, date of birth, ID document, and address. Two ways to satisfy it:
+Every card belongs to a verified customer, and the issuing bank requires that customer's identity: name, date of birth, ID document, and address. Run each cardholder through [Card KYC](/api-reference/cards/card-kyc) before you create a card for them. Approval returns a `customer_id`, which you pass to Create card. Because the identity details were captured during KYC, you don't send them again.
 
-- **New customer**: pass the nested `customer` object on the create call; the customer and card are created together.
-- **Existing customer**: pass `customer_id` and skip the object.
+Cards are virtual only. Lite cards, created with [Create lite card](/api-reference/cards/create-lite-card), also need approved Card KYC, plus `card_brand`, `swipe_count`, and `terminate_date`.
 
-You remain responsible for verifying your end users before creating cards on their behalf. Bitnob enforces platform-level KYC, and higher volumes or limits can require additional cardholder verification.
+Higher volumes or limits can require additional cardholder verification.
 
 ## What kind of card you get
 
@@ -49,7 +48,7 @@ You remain responsible for verifying your end users before creating cards on the
 |---|---|
 | User wants to shop online | One general-purpose card linked to their account, reused across merchants. |
 | Subscriptions | A persistent card left active for recurring charges. |
-| Business spend | Per-employee or per-department cards, each with [spend limits](/api-reference/cards/update-spend-limits). |
+| Business spend | Per-employee or per-department cards, each funded with only what that person needs. |
 | One-time purchase | A disposable card, terminated after use. |
 | Payout-to-spend | Issue and fund a card at payout time instead of transferring fiat. |
 

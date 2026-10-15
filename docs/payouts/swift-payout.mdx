@@ -78,10 +78,6 @@ x-auth-signature: <hmac-signature>
   Client-generated idempotency / tracking key.
 </ParamField>
 
-<ParamField body="client_meta_data" type="string">
-  Arbitrary metadata string for your own bookkeeping.
-</ParamField>
-
 
 ### Example request
 
@@ -146,10 +142,6 @@ Content-Type: application/json
 
 <ParamField body="callback_url" type="string">
   Per-payout webhook override URL.
-</ParamField>
-
-<ParamField body="client_meta_data" type="string">
-  Arbitrary client metadata.
 </ParamField>
 
 

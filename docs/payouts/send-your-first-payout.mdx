@@ -108,12 +108,11 @@ Every request goes to `https://api.bitnob.com`. Sandbox and production share tha
       },
       "reference": "payout-1777919122721-wln774",
       "payment_reason": "Invoice payment",
-      "callback_url": "https://your-app.example.com/webhooks/payout",
-      "client_meta_data": "{\"batch\":\"march-payouts\"}"
+      "callback_url": "https://your-app.example.com/webhooks/payout"
     }
     ```
 
-    `callback_url` is where webhook events for this payout are sent; set it. `client_meta_data` is echoed back for your own reconciliation.
+    `callback_url` is where webhook events for this payout are sent; set it.
 
     For onchain funding the response moves the record to `PENDING_ADDRESS_DEPOSIT` and carries the funding instruction in `address`:
 

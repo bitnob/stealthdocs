@@ -448,6 +448,7 @@
             "icon": "credit-card",
             "expanded": true,
             "pages": [
+              "POST /api/cards/kyc",
               "POST /api/cards",
               "GET /api/cards",
               "POST /api/cards/lite",
@@ -459,7 +460,6 @@
               "GET /api/cards/{cardId}/transactions/{transactionId}",
               "POST /api/cards/{cardId}/balance",
               "POST /api/cards/{cardId}/status",
-              "PUT /api/cards/{cardId}/spend-limits",
               "PATCH /api/cards/{cardId}/contact",
               "POST /api/cards/{cardId}/simulate-webhook",
               "GET /api/customers/{customerId}/cards",

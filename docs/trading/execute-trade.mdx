@@ -22,7 +22,7 @@ POST /api/trading/orders
 Use this endpoint to:
 
 - Execute a trade between supported currencies (USDT, USDC, Bitcoin, NGN) for a user or system wallet
-- Lock in pricing using a valid [quote](/api-reference/trading/create-quote) (quoteId)
+- Lock in pricing using a valid [quote](/api-reference/trading/create-quote) (`quote_id`)
 - Route funds directly to your Bitnob wallet for the destination asset
 - Track every trade via reference ID, [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference), and webhooks
 
@@ -53,7 +53,7 @@ Use this endpoint to:
 </ParamField>
 
 <ParamField body="reference" type="string">
-  Your unique reference for this trade. Also the idempotency key: reusing it returns the original trade instead of executing again.
+  Recommended. Your idempotency key for this trade. On NGN pairs, a repeat returns the original order. On crypto pairs, a repeat is **not** rejected, so look the order up before you retry. See [Idempotency](#idempotency).
 </ParamField>
 
 ## Example request
@@ -70,11 +70,7 @@ Use this endpoint to:
 }
 ```
 
-### Example request (NGN pair) preview
-
-<Note>
-  **Preview, enabled per account:** NGN (naira) trading is being rolled out gradually and is not enabled for all companies yet.
-</Note>
+### Example request (NGN pair)
 
 For a naira trade, set base_currency to what you are spending and use side: "sell". quote_id is required: carry over the price and id from the quote.
 
@@ -91,6 +87,8 @@ For a naira trade, set base_currency to what you are spending and use side: "sel
 ```
 
 ## Response
+
+Crypto pairs return `201 Created`.
 
 ```json
 {
@@ -146,7 +144,7 @@ For a naira trade, set base_currency to what you are spending and use side: "sel
 | order_type | string | The type of order (e.g., limit) |
 | quantity | string | The quantity of base currency ordered |
 | price | string | The price at which the order was placed |
-| order.status | string | Status of the order (filled, pending, cancelled) |
+| order.status | string | Status of the order: `pending`, `filled`, `rejected`, or `cancelled` |
 | created_at | string | ISO 8601 timestamp when order was created |
 | updated_at | string | ISO 8601 timestamp when order was last updated |
 | filled_quantity | string | The quantity that has been filled |
@@ -164,21 +162,27 @@ For a naira trade, set base_currency to what you are spending and use side: "sel
 
 ## Trade behaviour
 
-If quoteId is provided:
+If you send a `quote_id`:
 
-- The rate is locked
-- If the quote is expired, trade will fail (quote_expired)
+- The rate is locked.
+- If the quote has expired, the order is rejected with `422` and `Quote <id> has expired`. No funds move.
+- If the quote doesn't exist, the order is rejected with `404`.
 
-If quoteId is omitted:
+If you leave out `quote_id` (crypto pairs only):
 
-- The trade is executed at live market rate
-- Final output may vary slightly depending on real-time pricing
+- The order executes at the live market rate.
+- The final amount can differ slightly from what you displayed.
 
-For NGN pairs: quote_id is always required. Naira trades cannot execute at a live market rate, so the rate must be locked with a quote first.
+NGN pairs always need a `quote_id`. Naira trades can't execute at a live market rate, and each NGN quote backs exactly one order.
 
 ## Idempotency
 
-You must submit a unique reference for each trade attempt. Reusing the same reference will return the original trade object, preventing accidental double execution.
+Send a unique `reference` with every trade, and generate it before the first attempt. What a repeated reference does depends on the pair:
+
+- **NGN pairs:** the request returns the original order again, with the same `id`. Nothing executes a second time, even if you send a new `quote_id`.
+- **Crypto pairs:** the reference isn't checked for uniqueness. A second request with the same reference can execute a second trade.
+
+So after a timeout on a crypto order, don't resend blindly. Look it up first with `GET /api/trading/orders/{reference}`, and resend only if it isn't there. That lookup doesn't work for NGN orders (it returns `400` "invalid id"). For those, keep the order `id` from the response, or resend with the same reference to get the original order back.
 
 ## Webhooks
 
@@ -193,11 +197,14 @@ On completion, Bitnob will emit:
 
 | Code | Message | Description |
 |---|---|---|
-| 400 | Quote expired | quoteId is no longer valid. |
-| 400 | Invalid asset pair | Use a supported pair (USDT, USDC, BTC, NGN); naira trades need NGN on one side. |
-| 400 | Quote required | quote_id is mandatory for NGN pairs. |
-| 403 | NGN not enabled | Naira trading is not enabled on your account. |
-| 400 | Missing or invalid amount | Must be > 0 and in proper unit. |
-| 409 | Duplicate reference | Trade with that reference already exists. |
-| 422 | Insufficient balance | Source wallet doesn’t have enough funds. |
-| 500 | Execution failed | Internal issue; retry or contact support. |
+| 400 | Invalid asset pair | Use a supported pair (USDT, USDC, BTC, NGN). Naira trades need NGN on one side. |
+| 400 | quote_id is required for NGN pairs | Request a quote first. |
+| 400 | Validation failed | A required field is missing or malformed. `details` names each field. |
+| 400 | Order too small: minimum 1.0 USDC | Crypto pairs have a minimum order size, and the message names it. |
+| 403 | NGN not enabled | Naira trading isn't enabled on your account. Match on the status, not the text. |
+| 404 | `Quote <id> not found` | The `quote_id` doesn't exist. |
+| 422 | quote already consumed | NGN quotes back one order. Create a new quote. |
+| 422 | `Quote <id> has expired` | The quote passed its `expires_at`. Create a new quote. Code is `PRECONDITION_FAILED`. |
+| 422 | Insufficient balance | The source wallet doesn't have enough funds. No funds move. |
+| 500 | Execution failed | Internal issue. Retry, or contact support. |
+| 503 | We couldn't process your order right now. No funds were charged. | The trading service is unavailable. Look the order up before retrying. |
