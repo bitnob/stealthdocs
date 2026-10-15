@@ -4,6 +4,36 @@ description: "Dated entries for API changes, new products, and documentation upd
 rss: true
 ---
 
+<Update label="October 15, 2026" tags={["Breaking","New"]}>
+  ## Cards API: required fields updated and nested customer removed
+
+  The `POST /api/cards` endpoint now requires a `customer_id` string instead of a nested `customer` object. The `POST /api/cards/lite` endpoint no longer accepts a `type` field and adds several required fields, including `card_brand`, `swipe_count`, `terminate_date`, and detailed customer attributes. The `POST /api/customers` endpoint restricts `customer_type` to the enum values `individual` or `business`.
+
+  | Operation          | Endpoint               |
+  | ------------------ | ---------------------- |
+  | Create card        | `POST /api/cards`      |
+  | Create lite card   | `POST /api/cards/lite` |
+  | Create customer    | `POST /api/customers`  |
+
+  **Before and after for `POST /api/cards`**
+
+  | Before                                                            | After          |
+  | ----------------------------------------------------------------- | -------------- |
+  | `customer` (object with `customer_type`, `first_name`, `last_name`, `date_of_birth`, `id_type`, `id_number`, `email`, `phone_number`, `dial_code`, `line1`, `city`, `state`, `postal_code`, `country`) | `customer_id` (string) |
+
+  **Before and after for `POST /api/cards/lite`**
+
+  | Before                                                            | After                                                                    |
+  | ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
+  | `type` (string)                                                   | `card_brand` (string, enum: `visa`, `mastercard`)                        |
+  | `customer` (object, no required subfields)                        | `customer` (object with required `customer_type`, `email`, `first_name`, `last_name`, `phone_number`) |
+  | (no `swipe_count`, `terminate_date`)                              | `swipe_count` (integer), `terminate_date` (string)                       |
+
+  Required fields for `POST /api/cards` are `card_type`, `currency`, `amount`, and `customer_id`.  
+  Required fields for `POST /api/cards/lite` are `amount`, `currency`, `card_brand`, `swipe_count`, `terminate_date`; when a `customer` block is provided, `customer_type`, `email`, `first_name`, `last_name`, and `phone_number` are also required.  
+  Required fields for `POST /api/customers` are `email` and `customer_type` (limited to `individual` or `business`).
+</Update>
+
 <Update label="September 6, 2026" tags={["Breaking","New"]}>
   ## Cards API endpoints removed and added
 
