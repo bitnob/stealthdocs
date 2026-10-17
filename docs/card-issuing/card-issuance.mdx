@@ -31,6 +31,30 @@ Cards are virtual only. Lite cards, created with [Create lite card](/api-referen
 
 Higher volumes or limits can require additional cardholder verification.
 
+## What creating a card costs
+
+Create card takes the opening `amount` from your company balance, plus two fees: the \$1.00 card creation fee, and the top-up fee on the opening amount (\$1.00 flat below \$100, 1% at \$100 and above). They show up as separate ledger entries: a `CARD_TOPUP` carrying the top-up fee, and a `CARD_CREATION_FEES` debit. A \$2.00 card therefore needs \$4.00.
+
+If your balance can't cover all three, Create card fails before anything is issued:
+
+```json
+{
+  "type": "https://api.bitnob.com/errors/VALIDATION_ERROR",
+  "title": "Validation Error",
+  "status": 400,
+  "detail": "Insufficient company balance for card creation: required 4.00, available 0.11 USDC",
+  "code": "VALIDATION_ERROR",
+  "extensions": {
+    "error_code": "COMPANY_INSUFFICIENT_BALANCE",
+    "currency": "USDC",
+    "required": "4.00",
+    "available": "0.11"
+  }
+}
+```
+
+`extensions.currency` tells you which balance was checked, and `required` is the full amount including fees. Top that balance up, then retry.
+
 ## What kind of card you get
 
 | Property | Value |
@@ -41,6 +65,7 @@ Higher volumes or limits can require additional cardholder verification.
 | Spend scope | Online (card-not-present), plus in-store tap-to-pay via Apple or Google Wallet when contactless is enabled |
 | 3DS | Not currently supported |
 | Cards per customer | Up to 3 active cards |
+| Billing address | A fixed US billing address issued with the card and returned in `billing_address` |
 
 ## When to issue
 
