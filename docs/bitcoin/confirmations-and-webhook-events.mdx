@@ -33,7 +33,7 @@ To read the current depth of a transaction at any time, re-query [Get transactio
 | `transfer.success` | An outbound send completed. | Mark the withdrawal settled. |
 | `transfer.failed` | An outbound send failed. | Release the hold and surface the reason. |
 
-Deliveries are HTTPS POSTs signed with the `x-bitnob-signature` header. Verify the signature on every event before acting on it, and make handlers idempotent, de-duplicating on `event_id`. The full verification walkthrough and source IP list are on the [Addresses webhooks reference](/api-reference/addresses/webhooks).
+Deliveries are HTTPS POSTs signed with the `x-bitnob-signature` header. Verify the signature on every event before acting on it, and make handlers idempotent, de-duplicating on `event_id`. The full verification walkthrough and source IP list are on the [Addresses webhooks reference](/docs/stablecoins/address-webhook-events).
 
 ### `deposit.success` payload fields
 

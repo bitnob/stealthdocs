@@ -40,7 +40,7 @@ This section is designed for internal operators and support teams managing the l
 
 - Confirm chain, token, and address used by customer
 - Lookup the [Bitnob transaction record](/api-reference/transactions/get-transaction-by-id), then the chain explorer using txHash
-- Check Bitnob webhook log for deposit.success: see the [deposit webhook payload](/api-reference/addresses/webhooks#webhook)
+- Check Bitnob webhook log for deposit.success: see the [deposit webhook payload](/docs/stablecoins/address-webhook-events#webhook)
 - If not received: escalate to Engineering with txHash and address
 
 ### 2. Transfer in pending status \> X mins
@@ -56,7 +56,7 @@ This section is designed for internal operators and support teams managing the l
 - Retry via Dashboard or Support CLI
 - If issue persists:
   - Validate destination endpoint status
-  - Check [signature verification](/api-reference/addresses/webhooks#verifying-events) is not failing silently, and that any IP allowlist still matches the published [Source IPs](/api-reference/addresses/webhooks#source-ips)
+  - Check [signature verification](/docs/stablecoins/address-webhook-events#verifying-events) is not failing silently, and that any IP allowlist still matches the published [Source IPs](/docs/stablecoins/address-webhook-events#source-ips)
   - Notify integration partner (client)
 
 ### 4. Wrong chain deposit
@@ -94,6 +94,6 @@ Operations teams should be trained to:
 
 - Read blockchain explorers (Etherscan, Tronscan, Solscan)
 - Understand Bitnob reference IDs and idempotency
-- Parse [webhook payloads](/api-reference/addresses/webhooks#webhook) and link to user accounts
+- Parse [webhook payloads](/docs/stablecoins/address-webhook-events#webhook) and link to user accounts
 - Use internal tools to replay or verify events
 - Communicate using chain-aware language with customers

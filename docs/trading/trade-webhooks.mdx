@@ -13,7 +13,7 @@ The order response returns immediately, but the outcome arrives as a webhook. Up
 | `trade.completed` | The trade executed and settled. | Credit your ledger, show success. |
 | `trade.failed` | The trade failed: quote expiry, balance, or system error. | Unlock any UI hold, show the reason, offer a re-quote. |
 
-Deliveries are HTTPS POSTs from the addresses listed under [Source IPs](/api-reference/addresses/webhooks#source-ips). Each one carries an `x-bitnob-signature` header: an HMAC SHA-512 of the raw request body, keyed with your webhook secret. Verify it before you parse the body, comparing in constant time, as shown in [Verifying events](/api-reference/addresses/webhooks).
+Deliveries are HTTPS POSTs from the addresses listed under [Source IPs](/docs/stablecoins/address-webhook-events#source-ips). Each one carries an `x-bitnob-signature` header: an HMAC SHA-512 of the raw request body, keyed with your webhook secret. Verify it before you parse the body, comparing in constant time, as shown in [Verifying events](/docs/stablecoins/address-webhook-events).
 
 ## Payloads
 

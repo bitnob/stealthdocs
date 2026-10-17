@@ -118,7 +118,7 @@ We retry a failed delivery 3 times after the first failure. Confirm your handler
     Simulate a deposit and watch the retries arrive in your log.
   </Step>
   <Step title="Confirm the retry count and spacing">
-    Compare what you see against the documented behaviour in [Webhooks](/api-reference/addresses/webhooks).
+    Compare what you see against the documented behaviour in [Webhooks](/docs/stablecoins/address-webhook-events).
   </Step>
   <Step title="Process the same event twice">
     Return `200` and replay the event. Confirm the second run changes nothing.
