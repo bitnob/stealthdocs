@@ -109,7 +109,7 @@ Social previews served from `mint dev`, including through a tunnel, do not alway
 
 `changelog.mdx` is a list of dated `Update` blocks, and `rss: true` in its frontmatter publishes them as a feed integrators can subscribe to.
 
-The published spec at `https://bitnob.dev/api-collections/swagger/` is the source of truth for the API, not the copy in this repository. The `Spec sync` workflow in `.github/workflows/spec-sync.yml` runs every weekday morning, fetches the published spec, and compares it to the committed copy:
+The published specs are the source of truth for the API, not the copies in this repository: `https://bitnob.dev/api-collections/swagger/bitnob-api-v2.openapi.json` for the Bitnob API, and `https://api.platform.bitnob.com/openapi.json` for Platform. The `Spec sync` workflow in `.github/workflows/spec-sync.yml` runs every weekday morning, fetches the published spec, and compares it to the committed copy:
 
 - Nothing differs, and the run ends.
 - Bytes differ but no endpoint or field moved, and it opens a pull request with the updated spec and no changelog entry.
@@ -125,8 +125,10 @@ Configure it once in the repository settings:
 
 - Secret `OPENROUTER_API_KEY`: an [OpenRouter](https://openrouter.ai) key. Every model in the default list is free, so a key with no credit works. Each model is tried up to three times before the next one, since a free model sometimes returns an empty response.
 - Variable `OPENROUTER_MODELS` (optional): a comma-separated list of model ids to try in order. Free model ids are retired from time to time, so this is the setting to change when drafting starts failing on every model.
-- Variable `SPEC_FILES` (optional): a comma-separated list of spec filenames to sync. It defaults to `bitnob-api-v2.openapi.json`, the only one currently published. Add `bitnob-platform.openapi.json` once that spec is served too.
-- Variable `SPEC_BASE_URL` (optional): the directory the specs are fetched from.
+- Variable `SPEC_FILES` (optional): a comma-separated list of specs to sync. Each entry is either a filename, fetched from `SPEC_BASE_URL`, or `filename=url` to fetch that file from its own address. It defaults to `bitnob-api-v2.openapi.json,bitnob-platform.openapi.json=https://api.platform.bitnob.com/openapi.json`. If you set this variable in the repository settings, it replaces the default, so include both specs.
+- Variable `SPEC_BASE_URL` (optional): the directory that plain filenames in `SPEC_FILES` are fetched from. It defaults to `https://bitnob.dev/api-collections/swagger`.
+
+When a synced spec has a `.yaml` copy next to it, the workflow regenerates that copy from the JSON with `.github/scripts/json-to-yaml.py`, so the download links on the developer resources page stay in step. Postman collections are not regenerated; update them by hand when the API surface changes.
 
 Entries for documentation changes, such as new playground features, are still written by hand.
 

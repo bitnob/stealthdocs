@@ -13,7 +13,10 @@ env:
   OASDIFF_VERSION: "1.30.0"
   SYNC_BRANCH: automation/spec-sync
   SPEC_BASE_URL: ${{ vars.SPEC_BASE_URL || 'https://bitnob.dev/api-collections/swagger' }}
-  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json' }}
+  # Comma-separated. Each entry is a filename fetched from SPEC_BASE_URL, or
+  # name=url to fetch that file from its own address.
+  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json,bitnob-platform.openapi.json=https://api.platform.bitnob.com/openapi.json' }}
+  PYYAML_VERSION: "6.0.3"
 
 jobs:
   sync:
@@ -33,24 +36,34 @@ jobs:
           curl -sSL "https://github.com/oasdiff/oasdiff/releases/download/v${OASDIFF_VERSION}/oasdiff_${OASDIFF_VERSION}_linux_amd64.tar.gz" | tar xz -C "$RUNNER_TEMP/bin" oasdiff
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
+      - name: Install PyYAML
+        run: python3 -m pip install --quiet "pyyaml==${PYYAML_VERSION}"
+
       - name: Fetch the published specs and diff them
         id: diff
         run: |
           mkdir -p "$CHANGES_DIR/base"
           changed=false
           notable=false
-          for name in $(echo "$SPEC_FILES" | tr ',' ' '); do
+          for entry in $(echo "$SPEC_FILES" | tr ',' ' '); do
+            name="${entry%%=*}"
+            if [ "$name" = "$entry" ]; then
+              url="$SPEC_BASE_URL/$name"
+            else
+              url="${entry#*=}"
+            fi
+            echo "$name <- $url" >> "$CHANGES_DIR/sources.md"
             local_path="api-collections/swagger/$name"
             if [ ! -f "$local_path" ]; then
               echo "::warning::$local_path is not in the repository, skipping"
               continue
             fi
-            if ! curl -fsSL --retry 3 --max-time 60 -o "$CHANGES_DIR/fetched-$name" "$SPEC_BASE_URL/$name"; then
-              echo "::warning::could not fetch $SPEC_BASE_URL/$name, skipping"
+            if ! curl -fsSL --retry 3 --max-time 60 -o "$CHANGES_DIR/fetched-$name" "$url"; then
+              echo "::warning::could not fetch $url, skipping"
               continue
             fi
             if ! jq empty "$CHANGES_DIR/fetched-$name" 2>/dev/null; then
-              echo "::warning::$SPEC_BASE_URL/$name is not valid json, skipping"
+              echo "::warning::$url is not valid json, skipping"
               continue
             fi
             if cmp -s "$local_path" "$CHANGES_DIR/fetched-$name"; then
@@ -61,6 +74,9 @@ jobs:
             cp "$local_path" "$CHANGES_DIR/base/$name"
             oasdiff changelog "$CHANGES_DIR/base/$name" "$CHANGES_DIR/fetched-$name" --format json > "$CHANGES_DIR/$name.json"
             cp "$CHANGES_DIR/fetched-$name" "$local_path"
+            if [ -f "${local_path%.json}.yaml" ]; then
+              python3 .github/scripts/json-to-yaml.py "$local_path"
+            fi
             if [ "$(jq 'length' "$CHANGES_DIR/$name.json" 2>/dev/null || echo 0)" = "0" ]; then
               echo "$name changed, but no notable api changes"
               rm -f "$CHANGES_DIR/$name.json"
@@ -109,7 +125,9 @@ jobs:
           fi
 
           {
-            echo "The published spec at \`$SPEC_BASE_URL\` no longer matches the copy in this repository, so this pull request brings it up to date."
+            echo "A published spec no longer matches the copy in this repository, so this pull request brings it up to date. Sources:"
+            echo
+            sed 's/^/- /' "$CHANGES_DIR/sources.md"
             echo
             echo "$entry_note"
             echo
