@@ -9,7 +9,7 @@ In this tutorial you take one card through its whole life: verify the cardholder
 
 - Your API credentials and a working signing helper; see [Authentication](/api-reference/authentication/authentication).
 - A reachable webhook endpoint that [verifies signatures](/docs/card-issuing/webhook-payloads#verifying-events).
-- Balance in your Bitnob account to fund from.
+- Enough in your company balance to cover the card's opening amount plus fees. The \$2.00 card in this tutorial takes \$4.00: the \$2.00 load, a \$1.00 top-up fee, and a \$1.00 creation fee. See [What creating a card costs](/docs/card-issuing/card-issuance#what-creating-a-card-costs).
 
 Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` is \$2.00.
 
@@ -25,45 +25,46 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
     {
       "customer": {
         "customer_type": "individual",
-        "first_name": "Ifeoma",
-        "last_name": "Okafor",
-        "date_of_birth": "1990-01-15",
+        "first_name": "Amaka",
+        "last_name": "Eze",
+        "date_of_birth": "1992-05-14",
         "id_type": "bvn",
-        "id_number": "12345678901",
-        "email": "ifeoma.okafor@example.com",
-        "phone_number": "8034567890",
+        "id_number": "22415315108",
+        "email": "amaka.eze.6788f4@example.com",
+        "phone_number": "8179251297",
         "dial_code": "+234",
-        "line1": "18 Wuse Zone 4",
-        "city": "Abuja",
-        "state": "FCT",
-        "postal_code": "900001",
+        "line1": "12 Admiralty Way",
+        "city": "Lagos",
+        "state": "Lagos",
+        "postal_code": "101233",
         "country": "NGA"
       },
-      "occupation": "business_consultant",
+      "occupation": "software_engineer",
       "employment_status": "employed",
-      "account_purpose": "business expenses",
-      "annual_salary": "9600000",
-      "expected_monthly_volume": "850000",
+      "account_purpose": "online subscriptions",
+      "annual_salary": "12000000",
+      "expected_monthly_volume": "500000",
       "place_of_birth": "Enugu",
-      "terms_of_service_accepted": true,
-      "webhook_url": "https://example.com/webhooks/card-kyc"
+      "terms_of_service_accepted": true
     }
     ```
+
+    With a BVN, approval can come back in the same response:
 
     ```json
     {
       "success": true,
       "message": "Card KYC initiated successfully",
       "data": {
-        "customer_id": "01a01914-0000-7000-a000-000000000000",
+        "customer_id": "01a14942-c667-783d-8e42-9d9d4828bc60",
         "status": "approved",
         "completion_link": "",
-        "email": "ifeoma.okafor@example.com",
-        "first_name": "Ifeoma",
-        "last_name": "Okafor",
+        "email": "amaka.eze.6788f4@example.com",
+        "first_name": "Amaka",
+        "last_name": "Eze",
         "normalized_status": "approved"
       },
-      "timestamp": "2026-04-18T13:01:06.145180019Z"
+      "timestamp": "2026-10-17T09:47:55.452509813Z"
     }
     ```
 
@@ -86,16 +87,16 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
     {
       "card_type": "virtual",
       "currency": "USD",
-      "amount": 5000000,
-      "webhook_url": "https://example.com/webhook/callback",
-      "reference": "CARD_CREATE_3e096ff5-0c94-4653-adcc-b232676c84e7",
+      "amount": 2000000,
       "card_brand": "visa",
-      "contactless_payment": true,
-      "customer_id": "01a01914-0000-7000-a000-000000000000"
+      "customer_id": "01a14942-c667-783d-8e42-9d9d4828bc60",
+      "reference": "CARD_CREATE_7e685abc-40bc-4ca2-b7aa-209fad4777d6"
     }
     ```
 
-    The response returns the card in status `pending`:
+    `webhook_url` and `contactless_payment` are optional; see [Create card](/api-reference/cards/create-card-embedded-customer) for every field.
+
+    The response returns the card in status `pending`, with no card number yet:
 
     ```json
     {
@@ -103,20 +104,47 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
       "message": "Card created successfully",
       "data": {
         "card": {
-          "id": "019eeff9-d55e-79a4-9ca3-b86db3b3f7fb",
+          "id": "01a14943-44cf-7b97-832e-5a70803c54b9",
+          "company_id": "b1ebb43e-068f-4b6a-bbab-5c3027bc1510",
+          "customer_id": "01a14942-c667-783d-8e42-9d9d4828bc60",
           "card_type": "virtual",
           "status": "pending",
           "created_status": "processing",
           "card_brand": "visa",
-          "name": "Ifeoma Okafor",
+          "name": "Amaka Eze",
+          "preferred_name": "Amaka Eze",
+          "first_six_digit": "000000",
+          "masked_pan": "000000******",
           "balance_amount": "0",
           "balance_currency": "USD",
-          "reference": "CARD_CREATE_0e42b068-53d3-4683-86d3-8d873a5b0437",
-          "created_at": "2026-06-22T15:36:28Z"
+          "display_amount": 0,
+          "contactless_payment": false,
+          "card_limits": {},
+          "reference": "CARD_CREATE_7e685abc-40bc-4ca2-b7aa-209fad4777d6",
+          "card_program": "prepaid",
+          "nickname": "",
+          "business_spend": null,
+          "available_actions": [],
+          "balance_breakdown": null,
+          "user_metadata": "{}",
+          "billing_address": {
+            "line1": "3401 N. Miami, Ave. Ste 230",
+            "line2": "",
+            "city": "Miami",
+            "state": "Florida",
+            "postal_code": "33127",
+            "country": "United States"
+          },
+          "created_by": "b1ebb43e-068f-4b6a-bbab-5c3027bc1510",
+          "created_at": "2026-10-17T09:48:27Z",
+          "updated_at": "2026-10-17T09:48:27Z"
         }
-      }
+      },
+      "timestamp": "2026-10-17T09:48:27.910453852Z"
     }
     ```
+
+    The opening `amount` and both fees are taken from your company balance at this point. If it can't cover them, the call fails with `400` and `extensions.error_code` `COMPANY_INSUFFICIENT_BALANCE`.
 
     Store the card `id`. Every later call uses it.
   </Step>
@@ -140,6 +168,33 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
     ```
 
     This is the signal to show the card in your UI. Fetch the PAN, CVV, and expiry with [Get secure card details](/api-reference/cards/get-secure-card-details), display them once, and do not store the CVV. If creation fails you get `virtualcard.created.failed` with a `reason`.
+
+    You can also check with [Get card](/api-reference/cards/get-card). Once the card is `active`, it shows the last four digits and the opening balance:
+
+    ```json
+    {
+      "success": true,
+      "message": "Card retrieved successfully",
+      "data": {
+        "card": {
+          "id": "01a14943-44cf-7b97-832e-5a70803c54b9",
+          "status": "active",
+          "created_status": "completed",
+          "last_four_digit": "7725",
+          "masked_pan": "000000******7725",
+          "balance_amount": "2000000",
+          "display_amount": 2,
+          "available_actions": [
+            "FUND",
+            "WITHDRAW",
+            "FREEZE",
+            "UPDATE_LIMITS",
+            "TERMINATE"
+          ]
+        }
+      }
+    }
+    ```
   </Step>
 
   <Step title="Fund the card">

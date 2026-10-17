@@ -1,0 +1,67 @@
+---
+title: "Set card spending limits"
+sidebarTitle: "Set spending limits"
+description: "Cap what a card can spend per transaction, day, week, month, year, or in total, and read the limits back from the card."
+related:
+  - /docs/card-issuing/card-status-management
+  - /docs/card-issuing/transaction-monitoring
+---
+
+Every card can carry six spending limits: per transaction, daily, weekly, monthly, yearly, and all time. A new card starts with none set. When a card supports limits, [Get card](/api-reference/cards/get-card) lists `UPDATE_LIMITS` in its `available_actions`.
+
+## Set or change limits
+
+Full schema: [Update spend limits](/api-reference/cards/update-spend-limits).
+
+```http
+PUT /api/cards/{cardId}/spend-limits
+```
+
+```json
+{
+  "spending_limits": {
+    "transaction_limit": 10000000,
+    "daily_limit": 50000000,
+    "weekly_limit": 200000000,
+    "monthly_limit": 500000000,
+    "yearly_limit": 6000000000,
+    "all_time_limit": 10000000000
+  }
+}
+```
+
+Values are integers in micro-units: 1 USD = 1,000,000, so `10000000` is \$10.00. The response confirms the update but doesn't echo the limits back:
+
+```json
+{
+  "success": true,
+  "message": "Spending limits updated successfully",
+  "timestamp": "2026-10-17T10:33:20.123378515Z"
+}
+```
+
+You don't have to send all six. Only the limits you include change, and the rest keep their current values.
+
+## Read limits back
+
+[Get card](/api-reference/cards/get-card) returns the current limits in `card_limits`, as strings:
+
+```json
+"card_limits": {
+  "transaction_limit": "10000000",
+  "daily_limit": "50000000",
+  "weekly_limit": "200000000",
+  "monthly_limit": "500000000",
+  "yearly_limit": "6000000000",
+  "all_time_limit": "10000000000"
+}
+```
+
+A card with no limits set returns `"card_limits": {}`.
+
+## Rules to know
+
+- **Every value must be positive.** `0` or a negative number fails with `400` `VALIDATION_ERROR`, for example `spending limit daily_limit must be positive`.
+- **A limit can't be removed once set.** Sending `null` or an empty `spending_limits` object is accepted, but changes nothing. To loosen a limit, set it to a higher value.
+- **Limits aren't checked against each other.** The API accepts a per-transaction limit above the daily limit, so validate the combination yourself before you send it.
+- An empty body fails with `400` "spending_limits is required", and an unknown card returns `404`.

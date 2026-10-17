@@ -97,7 +97,7 @@ Send all four headers on every request. A request missing any of them is rejecte
 The API rejects a request with `401` if the timestamp is more than about five minutes in the past or the future, or if the signature doesn't match the exact bytes you sent.
 
 <Warning>
-  Don't rely on the nonce to block replays. In sandbox, a request sent again with the same nonce is accepted, so a captured request can be replayed until its timestamp expires. Generate a fresh nonce for every request anyway, send everything over HTTPS, and protect writes from duplicates with a unique `reference`.
+  Don't rely on the nonce to block replays. A request sent again with the same nonce isn't guaranteed to be rejected, so a captured request can be replayed until its timestamp expires. Generate a fresh nonce for every request anyway, send everything over HTTPS, and protect writes from duplicates with a unique `reference`.
 </Warning>
 
 ## Reference implementations
