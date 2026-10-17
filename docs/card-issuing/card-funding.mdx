@@ -115,7 +115,7 @@ A failed load arrives as `virtualcard.topup.failed` with the same shape and `sta
 
 <AccordionGroup>
   <Accordion title="Insufficient balance (400)">
-    Your company balance can't cover the amount plus fee. The error carries `extensions.error_code: "COMPANY_INSUFFICIENT_BALANCE"`, the `currency` of the balance that was checked, and the `required` and `available` amounts. Its `detail` says "for card creation" even on a top-up. Top up that balance, then retry.
+    Your company balance can't cover the amount plus fee. The error carries `extensions.error_code: "COMPANY_INSUFFICIENT_BALANCE"`, the `currency` of the balance that was checked, and the `required` and `available` amounts. Top up that balance, then retry.
   </Accordion>
   <Accordion title="Amount below the minimum (400)">
     Top-ups start at \$2.00 (`2000000`). The error reads "amount below minimum funding of \$2".
