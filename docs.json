@@ -233,6 +233,7 @@
                 "pages": [
                   "docs/card-issuing/card-funding",
                   "docs/card-issuing/card-status-management",
+                  "docs/card-issuing/spending-limits",
                   "docs/card-issuing/transaction-monitoring",
                   "docs/card-issuing/receive-card-webhooks"
                 ]
@@ -466,6 +467,7 @@
               "GET /api/cards/{cardId}/transactions/{transactionId}",
               "POST /api/cards/{cardId}/balance",
               "POST /api/cards/{cardId}/status",
+              "PUT /api/cards/{cardId}/spend-limits",
               "PATCH /api/cards/{cardId}/contact",
               "POST /api/cards/{cardId}/simulate-webhook",
               "GET /api/customers/{customerId}/cards"
