@@ -235,21 +235,9 @@ POST {BASE_URL}/api/payouts/{quoteId}/finalize
 
 **onchain**: send a crypto deposit to the address / instruction returned from the previous step. You can fund it with BTC (on-chain), Lightning, or stablecoins. Once the deposit confirms, settlement proceeds.
 
-<Tip>
-  **Sandbox tip (onchain):** you can't broadcast a real deposit in sandbox, so simulate it with `POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits` and a body of `{ "amount": "50000" }`.
-
-  ```http
-  # Sandbox only — simulate an onchain deposit
-  POST {BASE_URL}/api/payouts/quotes/{quoteId}/deposits
-  Content-Type: application/json
-  ```
-
-  ```json
-  {
-    "amount": "50000"
-  }
-  ```
-</Tip>
+<Note>
+  Sandbox has no endpoint that simulates a crypto deposit for a payout, so an onchain payout you don't fund stays in `PENDING_ADDRESS_DEPOSIT`.
+</Note>
 
 ```json
 {

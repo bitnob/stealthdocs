@@ -64,11 +64,16 @@ The Bitnob team enables virtual accounts and NGN trading together once your KYB 
       "reference": "your-unique-reference",
       "currency": "NGN",
       "customer_id": "<customer uuid>",
-      "account_alias": "Optional internal label"
+      "account_alias": "Optional internal label",
+      "bank": "globus"
     }
     ```
 
-    `reference` is your idempotency key: sending the same reference again returns the existing account. `account_alias` is an optional label for your own records. NGN is currently the only supported currency. The response returns the account number the customer can pay into.
+    `reference` is your idempotency key: sending the same reference again returns the existing account, even if you change `bank`. `account_alias` is an optional label for your own records. NGN is currently the only supported currency. The response returns the account number the customer can pay into.
+
+    `bank` chooses the issuing bank: `nomba` (Nombank MFB) or `globus` (Globus Bank). It isn't case-sensitive. Leave it out and the account opens at the default bank, currently Nomba. `bank_name` on the response names the bank, but in sandbox it's always `Sandbox Bank`, whichever you choose.
+
+    A customer can hold as many accounts as you need, including one at each bank. Send a new `reference` for each.
   </Step>
   <Step title="Test it in sandbox">
     [`POST /api/virtual-accounts/:id/simulate-deposit`](/api-reference/virtual-accounts/simulate-deposit-sandbox) fakes an inbound transfer so you can exercise the crediting flow without real money. It needs no request body: each call credits a fixed ₦1,000 to your company NGN balance and fires `virtual_account.deposit.success`, exactly as a real transfer would. It is rejected in production.
@@ -93,6 +98,9 @@ The Bitnob team enables virtual accounts and NGN trading together once your KYB 
   </Accordion>
   <Accordion title="Validation error naming missing customer fields">
     The customer record is incomplete. The error lists every missing field at once, for example `customer <id> is missing bvn, date_of_birth`, so fix them in one pass. It refers to the **customer record**, not the request you just sent; update the customer and retry.
+  </Accordion>
+  <Accordion title="bank must be one of: nomba, globus">
+    `bank` was set to something other than `nomba` or `globus`. The request fails with `400` `VALIDATION_ERROR`. Leave `bank` out to use the default bank.
   </Accordion>
   <Accordion title="Verification failure">
     The BVN did not match the customer's registered name or date of birth. Correct the customer record to match the registry.

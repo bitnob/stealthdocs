@@ -26,7 +26,7 @@ Every request goes to `https://api.bitnob.com`. Sandbox and production share tha
     GET {BASE_URL}/api/payouts/account-lookup?country=NG&account_number=0123456789&bank_code=058
     ```
 
-    Confirm the lookup returns `is_verified: true` and the `account_name` you expect. The full walkthrough, including mobile money destinations, is in [Validate a beneficiary](/docs/payouts/validate-a-beneficiary).
+    Confirm the lookup returns `is_verified: true` and the `account_name` you expect. Ghana bank accounts can't be looked up yet, so skip this step for them and have your user confirm the account name. The full walkthrough, including mobile money destinations, is in [Validate a beneficiary](/docs/payouts/validate-a-beneficiary).
   </Step>
 
   <Step title="Create a quote">
@@ -99,7 +99,7 @@ Every request goes to `https://api.bitnob.com`. Sandbox and production share tha
 
     ```json
     {
-      "quote_id": "QT2_21012472",
+      "quote_id": "QT2_21052918",
       "beneficiary": {
         "account_number": "0123456789",
         "bank_code": "058",
@@ -122,28 +122,68 @@ Every request goes to `https://api.bitnob.com`. Sandbox and production share tha
       "message": "Payout initialized successfully",
       "data": {
         "payout": {
-          "id": "019f225a-7063-7636-ba95-584ccba10538",
-          "quote_id": "QT2_21012472",
+          "id": "01a1490a-8853-701d-b999-12833458ac68",
+          "quote_id": "QT2_21052918",
           "status": "PENDING_ADDRESS_DEPOSIT",
           "from_asset": "BTC",
           "chain": "CHAIN_TYPE_LIGHTNING",
-          "to_currency": "KES",
-          "sat_amount": "635299",
-          "settlement_amount": "50000.000000",
+          "to_currency": "NGN",
+          "sat_amount": "45289",
+          "settlement_amount": "50000",
           "beneficiary": {
             "account_name": "Ada Okafor",
             "account_number": "0123456789",
             "bank_code": "058",
             "country": "NG"
           },
-          "address": "lnbc70070n1p4yv0gppp53agkyvtgzgdllzlpuvrkj6w6exka0d7exj4aavqs7cfkx0s9y48qdq4g4mx7h0",
-          "expires_at": "2026-07-02T10:29:39Z"
+          "address": "lntb452890n1p4dxd0xpp53lg3cjx7hmmyglsf656djf4qp5hhu5dj5cn08f37nj7qmxu7g49sdqcf9h8vmmfvdjjqurp09kk2mn5cqzpgxqztxsp5dta7kw6clzy96q39k8h6dy6ranjf0d6624yy3rwt3fjprctkaqns9qrsgqp4vhncl2a3yvnnhexc45kwxp60u2xy6txp7nl6ajsfsgwcz3ldm50a0p79cmld72y4e7s2ekjmcd56x344vkhd9shzdjd0uzjd93a0spkswms9",
+          "expires_at": "2026-10-17T08:52:29Z"
         }
       }
     }
     ```
 
-    What `address` contains depends on `chain`: a BOLT11 invoice (`lnbc…`) for `lightning`, a BTC address for `bitcoin`, or a deposit address on the relevant chain for stablecoins. With `source: "offchain"` there is no `address` and the record moves to `INITIATED` instead.
+    What `address` contains depends on `chain`: a BOLT11 invoice for `lightning` (`lnbc…` in production, `lntb…` testnet invoices in sandbox), a BTC address for `bitcoin`, or a deposit address on the relevant chain for stablecoins. With `source: "offchain"` there is no `address` and the record moves to `INITIATED` instead.
+
+    #### Beneficiaries for other corridors
+
+    Only the `beneficiary` object changes between corridors. Read the exact fields from country requirements in step 1. These shapes are accepted in sandbox:
+
+    <CodeGroup>
+
+    ```json Ghana mobile money (MTN MoMo only)
+    {
+      "destination_type": "mobile_money",
+      "network": "mtn",
+      "account_number": "233246838933",
+      "account_name": "Esther Aidoo",
+      "country": "GH"
+    }
+    ```
+
+    ```json Ghana bank account
+    {
+      "destination_type": "bank",
+      "bank_code": "GH190100",
+      "account_number": "0012345678901",
+      "account_name": "Kwame Mensah",
+      "country": "GH"
+    }
+    ```
+
+    ```json Kenya M-Pesa
+    {
+      "destination_type": "mobile_money",
+      "network": "mpesa",
+      "account_number": "254712345678",
+      "account_name": "John Doe",
+      "country": "KE"
+    }
+    ```
+
+    </CodeGroup>
+
+    Each quote can be initialized once. A second initialize on the same quote fails with `400` "Quote '…' has already been initialized", so use a fresh quote for each payout.
 
     Full schema: [Initialize payout](/api-reference/payouts/initialize-payout).
   </Step>

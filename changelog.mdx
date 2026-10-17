@@ -4,6 +4,12 @@ description: "Dated entries for API changes, new products, and documentation upd
 rss: true
 ---
 
+<Update label="October 14, 2026" tags={["New"]}>
+  ## Choose the bank for virtual accounts
+
+  [Create virtual account](/api-reference/virtual-accounts/create-virtual-account) takes an optional `bank` field: `nomba` (Nombank MFB) or `globus` (Globus Bank). Leave it out and the account opens at the default bank, currently Nomba. A customer can hold accounts at both banks, or several at one, as long as each request uses a new `reference`. `bank_name` returns the issuing bank, and is always `Sandbox Bank` in sandbox. Any other value fails with `bank must be one of: nomba, globus`.
+</Update>
+
 <Update label="October 15, 2026" tags={["Breaking","New"]}>
   ## Cards API: required fields updated and nested customer removed
 
