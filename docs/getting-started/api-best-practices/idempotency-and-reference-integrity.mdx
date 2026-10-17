@@ -120,7 +120,7 @@ What a reused reference does depends on the endpoint:
 | Endpoint | Reused reference |
 |---|---|
 | Payouts | Returns the existing payout instead of creating a second one. |
-| Withdrawals | Rejected with `409`. Nothing is sent. Look the original up with [Get transaction](/api-reference/transactions/get-transaction-by-id). |
+| Withdrawals | Rejected with `409` `DUPLICATE_KEY_ERROR`. Nothing is sent. Look the original up with [Get transaction](/api-reference/transactions/get-transaction-by-id). |
 | Trading, NGN pairs | Returns the original order with the same `id`. Nothing executes twice. |
 | Trading, crypto pairs | **Not checked.** A second request with the same reference can execute a second trade. Look the order up with `GET /api/trading/orders/{reference}` before you resend. |
 | Virtual accounts | Returns the existing account. |

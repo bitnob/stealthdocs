@@ -14,10 +14,10 @@ Sends draw on your balance, checked with [List balances](/api-reference/balances
 
 | Item | Detail |
 |---|---|
-| Minimum per withdrawal | \$1 |
+| Minimum per withdrawal | \$1. Below that, the request fails with `422` `PRECONDITION_FAILED`: "withdrawal amount below minimum: minimum is \$1 USD". |
 | Maximum per withdrawal | None |
 | Daily or monthly limit | None |
-| Fee | \$1 on every chain, charged on top, in the currency withdrawn |
+| Fee | \$1, charged on top, in the currency withdrawn. A 1 USDT send debits 2 USDT. |
 | Time to `transfer.success` | Depends on the chain, but no longer than 15 minutes |
 
 ## Supported chains
@@ -78,14 +78,14 @@ Which chains you can send on depends on the stablecoin and the environment. [Sup
     </ParamField>
 
     <ParamField body="reference" type="string" required>
-      Your unique identifier, and the idempotency key. A reference that already belongs to a withdrawal is rejected with `409`, and nothing is sent.
+      Your unique identifier, and the idempotency key. A reference that already belongs to a withdrawal is rejected with `409` `DUPLICATE_KEY_ERROR`, and nothing is sent.
     </ParamField>
 
     <ParamField body="description" type="string">
       Free-text note for your records.
     </ParamField>
 
-    The response returns the transfer in a pending state. It doesn't carry a fee field: read `fee` back from [Get transaction](/api-reference/transactions/get-transaction-by-id) once the transfer exists. Pending is expected: broadcasting and confirmation happen asynchronously.
+    The response returns the transfer in a pending state. It doesn't carry a fee field: read `fee` back from [Get transaction](/api-reference/transactions/get-transaction-by-id) using the `transaction_id` from the response. On that endpoint, `amount` is the total debit including the fee (`-2000000` for a 1 USDT send), while [List transactions](/api-reference/transactions/list-transactions) shows the sent amount (`-1000000`) and the fee separately. Pending is expected: broadcasting and confirmation happen asynchronously.
   </Step>
   <Step title="Confirm from the webhook">
     `transfer.success` fires once the chain's confirmation threshold is met; `transfer.failed` if the transfer is rejected, reverted, or times out, with held funds returned to your balance. Act on the events rather than polling; [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a reference if you need to re-check one. See [Receive stablecoin webhooks](/docs/stablecoins/webhooks) for payloads and verification.
@@ -98,6 +98,6 @@ Forward any memo the destination gives you exactly as provided; exchanges routin
 
 ## Keep fees legible
 
-The withdrawal fee is a flat \$1, the same on every chain and for any amount. It's charged on top, so the recipient gets the full amount you send. Because it isn't an estimate, show the exact arithmetic before the user confirms: sending \$10.00, fee \$1.00, total debited \$11.00, recipient gets \$10.00.
+The withdrawal fee is a flat \$1, charged on top, so the recipient gets the full amount you send. Because it isn't an estimate, show the exact arithmetic before the user confirms: sending \$10.00, fee \$1.00, total debited \$11.00, recipient gets \$10.00.
 
 For transfers between wallets on your own Bitnob account, skip the chain entirely: [internal transfers](/docs/stablecoins/internal-wallet-to-wallet-transfers) settle instantly with no gas.
