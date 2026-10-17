@@ -24,7 +24,7 @@ Before [issuing addresses](/api-reference/addresses/generate-address), [sending 
 
 **Idempotency.** Every state-changing request takes a unique `reference` you generate per business event. Retrying with the same reference returns the original result instead of repeating the action, so retries after timeouts are safe. Reusing a reference across different actions fails validation.
 
-**Rate limits.** 500 requests per minute per client IP address, on every route. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset` headers. On `429 Too Many Requests`, back off exponentially.
+**Rate limits.** 500 requests per minute. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset` headers. On `429 Too Many Requests`, back off exponentially.
 
 **Confirmation-gated crediting.** Deposits credit only after the chain's confirmation threshold, so design UIs around a pending state from the start. The thresholds are on [Supported chains](/docs/stablecoins/supported-chains), and the reasoning is in [How stablecoins work on Bitnob](/docs/stablecoins/key-concepts).
 

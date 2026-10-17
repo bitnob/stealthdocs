@@ -71,6 +71,8 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
       KYC can be asynchronous. Wait until the customer is approved before you issue a card. If `status` comes back pending, `completion_link` holds a URL the cardholder must finish, and the outcome arrives on the `virtualcard.user.kyc.complete` or `virtualcard.user.kyc.failed` webhook.
     </Note>
 
+    If a customer with that `id_number` already exists under a different email, Card KYC returns `400` with that customer's ID in the `detail`. Resubmit with `customer_id` in place of the `customer` object to verify the existing customer.
+
     Store the `customer_id`. It's the input to the next step.
   </Step>
   <Step title="Create the card">

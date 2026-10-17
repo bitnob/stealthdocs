@@ -49,7 +49,7 @@ Every error body carries `correlation_id`, and repeats it as `request_id`. Log `
 
 ## Rate limits
 
-The API allows 500 requests per minute per client IP address, on every route. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset`, so you can see how close you are before you're throttled. A request over the limit returns `429`: back off exponentially and retry after the reset. Design batch jobs to pace themselves rather than racing the limiter; see [Send payouts in bulk](/docs/payouts/mass-payouts) for the pattern.
+The API allows 500 requests per minute. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset`, so you can see how close you are before you're throttled. A request over the limit returns `429`: back off exponentially and retry after the reset. Design batch jobs to pace themselves rather than racing the limiter; see [Send payouts in bulk](/docs/payouts/mass-payouts) for the pattern.
 
 ## The retry discipline
 

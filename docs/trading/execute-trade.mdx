@@ -88,7 +88,7 @@ For a naira trade, set base_currency to what you are spending and use side: "sel
 
 ## Response
 
-Crypto pairs return `201 Created`.
+A successful order returns `201 Created`.
 
 ```json
 {
@@ -165,7 +165,7 @@ Crypto pairs return `201 Created`.
 If you send a `quote_id`:
 
 - The rate is locked.
-- If the quote has expired, the order is rejected with `422` and `Quote <id> has expired`. No funds move.
+- If the quote has expired, the order is rejected with `422` and code `PRECONDITION_FAILED`. No funds move.
 - If the quote doesn't exist, the order is rejected with `404`.
 
 If you leave out `quote_id` (crypto pairs only):
@@ -202,9 +202,9 @@ On completion, Bitnob will emit:
 | 400 | Validation failed | A required field is missing or malformed. `details` names each field. |
 | 400 | Order too small: minimum 1.0 USDC | Crypto pairs have a minimum order size, and the message names it. |
 | 403 | NGN not enabled | Naira trading isn't enabled on your account. Match on the status, not the text. |
-| 404 | `Quote <id> not found` | The `quote_id` doesn't exist. |
+| 404 | `Quote <id> not found` (crypto) or `quote not found` (NGN) | The `quote_id` doesn't exist. Code is `NOT_FOUND`. |
 | 422 | quote already consumed | NGN quotes back one order. Create a new quote. |
-| 422 | `Quote <id> has expired` | The quote passed its `expires_at`. Create a new quote. Code is `PRECONDITION_FAILED`. |
+| 422 | `Quote <id> has expired` (crypto) or `quote has expired` (NGN) | The quote passed its `expires_at`. Create a new quote. Code is `PRECONDITION_FAILED`. |
 | 422 | Insufficient balance | The source wallet doesn't have enough funds. No funds move. |
 | 500 | Execution failed | Internal issue. Retry, or contact support. |
 | 503 | We couldn't process your order right now. No funds were charged. | The trading service is unavailable. Look the order up before retrying. |

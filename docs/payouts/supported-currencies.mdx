@@ -10,15 +10,19 @@ This table is a snapshot for planning. [Supported countries](/api-reference/payo
 
 ## Currencies and rails
 
+<Note>
+  This table is the set of corridors with live payouts. [Supported countries](/api-reference/payouts/supported-countries) can list corridors that aren't live yet, so confirm a new corridor with your account manager before you launch it.
+</Note>
+
 | Currency | Settlement rail | Countries |
 |---|---|---|
-| GHS | Mobile money only (MTN MoMo) | Ghana |
+| GHS | Bank transfer; mobile money (MTN MoMo only) | Ghana |
 | GMD | Mobile money only (Afrimoney, Qmoney) | The Gambia |
 | KES | M-Pesa mobile money only (personal number, Paybill, Till) | Kenya |
 | NGN | NIP instant bank transfer | Nigeria |
 | RWF | Mobile money only (MTN MoMo, Airtel Money) | Rwanda |
 | UGX | Mobile money only (MTN MoMo, Airtel Money) | Uganda |
-| USD | ACH and wire (United States), local bank transfer (43 countries), SWIFT (about 100 countries) | United States, Europe, UAE, India, China, South Africa, and more |
+| USD | ACH and wire (United States), local bank transfer (43 countries), SWIFT (about 100 countries, including Vietnam) | United States, Europe, UAE, India, China, South Africa, and more. See [Country requirements](/api-reference/payouts/country-requirements) for a given country |
 | XAF | Mobile money only (MTN in Cameroon; Airtel Money and Moov Money in Gabon) | Cameroon, Gabon |
 | XOF | Mobile money only (Orange Money, Free Money, Expresso and Wave in Senegal; Orange Money, MTN MoMo and Moov Money in Ivory Coast; Moov Money and Airtel Money in Niger) | Senegal, Ivory Coast, Niger |
 
@@ -29,7 +33,7 @@ The rail, not Bitnob, sets how long the fiat leg takes. Size your SLAs around th
 | Rail | Typical speed |
 |---|---|
 | NIP (Nigeria) | Seconds. Real-time interbank settlement via NIBSS. |
-| Mobile money | Seconds to minutes. The only rail in Ghana, Kenya, The Gambia, Rwanda, Uganda, and the CFA franc countries listed above. |
+| Mobile money | Seconds to minutes. The only rail in Kenya, The Gambia, Rwanda, Uganda, and the CFA franc countries listed above, and one of two in Ghana. |
 | Local bank transfer (USD) | Varies by country. |
 | ACH (US domestic) | One to three business days. Cheaper than wire. |
 | Wire and SWIFT | Same day to several business days. Used for high-value and urgent cross-border payouts. |

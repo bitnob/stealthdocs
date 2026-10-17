@@ -13,16 +13,16 @@ M-Pesa, operated by Safaricom, is the overwhelmingly dominant mobile money platf
 
 For payout products, the operational reality is:
 
-Primary rail: M-Pesa mobile money wallet payouts,
-
-Secondary rail: Bank transfers (especially for high-value payouts to formal businesses).
+- **Only rail:** M-Pesa. Bitnob pays out to an M-Pesa personal number, a Paybill, or a Till.
+- **No bank transfers.** KES payouts to bank accounts aren't supported.
 
 ## 2. Settlement methods available
 
 | Method | Description |
 |---|---|
-| M-Pesa Wallet Payouts (Safaricom) | Real-time wallet-to-wallet or wallet-to-bank transfers via M-Pesa APIs. |
-| Bank Transfers | Used mainly for higher-value or business payments, slower than mobile money. |
+| M-Pesa personal number | Payout to a customer's M-Pesa wallet, identified by phone number. |
+| M-Pesa Paybill | Payout to a business Paybill number. |
+| M-Pesa Till | Payout to a merchant Till number. |
 
 <Note>
   In retail and small SME payouts, M-Pesa dominance is absolute.
@@ -30,13 +30,11 @@ Secondary rail: Bank transfers (especially for high-value payouts to formal busi
 
 ## 3. Beneficiary validation standards
 
-Confirm a destination resolves before paying it with [Account Lookup](/api-reference/payouts/account-lookup); bank and mobile-money codes come from [Get Banks](/api-reference/payouts/banks-by-country).
+Read the fields each M-Pesa destination needs from [Country requirements](/api-reference/payouts/country-requirements) at runtime.
 
 | Type | Validation Process |
 |---|---|
 | M-Pesa Wallets | Validate mobile number format (07xx xxx xxx). Confirm wallet registration status (through API where available). |
-| Bank Accounts | Validate account number structure (varies by bank), confirm bank codes, sometimes require manual beneficiary validation depending on integration partner. |
-|   | require manual beneficiary validation depending on integration partner. |
 
 ## Best practices for M-Pesa validation
 
@@ -69,7 +67,6 @@ Users may hit daily caps if many payouts occur in a day: plan for progressive pa
 |---|---|
 | Funding Confirmation (Bitcoin/Stablecoin) | \<15 minutes typically (network dependent). |
 | M-Pesa Wallet Payout Processing | Real-time to under 2 minutes under normal conditions. |
-| Bank Transfer Processing | Same day or next day depending on clearing hours and banks. |
 
 ## 6. Common failure modes
 

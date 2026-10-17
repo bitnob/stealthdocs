@@ -14,7 +14,7 @@ One rule governs everything: **never debit a user's view of their balance until 
 
 <AccordionGroup>
   <Accordion title="Quote expired (422)">
-    The quote was valid but wasn't used before its `expires_at`. The response is `422` with code `PRECONDITION_FAILED` and the detail `Quote <id> has expired`.
+    The quote was valid but wasn't used before its `expires_at`. The response is `422` with code `PRECONDITION_FAILED`. The detail reads `Quote <id> has expired` on crypto pairs and `quote has expired` on NGN pairs, so branch on the code, not the text.
 
     **Respond:** show "This price has expired, refresh to get a new quote", fetch a fresh [quote](/api-reference/trading/create-quote), and never auto-retry an expired quote without the user seeing the new rate. Validate `expires_at` server-side before submitting; [Get quote status](/api-reference/trading/get-quote-status) re-reads a quote you hold.
   </Accordion>
