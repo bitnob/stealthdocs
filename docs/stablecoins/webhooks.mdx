@@ -45,7 +45,7 @@ app.post('/webhook', express.raw({ type: () => true }), (req, res) => {
 });
 ```
 
-Reference implementations and the published [Source IPs](/api-reference/addresses/webhooks#source-ips) are under [Verifying events](/api-reference/addresses/webhooks#verifying-events). Treat any IP allowlist as a second layer; the signature is the check that counts.
+Reference implementations and the published [Source IPs](/docs/stablecoins/address-webhook-events#source-ips) are under [Verifying events](/docs/stablecoins/address-webhook-events#verifying-events). Treat any IP allowlist as a second layer; the signature is the check that counts.
 
 ## The payloads
 
@@ -108,7 +108,7 @@ All three events share one `data` shape. `amount` is in the token's smallest uni
 
 </CodeGroup>
 
-Field-by-field documentation lives under the [deposit](/api-reference/addresses/webhooks#webhook) and [transfer](/api-reference/withdrawal/webhooks#webhook) webhook references. Lightning receipts arrive separately as `btc.lightning.received.success`.
+Field-by-field documentation lives under the [deposit](/docs/stablecoins/address-webhook-events#webhook) and [transfer](/docs/stablecoins/withdrawal-webhook-events#webhook) webhook references. Lightning receipts arrive separately as `btc.lightning.received.success`.
 
 ## Delivery semantics
 

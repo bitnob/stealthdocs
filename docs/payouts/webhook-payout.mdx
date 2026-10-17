@@ -8,7 +8,7 @@ related:
 
 Bitnob notifies your server as a payout advances, so you can update records and notify users without polling. Set the destination with `callback_url` when you [initialize a payout](/api-reference/payouts/initialize-payout), or configure a global webhook URL on your dashboard.
 
-Before handling payout events, have the shared plumbing in place from [Webhooks](/api-reference/payouts/webhooks): verify the `x-bitnob-signature` HMAC on every delivery, return `200` quickly, and expect retries, which means the same event can arrive more than once. De-duplicate on `event_id`.
+Before handling payout events, have the shared plumbing in place from [Webhooks](/docs/payouts/webhook-events): verify the `x-bitnob-signature` HMAC on every delivery, return `200` quickly, and expect retries, which means the same event can arrive more than once. De-duplicate on `event_id`.
 
 ## The four events
 
@@ -137,7 +137,7 @@ Every event carries the payout record, so field names match the payouts API resp
 
 ## Handler checklist
 
-- Verify the signature before parsing anything else; see [Verifying events](/api-reference/payouts/webhooks#verifying-events).
+- Verify the signature before parsing anything else; see [Verifying events](/docs/payouts/webhook-events#verifying-events).
 - Return `200` immediately and process asynchronously. Bitnob retries non-200 deliveries up to 3 times with exponential backoff, then stops.
 - Make the handler idempotent on `event_id`.
 - Confirm terminal state with [Get payout](/api-reference/payouts/get-payout) before releasing goods or services; do not act on a webhook alone.

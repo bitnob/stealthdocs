@@ -34,16 +34,16 @@ Every event carries an `event` name, an `event_id`, and a `data` object holding 
 Each product documents its own events:
 
 <Columns cols={2}>
-  <Card title="Deposits and addresses" icon="location-dot" href="/api-reference/addresses/webhooks">
+  <Card title="Deposits and addresses" icon="location-dot" href="/docs/stablecoins/address-webhook-events">
     `deposit.success`, `transfer.success`, `transfer.failed`.
   </Card>
-  <Card title="Payouts" icon="money-bill-transfer" href="/api-reference/payouts/webhooks">
+  <Card title="Payouts" icon="money-bill-transfer" href="/docs/payouts/webhook-events">
     `payouts.initialized`, `payouts.processing`, `payouts.withdrawal.success`.
   </Card>
-  <Card title="Withdrawals" icon="arrow-up-from-bracket" href="/api-reference/withdrawal/webhooks">
+  <Card title="Withdrawals" icon="arrow-up-from-bracket" href="/docs/stablecoins/withdrawal-webhook-events">
     Withdrawal lifecycle events.
   </Card>
-  <Card title="Virtual cards" icon="credit-card" href="/api-reference/virtual-cards/webhooks">
+  <Card title="Virtual cards" icon="credit-card" href="/docs/card-issuing/webhook-payloads">
     Card creation, top-up, and transaction events.
   </Card>
 </Columns>

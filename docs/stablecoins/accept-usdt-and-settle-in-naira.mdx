@@ -252,7 +252,7 @@ Sandbox has no endpoint that simulates a stablecoin deposit to a payout address,
 
 ## Settlement lifecycle (what happens after deposit)
 
-Once the user funds the address, Bitnob handles the rest of the flow: track it with [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) or the [payout webhooks](/api-reference/payouts/webhooks#payout-webhooks):
+Once the user funds the address, Bitnob handles the rest of the flow: track it with [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) or the [payout webhooks](/docs/payouts/webhook-events#payout-webhooks):
 
 1. It confirms receipt (usually within 1–2 blocks for TRC20)
 2. Converts the USDT to NGN at the locked quote rate
@@ -275,7 +275,7 @@ If a withdrawal fails (e.g., due to an invalid account), the payout record moves
 
 Always display the exact amount and chain to the user.
 
-Poll [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) if you don't implement [webhooks](/api-reference/payouts/webhooks#payout-webhooks) yet.
+Poll [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) if you don't implement [webhooks](/docs/payouts/webhook-events#payout-webhooks) yet.
 
 Use a unique reference per payout. This is your trace ID.
 

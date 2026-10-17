@@ -6,7 +6,7 @@ related:
   - /docs/card-issuing/transaction-monitoring
 ---
 
-Every card event shares one envelope. Full payloads for each event live in the [Virtual Cards webhooks reference](/api-reference/virtual-cards/webhooks); delivery, signatures, and retries are covered in [Receive card webhooks](/docs/card-issuing/receive-card-webhooks).
+Every card event shares one envelope. Full payloads for each event live in the [Virtual Cards webhooks reference](/docs/card-issuing/webhook-payloads); delivery, signatures, and retries are covered in [Receive card webhooks](/docs/card-issuing/receive-card-webhooks).
 
 ```json
 {
@@ -21,7 +21,7 @@ Conventions: JSON keys are camelCase; amounts are integers in micro-units (1 USD
 
 ## Wire conventions for transaction events
 
-Branch on `event` first, then on `transactionType`, several events share a name across pending and settled states. Documented as [Wire conventions](/api-reference/virtual-cards/webhooks#wire-conventions-for-transaction-events) in the API reference.
+Branch on `event` first, then on `transactionType`, several events share a name across pending and settled states. Documented as [Wire conventions](/docs/card-issuing/webhook-payloads#wire-conventions-for-transaction-events) in the API reference.
 
 | Field | Meaning |
 |---|---|
@@ -86,4 +86,4 @@ Three events fire more than once with different `transactionType` values:
 
 | Event | Fires when |
 |---|---|
-| `virtualcard.contactless.activation` | Customer KYC and contactless activation completed. See [Activation & KYC](/api-reference/virtual-cards/webhooks#activation-kyc). |
+| `virtualcard.contactless.activation` | Customer KYC and contactless activation completed. See [Activation & KYC](/docs/card-issuing/webhook-payloads#activation-kyc). |
