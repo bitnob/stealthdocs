@@ -14,260 +14,299 @@
       {
         "tab": "Docs",
         "icon": "book-open",
-        "groups": [
+        "dropdowns": [
           {
-            "group": "Get started",
-            "icon": "rocket",
-            "expanded": true,
-            "pages": [
-              "index",
-              "docs/getting-started/overview",
-              "docs/getting-started/account-setup",
-              "docs/getting-started/quickstart",
-              {
-                "group": "Concepts",
-                "pages": [
-                  "docs/getting-started/core-concepts-and-architecture",
-                  "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts",
-                  "docs/getting-started/about"
-                ]
-              },
-              {
-                "group": "Build reliably",
-                "pages": [
-                  "docs/getting-started/api-best-practices/api-keys-and-credentials",
-                  "docs/getting-started/api-best-practices/idempotency-and-reference-integrity",
-                  "docs/getting-started/api-best-practices/webhook-best-practices",
-                  "docs/getting-started/api-best-practices/errors-and-retries",
-                  "docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows",
-                  "docs/getting-started/api-best-practices/simulating-flows-and-testing-in-sandbox",
-                  "docs/getting-started/api-best-practices/observability-logging-and-traceability"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Bitcoin",
-            "pages": [
-              "docs/bitcoin/overview",
-              {
-                "group": "Concepts",
-                "pages": [
-                  "docs/bitcoin/custody-models",
-                  "docs/bitcoin/lnurl-and-lightning-addresses",
-                  "docs/bitcoin/utxo-management-introduction",
-                  "docs/bitcoin/fee-market-and-transaction-strategies"
-                ]
-              },
+            "dropdown": "Bitnob API",
+            "icon": "bolt",
+            "description": "Payouts, cards, trading, and virtual accounts. HMAC-signed requests.",
+            "groups": [
               {
                 "group": "Get started",
+                "icon": "rocket",
+                "expanded": true,
                 "pages": [
-                  "docs/bitcoin/send-bitcoin"
-                ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices",
-                  "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
-                  "docs/bitcoin/user-managed-self-custodial-wallets"
-                ]
-              },
-              {
-                "group": "Reference",
-                "pages": [
-                  "docs/bitcoin/confirmations-and-webhook-events"
-                ]
-              }
-            ],
-            "icon": "bitcoin"
-          },
-          {
-            "group": "Stablecoins",
-            "pages": [
-              "docs/stablecoins/overview",
-              {
-                "group": "Concepts",
-                "pages": [
-                  "docs/stablecoins/key-concepts",
-                  "docs/stablecoins/why-support-stablecoins-on-multiple-chains"
-                ]
-              },
-              {
-                "group": "Get started",
-                "pages": [
-                  "docs/stablecoins/accept-usdt-and-settle-in-naira"
-                ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "docs/stablecoins/getting-started-with-stablecoins",
-                  "docs/stablecoins/issuing-stablecoin-addresses",
-                  "docs/stablecoins/receiving-stablecoin-deposits",
-                  "docs/stablecoins/sending-stablecoins",
-                  "docs/stablecoins/internal-wallet-to-wallet-transfers",
-                  "docs/stablecoins/webhooks",
-                  "docs/stablecoins/error-handling-and-failure-scenarios",
-                  "docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide"
-                ]
-              },
-              {
-                "group": "Reference",
-                "pages": [
-                  "docs/stablecoins/address-webhook-events",
-                  "docs/stablecoins/withdrawal-webhook-events",
-                  "docs/stablecoins/supported-chains"
-                ]
-              }
-            ],
-            "icon": "coins"
-          },
-          {
-            "group": "Trading",
-            "pages": [
-              "docs/trading/overview",
-              {
-                "group": "Concepts",
-                "pages": [
-                  "docs/trading/how-trading-works"
-                ]
-              },
-              {
-                "group": "Get started",
-                "pages": [
-                  "docs/trading/swap-bitcoin-to-usdt"
-                ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "docs/trading/create-quote",
-                  "docs/trading/execute-trade",
-                  "docs/trading/trade-status-and-history",
-                  "docs/trading/trade-webhooks",
-                  "docs/trading/error-handling-patterns"
-                ]
-              },
-              {
-                "group": "Reference",
-                "pages": [
-                  "docs/trading/statuses-and-webhook-events"
-                ]
-              }
-            ],
-            "icon": "arrow-right-arrow-left"
-          },
-          {
-            "group": "Payouts",
-            "icon": "money-bill-transfer",
-            "pages": [
-              "docs/payouts/overview",
-              {
-                "group": "Concepts",
-                "pages": [
-                  "docs/payouts/settlement-models",
-                  "docs/payouts/payouts-lifecycle"
-                ]
-              },
-              {
-                "group": "Get started",
-                "pages": [
-                  "docs/payouts/send-your-first-payout"
-                ]
-              },
-              {
-                "group": "Guides",
-                "pages": [
-                  "docs/payouts/validate-a-beneficiary",
-                  "docs/payouts/swift-payout",
-                  "docs/payouts/mass-payouts",
-                  "docs/payouts/webhook-payout",
-                  "docs/payouts/error-handling",
-                  "api-reference/payouts/usage-example",
-                  "docs/payouts/understanding-trip-timeline",
-                  "docs/payouts/payout-incident-postmortem",
-                  "docs/payouts/troubleshoot-payout-stuck",
-                  "docs/payouts/troubleshoot-webhooks-not-received"
-                ]
-              },
-              {
-                "group": "Reference",
-                "pages": [
-                  "docs/payouts/statuses-and-webhook-events",
-                  "docs/payouts/webhook-events",
-                  "docs/payouts/supported-currencies",
+                  "index",
+                  "docs/getting-started/overview",
+                  "docs/getting-started/account-setup",
+                  "docs/getting-started/quickstart",
                   {
-                    "group": "Corridors",
+                    "group": "Concepts",
                     "pages": [
-                      "docs/payouts/corridor-specific-behavior",
-                      "docs/payouts/corridor-specific-behavior/nigeria-payout",
-                      "docs/payouts/corridor-specific-behavior/ghana-payout",
-                      "docs/payouts/corridor-specific-behavior/kenya-payout"
+                      "docs/getting-started/core-concepts-and-architecture",
+                      "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts",
+                      "docs/getting-started/about"
                     ]
                   },
-                  "docs/payouts/glossary-terms"
+                  {
+                    "group": "Build reliably",
+                    "pages": [
+                      "docs/getting-started/api-best-practices/api-keys-and-credentials",
+                      "docs/getting-started/api-best-practices/idempotency-and-reference-integrity",
+                      "docs/getting-started/api-best-practices/webhook-best-practices",
+                      "docs/getting-started/api-best-practices/errors-and-retries",
+                      "docs/getting-started/api-best-practices/quote-expiry-and-transaction-windows",
+                      "docs/getting-started/api-best-practices/simulating-flows-and-testing-in-sandbox",
+                      "docs/getting-started/api-best-practices/observability-logging-and-traceability"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Bitcoin",
+                "pages": [
+                  "docs/bitcoin/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/bitcoin/custody-models",
+                      "docs/bitcoin/lnurl-and-lightning-addresses",
+                      "docs/bitcoin/utxo-management-introduction",
+                      "docs/bitcoin/fee-market-and-transaction-strategies"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/bitcoin/send-bitcoin"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices",
+                      "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
+                      "docs/bitcoin/user-managed-self-custodial-wallets"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/bitcoin/confirmations-and-webhook-events"
+                    ]
+                  }
+                ],
+                "icon": "bitcoin"
+              },
+              {
+                "group": "Stablecoins",
+                "pages": [
+                  "docs/stablecoins/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/stablecoins/key-concepts",
+                      "docs/stablecoins/why-support-stablecoins-on-multiple-chains"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/stablecoins/accept-usdt-and-settle-in-naira"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/stablecoins/getting-started-with-stablecoins",
+                      "docs/stablecoins/issuing-stablecoin-addresses",
+                      "docs/stablecoins/receiving-stablecoin-deposits",
+                      "docs/stablecoins/sending-stablecoins",
+                      "docs/stablecoins/internal-wallet-to-wallet-transfers",
+                      "docs/stablecoins/webhooks",
+                      "docs/stablecoins/error-handling-and-failure-scenarios",
+                      "docs/stablecoins/stablecoin-reconciliation-and-ledger-integrity-guide"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/stablecoins/address-webhook-events",
+                      "docs/stablecoins/withdrawal-webhook-events",
+                      "docs/stablecoins/supported-chains"
+                    ]
+                  }
+                ],
+                "icon": "coins"
+              },
+              {
+                "group": "Trading",
+                "pages": [
+                  "docs/trading/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/trading/how-trading-works"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/trading/swap-bitcoin-to-usdt"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/trading/create-quote",
+                      "docs/trading/execute-trade",
+                      "docs/trading/trade-status-and-history",
+                      "docs/trading/trade-webhooks",
+                      "docs/trading/error-handling-patterns"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/trading/statuses-and-webhook-events"
+                    ]
+                  }
+                ],
+                "icon": "arrow-right-arrow-left"
+              },
+              {
+                "group": "Payouts",
+                "icon": "money-bill-transfer",
+                "pages": [
+                  "docs/payouts/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/payouts/settlement-models",
+                      "docs/payouts/payouts-lifecycle"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/payouts/send-your-first-payout"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/payouts/validate-a-beneficiary",
+                      "docs/payouts/swift-payout",
+                      "docs/payouts/mass-payouts",
+                      "docs/payouts/webhook-payout",
+                      "docs/payouts/error-handling",
+                      "api-reference/payouts/usage-example",
+                      "docs/payouts/understanding-trip-timeline",
+                      "docs/payouts/payout-incident-postmortem",
+                      "docs/payouts/troubleshoot-payout-stuck",
+                      "docs/payouts/troubleshoot-webhooks-not-received"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/payouts/statuses-and-webhook-events",
+                      "docs/payouts/webhook-events",
+                      "docs/payouts/supported-currencies",
+                      {
+                        "group": "Corridors",
+                        "pages": [
+                          "docs/payouts/corridor-specific-behavior",
+                          "docs/payouts/corridor-specific-behavior/nigeria-payout",
+                          "docs/payouts/corridor-specific-behavior/ghana-payout",
+                          "docs/payouts/corridor-specific-behavior/kenya-payout"
+                        ]
+                      },
+                      "docs/payouts/glossary-terms"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Card issuing",
+                "icon": "credit-card",
+                "pages": [
+                  "docs/card-issuing/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/card-issuing/card-issuance"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/card-issuing/issue-your-first-card"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/card-issuing/card-funding",
+                      "docs/card-issuing/card-status-management",
+                      "docs/card-issuing/spending-limits",
+                      "docs/card-issuing/transaction-monitoring",
+                      "docs/card-issuing/receive-card-webhooks"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/card-issuing/webhooks",
+                      "docs/card-issuing/webhook-payloads",
+                      "docs/card-issuing/card-fees",
+                      "docs/card-issuing/virtual-card-glossary"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Virtual accounts",
+                "pages": [
+                  "docs/virtual-accounts/overview",
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/virtual-accounts/set-up-virtual-accounts"
+                    ]
+                  }
+                ],
+                "icon": "building-columns"
+              },
+              {
+                "group": "Resources",
+                "icon": "folder-open",
+                "expanded": true,
+                "pages": [
+                  "docs/developer-resources/overview"
                 ]
               }
             ]
           },
           {
-            "group": "Card issuing",
-            "icon": "credit-card",
-            "pages": [
-              "docs/card-issuing/overview",
+            "dropdown": "Platform API",
+            "icon": "wallet",
+            "description": "Policy-governed wallets. X-API-Key authentication.",
+            "groups": [
               {
-                "group": "Concepts",
+                "group": "Get started",
+                "icon": "rocket",
+                "expanded": true,
                 "pages": [
-                  "docs/card-issuing/card-issuance"
+                  "docs/platform/overview",
+                  "docs/platform/authentication"
                 ]
               },
               {
-                "group": "Get started",
+                "group": "Concepts",
+                "icon": "lightbulb",
+                "expanded": true,
                 "pages": [
-                  "docs/card-issuing/issue-your-first-card"
+                  "docs/platform/core-concepts"
                 ]
               },
               {
                 "group": "Guides",
+                "icon": "book",
+                "expanded": true,
                 "pages": [
-                  "docs/card-issuing/card-funding",
-                  "docs/card-issuing/card-status-management",
-                  "docs/card-issuing/spending-limits",
-                  "docs/card-issuing/transaction-monitoring",
-                  "docs/card-issuing/receive-card-webhooks"
-                ]
-              },
-              {
-                "group": "Reference",
-                "pages": [
-                  "docs/card-issuing/webhooks",
-                  "docs/card-issuing/webhook-payloads",
-                  "docs/card-issuing/card-fees",
-                  "docs/card-issuing/virtual-card-glossary"
+                  "docs/platform/exchange-integration-guide"
                 ]
               }
-            ]
-          },
-          {
-            "group": "Virtual accounts",
-            "pages": [
-              "docs/virtual-accounts/overview",
-              {
-                "group": "Get started",
-                "pages": [
-                  "docs/virtual-accounts/set-up-virtual-accounts"
-                ]
-              }
-            ],
-            "icon": "building-columns"
-          },
-          {
-            "group": "Resources",
-            "icon": "folder-open",
-            "expanded": true,
-            "pages": [
-              "docs/developer-resources/overview"
             ]
           }
         ]
@@ -480,20 +519,9 @@
         }
       },
       {
-        "tab": "Platform",
+        "tab": "Platform API",
         "icon": "wallet",
         "groups": [
-          {
-            "group": "Guides",
-            "icon": "book",
-            "expanded": true,
-            "pages": [
-              "docs/platform/overview",
-              "docs/platform/core-concepts",
-              "docs/platform/authentication",
-              "docs/platform/exchange-integration-guide"
-            ]
-          },
           {
             "group": "Meta",
             "icon": "circle-info",
