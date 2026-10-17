@@ -57,7 +57,7 @@ Two cases to handle:
 
 Once funded, the record moves to `PROCESSING` and Bitnob dispatches the fiat leg to the local rail. `payouts.processing` fires when the rail accepts it.
 
-How long this takes depends on the destination rail. NIP settles in seconds; SEPA and ACH settle in hours or days. See [Supported currencies and rails](/docs/payouts/supported-currencies).
+How long this takes depends on the destination rail. NIP and mobile money settle in seconds; ACH and SWIFT take hours to days. See [Supported currencies and rails](/docs/payouts/supported-currencies).
 
 Invalid beneficiary details fail here rather than earlier, because the local bank is the first party to validate them. [Validate the beneficiary](/docs/payouts/validate-a-beneficiary) before initializing to catch this in advance.
 

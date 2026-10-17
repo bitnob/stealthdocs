@@ -1,9 +1,9 @@
 ---
 title: "Issue your first card"
-description: "The full card lifecycle in one pass: create a virtual card, fund it, watch a real spend arrive as a webhook, handle a refund, and freeze or terminate the card."
+description: "Take one card through its whole life: verify the cardholder, create and fund the card, handle spends and refunds, then freeze or terminate it."
 ---
 
-In this tutorial you take one card through its whole life: create it, fund it, see a transaction land, handle a refund, and shut the card down. By the end you have every integration point a production card programme needs.
+In this tutorial you take one card through its whole life: verify the cardholder, create the card, fund it, see a transaction land, handle a refund, and shut the card down. By the end you have every integration point a production card programme needs.
 
 ## Prerequisites
 
@@ -14,8 +14,69 @@ In this tutorial you take one card through its whole life: create it, fund it, s
 Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` is \$2.00.
 
 <Steps>
+  <Step title="Verify the cardholder">
+    Every card starts with a verified cardholder. Submit their identity details to [Card KYC](/api-reference/cards/card-kyc). The response returns the `customer_id` you pass to Create card. Identity details are captured here, so you don't send them again when you create the card.
+
+    ```http
+    POST /api/cards/kyc
+    ```
+
+    ```json
+    {
+      "customer": {
+        "customer_type": "individual",
+        "first_name": "Ifeoma",
+        "last_name": "Okafor",
+        "date_of_birth": "1990-01-15",
+        "id_type": "bvn",
+        "id_number": "12345678901",
+        "email": "ifeoma.okafor@example.com",
+        "phone_number": "8034567890",
+        "dial_code": "+234",
+        "line1": "18 Wuse Zone 4",
+        "city": "Abuja",
+        "state": "FCT",
+        "postal_code": "900001",
+        "country": "NGA"
+      },
+      "occupation": "business_consultant",
+      "employment_status": "employed",
+      "account_purpose": "business expenses",
+      "annual_salary": "9600000",
+      "expected_monthly_volume": "850000",
+      "place_of_birth": "Enugu",
+      "terms_of_service_accepted": true,
+      "webhook_url": "https://example.com/webhooks/card-kyc"
+    }
+    ```
+
+    ```json
+    {
+      "success": true,
+      "message": "Card KYC initiated successfully",
+      "data": {
+        "customer_id": "01a01914-0000-7000-a000-000000000000",
+        "status": "approved",
+        "completion_link": "",
+        "email": "ifeoma.okafor@example.com",
+        "first_name": "Ifeoma",
+        "last_name": "Okafor",
+        "normalized_status": "approved"
+      },
+      "timestamp": "2026-04-18T13:01:06.145180019Z"
+    }
+    ```
+
+    <Note>
+      KYC can be asynchronous. Wait until the customer is approved before you issue a card. If `status` comes back pending, `completion_link` holds a URL the cardholder must finish, and the outcome arrives on the `virtualcard.user.kyc.complete` or `virtualcard.user.kyc.failed` webhook.
+    </Note>
+
+    If a customer with that `id_number` already exists under a different email, Card KYC returns `400` with that customer's ID in the `detail`. Resubmit with `customer_id` in place of the `customer` object to verify the existing customer.
+
+    Store the `customer_id`. It's the input to the next step.
+  </Step>
   <Step title="Create the card">
-    One call creates the customer and the card together. Full schema: [Create card](/api-reference/cards/create-card-embedded-customer).
+    Issue the card against the approved `customer_id`. `name` is optional and defaults to the customer's name. Full schema: [Create card](/api-reference/cards/create-card-embedded-customer).
 
     ```http
     POST /api/cards
@@ -24,32 +85,17 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
     ```json
     {
       "card_type": "virtual",
-      "name": "Ifeoma Okafor",
       "currency": "USD",
       "amount": 5000000,
       "webhook_url": "https://example.com/webhook/callback",
       "reference": "CARD_CREATE_3e096ff5-0c94-4653-adcc-b232676c84e7",
       "card_brand": "visa",
-      "customer": {
-        "customer_type": "individual",
-        "first_name": "Ifeoma",
-        "last_name": "Okafor",
-        "date_of_birth": "1993-07-08",
-        "id_type": "national_id",
-        "id_number": "NIN12345678901",
-        "email": "ifeoma.okafor@example.com",
-        "phone_number": "8034567890",
-        "dial_code": "+234",
-        "line1": "18 Wuse Zone 4",
-        "city": "Abuja",
-        "state": "FCT",
-        "postal_code": "900271",
-        "country": "NGA"
-      }
+      "contactless_payment": true,
+      "customer_id": "01a01914-0000-7000-a000-000000000000"
     }
     ```
 
-    For an existing customer, pass `customer_id` instead of the `customer` object. The response returns the card in status `pending`:
+    The response returns the card in status `pending`:
 
     ```json
     {

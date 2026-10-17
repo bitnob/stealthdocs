@@ -13,16 +13,16 @@ While traditional bank accounts exist and are growing, mobile money (especially 
 
 For payout products, the practical reality is:
 
- Primary rail: Mobile money (wallet-to-wallet payouts),
-
-Secondary rail: Bank transfers (lower penetration, used mainly by businesses and formal salaried workers).
+- **Two rails:** bank transfer and mobile money. Most retail payouts go to mobile money.
+- **Mobile money is MTN MoMo only.** Telecel Cash and AirtelTigo Money aren't supported on the API yet.
+- Read the destination types and their fields from [Country requirements](/api-reference/payouts/country-requirements) at runtime rather than hardcoding them.
 
 ## 2. Settlement methods available
 
 | Method | Description |
 |---|---|
-| Mobile Money Payouts (MTN MoMo, Vodafone Cash, AirtelTigo Money) | Mobile phone number-based wallets. Payouts are sent to wallet IDs linked to SIM cards. |
-| Bank Transfers | Used for business payouts, higher value transactions. Settlement typically same day, not instant. |
+| Bank transfer | Payouts to Ghanaian bank accounts. Take the `bank_code` from [Get banks](/api-reference/payouts/banks-by-country). |
+| Mobile money (MTN MoMo only) | Payouts to MTN MoMo wallets, identified by phone number. Send `network: "mtn"`. |
 
 <Note>
   Over 90% of retail and micro-merchant payouts favor Mobile Money channels, especially MTN.
@@ -30,12 +30,11 @@ Secondary rail: Bank transfers (lower penetration, used mainly by businesses and
 
 ## 3. Beneficiary validation standards
 
-Validation processes differ between mobile money and bank payouts. In both cases, confirm the destination with [Account Lookup](/api-reference/payouts/account-lookup) (for mobile money, pass the provider as the `bank_code`), and take provider/bank codes from [Get Banks](/api-reference/payouts/banks-by-country).
+Confirm a mobile money beneficiary with [Account lookup](/api-reference/payouts/account-lookup): pass `country=GH`, `type=mobile_money`, the network as the `bank_code` (for example `MTN`; case doesn't matter), and the phone number as the `account_number`, either as `233XXXXXXXXX` or `0XXXXXXXXX`. Leave out `type=mobile_money` and the lookup fails with `400`. For a bank account, take the `bank_code` from [Get banks](/api-reference/payouts/banks-by-country).
 
 | Type | Validation Process |
 |---|---|
-| Mobile Money Wallets | Validate phone number format (Ghana mobile prefixes, 024, 054, 055, etc.). Validate mobile money provider mapping (MTN, Vodafone, AirtelTigo). Some integrations allow real-time wallet status checks. |
-| Bank Accounts | Validate account number format (usually 10–12 digits). Validate Bank code (institution codes) where possible. |
+| Mobile Money Wallets | Validate phone number format (Ghana mobile prefixes, 024, 054, 055, etc.). Check the number is on MTN before you quote, since only MTN MoMo is supported. Some integrations allow real-time wallet status checks. |
 
  Best Practices for Mobile Money Validation
 
@@ -51,7 +50,7 @@ Validation processes differ between mobile money and bank payouts. In both cases
 
 Mobile money accounts in Ghana are often tiered based on KYC. The corridor min/max Bitnob enforces comes from [Get Limits](/api-reference/payouts/payout-limits):
 
-| Wellet Tier | Limits |
+| Wallet tier | Limits |
 |---|---|
 | Tier 0 (Basic Registration) | Low daily transaction limit (~GHS 1,000) and low wallet balance cap. |
 | Tier 1 (Full KYC with ID) | Higher daily limits (~GHS 5,000–10,000) and wallet caps. |
@@ -78,6 +77,10 @@ Some providers may hold funds temporarily pending user wallet upgrade (rare but 
 
 ## Ghana mobile money networks and prefixes
 
+<Warning>
+  Bitnob pays out to **MTN MoMo only** in Ghana. Telecel Cash and AirtelTigo Money aren't supported yet. Use the prefixes below to spot a non-MTN number and ask for a different wallet or a bank account before you create a quote.
+</Warning>
+
 ## 1. MTN Ghana (MTN mobile money)
 
  MTN is the largest mobile network operator in Ghana and the dominant mobile money provider (over 90% of wallet market share).
@@ -100,11 +103,11 @@ Some providers may hold funds temporarily pending user wallet upgrade (rare but 
 
 MTN MoMo wallets are tightly linked to these phone numbers.
 
-## 2. Vodafone Ghana (Vodafone cash)
+## 2. Telecel Ghana (Telecel Cash)
 
-Vodafone Cash is the second-largest mobile money provider in Ghana.
+Telecel Cash (formerly Vodafone Cash) is the second-largest mobile money provider in Ghana.
 
-Active Mobile Number Prefixes for Vodafone:
+Active Mobile Number Prefixes for Telecel:
 
 | Prefix |
 |---|
@@ -112,7 +115,7 @@ Active Mobile Number Prefixes for Vodafone:
 | 050 |
 
 <Note>
-  020 is Vodafone’s original mobile range.
+  020 is Telecel’s original mobile range.
 </Note>
 
 050 introduced for expanded mobile money and mobile user registrations.
@@ -121,7 +124,7 @@ Active Mobile Number Prefixes for Vodafone:
 
 Airtel and Tigo merged into AirtelTigo in Ghana.
 
-Their mobile money service is AirtelTigo Money (smaller market share compared to MTN and Vodafone).
+Their mobile money service is AirtelTigo Money (smaller market share compared to MTN and Telecel).
 
 Active Mobile Number Prefixes for AirtelTigo:
 
@@ -141,7 +144,7 @@ Active Mobile Number Prefixes for AirtelTigo:
 | Network | Common Prefixes |
 |---|---|
 | MTN Ghana | 024, 025, 054, 055, 059 |
-| Vodafone Ghana | 020, 050 |
+| Telecel Ghana | 020, 050 |
 | AirtelTigo Ghana | 026, 056 |
 
 ### 5. Validation best practices for Ghana mobile money
@@ -150,7 +153,7 @@ Active Mobile Number Prefixes for AirtelTigo:
 |---|---|
 | Phone Format | Normalize numbers (drop leading 0 if formatting for international +233 dialing). Example: 024xxxxxxx → 23324xxxxxxx |
 | Carrier Mapping | Validate number against correct mobile money network prefix before payout. |
-| Network-Specific Rules | MTN and Vodafone highly reliable; AirtelTigo may have slower response times in rural areas. |
+| Network support | Only MTN MoMo is supported. Reject Telecel (020, 050) and AirtelTigo (026, 056) numbers up front. |
 | Wallet Status Check | If possible, query provider API to validate if mobile wallet is active and capable of receiving payouts. |
 | Amount Limits | Respect wallet tier transaction limits, especially for Tier 0/Tier 1 users. |
 

@@ -1,7 +1,7 @@
 ---
-title: "Payouts to banks, mobile money, and cash pickup"
+title: "Payouts to bank accounts and mobile money"
 sidebarTitle: "Overview"
-description: "The Payouts API sends money to bank accounts, mobile money wallets, and cash pickup locations, funded from bitcoin, stablecoins, or a fiat balance."
+description: "The Payouts API sends money to bank accounts and mobile money wallets, funded from bitcoin, stablecoins, or a fiat balance."
 ---
 
 One integration reaches every country Bitnob supports. You fund each payout in the asset you hold, the recipient is paid in their local currency over the local rail, and Bitnob handles everything in between: it holds the liquidity, performs the conversion, clears the transaction with the local regulator, and disburses to the beneficiary. You call three endpoints.
@@ -40,9 +40,8 @@ A quote expires after minutes, at the `expires_at` timestamp it carries. If it e
 
 | Channel | Notes |
 |---|---|
-| Bank account | Direct credit over the local rail, such as NIP in Nigeria or SEPA in the EU. |
+| Bank account | Direct credit over the local rail, such as NIP in Nigeria, or SWIFT for USD. |
 | Mobile money wallet | M-Pesa, MTN Mobile Money, Orange Money, and others, by country. |
-| Cash pickup | Where a local partner network is available. |
 
 Availability differs by country. Call [Supported countries](/api-reference/payouts/supported-countries) for the live matrix and [Country requirements](/api-reference/payouts/country-requirements) for the fields a given destination needs. Do not hardcode either.
 

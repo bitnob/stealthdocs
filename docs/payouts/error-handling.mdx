@@ -19,7 +19,7 @@ Two rules underpin all of them:
   <Accordion title="Expired quote">
     The quote passed `expires_at` before you initialized, or before funding arrived.
 
-    **Detection:** using an expired `quoteId` returns `410 QUOTE_EXPIRED`. An initialized but unfunded payout emits `payouts.withdrawal.expired`.
+    **Detection:** using an expired `quote_id` returns `410 QUOTE_EXPIRED`. An initialized but unfunded payout emits `payouts.withdrawal.expired`.
 
     **Response:** request a fresh quote and start over. Nothing was settled. In your UI, check `expires_at` before showing payment instructions, and stop showing them once it passes.
   </Accordion>

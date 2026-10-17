@@ -64,7 +64,9 @@ const crypto = require("crypto");
 
 app.post(
   "/webhooks/bitnob",
-  express.raw({ type: "application/json" }),
+  // Read the raw bytes whatever Content-Type says: deliveries can arrive as
+  // "application/json, application/json", which type: "application/json" rejects
+  express.raw({ type: () => true }),
   (req, res) => {
     const expected = crypto
       .createHmac("sha512", process.env.BITNOB_WEBHOOK_SECRET)
@@ -118,7 +120,7 @@ Return `200` as soon as the signature is valid. Do the real work afterwards.
 A handler that writes to a database, calls a third-party service, and sends an email before responding will eventually exceed our timeout. We then treat the delivery as failed and send the event again, even though you processed it.
 
 ```javascript
-app.post("/webhooks/bitnob", express.raw({ type: "application/json" }), (req, res) => {
+app.post("/webhooks/bitnob", express.raw({ type: () => true }), (req, res) => {
   if (!verifySignature(req)) {
     return res.status(401).send("invalid signature");
   }
@@ -149,6 +151,7 @@ Redelivery means your handler will see the same event more than once. Processing
 Check the reference before you act, and record it after.
 
 ```python
+import json
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -158,7 +161,9 @@ def webhook_handler():
     if not verify_signature(request):
         return 'invalid signature', 401
 
-    payload = request.get_json()
+    # Parse the raw body yourself: get_json() rejects the
+    # "application/json, application/json" Content-Type deliveries can carry
+    payload = json.loads(request.get_data())
     reference = payload['data']['reference']
 
     if already_processed(reference):
