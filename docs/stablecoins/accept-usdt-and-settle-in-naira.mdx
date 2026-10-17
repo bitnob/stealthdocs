@@ -246,28 +246,9 @@ POST /api/payouts/:quoteId/finalize
 
 The payout moves to PENDING. The USDT address stays valid until `expires_at`, once the deposit lands, settlement proceeds automatically.
 
-## Simulate deposit (sandbox only)
+## Testing in sandbox
 
-For testing purposes, you can simulate a deposit.
-
-```http
-POST /api/addresses/simulate-deposit
-```
-
-**Example request:**
-
-```json
-{
-  "address": "TJZCwdcH2GZRLjt8aAphrhCZtEbJLqEAfC",
-  "amount": "1000000000",
-  "currency": "USDT",
-  "chain": "tron"
-}
-```
-
-<Note>
-  **Sandbox-only helper:** This endpoint exists only in sandbox. It tells the simulator to act as if the user just deposited the specified `amount` of `currency` at `address` on `chain`. The resulting transaction shows up in the Transactions API with `metadata.is_simulated: "true"` and a `sim_*` reference. Production accounts will reject the call.
-</Note>
+Sandbox has no endpoint that simulates a stablecoin deposit to a payout address, so a payout you don't fund stays pending. Test the quote and initialize steps, and the webhook handling with your own signed test payloads.
 
 ## Settlement lifecycle (what happens after deposit)
 

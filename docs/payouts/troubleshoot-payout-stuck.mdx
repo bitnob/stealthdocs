@@ -26,7 +26,7 @@ For **onchain** payouts, nothing happens until your crypto deposit arrives at th
 - the Lightning payment settles, or
 - the stablecoin deposit confirms.
 
-**Check:** in sandbox you cannot broadcast a real deposit. Simulate it with `POST /api/payouts/quotes/{quoteId}/deposits` and a body of `{ "amount": "50000" }`. A sandbox onchain payout left without a simulated deposit will sit in `pending` forever, which is expected behavior, not a bug.
+**Check:** sandbox has no endpoint that simulates a crypto deposit for a payout. An onchain payout you haven't funded stays in `PENDING_ADDRESS_DEPOSIT`. That's expected behaviour, not a bug.
 
 ## Cause 2: you are reading the wrong status field
 
