@@ -27,7 +27,9 @@ const app = express();
 
 const secret = process.env.BITNOB_WEBHOOK_SECRET;
 
-app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+// Read the raw bytes whatever Content-Type says: deliveries can arrive as
+// "application/json, application/json", which type: 'application/json' rejects
+app.post('/webhook', express.raw({ type: () => true }), (req, res) => {
   const signature = req.headers['x-bitnob-signature'] || '';
   const expected = crypto.createHmac('sha512', secret).update(req.body).digest('hex');
 

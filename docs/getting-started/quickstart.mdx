@@ -44,11 +44,12 @@ You need the `CLIENT_ID` and `CLIENT_SECRET` you issued on the previous page, [S
   </Step>
 
   <Step title="If you got a 401 instead">
-    Three causes cover nearly every failure:
+    These causes cover nearly every failure:
 
     - The timestamp is in milliseconds; the API wants seconds.
     - The signed body does not byte-for-byte match the sent body; for GET, sign an empty string.
     - A header is missing or the secret is wrong.
+    - Your `.env` file was saved with Windows line endings, which leave a hidden `\r` on the end of `CLIENT_ID` or `CLIENT_SECRET`. Save it with LF line endings, or strip the `\r` when you load it.
 
     See the troubleshooting notes on [Authentication](/api-reference/authentication/authentication).
   </Step>

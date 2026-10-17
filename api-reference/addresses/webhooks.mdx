@@ -11,7 +11,7 @@ A webhook is a URL on your server where we send payloads for transaction events.
 
 Verifying that these events come from Bitnob is necessary to avoid creating transactions due to a fraudulent event.
 
-To verify events, validate the **x-bitnob-signature** header sent with the event. The signature is an HMAC SHA-512 of the **raw request body**, keyed with your webhook secret. Compute it over the bytes you received, before parsing: re-serialising parsed JSON changes the bytes and the check fails.
+To verify events, validate the **x-bitnob-signature** header sent with the event. The signature is an HMAC SHA-512 of the **raw request body**, keyed with the webhook secret set in your dashboard (not your API client secret). Compute it over the bytes you received, before parsing: re-serialising parsed JSON changes the bytes and the check fails.
 
 ### Notification retries
 
@@ -37,7 +37,9 @@ const express = require('express');
 const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
 
 // Sign the raw body: re-serialising parsed JSON changes the bytes
-app.post('/webhook_url', express.raw({ type: 'application/json' }), (req, res) => {
+// Read the raw bytes whatever Content-Type says: deliveries can arrive as
+// "application/json, application/json", which type: 'application/json' rejects
+app.post('/webhook_url', express.raw({ type: () => true }), (req, res) => {
   const expected = crypto.createHmac('sha512', webhookSecret).update(req.body).digest('hex');
   const received = req.headers['x-bitnob-signature'] || '';
   const valid =

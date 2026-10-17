@@ -36,7 +36,7 @@ CLIENT_SECRET="<your-sandbox-or-production-secret>"   # shown once, store it sec
 
 ## Authentication
 
-Every API request is authenticated with an HMAC-SHA256 signature. You sign each request with your Client Secret and send four headers. Signatures are time-limited, so requests can't be replayed.
+Every API request is authenticated with an HMAC-SHA256 signature. You sign each request with your Client Secret and send four headers. Signatures are time-limited: a request stops being accepted about five minutes after its timestamp.
 
 ### Required headers
 
