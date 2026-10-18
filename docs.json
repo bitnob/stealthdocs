@@ -36,6 +36,8 @@
             "icon": "rocket",
             "expanded": true,
             "pages": [
+              "docs/getting-started/overview",
+              "docs/getting-started/account-setup",
               "docs/getting-started/quickstart",
               "docs/platform/quickstart"
             ]
@@ -45,8 +47,6 @@
             "icon": "building",
             "tag": "Business",
             "pages": [
-              "docs/getting-started/overview",
-              "docs/getting-started/account-setup",
               {
                 "group": "Concepts",
                 "pages": [
