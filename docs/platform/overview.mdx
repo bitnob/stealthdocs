@@ -1,5 +1,5 @@
 ---
-title: "Platform overview"
+title: "Platform API overview"
 sidebarTitle: "Overview"
 description: "Non-custodial, policy-governed wallets. Keys are generated in hardware you control access to, and Bitnob cannot move funds on your behalf."
 related:
@@ -7,24 +7,11 @@ related:
   - /docs/platform/exchange-integration-guide
 ---
 
-Bitnob Platform provides **non-custodial**, policy-governed wallets for banks, exchanges, and fintech companies. You hold the assets. Private keys are generated inside hardware-isolated enclaves, every signature is governed by policies you write, and Bitnob cannot move funds on your behalf.
+The Bitnob Platform API provides **non-custodial**, policy-governed wallets for banks, exchanges, and fintech companies. You hold the assets. Private keys are generated inside hardware-isolated enclaves, every signature is governed by policies you write, and Bitnob cannot move funds on your behalf.
 
 <Note>
-  **This is a separate product from the Bitnob API.** The Bitnob API is custodial: Bitnob holds the balance and settles payouts, cards, and trades for you. Platform is non-custodial: you hold the keys and Bitnob provides the signing, policy, and chain infrastructure around them. They use different base URLs and different authentication. See [Which product do I need](#which-product-do-i-need) below.
+  **The Platform API is a separate product from the Bitnob Business API**, with its own keys, base URL, and authentication. [Choose a product](/docs/choose-a-product) compares the two.
 </Note>
-
-## Which product do I need
-
-| | Bitnob API | Platform |
-|---|---|---|
-| Custody | Bitnob holds the funds. | You hold the funds. |
-| What you build | Payouts, cards, trading, virtual accounts. | Wallets, addresses, and governed signing across chains. |
-| Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
-| Authentication | HMAC request signing. | `X-API-Key` header. |
-| Comparable to | A payments API. | Fireblocks and similar wallet platforms. |
-| Reference | [API reference](/api-reference/authentication/authentication) | [Platform reference](/api-reference/platform/meta/get-api-key-info) |
-
-Some companies use both: Platform to hold and govern assets, and the Bitnob API to pay out in local currency.
 
 ## What non-custodial means here
 

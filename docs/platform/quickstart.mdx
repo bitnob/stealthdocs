@@ -1,0 +1,149 @@
+---
+title: "Platform API quickstart"
+sidebarTitle: "Platform API quickstart"
+description: "Make your first Platform API calls: confirm your API key, list supported chains, find your vault, and create a wallet in it."
+related:
+  - /docs/platform/authentication
+  - /docs/platform/core-concepts
+---
+
+This quickstart is for the **Platform API**, Bitnob's non-custodial wallet infrastructure. If you want Bitnob to hold the balance and settle payouts, cards, or trades for you, use the [Bitnob Business API quickstart](/docs/getting-started/quickstart) instead.
+
+Every request goes to `https://api.platform.bitnob.com` with your key in the `X-API-Key` header. There's no request signing.
+
+<Steps>
+  <Step title="Get an API key">
+    Create a key in the Bitnob dashboard and store it server-side. The key decides the environment: a live key works on mainnet, and a sandbox key on testnets.
+
+    ```bash
+    export PLATFORM_API_KEY=your_api_key
+    ```
+  </Step>
+
+  <Step title="Confirm the key works">
+    [Get API key info](/api-reference/platform/meta/get-api-key-info) returns the key, the organisation it belongs to, and the scopes it carries.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/me \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    ```json
+    {
+      "id": "d6c33cfa-7ffa-492a-b7da-dd3b4e1f013b",
+      "object": "api_key",
+      "name": "playground-work",
+      "organization_id": "b1ebb43e-068f-4b6a-bbab-5c3027bc1510",
+      "scopes": [
+        "transactions:create",
+        "transactions:read",
+        "vaults:view",
+        "wallets:create",
+        "wallets:read"
+      ],
+      "api_version": "v1",
+      "created_at": "2026-10-18T07:16:33.516081Z"
+    }
+    ```
+
+    The scope list is shortened here. A missing or wrong key returns `401` with a code you can branch on:
+
+    ```json
+    {
+      "error": {
+        "type": "authentication_error",
+        "code": "not_authenticated",
+        "message": "Invalid or expired API key"
+      }
+    }
+    ```
+  </Step>
+
+  <Step title="See the chains you can use">
+    [List chains](/api-reference/platform/assets/list-chains) returns every supported chain and its networks.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/assets/chains \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    ```json
+    {
+      "object": "list",
+      "data": [
+        { "id": "bitcoin", "object": "chain", "name": "bitcoin", "networks": ["mainnet", "testnet"] },
+        { "id": "ethereum", "object": "chain", "name": "ethereum", "networks": ["mainnet", "sepolia"] },
+        { "id": "polygon", "object": "chain", "name": "polygon", "networks": ["mainnet", "amoy"] }
+      ]
+    }
+    ```
+
+    The list is shortened here.
+  </Step>
+
+  <Step title="Find your vault">
+    Wallets live inside a vault, and vaults are created in the dashboard, not over the API. Once you have one, [List vaults](/api-reference/platform/vaults/list-vaults) returns its `id`:
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/vaults \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    Lists share one shape. A new organisation with no vaults yet returns:
+
+    ```json
+    {
+      "object": "list",
+      "data": [],
+      "has_more": false,
+      "url": "/v1/vaults"
+    }
+    ```
+  </Step>
+
+  <Step title="Create a wallet">
+    [Create wallet](/api-reference/platform/wallets/create-wallet) needs a `name`, a `chain`, and the `vault_id`. Every write also needs an `Idempotency-Key` header, so a retried request can't create a second wallet.
+
+    ```bash
+    curl -X POST https://api.platform.bitnob.com/v1/wallets \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: $(uuidgen)" \
+      -d '{
+        "name": "treasury-btc",
+        "chain": "bitcoin",
+        "vault_id": "<your vault id>"
+      }'
+    ```
+
+    The wallet's primary address is created with it. Leave out `Idempotency-Key` and the request fails before anything is created:
+
+    ```json
+    {
+      "error": {
+        "type": "invalid_request_error",
+        "code": "idempotency_key_required",
+        "message": "Idempotency-Key header is required",
+        "param": "Idempotency-Key"
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Core concepts" icon="lightbulb" href="/docs/platform/core-concepts">
+    How organisations, vaults, wallets, and addresses fit together.
+  </Card>
+  <Card title="Making requests" icon="code" href="/docs/platform/making-requests">
+    Versioning, idempotency, pagination, errors, and rate limits.
+  </Card>
+  <Card title="Best practices" icon="shield-check" href="/docs/platform/best-practices">
+    Key handling, policies, and safe retries.
+  </Card>
+  <Card title="Platform API reference" icon="book" href="/api-reference/platform/meta/get-api-key-info">
+    Every endpoint, with request and response schemas.
+  </Card>
+</Columns>

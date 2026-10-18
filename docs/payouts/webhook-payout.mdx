@@ -137,7 +137,7 @@ Every event carries the payout record, so field names match the payouts API resp
 
 ## Handler checklist
 
-- Verify the signature before parsing anything else; see [Verifying events](/docs/payouts/webhook-events#verifying-events).
+- Verify the signature before parsing anything else; see [Verifying events](/api-reference/webhooks#verify-every-delivery).
 - Return `200` immediately and process asynchronously. Bitnob retries non-200 deliveries up to 3 times with exponential backoff, then stops.
 - Make the handler idempotent on `event_id`.
 - Confirm terminal state with [Get payout](/api-reference/payouts/get-payout) before releasing goods or services; do not act on a webhook alone.

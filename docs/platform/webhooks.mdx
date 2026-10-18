@@ -1,0 +1,54 @@
+---
+title: "Platform API webhooks"
+sidebarTitle: "Webhooks"
+description: "The two kinds of Platform webhook, the events each one sends, and how to verify every delivery's signature."
+related:
+  - /docs/platform/making-requests
+  - /docs/platform/best-practices
+---
+
+The Platform API sends two kinds of webhook. They're signed the same way, but the signature arrives in a different place.
+
+| | Platform webhooks | On-chain subscriptions |
+|---|---|---|
+| Created with | [Create webhook](/api-reference/platform/webhooks/create-webhook) | [Create subscription](/api-reference/platform/subscriptions/create-subscription) |
+| What they report | Activity in your organisation: wallets, transactions, gas stations, policies, KYT | Activity on addresses you watch: incoming and outgoing transfers, confirmations, balance changes |
+| Signature | `X-Webhook-Signature` header | `signature` field in the JSON body |
+
+## Events
+
+Platform webhooks deliver events such as `wallet.created`, `transaction.signed`, `transaction.confirmed`, `transaction.completed`, `transaction.failed`, `gas_station.low_balance`, `policy.violation`, and `kyt.deposit.flagged`. `GET /webhooks/event-types` returns the full, current list.
+
+On-chain subscriptions deliver events such as `incoming_native_tx`, `incoming_token_tx`, `outgoing_native_tx`, `confirmation_threshold_met`, `confirmation_finalized`, and `balance_changed`.
+
+## Verify every delivery
+
+Each webhook and subscription has a signing secret. It's shown once, when you create it or rotate it with the rotate-secret endpoint, so store it then.
+
+The signature is computed over a canonical JSON object built from three fields of the delivery, and nothing else:
+
+```text
+{"data": <data>, "event": "<event>", "timestamp": <unix_seconds>}
+```
+
+```text
+signature = "sha256=" + hex(HMAC_SHA256(signing_secret, canonical_json))
+```
+
+To verify a delivery:
+
+<Steps>
+  <Step title="Build the canonical object">
+    Take `data`, `event`, and `timestamp` from the delivery and put them in a new object with the keys in that order: `data`, `event`, `timestamp`. Leave out the `signature` field and anything else in the body.
+  </Step>
+  <Step title="Compute and compare">
+    Compute the HMAC-SHA256 with your signing secret, hex-encode it, and prefix it with `sha256=`. Compare it with the received value in constant time, and reject the delivery if they differ.
+  </Step>
+  <Step title="Check the timestamp">
+    Reject deliveries whose `timestamp` is older than your tolerance window, a few minutes for example, so a captured delivery can't be replayed later.
+  </Step>
+</Steps>
+
+<Note>
+  The canonical object must serialize exactly as the platform's does: keys in lexical order, and Go's `encoding/json` formatting.
+</Note>

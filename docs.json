@@ -12,6 +12,22 @@
   "navigation": {
     "tabs": [
       {
+        "tab": "Home",
+        "icon": "house",
+        "groups": [
+          {
+            "group": "Home",
+            "icon": "house",
+            "pages": [
+              "index",
+              "docs/choose-a-product",
+              "docs/getting-started/about",
+              "docs/developer-resources/overview"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Docs",
         "icon": "book-open",
         "groups": [
@@ -20,16 +36,22 @@
             "icon": "rocket",
             "expanded": true,
             "pages": [
-              "index",
+              "docs/getting-started/quickstart",
+              "docs/platform/quickstart"
+            ]
+          },
+          {
+            "group": "Bitnob Business API",
+            "icon": "building",
+            "tag": "Business",
+            "pages": [
               "docs/getting-started/overview",
               "docs/getting-started/account-setup",
-              "docs/getting-started/quickstart",
               {
                 "group": "Concepts",
                 "pages": [
                   "docs/getting-started/core-concepts-and-architecture",
-                  "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts",
-                  "docs/getting-started/about"
+                  "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts"
                 ]
               },
               {
@@ -47,36 +69,54 @@
             ]
           },
           {
-            "group": "Bitcoin",
+            "group": "Platform API",
+            "icon": "wallet",
+            "tag": "Platform",
             "pages": [
-              "docs/bitcoin/overview",
+              "docs/platform/overview",
               {
                 "group": "Concepts",
                 "pages": [
-                  "docs/bitcoin/custody-models",
-                  "docs/bitcoin/lnurl-and-lightning-addresses",
-                  "docs/bitcoin/utxo-management-introduction",
-                  "docs/bitcoin/fee-market-and-transaction-strategies"
+                  "docs/platform/core-concepts"
                 ]
               },
               {
-                "group": "Get started",
+                "group": "Best practices",
                 "pages": [
-                  "docs/bitcoin/send-bitcoin"
+                  "docs/platform/best-practices"
                 ]
               },
               {
                 "group": "Guides",
                 "pages": [
+                  "docs/platform/exchange-integration-guide"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Bitcoin",
+            "pages": [
+              "docs/bitcoin/overview",
+              {
+                "group": "Custodial wallet",
+                "tag": "Business",
+                "pages": [
+                  "docs/bitcoin/send-bitcoin",
                   "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices",
-                  "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
-                  "docs/bitcoin/user-managed-self-custodial-wallets"
+                  "docs/bitcoin/lnurl-and-lightning-addresses",
+                  "docs/bitcoin/confirmations-and-webhook-events"
                 ]
               },
               {
-                "group": "Reference",
+                "group": "Your own keys",
+                "tag": "Platform",
                 "pages": [
-                  "docs/bitcoin/confirmations-and-webhook-events"
+                  "docs/bitcoin/custody-models",
+                  "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
+                  "docs/bitcoin/user-managed-self-custodial-wallets",
+                  "docs/bitcoin/utxo-management-introduction",
+                  "docs/bitcoin/fee-market-and-transaction-strategies"
                 ]
               }
             ],
@@ -121,7 +161,8 @@
                 ]
               }
             ],
-            "icon": "coins"
+            "icon": "coins",
+            "tag": "Business"
           },
           {
             "group": "Trading",
@@ -156,7 +197,8 @@
                 ]
               }
             ],
-            "icon": "arrow-right-arrow-left"
+            "icon": "arrow-right-arrow-left",
+            "tag": "Business"
           },
           {
             "group": "Payouts",
@@ -209,7 +251,8 @@
                   "docs/payouts/glossary-terms"
                 ]
               }
-            ]
+            ],
+            "tag": "Business"
           },
           {
             "group": "Card issuing",
@@ -247,7 +290,8 @@
                   "docs/card-issuing/virtual-card-glossary"
                 ]
               }
-            ]
+            ],
+            "tag": "Business"
           },
           {
             "group": "Virtual accounts",
@@ -260,28 +304,22 @@
                 ]
               }
             ],
-            "icon": "building-columns"
-          },
-          {
-            "group": "Resources",
-            "icon": "folder-open",
-            "expanded": true,
-            "pages": [
-              "docs/developer-resources/overview"
-            ]
+            "icon": "building-columns",
+            "tag": "Business"
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Business API",
         "icon": "code",
         "groups": [
           {
-            "group": "Authentication",
-            "icon": "key",
+            "group": "Get started",
+            "icon": "rocket",
             "expanded": true,
             "pages": [
               "api-reference/authentication/authentication",
+              "api-reference/webhooks",
               "api-reference/authentication/usage-examples"
             ]
           },
@@ -480,18 +518,17 @@
         }
       },
       {
-        "tab": "Platform",
+        "tab": "Platform API",
         "icon": "wallet",
         "groups": [
           {
-            "group": "Guides",
-            "icon": "book",
+            "group": "Get started",
+            "icon": "rocket",
             "expanded": true,
             "pages": [
-              "docs/platform/overview",
-              "docs/platform/core-concepts",
               "docs/platform/authentication",
-              "docs/platform/exchange-integration-guide"
+              "docs/platform/making-requests",
+              "docs/platform/webhooks"
             ]
           },
           {
