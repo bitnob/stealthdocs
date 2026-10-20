@@ -28,7 +28,7 @@ Cards are online-first and restricted by design: no ATM withdrawals, USD only, a
     Submit the cardholder to [Card KYC](/api-reference/cards/card-kyc). Approval returns the `customer_id` every card for that person is issued against. With a BVN, approval can come back in the same response.
   </Step>
   <Step title="Create the card">
-    Call [Create card](/api-reference/cards/create-card-embedded-customer) with the `customer_id` and the opening `amount`. The card comes back `pending` and goes `active` once the issuer provisions it, usually within seconds. [Get card](/api-reference/cards/get-card) then shows the last four digits; the full card details come from [Get secure card details](/api-reference/cards/get-secure-card-details).
+    Call [Create card](/api-reference/cards/create-card) with the `customer_id` and the opening `amount`. The card comes back `pending` and goes `active` once the issuer provisions it, usually within seconds. [Get card](/api-reference/cards/get-card) then shows the last four digits; the full card details come from [Get secure card details](/api-reference/cards/get-secure-card-details).
   </Step>
   <Step title="Top it up">
     Add value later with [Fund or withdraw balance](/api-reference/cards/fund-or-withdraw-balance).
