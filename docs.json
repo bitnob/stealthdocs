@@ -595,8 +595,12 @@
               "PATCH /wallets/{id}",
               "GET /wallets/{id}/addresses",
               "POST /wallets/{id}/addresses",
-              "GET /wallets/{id}/addresses/{addressId}",
-              "GET /wallets/{id}/balances"
+              "GET /wallets/{id}/addresses/{address_id}",
+              "GET /wallets/{id}/balances",
+              "GET /wallets/sign-logs",
+              "GET /wallets/{id}/balances/{asset_id}",
+              "POST /wallets/{id}/sign",
+              "GET /wallets/{id}/utxos"
             ]
           },
           {
@@ -606,7 +610,8 @@
             "pages": [
               "GET /transactions",
               "POST /transactions",
-              "GET /transactions/{id}"
+              "GET /transactions/{id}",
+              "POST /transactions/estimate-fee"
             ]
           },
           {
@@ -620,6 +625,74 @@
               "PATCH /gasstations/{id}",
               "POST /gasstations/{id}/refill",
               "POST /gasstations/{id}/sponsor-broadcast"
+            ]
+          },
+          {
+            "group": "Sponsored transfers",
+            "pages": [
+              "GET /sponsored-transfers",
+              "POST /sponsored-transfers",
+              "GET /sponsored-transfers/{id}",
+              "POST /sponsored-transfers/{id}/submit"
+            ]
+          },
+          {
+            "group": "Consolidation",
+            "pages": [
+              "DELETE /consolidation/rules/{id}",
+              "GET /consolidation/rules/{id}",
+              "PATCH /consolidation/rules/{id}",
+              "POST /consolidation/rules/{id}/disable",
+              "POST /consolidation/rules/{id}/enable",
+              "POST /consolidation/rules/{id}/run",
+              "GET /consolidation/rules/{id}/runs",
+              "GET /consolidation/runs/{id}",
+              "GET /consolidation/runs/{id}/sweeps",
+              "GET /vaults/{vault_id}/consolidation/rules",
+              "POST /vaults/{vault_id}/consolidation/rules"
+            ]
+          },
+          {
+            "group": "Policies",
+            "pages": [
+              "GET /policies",
+              "POST /policies",
+              "POST /policies/evaluate",
+              "GET /policies/quorum",
+              "GET /policies/schema",
+              "POST /policies/validate",
+              "DELETE /policies/{id}",
+              "GET /policies/{id}",
+              "PUT /policies/{id}",
+              "POST /policies/{id}/activate",
+              "GET /policies/{id}/audit",
+              "POST /policies/{id}/rules",
+              "DELETE /policies/{id}/rules/{rule_id}",
+              "PUT /policies/{id}/rules/{rule_id}",
+              "POST /policies/{id}/validate"
+            ]
+          },
+          {
+            "group": "KYT",
+            "pages": [
+              "GET /kyt/categories",
+              "GET /kyt/risk-profiles",
+              "POST /kyt/risk-profiles",
+              "GET /kyt/risk-profiles/default",
+              "GET /kyt/risk-profiles/{id}",
+              "PUT /kyt/risk-profiles/{id}"
+            ]
+          },
+          {
+            "group": "Insights",
+            "pages": [
+              "GET /insights/estimate-network-fees"
+            ]
+          },
+          {
+            "group": "Users",
+            "pages": [
+              "GET /users/approver-candidates"
             ]
           },
           {
@@ -651,7 +724,8 @@
               "DELETE /webhooks/{id}",
               "GET /webhooks/{id}",
               "PATCH /webhooks/{id}",
-              "POST /webhooks/{id}/rotate-secret"
+              "POST /webhooks/{id}/rotate-secret",
+              "GET /webhooks/event-types"
             ]
           },
           {
@@ -659,7 +733,7 @@
             "icon": "network-wired",
             "expanded": true,
             "pages": [
-              "POST /rpc/{chain}"
+              "POST /rpc/{chain_network}"
             ]
           }
         ],
@@ -1425,6 +1499,10 @@
     {
       "source": "/api-reference/payouts/swift-payouts",
       "destination": "/docs/payouts/swift-payout"
+    },
+    {
+      "source": "/api-reference/platform/gas-stations/:slug*",
+      "destination": "/api-reference/platform/gasstations/:slug*"
     }
   ]
 }
