@@ -1,15 +1,15 @@
 ---
-title: "Platform API webhooks"
+title: "Bitnob Enterprise API webhooks"
 sidebarTitle: "Webhooks"
-description: "The two kinds of Platform webhook, the events each one sends, and how to verify every delivery's signature."
+description: "The two kinds of Bitnob Enterprise webhook, the events each one sends, and how to verify every delivery's signature."
 related:
   - /docs/platform/making-requests
   - /docs/platform/best-practices
 ---
 
-The Platform API sends two kinds of webhook. They're signed the same way, but the signature arrives in a different place.
+The Bitnob Enterprise API sends two kinds of webhook. They're signed the same way, but the signature arrives in a different place.
 
-| | Platform webhooks | On-chain subscriptions |
+| | Enterprise webhooks | On-chain subscriptions |
 |---|---|---|
 | Created with | [Create webhook](/api-reference/platform/webhooks/create-webhook) | [Create subscription](/api-reference/platform/subscriptions/create-subscription) |
 | What they report | Activity in your organisation: wallets, transactions, gas stations, policies, KYT | Activity on addresses you watch: incoming and outgoing transfers, confirmations, balance changes |
@@ -17,7 +17,7 @@ The Platform API sends two kinds of webhook. They're signed the same way, but th
 
 ## Events
 
-Platform webhooks deliver events such as `wallet.created`, `transaction.signed`, `transaction.confirmed`, `transaction.completed`, `transaction.failed`, `gas_station.low_balance`, `policy.violation`, and `kyt.deposit.flagged`. [List supported event types](/api-reference/platform/webhooks/list-supported-event-types) returns the full, current list.
+Enterprise webhooks deliver events such as `wallet.created`, `transaction.signed`, `transaction.confirmed`, `transaction.completed`, `transaction.failed`, `gas_station.low_balance`, `policy.violation`, and `kyt.deposit.flagged`. [List supported event types](/api-reference/platform/webhooks/list-supported-event-types) returns the full, current list.
 
 On-chain subscriptions deliver events such as `incoming_native_tx`, `incoming_token_tx`, `outgoing_native_tx`, `confirmation_threshold_met`, `confirmation_finalized`, and `balance_changed`.
 

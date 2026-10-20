@@ -1,16 +1,16 @@
 ---
-title: "Platform authentication"
+title: "Bitnob Enterprise API authentication"
 sidebarTitle: "Authentication"
-description: "How Platform API keys are issued, scoped to a permission set, and used to sign requests."
+description: "How Bitnob Enterprise API keys are issued, scoped to a permission set, and used to sign requests."
 related:
   - /docs/platform/core-concepts
   - /docs/platform/exchange-integration-guide
 ---
 <Note>
-  This page covers the **Platform API**, the non-custodial product. The custodial Bitnob Business API used for payouts, cards, and trading signs requests with HMAC instead. See [Business API authentication](/api-reference/authentication/authentication).
+  This page covers the **Bitnob Enterprise API**, the non-custodial product. The custodial Bitnob Business API used for payouts, cards, and trading signs requests with HMAC instead. See [Business API authentication](/api-reference/authentication/authentication).
 </Note>
 
-Every request to the Platform API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
+Every request to the Bitnob Enterprise API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
 
 ## Base URL
 
@@ -31,7 +31,7 @@ Content-Type: application/json
 The organisation context is resolved automatically from the key. You never need to send an org ID header.
 
 <Warning>
-  Keep keys server-side. Never expose a Platform API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
+  Keep keys server-side. Never expose a Bitnob Enterprise API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
 </Warning>
 
 ## Required headers

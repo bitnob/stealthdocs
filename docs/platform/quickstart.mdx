@@ -1,19 +1,19 @@
 ---
-title: "Platform API quickstart"
-sidebarTitle: "Platform API quickstart"
-description: "Make your first Platform API calls: confirm your API key, list supported chains, find your vault, and create a wallet in it."
+title: "Bitnob Enterprise API quickstart"
+sidebarTitle: "Quickstart"
+description: "Make your first Bitnob Enterprise API calls: confirm your API key, list supported chains, find your vault, and create a wallet in it."
 related:
   - /docs/platform/authentication
   - /docs/platform/core-concepts
 ---
 
-This quickstart is for the **Platform API**, Bitnob's non-custodial wallet infrastructure. If you want Bitnob to hold the balance and settle payouts, cards, or trades for you, use the [Bitnob Business API quickstart](/docs/getting-started/quickstart) instead.
+This quickstart is for the **Bitnob Enterprise API**, Bitnob's non-custodial wallet infrastructure. If you want Bitnob to hold the balance and settle payouts, cards, or trades for you, use the [Bitnob Business API quickstart](/docs/getting-started/quickstart) instead.
 
 Every request goes to `https://api.platform.bitnob.com` with your key in the `X-API-Key` header. There's no request signing.
 
 <Steps>
   <Step title="Get an API key">
-    Create a key in the Bitnob dashboard, as described in [Set up your account](/docs/getting-started/account-setup#create-platform-api-keys), and store it server-side. The key decides the environment: a live key works on mainnet, and a sandbox key on testnets.
+    Create a key in the Bitnob dashboard, as described in [Set up your account](/docs/platform/account-setup#create-an-api-key), and store it server-side. The key decides the environment: a live key works on mainnet, and a sandbox key on testnets.
 
     ```bash
     export PLATFORM_API_KEY=your_api_key
@@ -143,7 +143,7 @@ Every request goes to `https://api.platform.bitnob.com` with your key in the `X-
   <Card title="Best practices" icon="shield-check" href="/docs/platform/best-practices">
     Key handling, policies, and safe retries.
   </Card>
-  <Card title="Platform API reference" icon="book" href="/api-reference/platform/meta/get-api-key-info">
+  <Card title="Bitnob Enterprise API reference" icon="book" href="/api-reference/platform/meta/get-api-key-info">
     Every endpoint, with request and response schemas.
   </Card>
 </Columns>

@@ -1,13 +1,13 @@
 ---
-title: "Making Platform API requests"
+title: "Making Bitnob Enterprise API requests"
 sidebarTitle: "Making requests"
-description: "The conventions every Platform API call shares: versioning, idempotency, pagination, errors, rate limits, amounts, and request tracing."
+description: "The conventions every Bitnob Enterprise API call shares: versioning, idempotency, pagination, errors, rate limits, amounts, and request tracing."
 related:
   - /docs/platform/authentication
   - /docs/platform/best-practices
 ---
 
-Every Platform API request goes to `https://api.platform.bitnob.com` with your key in the `X-API-Key` header. The rest of this page covers the conventions every endpoint shares.
+Every Bitnob Enterprise API request goes to `https://api.platform.bitnob.com` with your key in the `X-API-Key` header. The rest of this page covers the conventions every endpoint shares.
 
 ## Versioning
 
@@ -102,7 +102,7 @@ Branch on `code`, which is stable. Show `message` to people, but don't parse it.
 | `api_error` | 500 | `internal_error` |
 | `service_unavailable_error` | 503 | `service_unavailable` |
 
-The Platform API's error shape is different from the Bitnob Business API's, so don't share one error handler between the two.
+The Bitnob Enterprise API's error shape is different from the Bitnob Business API's, so don't share one error handler between the two.
 
 ## Rate limits
 
