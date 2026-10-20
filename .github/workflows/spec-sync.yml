@@ -13,7 +13,7 @@ env:
   OASDIFF_VERSION: "1.30.0"
   SYNC_BRANCH: automation/spec-sync
   SPEC_BASE_URL: ${{ vars.SPEC_BASE_URL || 'https://bitnob.dev/api-collections/swagger' }}
-  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json,bitnob-platform.openapi.json=https://api.platform.bitnob.com/openapi.json' }}
+  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json' }}
 
 jobs:
   sync:
@@ -39,23 +39,18 @@ jobs:
           mkdir -p "$CHANGES_DIR/base"
           changed=false
           notable=false
-          for entry in $(echo "$SPEC_FILES" | tr ',' ' '); do
-            name="${entry%%=*}"
-            url="$SPEC_BASE_URL/$name"
-            if [ "$name" != "$entry" ]; then
-              url="${entry#*=}"
-            fi
+          for name in $(echo "$SPEC_FILES" | tr ',' ' '); do
             local_path="api-collections/swagger/$name"
             if [ ! -f "$local_path" ]; then
               echo "::warning::$local_path is not in the repository, skipping"
               continue
             fi
-            if ! curl -fsSL --retry 3 --max-time 60 -o "$CHANGES_DIR/fetched-$name" "$url"; then
-              echo "::warning::could not fetch $url, skipping"
+            if ! curl -fsSL --retry 3 --max-time 60 -o "$CHANGES_DIR/fetched-$name" "$SPEC_BASE_URL/$name"; then
+              echo "::warning::could not fetch $SPEC_BASE_URL/$name, skipping"
               continue
             fi
             if ! jq empty "$CHANGES_DIR/fetched-$name" 2>/dev/null; then
-              echo "::warning::$url is not valid json, skipping"
+              echo "::warning::$SPEC_BASE_URL/$name is not valid json, skipping"
               continue
             fi
             if cmp -s "$local_path" "$CHANGES_DIR/fetched-$name"; then
@@ -75,8 +70,6 @@ jobs:
             fi
             notable=true
             echo "## $name" >> "$CHANGES_DIR/summary.md"
-            echo "Fetched from \`$url\`." >> "$CHANGES_DIR/summary.md"
-            echo >> "$CHANGES_DIR/summary.md"
             oasdiff changelog "$CHANGES_DIR/base/$name" "$local_path" --format markdown | sed '1d;s/^#/##/' | cat -s >> "$CHANGES_DIR/summary.md"
           done
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
@@ -116,7 +109,7 @@ jobs:
           fi
 
           {
-            echo "A published spec no longer matches the copy in this repository, so this pull request brings it up to date."
+            echo "The published spec at \`$SPEC_BASE_URL\` no longer matches the copy in this repository, so this pull request brings it up to date."
             echo
             echo "$entry_note"
             echo
