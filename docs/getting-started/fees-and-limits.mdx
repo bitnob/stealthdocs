@@ -1,0 +1,91 @@
+---
+title: "Fees and limits by product"
+sidebarTitle: "Fees and limits"
+description: "What each Bitnob product costs, the smallest and largest amounts it accepts, who pays, and when the charge is taken."
+related:
+  - /docs/getting-started/core-concepts-and-architecture/currencies-and-amounts
+  - /docs/card-issuing/card-fees
+  - /docs/stablecoins/sending-stablecoins
+---
+
+What each product costs, the smallest and largest amounts it accepts, who pays, and when the charge is taken. These are the standard terms. Where your Partner Agreement differs, the agreement applies.
+
+<Note>
+  Payout limits and withdrawal chains vary by corridor and environment. Where a row names an endpoint, call it at runtime instead of hard-coding the number.
+</Note>
+
+## Virtual cards
+
+| Item | Amount | Who pays, and when |
+|---|---|---|
+| Card creation | \$1.00 per card | Your company balance, when the card is created |
+| Card funding | \$1.00 flat below \$100; 1% of the load at \$100 and above | Your company balance, on each top-up, including the opening amount at creation |
+| Cross-border transaction | 2.5% + \$0.50 | On any transaction made outside the United States |
+| Contactless transaction | 0.25% per transaction | On each tap-to-pay transaction |
+| Chargeback | \$60.00 flat | When a cardholder disputes a transaction |
+| Declined authorisation | First free; \$0.75 for the 2nd and 3rd | The card is terminated on the 3rd |
+
+| Limit | Value |
+|---|---|
+| Minimum per top-up | \$2 |
+| Maximum per funding transaction | \$2,500 |
+| Maximum card balance | \$50,000 |
+| Withdrawals from a card | One every 300 seconds per card |
+
+Full rules: [Fees and decline rules](/docs/card-issuing/card-fees) and [Fund a card](/docs/card-issuing/card-funding).
+
+## Payouts
+
+| Item | Detail |
+|---|---|
+| Fee | Returned on every quote as `fees` (major units) and `cent_fees` (minor units), in `fee_currency`, before you commit. |
+| Minimum and maximum | Per country. Call [Payout limits](/api-reference/payouts/payout-limits), or read the limits on each rail from [Country requirements](/api-reference/payouts/country-requirements). |
+| Exchange rate | Locked on the quote as `exchange_rate.rate`. `effective_rate` includes the spread. |
+
+Limits for the live corridors, as [Payout limits](/api-reference/payouts/payout-limits) returns them:
+
+| Country | Currency | Minimum | Maximum |
+|---|---|---|---|
+| Nigeria | NGN | 500 | 50,000,000 |
+| Ghana | GHS | 20 | 15,000 |
+| Kenya | KES | 20 | 250,000 |
+| Uganda | UGX | 37,000 | 5,000,000 |
+| Rwanda | RWF | 100 | 10,000,000 |
+| The Gambia | GMD | 10 | 50,000 |
+| Cameroon | XAF | 100 | 1,000,000 |
+| Gabon | XAF | 200 | 500,000 |
+| Senegal | XOF | 100 | 200,000 |
+| Ivory Coast | XOF | 100 | 2,000,000 |
+| Niger | XOF | 500 | 500,000,000 |
+| United States | USD | 1 | 10,000,000 |
+
+## Virtual accounts (NGN)
+
+| Item | Detail |
+|---|---|
+| Collection fee | None |
+| Deposit limits | None per deposit, per day, or per month |
+| Crediting time | Within 10 minutes of the transfer, barring delays at the sending bank |
+
+## Stablecoins
+
+| Item | Detail |
+|---|---|
+| Minimum deposit | \$1. Smaller deposits are not processed. |
+| Withdrawal fee | \$1 on every chain, charged on top in the currency withdrawn. Sending 1 USDT debits 2 USDT. |
+| Minimum withdrawal | \$1 |
+| Maximum withdrawal | None |
+| Daily or monthly limit | None |
+
+## Trading
+
+| Item | Detail |
+|---|---|
+| NGN pairs, per trade | ₦500 to ₦10,000,000 |
+| NGN pairs, daily or monthly | None |
+| Crypto pairs | No daily or monthly cap. Each quote has a maximum size (50 BTC on BTC pairs), and an order must be at least 1.0 USDC or the equivalent. |
+| Spread | Included in the quoted price. The gap between `buy_rate` and `sell_rate` from [Get single-pair rate](/api-reference/exchange-rates/get-single-pair-rate) shows it. |
+
+## Not listed here
+
+For Lightning, bulk transfers, and volume-based pricing, contact your account manager or [sales](https://bitnob.com/contact).

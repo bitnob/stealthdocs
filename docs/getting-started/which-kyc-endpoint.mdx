@@ -1,0 +1,83 @@
+---
+title: "Which KYC endpoint to use"
+sidebarTitle: "Which KYC endpoint"
+description: "Card KYC or Create customer: which endpoint verifies a customer for each product, how to check status, and the field formats both expect."
+related:
+  - /docs/card-issuing/issue-your-first-card
+  - /docs/virtual-accounts/set-up-virtual-accounts
+---
+
+A customer's identity reaches Bitnob in one of two ways. Which one you use depends on the product, not on the customer.
+
+| You want to | Call | What it does |
+|---|---|---|
+| Issue a virtual card | [Card KYC](/api-reference/cards/card-kyc) | Verifies the person and creates the customer in one step. Returns the `customer_id` you pass to Create card. |
+| Issue a naira virtual account | [Create customer](/api-reference/customers/create-customer), then [Create virtual account](/api-reference/virtual-accounts/create-virtual-account) | You create the customer with their BVN. The BVN is verified when the account is created. |
+| Create a customer for payouts or beneficiaries | [Create customer](/api-reference/customers/create-customer) | Creates the record. No identity verification runs. |
+
+## Cards: `POST /api/cards/kyc`
+
+- Send the customer's details and one identity document. You don't create the customer first: a successful submission creates them and returns `customer_id`.
+- Accepted `id_type` values: `bvn`, `nin`, `passport`, `drivers_license`, `national_id`, `vnin`, `voters_card`, `ghana_card`.
+- Verification is instant for `bvn` and `nin`. Document types can sit at `pending` for up to 10 minutes. A card can only be created once the customer is `approved`.
+- If the `id_number` already belongs to one of your customers under a different email, the call returns `400` and names the existing `customer_id`. Resubmit with that `customer_id`.
+- Card KYC is enabled per account. If it isn't on for you, the call returns "card KYC is not available".
+
+Walkthrough: [Issue your first card](/docs/card-issuing/issue-your-first-card).
+
+## Virtual accounts: `POST /api/customers`
+
+- Create the customer with `first_name`, `last_name`, `email`, `phone_number`, `date_of_birth`, `id_type: "bvn"`, and the BVN as `id_number`.
+- Then call [Create virtual account](/api-reference/virtual-accounts/create-virtual-account) with that `customer_id`. The BVN is checked against the national registry at this point, not when the customer is created.
+- The name and date of birth must match the BVN record exactly, or verification fails even when the BVN is valid.
+- For a company, set `customer_type: "business"`. The personal fields are those of a director or authorised representative.
+
+<Warning>
+  Customers are matched on `phone_number`. Creating a customer with a phone number you've already used returns `201` with the existing customer, and the other fields you sent are ignored.
+</Warning>
+
+Walkthrough: [Set up virtual accounts](/docs/virtual-accounts/set-up-virtual-accounts).
+
+## Check status
+
+There's no separate status endpoint. Read the customer with [Get customer](/api-reference/customers/get-customer):
+
+```http
+GET /api/customers/:customerId
+```
+
+```json
+{
+  "success": true,
+  "message": "Customer retrieved successfully",
+  "data": {
+    "id": "01a114af-8ea6-79b7-be0b-2405531fe8ef",
+    "customer_type": "individual",
+    "card_program_kyc": [
+      {
+        "card_program": "prepaid",
+        "normalized_status": "approved"
+      }
+    ]
+  }
+}
+```
+
+`card_program_kyc[].normalized_status` is one of `none`, `initiated`, `pending`, `approved`, or `rejected`. Prefer the `virtualcard.user.kyc.*` webhooks over polling.
+
+Virtual accounts have no pending state. The create call either returns the account or an error naming what failed.
+
+## Existing customers
+
+A customer you already created with `POST /api/customers` can be given a virtual account once the fields above are on the record. Add missing ones with [Update customer](/api-reference/customers/update-customer).
+
+## Field formats
+
+| Field | Format |
+|---|---|
+| `date_of_birth` | `YYYY-MM-DD`, for example `1994-03-21`. The customer must be 18 or over. |
+| `id_number` for `bvn` | 11 digits |
+| `id_type` `bvn` and `nin` | The customer's country must be Nigeria. |
+| `country` | ISO 3166-1 alpha-3, for example `NGA`, `GHA`, `USA` |
+| `phone_number` and `dial_code` | The number without the prefix (`8012345678`), and the prefix separately (`+234`) |
+| `created_by` | Set by Bitnob to the ID of the API client that created the record. A value you send is ignored. |

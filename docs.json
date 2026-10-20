@@ -48,7 +48,9 @@
                     "group": "Concepts",
                     "pages": [
                       "docs/getting-started/core-concepts-and-architecture",
-                      "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts"
+                      "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts",
+                      "docs/getting-started/fees-and-limits",
+                      "docs/getting-started/which-kyc-endpoint"
                     ]
                   },
                   {
