@@ -84,7 +84,7 @@ app.listen(3000);
 
 </CodeGroup>
 
-Reference implementation and secrets guidance: [Verifying events](/docs/card-issuing/webhook-payloads#verifying-events).
+Reference implementation and secrets guidance: [Verifying events](/api-reference/webhooks#verify-every-delivery).
 
 ## Handle delivery semantics
 
@@ -95,7 +95,7 @@ Reference implementation and secrets guidance: [Verifying events](/docs/card-iss
 | Ordering | Do not assume order. Branch on `event`, then `transactionType`, and reconcile against [card transactions](/api-reference/cards/list-card-transactions-by-card) rather than inferring state from sequence. |
 | New fields | Event names are stable, but new optional fields can appear in `data` without a version bump. Ignore what you do not recognise. |
 
-If your firewall restricts inbound traffic, allowlist the published [Source IPs](/docs/card-issuing/webhook-payloads#source-ips), but only as a second layer: any host can spoof a source address, so the signature is the check that counts. Always use HTTPS, and keep the secret out of client code and repositories.
+If your firewall restricts inbound traffic, allowlist the published [Source IPs](/api-reference/webhooks#source-ips), but only as a second layer: any host can spoof a source address, so the signature is the check that counts. Always use HTTPS, and keep the secret out of client code and repositories.
 
 ## Test your endpoint
 

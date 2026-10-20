@@ -45,7 +45,7 @@ app.post('/webhook', express.raw({ type: () => true }), (req, res) => {
 });
 ```
 
-Reference implementations and the published [Source IPs](/docs/stablecoins/address-webhook-events#source-ips) are under [Verifying events](/docs/stablecoins/address-webhook-events#verifying-events). Treat any IP allowlist as a second layer; the signature is the check that counts.
+Reference implementations and the published [Source IPs](/api-reference/webhooks#source-ips) are under [Verifying events](/api-reference/webhooks#verify-every-delivery). Treat any IP allowlist as a second layer; the signature is the check that counts.
 
 ## The payloads
 

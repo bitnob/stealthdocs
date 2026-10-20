@@ -1,15 +1,18 @@
 ---
 title: "Set up your account"
-description: "Account creation, sandbox and production credentials, safe storage, and a call that confirms they work."
+description: "Create your Bitnob account, then issue Bitnob Business API credentials or Platform API keys, store them safely, and confirm they work."
 related:
   - /docs/getting-started/quickstart
   - /docs/getting-started/core-concepts-and-architecture
   - /docs/getting-started/api-best-practices/api-keys-and-credentials
 ---
 
-This guide takes you from no account to a verified credential pair. It covers registration, credential creation, storage, and one call that proves the setup works.
+One Bitnob account covers both APIs. This guide takes you from no account to working credentials: register, complete your profile, then create credentials for the API you're using and confirm they work.
 
-Everything after this page assumes you hold a `CLIENT_ID` and a `CLIENT_SECRET`. The [Quickstart](/docs/getting-started/quickstart) picks up here and shows you how to sign a request with them.
+| API | Credentials | Next step |
+|---|---|---|
+| Bitnob Business API | A `CLIENT_ID` and `CLIENT_SECRET` pair that signs requests | [Business API quickstart](/docs/getting-started/quickstart) |
+| Platform API | An API key sent in the `X-API-Key` header | [Platform API quickstart](/docs/platform/quickstart) |
 
 ## Create your account
 
@@ -53,7 +56,7 @@ To unlock production and raise your limits, open **Identity & Compliance** and s
 
 Review usually takes 24 to 48 hours. We email you the result.
 
-## Create API credentials
+## Create Bitnob Business API credentials
 
 Your credentials are a pair: a `CLIENT_ID` that identifies you, and a `CLIENT_SECRET` that signs your requests.
 
@@ -95,7 +98,7 @@ The secret you sign with selects the environment. There is no environment header
 
 Sandbox data resets from time to time. Do not use it for records you need to keep.
 
-## Store your credentials
+### Store your credentials
 
 Keep credentials out of source control and out of client applications.
 
@@ -106,7 +109,7 @@ BITNOB_CLIENT_SECRET=yourSecretKey
 
 In production, read them from a secret manager rather than a file. [API keys and credential security](/docs/getting-started/api-best-practices/api-keys-and-credentials) covers storage, rotation, and leak response.
 
-## Verify the setup
+### Verify your Business API credentials
 
 Call `/api/whoami`. It returns your authenticated account details and nothing else, so it is safe to call at any time.
 
@@ -127,8 +130,23 @@ A `401` means the signature, the timestamp, or the client id is wrong. The [Quic
   To sign this request from application code, copy a signing helper for Node.js, Go, or Python from [Authentication](/api-reference/authentication/authentication).
 </Note>
 
-## Platform API credentials
+## Create Platform API keys
 
-The Platform API is separate. It uses a different base URL and an `X-API-Key` header instead of HMAC signing.
+The Platform API uses a single API key instead of a signed credential pair. Create it in the Bitnob dashboard, and store it the same way as a Business API secret: server-side only, never in client code or source control.
 
-If you need it, see the [Platform authentication guide](/docs/platform/authentication).
+The key decides the environment. A live key works on mainnet, and a sandbox key on testnets. Each key also carries a fixed set of scopes, so create a separate key for each service with only the scopes it needs.
+
+```bash
+BITNOB_PLATFORM_API_KEY=yourApiKey
+```
+
+### Verify your Platform API key
+
+Call [Get API key info](/api-reference/platform/meta/get-api-key-info). A `200` returns the key's name, its organisation, and its scopes.
+
+```bash
+curl https://api.platform.bitnob.com/v1/me \
+  -H "X-API-Key: $BITNOB_PLATFORM_API_KEY"
+```
+
+A `401` with `not_authenticated` means the key is missing, wrong, or expired. The [Platform API quickstart](/docs/platform/quickstart) continues from here.

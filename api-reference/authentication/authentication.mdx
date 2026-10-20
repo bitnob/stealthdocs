@@ -1,11 +1,11 @@
 ---
-title: "API authentication and request signing"
-sidebarTitle: "Overview"
-description: "Base URL, HMAC signing scheme, and the headers every Bitnob API request must carry."
+title: "Bitnob Business API authentication and request signing"
+sidebarTitle: "Authentication"
+description: "Base URL, HMAC signing scheme, and the headers every Bitnob Business API request must carry."
 ---
 
 <Note>
-  This page covers the **Bitnob API**, the custodial product behind payouts, cards, trading, and virtual accounts. Platform is a separate, non-custodial product with its own base URL and a simpler `X-API-Key` scheme. See [Platform authentication](/docs/platform/authentication).
+  This page covers the **Bitnob Business API**, the custodial product behind payouts, cards, trading, and virtual accounts. Platform is a separate, non-custodial product with its own base URL and a simpler `X-API-Key` scheme. See [Platform authentication](/docs/platform/authentication).
 </Note>
 
 Every request goes to `https://api.bitnob.com` and is signed with HMAC-SHA256. There is one authentication mode, and it needs both your `CLIENT_ID` and `CLIENT_SECRET`. Signing binds each request to its body and a timestamp, so a captured request can't be altered, and it stops being accepted after about five minutes.

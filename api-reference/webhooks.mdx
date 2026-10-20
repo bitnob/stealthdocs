@@ -1,0 +1,109 @@
+---
+title: "Bitnob Business API webhooks"
+sidebarTitle: "Webhooks"
+description: "How Bitnob Business API webhooks are delivered, how to verify each one, retries and duplicates, source IPs, and where to find every event."
+---
+
+Bitnob sends a webhook to your server when something happens on your account: a deposit lands, a payout completes, a card is charged. Set your webhook URL and webhook secret in the dashboard. Some requests, such as Create card and Initialize payout, also take a per-request URL.
+
+## Verify every delivery
+
+Each delivery carries an `x-bitnob-signature` header: an HMAC SHA-512, hex-encoded, of the **raw request body**, keyed with the webhook secret from your dashboard. Your API client secret doesn't sign webhooks.
+
+Compute the signature over the exact bytes you received, before you parse anything. Re-serialising parsed JSON changes the bytes, and the check fails.
+
+<CodeGroup>
+
+```javascript Node.js (Express)
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
+const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
+
+// Read the raw bytes for any Content-Type header
+app.post('/webhook_url', express.raw({ type: () => true }), (req, res) => {
+  const expected = crypto.createHmac('sha512', webhookSecret).update(req.body).digest('hex');
+  const received = req.headers['x-bitnob-signature'] || '';
+  const valid =
+    received.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected));
+  if (!valid) return res.sendStatus(401);
+
+  res.sendStatus(200);
+  // Parse the body only after the signature checks out
+  const event = JSON.parse(req.body);
+  // De-duplicate on the event ID, then process
+});
+
+app.listen(3000);
+```
+
+```python Python (Flask)
+import hashlib
+import hmac
+import json
+import os
+
+from flask import Flask, abort, request
+
+app = Flask(__name__)
+WEBHOOK_SECRET = os.environ["BITNOB_WEBHOOK_SECRET"].encode()
+
+@app.route("/webhook_url", methods=["POST"])
+def handle_webhook():
+    raw_body = request.get_data()
+    expected = hmac.new(WEBHOOK_SECRET, raw_body, hashlib.sha512).hexdigest()
+    if not hmac.compare_digest(expected, request.headers.get("x-bitnob-signature", "")):
+        abort(401)
+
+    # Parse the raw body yourself rather than with request.json
+    event = json.loads(raw_body)
+    # De-duplicate on the event ID, then process
+    return "", 200
+```
+
+</CodeGroup>
+
+## Retries and duplicates
+
+Return `200` as soon as the signature checks out, then process the event in the background. Anything other than a `200`, including a timeout, counts as a failed delivery. A failed delivery is retried up to 3 times with exponential backoff, and then delivery stops.
+
+- **Expect duplicates.** The same event can arrive more than once, even after you returned `200`. De-duplicate on the event ID: `event_id` on most events, and `eventId` on card events.
+- **Don't assume order.** A retried delivery can land after a later event.
+- **Reconcile on a schedule.** Retries are finite, so an endpoint that's down for long enough misses events for good. Check the relevant list endpoint for anything you still hold as pending.
+
+## Source IPs
+
+If your firewall restricts inbound traffic, allow the addresses Bitnob sends webhooks from:
+
+| IP address | Use |
+|---|---|
+| `18.171.51.218` | Webhook delivery |
+| `13.134.154.133` | Webhook delivery |
+
+```nginx
+location /webhook_url {
+  allow 18.171.51.218;
+  allow 13.134.154.133;
+  deny  all;
+}
+```
+
+<Warning>
+  An IP allowlist isn't a security boundary. Any host can send a request from an allowlisted address, and these addresses can change. Verify the signature on every event, whether or not you filter by IP.
+</Warning>
+
+## Test locally
+
+Webhooks need a public URL. While you build, expose your local server with a tunnel such as [ngrok](https://ngrok.com/), and set the tunnel URL as your webhook URL in the sandbox dashboard. Only do this in sandbox.
+
+## Events by product
+
+| Product | Events |
+|---|---|
+| Stablecoin deposits | [Address webhook events](/docs/stablecoins/address-webhook-events) |
+| Stablecoin and bitcoin withdrawals | [Withdrawal webhook events](/docs/stablecoins/withdrawal-webhook-events) |
+| Payouts | [Payout webhook events](/docs/payouts/webhook-events) |
+| Card issuing | [Card webhook payloads](/docs/card-issuing/webhook-payloads) |
+| Trading | [Trade webhooks](/docs/trading/trade-webhooks) |
+| Bitcoin | [Confirmations and webhook events](/docs/bitcoin/confirmations-and-webhook-events) |

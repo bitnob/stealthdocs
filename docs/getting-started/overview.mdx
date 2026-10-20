@@ -1,7 +1,7 @@
 ---
-title: "Introduction"
+title: "Introduction to the Bitnob APIs"
 sidebarTitle: "Introduction"
-description: "A financial infrastructure API for moving money between bitcoin, stablecoins, and local African currencies. What you can build, and where to start."
+description: "Bitnob's two APIs: the Bitnob Business API for moving money across Africa, and the Platform API for non-custodial wallets. What each does, and where to start."
 ---
 <img
   src="/images/hero.jpg"
@@ -9,22 +9,35 @@ description: "A financial infrastructure API for moving money between bitcoin, s
   className="w-full !mt-0 rounded-2xl border border-gray-200 dark:border-white/10"
 />
 
-Bitnob is a financial infrastructure API. It gives you one integration for bitcoin, stablecoins, and local currency rails across Africa, so you can move money between them without holding accounts or licences in each market.
+Bitnob is financial infrastructure for bitcoin, stablecoins, and local currency rails across Africa. You build on it through one of two APIs:
 
-Every request goes to `https://api.bitnob.com` and is signed with HMAC. Two pages take you from nothing to a working call: get credentials, then sign your first request.
+| | Bitnob Business API | Platform API |
+|---|---|---|
+| What it is | Bitnob holds the balance and settles payouts, cards, trades, and deposits for you. | Non-custodial wallets with policy-governed signing across chains. |
+| Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
+| Authentication | HMAC-signed requests | An `X-API-Key` header |
 
-<Columns cols={2}>
+Not sure which you need? [Choose a product](/docs/choose-a-product) compares them in more detail.
+
+## Get started
+
+Both APIs start from the same Bitnob account. Set it up once, then follow the quickstart for the API you're using.
+
+<Columns cols={3}>
   <Card title="1. Set up your account" icon="key" href="/docs/getting-started/account-setup">
-    Register, issue sandbox credentials, and store them safely.
+    Register, then create Business API credentials or Platform API keys.
   </Card>
-  <Card title="2. Quickstart" icon="bolt" href="/docs/getting-started/quickstart">
+  <Card title="2a. Business API quickstart" icon="bolt" href="/docs/getting-started/quickstart">
     Sign a request and get a `200` back, in about five minutes.
+  </Card>
+  <Card title="2b. Platform API quickstart" icon="wallet" href="/docs/platform/quickstart">
+    Confirm your key, list chains, and create your first wallet.
   </Card>
 </Columns>
 
-## What you can build
+## What you can build with the Bitnob Business API
 
-Each product is a separate lane with its own guides and endpoints. Most integrations use two or three.
+Each product has its own guides and endpoints. Most integrations use two or three.
 
 <Columns cols={2}>
   <Card title="Bitcoin" icon="bitcoin" href="/docs/bitcoin/overview">
@@ -47,17 +60,20 @@ Each product is a separate lane with its own guides and endpoints. Most integrat
   </Card>
 </Columns>
 
-## Holding assets yourself?
+## What you can build with the Platform API
 
-Everything on this page is the **Bitnob API**: Bitnob holds the balance and settles on your behalf. If you need to hold the assets yourself, that is Platform, the non-custodial product.
+<Columns cols={2}>
+  <Card title="Wallets and signing" icon="wallet" href="/docs/platform/overview">
+    Vaults, wallets, and addresses across chains, with every signature checked against your policies.
+  </Card>
+  <Card title="Bitcoin with your own keys" icon="key" href="/docs/bitcoin/custody-models">
+    Business-managed custody and self-custodial wallets on Bitnob's infrastructure.
+  </Card>
+</Columns>
 
-<Card title="Platform" icon="vault" href="/docs/platform/overview">
-  Non-custodial, policy-governed wallets. Keys are generated in hardware enclaves and Bitnob cannot move funds on your behalf.
-</Card>
+## A typical Business API integration
 
-## A typical integration
-
-Most products follow the same shape, so learning one carries over to the rest.
+Most Business API products follow the same shape, so learning one carries over to the rest.
 
 <Steps>
   <Step title="Create a customer">
@@ -81,7 +97,7 @@ Most products follow the same shape, so learning one carries over to the rest.
     From quote to confirmed delivery, with real requests and responses.
   </Card>
   <Card title="API reference" icon="code" href="/api-reference/authentication/authentication">
-    Every endpoint, with request and response schemas.
+    Every Business API and Platform API endpoint, with request and response schemas.
   </Card>
   <Card title="Why we built this" icon="compass" href="/docs/getting-started/about">
     The problem Bitnob exists to solve.
