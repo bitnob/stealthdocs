@@ -15,7 +15,7 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
 
 <Steps>
   <Step title="Verify the cardholder">
-    Every card starts with a verified cardholder. Submit their identity details to [Card KYC](/api-reference/cards/card-kyc). The response returns the `customer_id` you pass to Create card. Identity details are captured here, so you don't send them again when you create the card.
+    Every card starts with a verified cardholder. Submit their identity details to [Card KYC](/api-reference/cards/card-kyc). The response returns the `customer_id` you pass to Create card. Identity details are captured here, so you don't send them again when you create the card. [Card KYC](/docs/card-issuing/card-kyc) covers document rules, statuses, and rejections.
 
     ```http
     POST /api/cards/kyc
@@ -167,7 +167,7 @@ Amounts throughout are integers in micro-units: 1 USD = 1,000,000, so `2000000` 
     }
     ```
 
-    This is the signal to show the card in your UI. Fetch the PAN, CVV, and expiry with [Get secure card details](/api-reference/cards/get-secure-card-details), display them once, and do not store the CVV. If creation fails you get `virtualcard.created.failed` with a `reason`.
+    This is the signal to show the card in your UI. Fetch the PAN, CVV, and expiry with [Get secure card details](/api-reference/cards/get-secure-card-details), display them once, and do not store the CVV. If you've registered a card encryption key, they arrive encrypted; see [Decrypt card details](/docs/card-issuing/decrypt-card-details). If creation fails you get `virtualcard.created.failed` with a `reason`.
 
     You can also check with [Get card](/api-reference/cards/get-card). Once the card is `active`, it shows the last four digits and the opening balance:
 

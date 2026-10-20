@@ -1,0 +1,295 @@
+---
+title: "Verify cardholders with Card KYC"
+sidebarTitle: "Card KYC"
+description: "Submit a cardholder for identity verification, track the outcome by status or webhook, and handle rejections before you issue a card."
+related:
+  - /docs/card-issuing/issue-your-first-card
+  - /docs/getting-started/which-kyc-endpoint
+  - /docs/card-issuing/webhook-payloads
+---
+
+Before a customer can be given a virtual card, they must verify their identity. You submit their details (name, date of birth, an ID, and an address) to [Card KYC](/api-reference/cards/card-kyc), our partners check them, and once the customer is `approved`, you can create a card for them.
+
+No approval means no card. This is a compliance requirement, not a bug.
+
+## How it works
+
+<Steps>
+  <Step title="Submit">
+    Send the customer's identity details to `POST /api/cards/kyc`. A successful submission creates the customer and returns their `customer_id` with an initial status.
+  </Step>
+  <Step title="Wait for the outcome">
+    Verification runs asynchronously. `bvn` and `nin` are verified instantly. Other ID types return a result within 10 minutes and sit at `pending` until then.
+  </Step>
+  <Step title="Learn the result">
+    Receive the `virtualcard.user.kyc.*` webhook (recommended), or read the status from the customer record.
+  </Step>
+  <Step title="Issue the card">
+    Once the customer is `approved`, pass their `customer_id` to [Create card](/api-reference/cards/create-card-embedded-customer).
+  </Step>
+</Steps>
+
+## Submit KYC
+
+```http
+POST /api/cards/kyc
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `customer` | object | Yes | The identity to verify. See the table below. |
+| `occupation` | string | Yes | The customer's occupation, in lowercase snake_case. |
+| `employment_status` | string | Yes | For example `employed`. |
+| `account_purpose` | string | Yes | What the customer intends to use the card for. |
+| `annual_salary` | string | Yes | Declared annual income in whole major units. |
+| `expected_monthly_volume` | string | Yes | Anticipated monthly spend in whole major units. |
+| `terms_of_service_accepted` | boolean | Yes | Must be `true`. |
+| `place_of_birth` | string | No | The customer's place of birth. |
+| `webhook_url` | string | No | Per-submission URL for the outcome. Leave it out to use your company's webhook URL. |
+| `id_front_image` | string | For document ID types | Base64-encoded image of the front of the ID. Never sent for `bvn` or `nin`. |
+| `redirect_url` | string | No | Where to send the customer after they finish verification through `completion_link`. |
+
+### The `customer` object
+
+| Field | Required | Notes |
+|---|---|---|
+| `customer_type` | Yes | Lowercase `individual` or `business`. |
+| `first_name`, `last_name` | Yes | Exactly as they appear on the identity document. Required for businesses too: the person behind the account. |
+| `date_of_birth` | Yes | `YYYY-MM-DD`. Required for businesses too. |
+| `id_type` | Yes | See [Identity document rules](#identity-document-rules). |
+| `id_number` | Yes | The BVN, NIN, or document number. 4 to 50 characters. |
+| `email` | Yes | Your reconciliation key for the customer. |
+| `phone_number`, `dial_code` | No | Send them together: `8031234567` and `+234`. |
+| `business_name`, `registration_number` | For businesses | Sent alongside the personal fields, not instead of them. |
+| `line1`, `city`, `state`, `postal_code`, `country` | Yes | Address. `country` is ISO 3166-1 alpha-3. |
+| `line2` | No | Address line 2. |
+
+<CodeGroup>
+
+```json Individual
+{
+  "customer": {
+    "customer_type": "individual",
+    "first_name": "James",
+    "last_name": "Whitfield",
+    "date_of_birth": "1992-03-07",
+    "id_type": "passport",
+    "id_number": "503192812",
+    "email": "james.whitfield@example.com",
+    "phone_number": "7911123456",
+    "dial_code": "+44",
+    "line1": "42 Bloomsbury Street",
+    "city": "London",
+    "state": "Greater London",
+    "postal_code": "WC1B 3QJ",
+    "country": "GBR"
+  },
+  "occupation": "software_engineer",
+  "employment_status": "employed",
+  "account_purpose": "personal spending",
+  "annual_salary": "72000",
+  "expected_monthly_volume": "6000",
+  "place_of_birth": "Manchester",
+  "terms_of_service_accepted": true,
+  "webhook_url": "https://example.com/webhooks/card-kyc",
+  "id_front_image": "/9j/4AAQSkZJRgABAQEAkACQAAD/"
+}
+```
+
+```json Business
+{
+  "customer": {
+    "customer_type": "business",
+    "business_name": "Acme Technologies Ltd",
+    "registration_number": "RC1234567",
+    "first_name": "Chidi",
+    "last_name": "Nwosu",
+    "date_of_birth": "1985-06-22",
+    "id_type": "passport",
+    "id_number": "A01234567",
+    "email": "ops@acme.co",
+    "phone_number": "8031234567",
+    "dial_code": "+234",
+    "line1": "12 Marina Road",
+    "city": "Lagos",
+    "state": "Lagos",
+    "postal_code": "100001",
+    "country": "NGA"
+  },
+  "occupation": "operations",
+  "employment_status": "employed",
+  "account_purpose": "business expenses",
+  "annual_salary": "96000",
+  "expected_monthly_volume": "8500",
+  "place_of_birth": "Enugu",
+  "terms_of_service_accepted": true,
+  "webhook_url": "https://example.com/webhooks/card-kyc",
+  "id_front_image": "/9j/4AAQSkZJRgABAQEAkACQAAD/"
+}
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Card KYC initiated successfully",
+  "data": {
+    "customer_id": "01a15950-553f-7a50-a6c3-6950ebb516ef",
+    "status": "approved",
+    "normalized_status": "approved",
+    "completion_link": "",
+    "email": "james.whitfield@example.com",
+    "first_name": "James",
+    "last_name": "Whitfield"
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `customer_id` | The Bitnob customer ID. Use it for status checks and card issuance. |
+| `normalized_status` | Read this one: `initiated`, `pending`, `approved`, or `rejected`, whichever provider ran the check. |
+| `status` | The provider's own vocabulary. |
+| `completion_link` | A URL for the customer to finish verification when more information is needed. Empty when nothing further is required. |
+| `email`, `first_name`, `last_name` | Echoed back for reconciliation. |
+
+### When the ID already belongs to a customer
+
+If the `id_number` matches one of your existing customers under a different email, the call returns `400` `VALIDATION_ERROR` and names that customer: "an existing customer already matches this id_number under a different email; re-submit with customer_id=… to verify that customer". Resubmit with that `customer_id` rather than creating a second customer.
+
+## Check status
+
+Prefer the webhook. To poll or reconcile, read the customer with [Get customer](/api-reference/customers/get-customer) and check `card_program_kyc[].normalized_status`.
+
+| `normalized_status` | Meaning | Final |
+|---|---|---|
+| `none` | No KYC on record for this customer | No |
+| `initiated` | Submission received | No |
+| `pending` | Under review: documents or checks in progress | No |
+| `approved` | Verified. The customer can be issued a card. | Yes |
+| `rejected` | Verification failed. See `reason`. | Yes |
+
+The raw provider `status` collapses into `normalized_status`: `action_required` becomes `pending`, `denied` becomes `rejected`, and any other value passes through unchanged.
+
+## Identity document rules
+
+Accepted `id_type` values: `bvn`, `nin`, `passport`, `drivers_license`, `national_id`, `vnin`, `voters_card`, and `ghana_card`.
+
+| Rule | Requirement |
+|---|---|
+| `bvn` and `nin` | `country` must be `NGA`. Never send `id_front_image`. |
+| `nin` | `date_of_birth` is required, as `YYYY-MM-DD`. |
+| Document types: `passport`, `drivers_license`, `ghana_card`, `national_id`, `voters_card`, `vnin` | Send `id_front_image` as a base64-encoded string. |
+| Country codes | ISO 3166-1 alpha-3, for example `NGA`, `GHA`, `USA`. |
+
+The photo must show the front of the document in full, in focus, and in date. Blurred, partial, or expired images are the most common cause of rejection, and screenshots are always rejected.
+
+## Webhooks
+
+KYC is asynchronous, so receive the outcome as a webhook rather than polling. Set `webhook_url` per submission, or rely on your company webhook URL.
+
+| Event | Meaning |
+|---|---|
+| `virtualcard.user.kyc.pending` | Under review. Not final. |
+| `virtualcard.user.kyc.complete` | Approved: `kycPassed: true`. |
+| `virtualcard.user.kyc.failed` | Rejected: `kycPassed: false`, with `reason` and `rejectionDetails`. |
+
+```json virtualcard.user.kyc.failed
+{
+  "data": {
+    "companyId": "550e8400-e29b-41d4-a716-446655440000",
+    "customerEmail": "jane.doe@example.com",
+    "customerId": "01a015ec-dc11-76e9-9a5a-68bddb798c37",
+    "id": "01a015ec-dc11-76e9-9a5a-68bddb798c37",
+    "kycPassed": false,
+    "reason": "RETRY: UNSATISFACTORY_PHOTOS",
+    "rejectionDetails": [
+      {
+        "code": "UNSATISFACTORY_PHOTOS",
+        "message": "The document or its details could not be read clearly. Please upload a sharper photo."
+      }
+    ]
+  },
+  "event": "virtualcard.user.kyc.failed",
+  "event_id": "3725226b-24ee-4a0a-a9ff-2d6b9069997a"
+}
+```
+
+| `data` field | Notes |
+|---|---|
+| `customerId` | The Bitnob customer ID. Your reconciliation key, alongside `customerEmail`. |
+| `customerEmail` | The customer's email. |
+| `kycPassed` | `true` on `complete`, `false` on `failed`. |
+| `reason` | On failure, rejection labels prefixed by the action to take, for example `RETRY: UNSATISFACTORY_PHOTOS`. |
+| `id` | Rejection only. Repeats `customerId`. |
+| `rejectionDetails` | Rejection only. An array of `{ code, message }`. Branch on `code`; show `message` to the customer, since it's written for them. |
+
+<Note>
+  `RETRY: UNSATISFACTORY_PHOTOS` is the most common rejection: a blurred, cropped, or glare-covered document, or a screenshot instead of a photo. The `RETRY` prefix means the customer can try again. Show them the `rejectionDetails` message and submit a fresh photo to `POST /api/cards/kyc`.
+</Note>
+
+To handle these events:
+
+- Verify the signature and respond `2xx` quickly. See [Webhooks](/api-reference/webhooks).
+- De-duplicate on `event_id`. Don't key on `customerId` and event name: one customer can legitimately produce `pending`, `failed`, and `complete` more than once across retries.
+- Don't treat `pending` as final. Only `complete` and `failed` are.
+
+## Common errors
+
+| Message | Cause or fix |
+|---|---|
+| `Customer type must be one of: individual business` | `customer.customer_type` is missing, capitalised, or another value. |
+| `Terms of service must be accepted` | `terms_of_service_accepted` isn't `true`. |
+| `id_number must be 4-50 characters` | Fix `customer.id_number`. |
+| `an existing customer already matches this id_number under a different email` | Resubmit with the `customer_id` the message names. |
+| `KYC is required before a card can be issued for this customer` | Card creation was attempted before KYC reached `approved`. |
+| `card KYC is not available` | The KYC service is unavailable for this environment. Check you're calling the right one, and contact Bitnob if it persists. |
+
+## Support notes
+
+What to tell the customer at each status:
+
+| Status | What the customer should hear |
+|---|---|
+| `none` | We haven't received your verification yet. Please submit your details to continue. |
+| `initiated` | We have your details and verification has started. |
+| `pending` | Your verification is under review. There's nothing you need to do right now; we'll update you once it's complete. |
+| `approved` | You're verified. Your card can now be created. |
+| `rejected` | We couldn't verify your identity, because of the reason on the record. Please correct it and submit again. |
+
+<AccordionGroup>
+  <Accordion title="Card creation says KYC is required">
+    The customer isn't approved yet. Check the status: `pending` means wait for `virtualcard.user.kyc.complete`; `rejected` means fix the reason and resubmit; `none` means no KYC has been submitted.
+  </Accordion>
+  <Accordion title="KYC came back pending and never moved">
+    Verification is still processing, or a document was unreadable. Look for a `virtualcard.user.kyc.failed` webhook with a `reason`, and re-check the status.
+  </Accordion>
+  <Accordion title="The verification was rejected">
+    The cause is in `reason` on the record and on the `virtualcard.user.kyc.failed` webhook: commonly a blurred document, mismatched details, or an expired ID. Pass on the `rejectionDetails` message, then have them resubmit.
+  </Accordion>
+  <Accordion title="Which ID becomes the card owner?">
+    The `customer_id` returned on submission: always the Bitnob ID, never the provider's internal one.
+  </Accordion>
+  <Accordion title="A bvn or nin submission is rejected on country">
+    `bvn` and `nin` need `country: "NGA"` and no ID image. The photo is only for documents such as a passport or driver's licence.
+  </Accordion>
+  <Accordion title="KYC is approved but the card still won't create">
+    Confirm `normalized_status` really is `approved`, not `pending`. If it is and issuance still fails, it's not a KYC problem: escalate.
+  </Accordion>
+</AccordionGroup>
+
+## Escalation
+
+Escalate to Bitnob when `normalized_status` is `approved` but card issuance still fails, when a submission stays `pending` far beyond 10 minutes with no webhook, or when you hit an error not covered above. Send:
+
+| Item | Detail |
+|---|---|
+| Company | Your `company_id` and partner name |
+| Customer | The `customer_id` returned on submission, and the customer's email |
+| Status | The current `normalized_status`, the raw `status`, and any `reason` |
+| Document | The `id_type` used, and whether `id_front_image` was sent |
+| Timing | Approximate time of the submission or the failed card creation |
+| Error | The exact error message and HTTP status |
