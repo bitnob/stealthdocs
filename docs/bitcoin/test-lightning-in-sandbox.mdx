@@ -1,0 +1,109 @@
+---
+title: "Test Lightning payments in sandbox"
+sidebarTitle: "Test Lightning in sandbox"
+description: "Create testnet Lightning invoices and settle them in sandbox with auto-settle, a simulated payment, or a payment from another sandbox account."
+related:
+  - /docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices
+  - /docs/bitcoin/confirmations-and-webhook-events
+---
+
+Sandbox simulates the Lightning Network. You create invoices, receive payments, and send payments with the same API calls you use in production, and you get the same balance changes and webhooks. No real bitcoin moves.
+
+Sandbox invoices are real, signed testnet BOLT11 invoices: they start with `lntb`, decode in any Lightning library, and work in QR codes. Nothing pays a sandbox invoice on its own, so you trigger the payment in one of three ways:
+
+| Method | How |
+|---|---|
+| Auto-settle | Create the invoice with `"auto_settle": true`. It's paid about 5 seconds later. |
+| Simulate a payment | Call `POST /api/lightning/invoices/{invoice_id}/simulate-payment` on one of your open invoices. |
+| Pay from another sandbox account | A second sandbox business pays your `lntb` invoice with [Send payment](/api-reference/lightning/send-payment). |
+
+When an invoice is paid, your sandbox balance is credited and you receive the usual payment webhook, usually within a few seconds.
+
+## Create an invoice that settles itself
+
+Full schema: [Create invoice](/api-reference/lightning/create-invoice).
+
+```http
+POST /api/lightning/invoices
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `amount` | number | Yes | The invoice amount in satoshis. |
+| `description` | string | Yes | What the payment is for. Shown in the payer's wallet. |
+| `reference` | string | Yes | A unique idempotency key for this request. |
+| `auto_settle` | boolean | No | Sandbox only. `true` pays the invoice about 5 seconds after it's created. Rejected in production. |
+
+```json Request
+{
+  "amount": 1000,
+  "description": "Sandbox test",
+  "reference": "doc-auto-291827399",
+  "auto_settle": true
+}
+```
+
+```json Response (201)
+{
+  "success": true,
+  "message": "Lightning invoice created successfully",
+  "data": {
+    "id": "01a13a0c-a763-72e8-9fe6-3872247a9f5b",
+    "payment_hash": "59f43ab00140929e24e3062d4dedb5e99f44c7dd62b184ca934aa5cedcd20954",
+    "request": "lntb10u1p4v7hmxpp5t86r4vqpgzffuf8rqck5mmd4ax05f37av2ccfj5nf2juahxjp92qdq52dskuerzdauzqar9wd6qcqzpgxqyz5tlsp5q4xt8c5y2ea9ae75jln3g22ts5va3uhcpur3k390fxnk8m48z53q9qrsgqhuvdvvdz2sxwzu2a297352qvgxsjn8pa3hzujtvkjvlvkwgma0ah2p8lma2w832u8a3az9rkyzv5gzp2s4md3jdqfpshapr8c7z54mspwsp744",
+    "amount_sat": "1000",
+    "description": "Sandbox test",
+    "status": "pending",
+    "expires_at": "2026-10-15T10:54:30Z",
+    "created_at": "2026-10-14T10:54:30Z"
+  },
+  "timestamp": "2026-10-14T10:54:30.255793511Z"
+}
+```
+
+`status` is `pending` on creation and moves to `paid` once the invoice settles. Check it with [Get invoice](/api-reference/lightning/get-invoice).
+
+## Simulate a payment
+
+```http
+POST /api/lightning/invoices/{invoice_id}/simulate-payment
+```
+
+No request body. The invoice must belong to your business, be unpaid, and not be expired.
+
+```json Response (200)
+{
+  "success": true,
+  "message": "Invoice payment simulated; the credit and webhook follow within a few seconds",
+  "data": {
+    "invoice_id": "01a13a0c-d953-7053-b098-6e30e2223573",
+    "payment_hash": "87d46a219d92e3db8c2afec8a78ab0756bc906d09050dfbade5ee6bc8849fd62"
+  },
+  "timestamp": "2026-10-14T10:55:04.058944675Z"
+}
+```
+
+Simulating a payment on an invoice that's already paid returns `422` `PRECONDITION_FAILED`: "This invoice has already been paid."
+
+## Send a payment
+
+Pay any `lntb` invoice with [Send payment](/api-reference/lightning/send-payment):
+
+```http
+POST /api/lightning/pay
+```
+
+```json
+{
+  "request": "lntb40400n1p…",
+  "reference": "payout-77"
+}
+```
+
+## Good to know
+
+- Sandbox can only pay testnet (`lntb`) invoices. Paying a mainnet `lnbc` invoice returns an error.
+- The normal balance check applies: paying more than your sandbox balance returns an insufficient-balance error.
+- Each invoice can be paid once.
+- Expired invoices can't be paid or simulated.
+- Invoices created through a Lightning address can be settled with any of the three methods.
