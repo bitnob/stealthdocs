@@ -12,30 +12,43 @@
   "navigation": {
     "tabs": [
       {
+        "tab": "Home",
+        "icon": "house",
+        "groups": [
+          {
+            "group": "Home",
+            "icon": "house",
+            "pages": [
+              "index",
+              "docs/choose-a-product",
+              "docs/getting-started/about",
+              "docs/developer-resources/overview"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Docs",
         "icon": "book-open",
         "dropdowns": [
           {
             "dropdown": "Bitnob Business",
             "icon": "bolt",
-            "description": "Payouts, cards, trading, and virtual accounts. HMAC-signed requests.",
+            "description": "Payouts, cards, trading, and virtual accounts.",
             "groups": [
               {
                 "group": "Get started",
                 "icon": "rocket",
                 "expanded": true,
                 "pages": [
-                  "index",
                   "docs/getting-started/overview",
-                  "docs/choose-a-product",
                   "docs/getting-started/account-setup",
                   "docs/getting-started/quickstart",
                   {
                     "group": "Concepts",
                     "pages": [
                       "docs/getting-started/core-concepts-and-architecture",
-                      "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts",
-                      "docs/getting-started/about"
+                      "docs/getting-started/core-concepts-and-architecture/currencies-and-amounts"
                     ]
                   },
                   {
@@ -242,21 +255,13 @@
                   }
                 ],
                 "icon": "building-columns"
-              },
-              {
-                "group": "Resources",
-                "icon": "folder-open",
-                "expanded": true,
-                "pages": [
-                  "docs/developer-resources/overview"
-                ]
               }
             ]
           },
           {
             "dropdown": "Bitnob Enterprise",
             "icon": "wallet",
-            "description": "Policy-governed wallets. X-API-Key authentication.",
+            "description": "Policy-governed wallets.",
             "groups": [
               {
                 "group": "Get started",
