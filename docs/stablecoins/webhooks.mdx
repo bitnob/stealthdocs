@@ -112,7 +112,7 @@ Field-by-field documentation lives under the [deposit](/docs/stablecoins/address
 
 ## Delivery semantics
 
-- Return `200` quickly. Any other response, including a timeout, is retried up to 3 times with exponential backoff, and then delivery stops.
+- Return `200` quickly. A timeout, a `5xx`, or most `4xx` responses are retried with increasing delays, up to the retry count set on your webhook (1 to 5 attempts in total). `400`, `404`, `410`, `422`, and `451` are final and never retried. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates).
 - Retries mean duplicates: de-duplicate on `event_id`.
 - Endpoints must be HTTPS and respond within 5 seconds; process asynchronously.
 - Keep the backstop: sweep [List transactions](/api-reference/transactions/list-transactions) on a schedule so a missed delivery never becomes a wrong balance. [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a single reference.

@@ -62,7 +62,7 @@ Deliveries are HTTPS POSTs from the addresses listed under [Source IPs](/api-ref
 ## Delivery, retries and ordering
 
 - Return a `200` as soon as the signature checks out, then process. A slow handler times out, and a timeout counts as a failed delivery.
-- A non-`200` response is retried up to 3 more times with exponential backoff. After that, delivery stops.
+- A `2xx` response marks the event delivered. `400`, `404`, `410`, `422`, and `451` are final and not retried. Anything else, including a timeout, is retried with increasing delays, up to the retry count set on your webhook (1 to 5 attempts in total). After that, delivery stops. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates).
 - The same event can arrive more than once. De-duplicate on `event_id`.
 - Events can arrive in any order, because a retried delivery may land after a later one. Each trade ends in exactly one terminal event: `trade.completed` or `trade.failed`.
 - Retries are finite, so an endpoint that is down for long enough misses events for good. Reconcile anything you still hold as pending with [Get order](/api-reference/trading/get-order-by-id-or-reference).

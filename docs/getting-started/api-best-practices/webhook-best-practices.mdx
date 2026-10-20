@@ -133,12 +133,15 @@ Any durable queue works: BullMQ or BeeQueue on Node.js, Sidekiq on Ruby, Celery 
 
 ## Retry behaviour
 
-We expect a `200`. If we do not get one, we send the event again **3 times after the first failure**.
+How we read your response:
 
-A delivery counts as failed when:
+| Your response | What happens |
+|---|---|
+| Any `2xx` | Delivered. We don't send the event again. |
+| `400`, `404`, `410`, `422`, or `451` | Permanent rejection. We **don't retry**. |
+| `5xx`, `401`, `403`, `408`, `429`, a timeout, or no response | Retried with increasing delays (by default about 1, 5, 15, and 60 minutes), up to the retry count set on your webhook: 1 to 5 attempts in total. A `Retry-After` header you send is honoured, up to a cap. |
 
-- Your endpoint is unreachable or times out.
-- Your server returns any status other than `200`.
+If your own processing fails temporarily, for example your database is down, return a `5xx` so the event comes back. Return `400` or `422` only when retrying would never help.
 
 <Warning>
   Retries are finite. After the final attempt we stop. An endpoint that is down for an extended period will miss events permanently, so you also need reconciliation.

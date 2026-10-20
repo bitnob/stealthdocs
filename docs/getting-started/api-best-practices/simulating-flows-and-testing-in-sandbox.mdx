@@ -103,7 +103,7 @@ See [Quote lifecycle and expiry](/docs/getting-started/api-best-practices/quote-
 
 ## Test webhook delivery and retries
 
-We retry a failed delivery 3 times after the first failure. Confirm your handler behaves under those retries before you rely on it.
+A `5xx`, a timeout, and most `4xx` responses are retried, up to the retry count set on your webhook. `400`, `404`, `410`, `422`, and `451` are final. [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates) has the full rules. Confirm your handler behaves under retries before you rely on it.
 
 <Steps>
   <Step title="Return a failure on purpose">
@@ -118,7 +118,7 @@ We retry a failed delivery 3 times after the first failure. Confirm your handler
     Simulate a deposit and watch the retries arrive in your log.
   </Step>
   <Step title="Confirm the retry count and spacing">
-    Compare what you see against the documented behaviour in [Webhooks](/docs/stablecoins/address-webhook-events).
+    Compare what you see against the documented behaviour in [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates). By default the delays are about 1, 5, 15, and 60 minutes, so a full retry cycle takes over an hour.
   </Step>
   <Step title="Process the same event twice">
     Return `200` and replay the event. Confirm the second run changes nothing.

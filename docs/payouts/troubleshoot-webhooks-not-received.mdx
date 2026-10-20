@@ -3,7 +3,7 @@ title: "Troubleshooting: webhooks not received"
 description: "Why Bitnob webhook events fail to arrive, from non-public URLs and firewall rules to missed retries, and why polling remains your safety net."
 ---
 
-When a webhook does not arrive, the cause is almost always on the delivery path: the URL is not publicly reachable, a firewall blocks our sender, or your endpoint answered with something other than a 200 and the retries were spent. Work through these in order.
+When a webhook does not arrive, the cause is almost always on the delivery path: the URL is not publicly reachable, a firewall blocks our sender, or your endpoint rejected the event or the retries were spent. Work through these in order.
 
 ## 1. Your endpoint must be publicly reachable
 
@@ -26,17 +26,17 @@ These addresses can change; we announce changes ahead of time. An allowlist is n
   **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
 </Warning>
 
-## 3. You get exactly 3 retries, then silence
+## 3. Your endpoint rejected the event, or the retries ran out
 
-We expect a `200` response when posting a notification. If your endpoint returns anything else, we retry the event 3 times after the first failure. After that, the event is not sent again.
+Any `2xx` counts as delivered. A `400`, `404`, `410`, `422`, or `451` is treated as a permanent rejection, and the event is **never retried**. Anything else, including a timeout, is retried with increasing delays (by default about 1, 5, 15, and 60 minutes), up to the retry count set on your webhook: 1 to 5 attempts in total. After that, the event is not sent again.
 
-Common ways to burn all three retries:
+Common ways to lose an event:
 
-- your endpoint was down or redeploying,
-- it did heavy processing synchronously before responding, and timed out,
-- it returned a redirect, a 404 from a route mismatch, or a 5xx.
+- a route mismatch returned `404`, or validation in your handler returned `400` or `422`, so the first failure was final,
+- your endpoint was down or redeploying for longer than the retry window,
+- it did heavy processing synchronously before responding, and timed out on every attempt.
 
-**Fix:** respond with a `2xx` immediately and process asynchronously. Make handling idempotent, since the same event can be delivered more than once.
+**Fix:** respond with a `2xx` immediately and process asynchronously. If processing fails temporarily, return a `5xx` so the event is retried. Make handling idempotent, since the same event can be delivered more than once. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates).
 
 ## 4. Verify the signature while debugging
 
