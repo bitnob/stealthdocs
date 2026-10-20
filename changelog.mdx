@@ -4,6 +4,14 @@ description: "Dated entries for API changes, new products, and documentation upd
 rss: true
 ---
 
+<Update label="October 20, 2026" tags={["Fix"]}>
+  ## Virtual accounts API: optional bank field added
+
+  The `POST /api/virtual-accounts` endpoint now accepts an optional `bank` field to select the issuing bank for the virtual account. When the field is omitted, the account is opened at the default bank, currently Nomba.
+
+  The `bank` field accepts the enum values `nomba` (Nombank MFB) or `globus` (Globus Bank). The `reference` field continues to serve as the idempotency key; reusing a reference returns the existing account regardless of the `bank` value. Required fields remain `reference`, `currency`, and `customer_id`.
+</Update>
+
 <Update label="October 14, 2026" tags={["New"]}>
   ## Choose the bank for virtual accounts
 
