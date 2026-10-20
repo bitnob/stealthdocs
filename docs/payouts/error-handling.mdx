@@ -77,7 +77,7 @@ Two rules underpin all of them:
   <Accordion title="Your webhook endpoint is down">
     Not a payout failure, but it looks like one from inside your system: payouts complete and your records never hear about it.
 
-    **Behaviour:** Bitnob retries failed deliveries 3 times after the first failure.
+    **Behaviour:** Bitnob retries timeouts, `5xx` responses, and most `4xx` responses with increasing delays, up to the retry count set on your webhook (1 to 5 attempts in total). `400`, `404`, `410`, `422`, and `451` are final. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates).
 
     **Response:** idempotent handlers, fast `200`s, and the reconciliation sweep as the backstop. See [Receive payout webhooks](/docs/payouts/webhook-payout).
   </Accordion>

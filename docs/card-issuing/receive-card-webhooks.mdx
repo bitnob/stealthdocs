@@ -90,7 +90,7 @@ Reference implementation and secrets guidance: [Verifying events](/api-reference
 
 | Behaviour | What it means for your handler |
 |---|---|
-| Retries | Any response other than `200`, including a timeout, is retried up to 3 times with exponential backoff, then delivery stops. Return `200` as soon as you have accepted the event; process asynchronously. |
+| Retries | Any `2xx` counts as delivered. `400`, `404`, `410`, `422`, and `451` are final and never retried. Anything else, including a timeout, is retried with increasing delays, up to the retry count set on your webhook (1 to 5 attempts in total). Return `200` as soon as you have accepted the event and process asynchronously; if processing fails temporarily, return a `5xx`. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates). |
 | Duplicates | Retries reuse the same `eventId`. Persist processed IDs and ignore repeats. |
 | Ordering | Do not assume order. Branch on `event`, then `transactionType`, and reconcile against [card transactions](/api-reference/cards/list-card-transactions-by-card) rather than inferring state from sequence. |
 | New fields | Event names are stable, but new optional fields can appear in `data` without a version bump. Ignore what you do not recognise. |
