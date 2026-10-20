@@ -247,11 +247,13 @@
                   {
                     "group": "Guides",
                     "pages": [
+                      "docs/card-issuing/card-kyc",
                       "docs/card-issuing/card-funding",
                       "docs/card-issuing/card-status-management",
                       "docs/card-issuing/spending-limits",
                       "docs/card-issuing/transaction-monitoring",
-                      "docs/card-issuing/receive-card-webhooks"
+                      "docs/card-issuing/receive-card-webhooks",
+                      "docs/card-issuing/decrypt-card-details"
                     ]
                   },
                   {
