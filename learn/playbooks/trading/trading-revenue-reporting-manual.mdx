@@ -19,8 +19,8 @@ This manual focuses on capturing revenue from both spread and fee-based models.
 | Term | Meaning |
 |---|---|
 | rate | Exchange rate provided by Bitnob (e.g., sats per cent) |
-| inputAmount | Amount the user traded (in cents or sats) |
-| outputAmount | Amount the user received (in sats or cents) |
+| inputAmount | Amount the user traded, in the input asset's smallest unit |
+| outputAmount | Amount the user received, in the output asset's smallest unit |
 | bitnobOutput | Actual amount Bitnob would have returned at quoted rate |
 | spreadEarned | Difference between bitnobOutput and what the user received |
 | feeCharged | Platform-defined fee added to trade, if applicable |
@@ -31,7 +31,7 @@ A. Spread-Based Revenue
 
 Formula: spreadEarned = bitnobOutput - userOutput
 
-Unit: Output asset (sats or cents)
+Unit: Output asset, smallest unit
 
 Use when:
 
@@ -40,7 +40,7 @@ Use when:
 - Execute at the original Bitnob quote
 - B. Fee-Based Revenue
 - Formula: feeCharged = percentageFee * inputAmount
-- Unit: Input asset (sats or cents)
+- Unit: Input asset, smallest unit
 
 Use when:
 
@@ -75,7 +75,7 @@ Track trades in a financial ledger or database table:
 |---|---|---|---|---|---|---|---|
 | trade_123 | 10000 | 222500 | 2250 | 225000 | 0 | 2500 | 2025-05-16 |
 
-All crypto values should be in base units (sats or cents), not floats. NGN values are recorded in whole naira (major units).
+Record every value as an integer in the smallest unit, not a float: sats for BTC, 6-decimal base units for USDT and USDC, and kobo for NGN. The trading API sends amounts as major-unit decimal strings, so convert them when you record a trade. See [Currencies and amounts](/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts#units-by-product).
 
 ## Sample monthly report template
 

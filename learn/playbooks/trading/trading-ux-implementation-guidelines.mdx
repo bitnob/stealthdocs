@@ -66,11 +66,13 @@ Requirements: Input field must:
 
 Accept only valid numbers
 
-Internally normalize:
+Internally normalize to the smallest unit:
 
-- USDT → cents (10000 = \$100.00)
+- USDT and USDC → base units, 6 decimals (100000000 = \$100.00)
 - BTC → sats (225000 = 0.00225 BTC)
-- NGN → whole naira (5000 = ₦5,000)
+- NGN → kobo (500000 = ₦5,000)
+
+The trading API takes and returns major-unit decimal strings (`"100"` is 100 USDT, `"5000"` is ₦5,000), so convert when you build the request. See [Currencies and amounts](/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts#units-by-product).
 
 Display labels:
 
