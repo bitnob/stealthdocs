@@ -10,56 +10,16 @@ rss: true
   [Create virtual account](/api-reference/virtual-accounts/create-virtual-account) takes an optional `bank` field: `nomba` (Nombank MFB) or `globus` (Globus Bank). Leave it out and the account opens at the default bank, currently Nomba. A customer can hold accounts at both banks, or several at one, as long as each request uses a new `reference`. `bank_name` returns the issuing bank, and is always `Sandbox Bank` in sandbox. Any other value fails with `bank must be one of: nomba, globus`.
 </Update>
 
-<Update label="October 15, 2026" tags={["Breaking","New"]}>
-  ## Cards API: required fields updated and nested customer removed
+<Update label="October 9, 2026" tags={["Breaking"]}>
+  ## Lite cards require Card KYC
 
-  The `POST /api/cards` endpoint now requires a `customer_id` string instead of a nested `customer` object. The `POST /api/cards/lite` endpoint no longer accepts a `type` field and adds several required fields, including `card_brand`, `swipe_count`, `terminate_date`, and detailed customer attributes. The `POST /api/customers` endpoint restricts `customer_type` to the enum values `individual` or `business`.
-
-  | Operation          | Endpoint               |
-  | ------------------ | ---------------------- |
-  | Create card        | `POST /api/cards`      |
-  | Create lite card   | `POST /api/cards/lite` |
-  | Create customer    | `POST /api/customers`  |
-
-  **Before and after for `POST /api/cards`**
-
-  | Before                                                            | After          |
-  | ----------------------------------------------------------------- | -------------- |
-  | `customer` (object with `customer_type`, `first_name`, `last_name`, `date_of_birth`, `id_type`, `id_number`, `email`, `phone_number`, `dial_code`, `line1`, `city`, `state`, `postal_code`, `country`) | `customer_id` (string) |
-
-  **Before and after for `POST /api/cards/lite`**
-
-  | Before                                                            | After                                                                    |
-  | ----------------------------------------------------------------- | -------------------------------------------------------------------------- |
-  | `type` (string)                                                   | `card_brand` (string, enum: `visa`, `mastercard`)                        |
-  | `customer` (object, no required subfields)                        | `customer` (object with required `customer_type`, `email`, `first_name`, `last_name`, `phone_number`) |
-  | (no `swipe_count`, `terminate_date`)                              | `swipe_count` (integer), `terminate_date` (string)                       |
-
-  Required fields for `POST /api/cards` are `card_type`, `currency`, `amount`, and `customer_id`.  
-  Required fields for `POST /api/cards/lite` are `amount`, `currency`, `card_brand`, `swipe_count`, `terminate_date`; when a `customer` block is provided, `customer_type`, `email`, `first_name`, `last_name`, and `phone_number` are also required.  
-  Required fields for `POST /api/customers` are `email` and `customer_type` (limited to `individual` or `business`).
+  [Create lite card](/api-reference/cards/create-lite-card) now requires approved Card KYC for the cardholder. Verify the customer with [Card KYC](/api-reference/cards/card-kyc) first, then pass the returned `customer_id`. Three new fields are also required: `card_brand`, `swipe_count`, and `terminate_date`. Requests without approved KYC or these fields are rejected.
 </Update>
 
-<Update label="September 6, 2026" tags={["Breaking","New"]}>
-  ## Cards API endpoints removed and added
+<Update label="August 23, 2026" tags={["New"]}>
+  ## Card KYC
 
-  Two card endpoints have been removed without deprecation. Remove them from your integration.
-
-  | Removed operation | Endpoint |
-  | --- | --- |
-  | Register encryption key | `POST /api/cards/encryption-key` |
-  | List team-member cards | `GET /api/cards/team-members` |
-
-  Two endpoints have been added.
-
-  | Added operation | Endpoint |
-  | --- | --- |
-  | Create lite card | `POST /api/cards/lite` |
-  | Simulate card webhook | `POST /api/cards/{cardId}/simulate-webhook` |
-
-  `POST /api/cards/lite` issues a card from a lightweight customer profile. The request body requires `type`, `amount`, `currency`, `name`, and `customer`, and `webhook_url` is optional.
-
-  `POST /api/cards/{cardId}/simulate-webhook` fires a synthetic card webhook at the card's configured callback URL, so you can verify a receiver end to end without real card activity. It is sandbox only, and the route is pinned to sandbox by middleware. The request body requires `card_id` and `event_type`, where `event_type` is one of `authorization`, `settlement`, `reversal`, or `decline`.
+  Cardholders are verified through the new [Card KYC](/api-reference/cards/card-kyc) endpoint before a card can be issued. Submit the customer to `POST /api/cards/kyc` first. Approval returns a `customer_id`, which you then pass to [Create card](/api-reference/cards/create-card-embedded-customer). Card KYC is enabled per account.
 </Update>
 
 <Update label="August 9, 2026" tags={["New"]}>
@@ -73,7 +33,7 @@ rss: true
   | List accounts | `GET /api/virtual-accounts` |
   | Get one account | `GET /api/virtual-accounts/:id` |
   | List transactions | `GET /api/virtual-accounts/:id/transactions` |
-  | Update the alias | `PATCH /api/virtual-accounts/:id` |
+  | Update the alias | `PATCH /api/virtual-accounts/:id/alias` |
   | Simulate a deposit (sandbox) | `POST /api/virtual-accounts/:id/simulate-deposit` |
 
   Two requirements before you call create:
@@ -90,7 +50,7 @@ rss: true
   These addresses can change. Treat the allowlist as a network convenience rather than a security boundary, and verify the `x-bitnob-signature` header on every event.
 </Update>
 
-<Update label="July 20, 2026" tags={["Fix"]}>
+<Update label="July 20, 2026" tags={["Breaking"]}>
   ## Payout webhooks reference
 
   The events emitted across the payout flow of quote, initialize, and finalize are now documented.
@@ -141,7 +101,7 @@ rss: true
   Each page covers signature verification with HMAC SHA512 through the `x-bitnob-signature` header, notification retries, local testing, and the full payload field reference with sample payloads.
 </Update>
 
-<Update label="May 19, 2026" tags={["Fix"]}>
+<Update label="May 19, 2026" tags={["Breaking"]}>
   ## Card webhooks v2
 
   Every outbound virtual card webhook moved to a new payload shape.
@@ -157,6 +117,12 @@ rss: true
   | No merchant context | Transaction events add `transactionType`, `merchantName`, `merchantMcc`, `merchantCountry`, and `timestamp` |
 
   Cross-border transactions emit two variants, `cross_border_pending` for the company wallet fee debit and `cross_border_settled` for the card balance principal debit. Both are `transactionType` values, which stay snake_case. Contactless and refund events also fire with several `transactionType` values under one `event` string, so branch on `event` first and then on `transactionType`.
+</Update>
+
+<Update label="May 15, 2026" tags={["Improved"]}>
+  ## Webhook payloads: top-level event_id
+
+  Webhook payloads for card top-up, card withdrawal, stablecoin transfer, and stablecoin deposit events now include a top-level `event_id`, which makes de-duplication and tracing easier. The `transfer.success` event also includes `transaction_id` in its `data` payload.
 </Update>
 
 <Update label="February 28, 2026" tags={["New"]}>
@@ -183,15 +149,6 @@ rss: true
   ## Legacy Virtual Cards endpoints removed
 
   Everything under `/api/virtualcards` is no longer supported. Card operations require an explicit `cardId` path parameter instead of implicit context, and the user-based model is replaced by a customer-centric model keyed on `customerId`.
-
-  | Old endpoint | New endpoint |
-  | --- | --- |
-  | `POST /api/virtualcards/create` | `POST /api/cards` |
-  | `POST /api/virtualcards/topup` | `POST /api/cards/:cardId/fund` |
-  | `POST /api/virtualcards/withdraw` | `POST /api/cards/:cardId/withdraw` |
-  | `POST /api/virtualcards/freeze` | `POST /api/cards/:cardId/freeze` |
-  | `POST /api/virtualcards/unfreeze` | `POST /api/cards/:cardId/unfreeze` |
-  | `POST /api/virtualcards/terminate` | `POST /api/cards/:cardId/terminate` |
 
   Update your integration to the new namespaces before upgrading.
 </Update>
