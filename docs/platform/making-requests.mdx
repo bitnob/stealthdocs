@@ -1,0 +1,132 @@
+---
+title: "Making Platform API requests"
+sidebarTitle: "Making requests"
+description: "The conventions every Platform API call shares: versioning, idempotency, pagination, errors, rate limits, amounts, and request tracing."
+related:
+  - /docs/platform/authentication
+  - /docs/platform/best-practices
+---
+
+Every Platform API request goes to `https://api.platform.bitnob.com` with your key in the `X-API-Key` header. The rest of this page covers the conventions every endpoint shares.
+
+## Versioning
+
+Pin the version with the `API-Version` header, or put it in the path. Both of these call the same endpoint:
+
+```bash
+curl https://api.platform.bitnob.com/me \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "API-Version: v1"
+
+curl https://api.platform.bitnob.com/v1/me \
+  -H "X-API-Key: $PLATFORM_API_KEY"
+```
+
+Leave the version out and you get the current default. An unsupported version fails with `400`:
+
+```json
+{
+  "error": {
+    "type": "invalid_request_error",
+    "code": "invalid_request",
+    "message": "Unsupported API version: v99"
+  }
+}
+```
+
+New endpoints and new optional fields are added without a version change, so write clients that ignore fields they don't recognise. When an endpoint or version is scheduled for removal, its responses carry a `Deprecation` header and a `Sunset` header with the date it stops working.
+
+## Idempotency
+
+Send an `Idempotency-Key` header, a unique value you generate such as a UUID, on `POST`, `PATCH`, and `DELETE` requests. It's **required** on endpoints that move value or create resources: creating wallets, addresses, and transactions, and refilling or sponsor-broadcasting gas stations. Without it, those requests fail before anything happens:
+
+```json
+{
+  "error": {
+    "type": "invalid_request_error",
+    "code": "idempotency_key_required",
+    "message": "Idempotency-Key header is required",
+    "param": "Idempotency-Key"
+  }
+}
+```
+
+How keys behave:
+
+- A key is kept for 24 hours.
+- Retrying with the same key replays the original response and adds an `Idempotent-Replayed: true` header.
+- Reusing a key with a different request body fails with `409` `idempotency_conflict`. Generate a fresh key for every distinct operation.
+- Only successful responses are stored, so a request that failed can be retried with the same key.
+
+## Pagination
+
+List endpoints are cursor-paginated with `limit`, `starting_after`, and `ending_before`. Every list returns the same envelope:
+
+```json
+{
+  "object": "list",
+  "data": [],
+  "has_more": false,
+  "url": "/v1/vaults"
+}
+```
+
+When `has_more` is `true`, the response also carries a `next_cursor`. Pass it as `starting_after` to fetch the next page. Cursors are opaque, so don't parse or build them. Sending both `starting_after` and `ending_before` fails with `400` `ambiguous_cursor`.
+
+## Errors
+
+Every error uses one envelope:
+
+```json
+{
+  "error": {
+    "type": "not_found_error",
+    "code": "vault_not_found",
+    "message": "Vault not found",
+    "param": "id"
+  }
+}
+```
+
+Branch on `code`, which is stable. Show `message` to people, but don't parse it. `param` names the offending field when there is one, and some errors add a `details` object.
+
+| `type` | HTTP | Example codes |
+|---|---|---|
+| `invalid_request_error` | 400 | `invalid_body`, `missing_required_field`, `invalid_cursor`, `idempotency_key_required` |
+| `authentication_error` | 401 | `not_authenticated` |
+| `permission_error` | 403 | `insufficient_permissions`, `ip_not_allowed` |
+| `not_found_error` | 404 | `route_not_found`, `vault_not_found`, `wallet_not_found` |
+| `conflict_error` | 409 | `idempotency_conflict`, `wallet_archived` |
+| `unprocessable_entity_error` | 422 | A business rule blocked the request |
+| `rate_limit_error` | 429 | `rate_limit_exceeded` |
+| `api_error` | 500 | `internal_error` |
+| `service_unavailable_error` | 503 | `service_unavailable` |
+
+The Platform API's error shape is different from the Bitnob Business API's, so don't share one error handler between the two.
+
+## Rate limits
+
+Limits apply per API key and per organisation, and every response carries both:
+
+| Header | Meaning |
+|---|---|
+| `X-Ratelimit-Limit` | Requests allowed for this key in the current window |
+| `X-Ratelimit-Remaining` | Requests left for this key |
+| `X-Ratelimit-Reset` | Unix time, in seconds, when the key's window resets |
+| `X-Ratelimit-Scope` | The scope the limit applies at, for example `key` |
+| `X-Org-X-Ratelimit-Limit`, `-Remaining`, `-Reset` | The same values for your whole organisation |
+
+Slow down before you reach the limit. Over it, the API returns `429` with a `Retry-After` header giving the seconds to wait.
+
+## Amounts
+
+Money is always a JSON string, never a number, so parse it with a decimal type rather than a float. Values come in two forms:
+
+- `amount` and `fee_amount` are human-readable decimals in the asset's display unit, such as `"25.5"` USDC.
+- `amount_raw`, `fee_amount_raw`, and wallet `balance` fields are integers in the asset's smallest unit, such as `"25500000"` for 25.5 USDC. `asset_decimals` gives the conversion.
+
+Fees are paid in `fee_asset`, which on most chains is the native coin rather than the asset you sent, so read `fee_asset` and `fee_decimals` instead of assuming.
+
+## Request tracing
+
+Every response carries an `X-Request-Id` header. Log it with your own record of the request, and quote it when you contact support.

@@ -23,7 +23,7 @@ flowchart TD
 
 ## Act on deposit.success
 
-The payload carries everything needed to credit and reconcile; [verify the signature](/docs/stablecoins/address-webhook-events#verifying-events) first, then match on `address` and record `hash` as the on-chain proof.
+The payload carries everything needed to credit and reconcile; [verify the signature](/api-reference/webhooks#verify-every-delivery) first, then match on `address` and record `hash` as the on-chain proof.
 
 ```json
 {

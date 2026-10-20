@@ -13,7 +13,7 @@ Your application can issue both on-chain Bitcoin addresses and Lightning invoice
 
 ### What they are
 
-An on-chain address is a standard Bitcoin address on the main blockchain. When a user wants to receive BTC, you can generate a new address via the Bitnob API and display it to the user. Once the user sends BTC to that address, Bitnob listens for the transaction and fires a webhook event (deposit.success) once the transaction is detected.
+An on-chain address is a standard Bitcoin address on the main blockchain. When a user wants to receive BTC, you can generate a new address via the Bitnob Business API and display it to the user. Once the user sends BTC to that address, Bitnob listens for the transaction and fires a webhook event (deposit.success) once the transaction is detected.
 
 ### Generating addresses
 
@@ -80,7 +80,7 @@ Lightning invoices allow near-instant BTC payments on top of Bitcoin’s second-
 
 ### Creating a Lightning invoice
 
-Similar to on-chain addresses, you generate a Lightning invoice via the Bitnob API. The invoice is a BOLT11 string that starts with ln. This is what you display or provide to the payer.
+Similar to on-chain addresses, you generate a Lightning invoice via the Bitnob Business API. The invoice is a BOLT11 string that starts with ln. This is what you display or provide to the payer.
 
 ```bash
 POST /api/lightning/invoices
