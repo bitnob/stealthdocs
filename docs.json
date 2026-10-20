@@ -16,7 +16,7 @@
         "icon": "book-open",
         "dropdowns": [
           {
-            "dropdown": "Bitnob Business API",
+            "dropdown": "Bitnob Business",
             "icon": "bolt",
             "description": "Payouts, cards, trading, and virtual accounts. HMAC-signed requests.",
             "groups": [
@@ -254,7 +254,7 @@
             ]
           },
           {
-            "dropdown": "Platform API",
+            "dropdown": "Bitnob Enterprise",
             "icon": "wallet",
             "description": "Policy-governed wallets. X-API-Key authentication.",
             "groups": [
