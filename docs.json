@@ -85,7 +85,8 @@
                   {
                     "group": "Guides",
                     "pages": [
-                      "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices"
+                      "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices",
+                      "docs/bitcoin/test-lightning-in-sandbox"
                     ]
                   },
                   {
@@ -1099,6 +1100,10 @@
     {
       "source": "/docs/genesis/api-best-practices",
       "destination": "/docs/getting-started/api-best-practices/api-keys-and-credentials"
+    },
+    {
+      "source": "/api-reference/lightning/testing-in-sandbox",
+      "destination": "/docs/bitcoin/test-lightning-in-sandbox"
     },
     {
       "source": "/docs/genesis/:slug*",
