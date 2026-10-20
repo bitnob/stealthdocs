@@ -17,28 +17,34 @@ A quote with no expiry would mean an open-ended commitment to a stale price. Any
 
 ## What a quote contains
 
+A payout quote, as returned in `data.payout` by [Create payout quote](/api-reference/payouts/create-quote), trimmed to the fields that matter here:
+
 ```json
 {
-  "quote_id": "QT2_21015643",
+  "id": "01a15949-999c-79f6-96d6-baa649fed594",
+  "quote_id": "QT2_21053530",
   "status": "QUOTE",
   "from_asset": "USDT",
   "to_currency": "NGN",
-  "amount": "0.724761",
+  "amount": "0.738407",
   "settlement_amount": "1000",
+  "fees": "0",
+  "total_amount": "0.738407",
   "exchange_rate": {
-    "rate": "1382.5294",
-    "effective_rate": "1379.7651915597003702"
+    "rate": "1356.9806",
+    "effective_rate": "1354.26668490412469"
   },
   "reference": "your-unique-ref-123",
-  "expires_at": "2026-07-04T22:12:36.909609058Z",
-  "created_at": "2026-07-04T21:56:36.911340825Z"
+  "expires_at": "2026-10-20T12:45:18.111318252Z",
+  "created_at": "2026-10-20T12:29:18.115131314Z"
 }
 ```
 
 | Field | Meaning |
 |---|---|
 | `quote_id` | The identifier you execute against. |
-| `amount` | What leaves your balance. |
+| `amount` | What leaves your balance, before fees. |
+| `total_amount` | `amount` plus fees. |
 | `settlement_amount` | What the recipient gets. |
 | `exchange_rate.rate` | The headline rate. |
 | `exchange_rate.effective_rate` | The rate after fees. Show this one to users. |
@@ -80,9 +86,18 @@ const secondsLeft = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
 showCountdown(secondsLeft);
 ```
 
+### Separate looking from committing
+
+Don't hold a quote open while a person browses. A trading quote lasts about 10 seconds in production, so a quote created when the screen opens is usually dead by the time the user decides.
+
+1. While the user is browsing, show indicative rates. Use [List all prices](/api-reference/trading/list-all-prices) for crypto pairs and [Get exchange rate](/api-reference/exchange-rates/get-single-pair-rate) for NGN pairs. They carry no commitment.
+2. Create the quote only when the user taps to commit. Show the locked amount with a countdown from `expires_at`, and disable Confirm when it passes.
+3. If it expires, fetch a new quote and ask the user to confirm the new rate. Don't execute at a price they haven't seen.
+4. Check your stored `expires_at` on your server before you submit the order.
+
 ### Refuse to execute an expired quote
 
-Check `expires_at` before you submit. Submitting an expired quote returns an error, and the round trip wastes the user's time.
+Check `expires_at` before you submit. Submitting an expired trading quote returns `422` with code `PRECONDITION_FAILED`, and the round trip wastes the user's time.
 
 When a quote expires, request a new one and show the new terms. Never present old terms with a new quote behind them.
 
@@ -90,7 +105,7 @@ When a quote expires, request a new one and show the new terms. Never present ol
 
 Prices move. A quote requested a minute ago is not a discount you can apply now, and the platform will not honour it.
 
-If your interface always converts a fixed amount, you can fetch a quote in advance and refresh it as it approaches expiry:
+If your system converts a fixed amount without a person confirming each rate, for example a scheduled treasury job, you can fetch a quote in advance and refresh it as it approaches expiry:
 
 ```javascript
 let quote = await fetchQuote();
@@ -103,13 +118,13 @@ setInterval(async () => {
 }, 1000);
 ```
 
-Refresh slightly before expiry, so the user never sees a dead quote.
+Refresh slightly before expiry, so you never submit a dead quote. When a person is confirming, show them the refreshed terms before you execute.
 
 ### Store the quote with your record
 
 | reference | quote_id | rate | expires_at | status |
 |---|---|---|---|---|
-| `payout_20260408_a41f9c` | QT2_21015643 | 1382.5294 | 2026-07-04T22:12:36Z | pending |
+| `payout_20261020_a41f9c` | QT2_21053530 | 1356.9806 | 2026-10-20T12:45:18Z | pending |
 
 Storing the quote lets you answer the question that follows every pricing dispute: what rate did this user actually see, and when.
 

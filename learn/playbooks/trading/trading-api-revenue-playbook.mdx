@@ -16,12 +16,12 @@ Concept: You offer a trade rate slightly less favorable than what Bitnob provide
 
 How it works:
 
-- Fetch quote: Bitnob gives you a live rate, e.g. 2250 sats per cent
-- Show your user: a slightly wider rate, e.g. 2200 sats per cent
+- Fetch quote: the quote's `price` is Bitnob's rate, e.g. 1 BTC = 83,125 USDT
+- Show your user: a slightly wider rate, e.g. 1 BTC = 85,000 USDT
 - Execute trade using original Bitnob quote
 - Profit = (Bitnob output - User output)
 
-You earn in sats or cents, without needing to show any fees.
+You earn in the output asset, without needing to show any fees.
 
 Recommended when:
 
@@ -110,9 +110,9 @@ Use this reference to track and report earnings per trade.
 | Field | Description |
 |---|---|
 | reference | Your internal trade ID |
-| bitnobRate | Actual rate used in /trades/execute |
+| bitnobRate | Actual rate of the order you submitted with [Create order](/api-reference/trading/submit-order) |
 | userRate | Rate shown to user |
-| inputAmount | Amount user is converting (cents or sats) |
+| inputAmount | Amount user is converting, in the input asset's smallest unit |
 | outputAmount | Amount user received |
 | bitnobOutput | Actual amount received from Bitnob |
 | spreadEarned | bitnobOutput - outputAmount |

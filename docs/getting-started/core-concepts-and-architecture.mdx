@@ -99,9 +99,13 @@ You create a quote, then execute against it before it expires. If it expires, yo
 
 ## Amounts
 
-The API represents amounts as integers in the smallest unit of the currency. One BTC is 100,000,000 satoshis. One USDT is 1,000,000 base units.
+The unit depends on the product. Balances, transactions, and withdrawals use integer strings in the smallest unit: one BTC is 100,000,000 satoshis, one USDT is 1,000,000 base units, and one naira is 100 kobo. Trading and payouts use decimal strings in major units. Cards use micro-units, where 1 USD is 1,000,000.
 
-Integer amounts remove rounding error. [Currencies and amounts](/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts) explains how to store and display them.
+Check the unit before you parse or send an amount, and store integers in the smallest unit in your own ledger. [Currencies and amounts](/docs/getting-started/core-concepts-and-architecture/currencies-and-amounts) has the table for every product.
+
+## Rate limits
+
+The API allows 500 requests per minute. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset`. Over the limit, you get `429`; see [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries#rate-limits).
 
 ## One environment, two credentials
 
