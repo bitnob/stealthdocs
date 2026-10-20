@@ -17,7 +17,7 @@ The Platform API sends two kinds of webhook. They're signed the same way, but th
 
 ## Events
 
-Platform webhooks deliver events such as `wallet.created`, `transaction.signed`, `transaction.confirmed`, `transaction.completed`, `transaction.failed`, `gas_station.low_balance`, `policy.violation`, and `kyt.deposit.flagged`. `GET /webhooks/event-types` returns the full, current list.
+Platform webhooks deliver events such as `wallet.created`, `transaction.signed`, `transaction.confirmed`, `transaction.completed`, `transaction.failed`, `gas_station.low_balance`, `policy.violation`, and `kyt.deposit.flagged`. [List supported event types](/api-reference/platform/webhooks/list-supported-event-types) returns the full, current list.
 
 On-chain subscriptions deliver events such as `incoming_native_tx`, `incoming_token_tx`, `outgoing_native_tx`, `confirmation_threshold_met`, `confirmation_finalized`, and `balance_changed`.
 
