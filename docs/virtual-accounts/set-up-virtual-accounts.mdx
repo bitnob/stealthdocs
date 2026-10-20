@@ -66,9 +66,37 @@ Before you start, make sure virtual accounts are enabled on your account. The Bi
     A customer can hold as many accounts as you need, including one at each bank. Send a new `reference` for each.
   </Step>
   <Step title="Test it in sandbox">
-    [`POST /api/virtual-accounts/:id/simulate-deposit`](/api-reference/virtual-accounts/simulate-deposit-sandbox) fakes an inbound transfer so you can exercise the crediting flow without real money. It needs no request body: each call credits a fixed ₦1,000 to your company NGN balance and fires `virtual_account.deposit.success`, exactly as a real transfer would. It is rejected in production.
+    [`POST /api/virtual-accounts/:id/simulate-deposit`](/api-reference/virtual-accounts/simulate-deposit-sandbox) fakes an inbound transfer so you can exercise the crediting flow without real money. It needs no request body: each call credits a fixed ₦1,000 to your company NGN balance and fires [`virtual_account.deposit.success`](/docs/virtual-accounts/deposit-webhook), exactly as a real transfer would. It is rejected in production.
   </Step>
 </Steps>
+
+## Business customers
+
+To open an account for a company, set `customer_type` to `business` and add the company's details to the customer:
+
+| Field | Notes |
+|---|---|
+| `company_name` | The company's registered name |
+| `registration_number` | For example `RC1487263` |
+
+The personal fields (`first_name`, `last_name`, `date_of_birth`, `email`, `phone_number`, `dial_code`, `id_type`, and `id_number`) are those of a director or authorised representative, and follow the same rules as for an individual. The account is created with `account_type: "business"`.
+
+```json
+{
+  "customer_type": "business",
+  "company_name": "Okonkwo Agro Foods Ltd",
+  "registration_number": "RC1487263",
+  "first_name": "Ada",
+  "last_name": "Okonkwo",
+  "date_of_birth": "1990-04-12",
+  "id_type": "bvn",
+  "id_number": "22187465039",
+  "email": "ada.okonkwo@example.com",
+  "phone_number": "8012345678",
+  "dial_code": "+234",
+  "country": "NGA"
+}
+```
 
 ## Working with issued accounts
 
@@ -77,7 +105,7 @@ Before you start, make sure virtual accounts are enabled on your account. The Bi
 | GET | `/api/virtual-accounts` | List your accounts |
 | GET | `/api/virtual-accounts/:id` | Fetch one |
 | GET | `/api/virtual-accounts/:id/transactions` | Deposits into that account |
-| PATCH | `/api/virtual-accounts/:id/alias` | Change your internal label |
+| PATCH | `/api/virtual-accounts/:id/alias` | Change your internal label. Payers don't see it. |
 | GET | `/api/virtual-accounts/supported-currencies` | Currently returns NGN |
 
 ## When something fails

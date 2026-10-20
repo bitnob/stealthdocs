@@ -270,7 +270,8 @@
                   {
                     "group": "Get started",
                     "pages": [
-                      "docs/virtual-accounts/set-up-virtual-accounts"
+                      "docs/virtual-accounts/set-up-virtual-accounts",
+                      "docs/virtual-accounts/deposit-webhook"
                     ]
                   }
                 ],

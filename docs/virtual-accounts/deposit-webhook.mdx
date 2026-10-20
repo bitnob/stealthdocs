@@ -1,0 +1,59 @@
+---
+title: "Virtual account deposit webhook"
+sidebarTitle: "Deposit webhook"
+description: "The virtual_account.deposit.success event: when it fires, what each field means, and how to credit a customer from it exactly once."
+related:
+  - /docs/virtual-accounts/overview
+  - /api-reference/webhooks
+---
+
+Money arriving in a virtual account isn't something you initiate, so there's no response to read it from. Bitnob sends `virtual_account.deposit.success` to your webhook URL when a transfer lands, normally within 10 minutes of the sender's transfer. The funds credit your company NGN balance, not a per-customer balance.
+
+Signature verification, retries, and source IPs work the same way as every other Bitnob webhook. They're covered on [Webhooks](/api-reference/webhooks).
+
+## `virtual_account.deposit.success`
+
+Fired when a transfer into one of your virtual accounts is confirmed. Use it to mark an order paid, release goods, or credit the customer in your own ledger.
+
+```json virtual_account.deposit.success
+{
+  "eventType": "virtual_account.deposit.success",
+  "eventId": "c5efb1ec-2912-4619-90f7-93b5172fd712",
+  "payload": {
+    "amount": "5000000",
+    "currency": "NGN",
+    "ledger_transaction_id": "1fcda02a-8af6-4019-bef9-2a9dfacae4a3",
+    "provider_transaction_id": "ad2c9abb-4a1e-470a-835c-228778fc17f0",
+    "reference": "DEP_fce659bd60fe7b7",
+    "virtual_account_id": "01a061d3-68c0-7ce6-80a5-af2cb46308bc"
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `eventType` | string | Always `virtual_account.deposit.success` for this event. Route on this value. |
+| `eventId` | UUID | Unique per event. Use it as an idempotency key so a redelivered event isn't credited twice. |
+| `payload.amount` | string | Amount deposited, as an integer string in kobo. `"5000000"` is ₦50,000.00. |
+| `payload.currency` | string | Currency of the deposit. `NGN` for Nigerian virtual accounts. |
+| `payload.virtual_account_id` | UUID | The account the money landed in. Use it to attribute the deposit to one of your customers. |
+| `payload.ledger_transaction_id` | UUID | The resulting ledger entry. Matches the transaction returned by [Get account transactions](/api-reference/virtual-accounts/get-account-transactions). |
+| `payload.provider_transaction_id` | UUID | Identifier from the upstream bank partner. Quote it when you raise a query about a specific transfer. |
+| `payload.reference` | string | Server-generated reference for the deposit, for example `DEP_fce659bd60fe7b7`. |
+
+<Note>
+  This event uses `eventType`, `eventId`, and `payload` at the top level, with snake_case fields inside `payload`. Route on `eventType`, not `event`.
+</Note>
+
+## Handle it once
+
+1. Verify the `x-bitnob-signature` header over the raw body. See [Verify every delivery](/api-reference/webhooks#verify-every-delivery).
+2. Skip the event if you've already processed its `eventId`.
+3. Look up which customer owns `payload.virtual_account_id`, and credit them `payload.amount` kobo in your ledger.
+4. Respond `200`. If your own processing fails temporarily, respond with a `5xx` so the event is retried.
+
+Reconcile on a schedule with [Get account transactions](/api-reference/virtual-accounts/get-account-transactions), so a missed delivery never becomes a missing credit.
+
+## Test it in sandbox
+
+Call [Simulate deposit](/api-reference/virtual-accounts/simulate-deposit-sandbox) instead of waiting on a real transfer. Each call credits a fixed ₦1,000 (`"100000"` kobo) and fires this event to the webhook URL set in your sandbox dashboard.
