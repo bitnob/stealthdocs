@@ -70,10 +70,30 @@
                 "icon": "bitcoin",
                 "pages": [
                   "docs/bitcoin/overview",
-                  "docs/bitcoin/send-bitcoin",
-                  "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices",
-                  "docs/bitcoin/lnurl-and-lightning-addresses",
-                  "docs/bitcoin/confirmations-and-webhook-events"
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/bitcoin/lnurl-and-lightning-addresses"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/bitcoin/send-bitcoin"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/bitcoin/issuing-bitcoin-addresses-and-lightning-invoices"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/bitcoin/confirmations-and-webhook-events"
+                    ]
+                  }
                 ]
               },
               {
@@ -264,47 +284,51 @@
             "description": "Policy-governed wallets.",
             "groups": [
               {
-                "group": "Get started",
-                "icon": "rocket",
+                "group": "Platform API",
+                "icon": "wallet",
                 "expanded": true,
                 "pages": [
                   "docs/platform/overview",
-                  "docs/platform/quickstart"
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/platform/core-concepts"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/platform/quickstart"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/platform/best-practices",
+                      "docs/platform/exchange-integration-guide"
+                    ]
+                  }
                 ]
               },
               {
-                "group": "Concepts",
-                "icon": "lightbulb",
-                "expanded": true,
-                "pages": [
-                  "docs/platform/core-concepts"
-                ]
-              },
-              {
-                "group": "Best practices",
-                "icon": "shield-check",
-                "expanded": true,
-                "pages": [
-                  "docs/platform/best-practices"
-                ]
-              },
-              {
-                "group": "Guides",
-                "icon": "book",
-                "expanded": true,
-                "pages": [
-                  "docs/platform/exchange-integration-guide"
-                ]
-              },
-              {
-                "group": "Bitcoin infrastructure",
+                "group": "Bitcoin",
                 "icon": "bitcoin",
                 "pages": [
-                  "docs/bitcoin/custody-models",
-                  "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
-                  "docs/bitcoin/user-managed-self-custodial-wallets",
-                  "docs/bitcoin/utxo-management-introduction",
-                  "docs/bitcoin/fee-market-and-transaction-strategies"
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/bitcoin/custody-models",
+                      "docs/bitcoin/utxo-management-introduction",
+                      "docs/bitcoin/fee-market-and-transaction-strategies"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/bitcoin/business-managed-non-custodial-bitcoin-wallets",
+                      "docs/bitcoin/user-managed-self-custodial-wallets"
+                    ]
+                  }
                 ]
               }
             ]
