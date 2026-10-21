@@ -19,7 +19,7 @@ flowchart TD
     C --> E[virtualcard.created.failed]
 ```
 
-Your [Create card](/api-reference/cards/create-card-embedded-customer) call returns immediately with the card in status `pending` and `created_status: processing`. The issuer then provisions the card, usually within seconds. `virtualcard.created.completed` confirms it is `active`; only then are the PAN, CVV, and expiry retrievable via [Get secure card details](/api-reference/cards/get-secure-card-details).
+Your [Create card](/api-reference/cards/create-card) call returns immediately with the card in status `pending` and `created_status: processing`. The issuer then provisions the card, usually within seconds. `virtualcard.created.completed` confirms it is `active`; only then are the PAN, CVV, and expiry retrievable via [Get secure card details](/api-reference/cards/get-secure-card-details).
 
 Treat the webhook, not the HTTP response, as the signal to show the card to a user.
 
@@ -96,4 +96,4 @@ Creating a card is not idempotent by customer: calling create twice makes two ca
   </Accordion>
 </AccordionGroup>
 
-Ready to build? [Issue your first card](/docs/card-issuing/issue-your-first-card) walks the whole lifecycle, and [Create card](/api-reference/cards/create-card-embedded-customer) has the full request schema.
+Ready to build? [Issue your first card](/docs/card-issuing/issue-your-first-card) walks the whole lifecycle, and [Create card](/api-reference/cards/create-card) has the full request schema.

@@ -290,11 +290,13 @@
             "description": "Policy-governed wallets.",
             "groups": [
               {
-                "group": "Platform API",
-                "icon": "wallet",
+                "group": "Get started",
+                "icon": "rocket",
                 "expanded": true,
                 "pages": [
                   "docs/platform/overview",
+                  "docs/platform/account-setup",
+                  "docs/platform/quickstart",
                   {
                     "group": "Concepts",
                     "pages": [
@@ -302,15 +304,14 @@
                     ]
                   },
                   {
-                    "group": "Get started",
+                    "group": "Build reliably",
                     "pages": [
-                      "docs/platform/quickstart"
+                      "docs/platform/best-practices"
                     ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "docs/platform/best-practices",
                       "docs/platform/exchange-integration-guide"
                     ]
                   }
@@ -550,7 +551,7 @@
         }
       },
       {
-        "tab": "Platform API",
+        "tab": "Enterprise API",
         "icon": "wallet",
         "groups": [
           {
