@@ -35,7 +35,7 @@ Before you start, make sure virtual accounts are enabled on your account. The Bi
     The BVN lives on the customer, not on the virtual account request; add it at creation or [patch an existing customer](/api-reference/customers/update-customer).
 
     <Warning>
-      Customers are matched on `phone_number`. If you send a phone number that already belongs to one of your customers, you get `201 Created` with **that existing customer**, and the other fields you sent are ignored. Compare the returned `email` and name with what you sent. If they differ, the number is already in use, and the virtual account would be issued against the existing customer's details.
+      Customers are matched on `email`, `phone_number` and BVN (`id_number`). If you send an email, phone number or BVN that already belongs to one of your customers, you get `201 Created` with **that existing customer**, and the other fields you sent are ignored. Compare the returned `email`, phone number and name with what you sent. If they differ, one of those details is already in use, and the virtual account would be issued against the existing customer's details.
     </Warning>
 
     <Warning>

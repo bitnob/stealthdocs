@@ -151,7 +151,7 @@ Every request goes to `https://api.bitnob.com`. Sandbox and production share tha
 
     <CodeGroup>
 
-    ```json Ghana mobile money (MTN MoMo only)
+    ```json Ghana mobile money (MTN)
     {
       "destination_type": "mobile_money",
       "network": "mtn",
@@ -182,6 +182,8 @@ Every request goes to `https://api.bitnob.com`. Sandbox and production share tha
     ```
 
     </CodeGroup>
+
+    For Ghana mobile money, set `network` to `mtn`, `vodafone` (Telecel Cash) or `airtel` (AirtelTigo Money) to match the recipient's number.
 
     Each quote can be initialized once. A second initialize on the same quote fails with `400` "Quote '…' has already been initialized", so use a fresh quote for each payout.
 
