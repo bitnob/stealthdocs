@@ -33,7 +33,7 @@ Walkthrough: [Issue your first card](/docs/card-issuing/issue-your-first-card).
 - For a company, set `customer_type: "business"`. The personal fields are those of a director or authorised representative.
 
 <Warning>
-  Customers are matched on `phone_number`. Creating a customer with a phone number you've already used returns `201` with the existing customer, and the other fields you sent are ignored.
+  Customers are matched on `email`, `phone_number` and BVN (`id_number`). Creating a customer with an email, phone number or BVN you've already used returns `201` with the existing customer, and the other fields you sent are ignored.
 </Warning>
 
 Walkthrough: [Set up virtual accounts](/docs/virtual-accounts/set-up-virtual-accounts).
