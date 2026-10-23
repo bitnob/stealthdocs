@@ -32,7 +32,7 @@ For payout products, the practical reality is:
 
 How you validate a GHS beneficiary depends on the rail.
 
-- **Mobile money:** for MTN numbers, confirm the wallet with [Account lookup](/api-reference/payouts/account-lookup). Pass `country=GH`, `type=mobile_money`, `MTN` as the `bank_code` (case doesn't matter), and the phone number as the `account_number`, either as `233XXXXXXXXX` or `0XXXXXXXXX`. Leave out `type=mobile_money` and the lookup fails with `400`. For Telecel Cash and AirtelTigo Money numbers, have your user confirm the account name before you finalize.
+- **Mobile money:** for MTN numbers, confirm the wallet with [Account lookup](/api-reference/payouts/account-lookup). Pass `country=GH`, `type=mobile_money`, `MTN` as the `bank_code` (case doesn't matter), and the phone number as the `account_number`, either as `233XXXXXXXXX` or `0XXXXXXXXX`. Leave out `type=mobile_money` and the lookup fails with `400`.
 - **Bank account:** Account lookup doesn't support Ghana bank accounts yet. A lookup with a Ghana bank code returns `400` `VALIDATION_ERROR`. Take the `bank_code` from [Get banks](/api-reference/payouts/banks-by-country) (for example `GH190100` for Stanbic Bank, `GH040100` for GCB Bank Ltd) and collect the `account_name` from your user.
 
 <Warning>
@@ -123,7 +123,7 @@ Mobile money wallets are tied to these phone numbers.
 |---|---|
 | Network detection | Work out the network from the phone number prefix and send the matching `network` value. |
 | Number normalization | Store one canonical format (for example 23324xxxxxxx), so 024xxxxxxx, +233 24 xxx xxxx and 23324xxxxxxx all resolve to the same wallet. |
-| Validation | For MTN numbers, resolve the beneficiary name with Account lookup before releasing funds, passing `MTN` as the `bank_code`. For Telecel Cash, AirtelTigo Money and bank accounts, have the user confirm the account name. |
+| Validation | For MTN numbers, resolve the beneficiary name with Account lookup before releasing funds, passing `MTN` as the `bank_code`. Ghana bank accounts can't be looked up yet. |
 | Bank payouts | Take bank codes from Get banks rather than hardcoding them, and show the user the account name and number to confirm before you finalize. Set expectations that bank payouts take 1 to 10 minutes. |
 
 ## Quick reference
@@ -138,7 +138,7 @@ Mobile money wallets are tied to these phone numbers.
 | Prefixes | MTN 024, 025, 054, 055, 059; Telecel 020, 050; AirtelTigo 026, 056 |
 | Timing | Mobile money instant; bank account 1 to 10 minutes; funding confirmation under 15 minutes |
 | Main risks | Wrong `network` for the number, wallet tier limits, inactive or unregistered wallets, unverified bank account details |
-| Validation endpoints | [Account lookup](/api-reference/payouts/account-lookup) (mobile money only), [Get banks](/api-reference/payouts/banks-by-country), [Payout limits](/api-reference/payouts/payout-limits) |
+| Validation endpoints | [Account lookup](/api-reference/payouts/account-lookup) (MTN mobile money), [Get banks](/api-reference/payouts/banks-by-country), [Payout limits](/api-reference/payouts/payout-limits) |
 
 ## Closing note
 
