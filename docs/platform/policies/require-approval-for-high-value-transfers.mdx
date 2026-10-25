@@ -1,0 +1,118 @@
+---
+title: "Require approval for high-value transfers"
+sidebarTitle: "Require approval"
+description: "Hold transfers above a threshold until approvers sign off, with tiered approval counts and a fast path for small, routine payouts."
+related:
+  - /docs/platform/policies/handle-held-and-rejected-transactions
+  - /docs/platform/policies/how-policy-evaluation-works
+  - /docs/platform/policies/rule-reference
+---
+
+A `require_approval` rule holds a matching transaction in `pending_authorization` until enough approvers approve it. The transaction is persisted and its funds are locked while it waits. Once approved, it signs and broadcasts without being resubmitted.
+
+This guide builds a tiered approval policy for a treasury team:
+
+| Transfer value | Outcome |
+|---|---|
+| Over $250,000 | Blocked |
+| Over $50,000 | Two approvals from the `admin` role |
+| Over $10,000 | One approval from the `operator` role |
+| Automated sweeps between your own vaults, any value | Allowed |
+| Everything else | No match |
+
+## Choose your approvers
+
+[List approver candidates](/api-reference/platform/users/list-approver-candidates) returns every user and role you can name. Each entry's `id` and `type` go into the rule's `approvers` list.
+
+- **Roles** (`"type": "role"`) cover everyone who holds the role at the time a transaction is held. `member_count` shows how many people that is now. Prefer roles.
+- **Users** (`"type": "user"`) name one person. Use them only when a specific person must sign off, and plan for that person being away.
+
+<Warning>
+  A rule that needs more approvals than its approvers can give holds every matching transaction until it expires. Keep `required_approvals` below the number of people who can approve, so one absence doesn't stop your payouts.
+</Warning>
+
+## Write the rules
+
+Rules run in order and the first match wins, so order them from most to least restrictive. The sweep rule comes first so automated internal moves never wait for a person.
+
+```json
+{
+  "name": "Treasury approvals",
+  "category": "approvals",
+  "rules": [
+    {
+      "name": "Allow automated internal sweeps",
+      "order": 1,
+      "action_type": "allow",
+      "conditions": [
+        { "field": "is_automated", "operator": "equal", "value": "true" },
+        { "field": "destination_type", "operator": "equal", "value": "vault" }
+      ]
+    },
+    {
+      "name": "Block over $250,000",
+      "order": 2,
+      "action_type": "block",
+      "conditions": [
+        { "field": "amount_usd", "operator": "greater_than", "value": "250000" }
+      ]
+    },
+    {
+      "name": "Two admins over $50,000",
+      "order": 3,
+      "action_type": "require_approval",
+      "conditions": [
+        { "field": "amount_usd", "operator": "greater_than", "value": "50000" }
+      ],
+      "action_config": {
+        "required_approvals": 2,
+        "approvers": [{ "id": "admin", "type": "role" }]
+      }
+    },
+    {
+      "name": "One operator over $10,000",
+      "order": 4,
+      "action_type": "require_approval",
+      "conditions": [
+        { "field": "amount_usd", "operator": "greater_than", "value": "10000" }
+      ],
+      "action_config": {
+        "required_approvals": 1,
+        "approvers": [{ "id": "operator", "type": "role" }]
+      }
+    }
+  ]
+}
+```
+
+<Note>
+  Check the exact `action_config` keys for `require_approval`, and the values `destination_type` accepts, in [Get policy schema](/api-reference/platform/policies/get-policy-schema) before you save. The values above are illustrative.
+</Note>
+
+Lint the rules with [Validate in-flight rule array](/api-reference/platform/policies/validate-in-flight-rule-array), then save them with [Create draft policy](/api-reference/platform/policies/create-draft-policy). [Write and activate your first policy](/docs/platform/policies/write-and-activate-your-first-policy) shows both calls.
+
+## Test each tier
+
+Dry-run one request per row of the table, against the draft. Each should stop at the rule you expect.
+
+| Request | Expected `trace` terminal rule | Expected decision |
+|---|---|---|
+| `"amount_usd": "300000"` | Block over $250,000 | `allowed: false` |
+| `"amount_usd": "75000"` | Two admins over $50,000 | `required_approvals: 2` |
+| `"amount_usd": "20000"` | One operator over $10,000 | `required_approvals: 1` |
+| `"amount_usd": "300000", "is_automated": true, "destination_type": "vault"` | Allow automated internal sweeps | `allowed: true` |
+| `"amount_usd": "500"` | None | `result: no_match` |
+
+The fourth row is worth checking closely: the sweep rule is above the block rule, so it lets a $300,000 automated sweep through. If that isn't what you want, add an `amount_usd` cap to the sweep rule.
+
+When every row matches, validate the stored draft and activate it.
+
+## What approvers see
+
+When a transfer is held, the dry-run fields `required_approvals` and `expiry_hours` describe the approval request it opens. Approvers act on the request in the Bitnob dashboard. The transaction then moves on:
+
+- **Approved**: it continues to signing and broadcast, and you receive `transaction.signed` and then `transaction.completed` as normal.
+- **Rejected**: its status becomes `rejected`, which is terminal. Nothing is signed or broadcast.
+- **Expired**: the request lapses without enough approvals, and the transaction does not execute.
+
+[Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions) covers how to show each state to your users.

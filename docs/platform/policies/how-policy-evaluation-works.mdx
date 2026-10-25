@@ -1,0 +1,94 @@
+---
+title: "How Bitnob Enterprise evaluates policy rules"
+sidebarTitle: "How evaluation works"
+description: "Rules run in order and the first full match wins. Learn how conditions, actions, and categories combine into a decision before signing."
+related:
+  - /docs/platform/policies/policy-lifecycle-and-quorum
+  - /docs/platform/policies/rule-reference
+  - /docs/platform/policies/test-rules-with-dry-run-evaluation
+---
+
+Every signing request passes through the policy engine before the Bitnob Secure Enclave signs it. The engine compares the request against the rules in your organisation's enforced policy and returns one decision. This page explains how it reaches that decision, so you can predict what a rule set will do before you write it.
+
+## The objects
+
+A **policy** is a named, ordered list of rules. Your organisation has at most one policy in `enforced` status at a time. Any others are drafts or archived versions.
+
+A **rule** has three parts:
+
+- **Conditions**: a list of comparisons against the request, such as `amount_usd greater_than 10000`. Every condition in a rule must match for the rule to match.
+- **An action**: what happens when the rule matches. One of `allow`, `block`, `require_approval`, `delay`, or `alert`.
+- **An order**: the rule's position in the list. Lower numbers run first.
+
+A **condition** has a `field`, an `operator`, and a value. The value goes in `value`, `values`, or `min` and `max`, depending on the operator. See [Condition values](/docs/platform/policies/rule-reference#condition-values).
+
+```json
+{
+  "name": "Approve transfers over $10,000",
+  "order": 1,
+  "action_type": "require_approval",
+  "conditions": [
+    { "field": "amount_usd", "operator": "greater_than", "value": "10000" }
+  ]
+}
+```
+
+## First match wins
+
+The engine walks the rules in `order`, from first to last. For each rule it checks the conditions in turn, and stops at the first condition that fails. The first rule whose conditions all match is the **terminal** rule: its action becomes the decision, and the rules after it are not evaluated.
+
+Three consequences follow, and most policy bugs come from one of them:
+
+- **Order is meaning.** A broad `allow` placed above a narrow `block` makes the `block` unreachable. Put the most specific and most restrictive rules first.
+- **Conditions within a rule are AND.** To express "chain is Tron **or** chain is Ethereum", use one condition with the `in` operator, not two conditions.
+- **Rules are OR.** To express "block if A, and separately block if B", write two rules.
+
+[Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) catches the first problem for you: it reports rules that are shadowed by an earlier rule as `unreachable_rule`.
+
+## What the engine can see
+
+A condition can compare any request attribute the engine evaluates. These include:
+
+| Attribute | Examples of what it lets you express |
+|---|---|
+| `amount`, `amount_usd` | Thresholds in the asset's display unit, or in US dollars across assets |
+| `asset_symbol`, `chain`, `network`, `token_address` | Restrict by asset or chain |
+| `to_address`, `from_address`, `destination_type` | Allowlists and blocklists of destinations |
+| `wallet_id`, `vault_id`, `source_type` | Different rules for treasury and customer wallets |
+| `actor_type`, `actor_id`, `user_id` | Different rules for API keys and dashboard users, or for one specific key |
+| `is_automated`, `automation_rule_id` | Different rules for automated sweeps and manual transfers |
+| `operation_type`, `tx_type` | Different rules for each kind of operation |
+
+The authoritative list for your organisation, with each field's value type and the operators it accepts, comes from [Get policy schema](/api-reference/platform/policies/get-policy-schema) in `condition_fields`. Read it rather than hardcoding field names.
+
+<Tip>
+  Prefer `amount_usd` for spending thresholds. A single USD rule covers every asset, and you don't need a separate rule per token with its own decimals.
+</Tip>
+
+## When no rule matches
+
+If no rule matches, the result is `no_match`. When your organisation has no enforced policy at all, `no_match` is allowed.
+
+Don't rely on an implicit default for anything security-relevant. End your rule list with an explicit decision for the cases you care about, and confirm the behaviour by dry-running a request that matches none of your other rules. See [Test rules with dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation).
+
+## Actions and the transaction status they produce
+
+| Action | Decision | Transaction status | Create transaction returns |
+|---|---|---|---|
+| `allow` | Allowed | Moves on to `pending_signature` and `signed` | `201` |
+| `alert` | Allowed, match recorded | Moves on as normal | `201` |
+| `require_approval` | Held for approval | `pending_authorization` | `202` |
+| `delay` | Held for a time lock | `delayed`, with `execute_at` set | `202` |
+| `block` | Rejected | Not signed | Error |
+
+A held transaction is persisted and its funds are locked. It does not need to be resubmitted: it executes on its own once it is approved or its time lock expires. [Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions) covers the integration side.
+
+## Categories
+
+Every policy has a `category`: `access`, `whitelist`, `limits`, `approvals`, `velocity`, `compliance`, or `quorum`. If you leave it out, it defaults to `access`. The category describes what the policy is for and controls how it is evaluated. `quorum` is reserved for the policy that governs administrative changes, described in [Policy lifecycle and quorum](/docs/platform/policies/policy-lifecycle-and-quorum).
+
+[Get policy schema](/api-reference/platform/policies/get-policy-schema) returns the categories available to your organisation, with a description of each, in `categories`.
+
+## Policies and KYT screening
+
+Policies decide whether a transfer may be signed. [KYT risk profiles](/api-reference/platform/kytrisk-profiles/list-risk-profiles) screen the counterparties a transfer touches, and can hold or block by risk category and exposure. They are configured separately, and a transfer must pass both.

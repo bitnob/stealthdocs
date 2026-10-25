@@ -1,0 +1,214 @@
+---
+title: "Write and activate your first Enterprise policy"
+sidebarTitle: "Write your first policy"
+description: "Draft a two-rule policy, lint it, dry-run it against sample transfers, and send it to quorum for activation."
+related:
+  - /docs/platform/policies/how-policy-evaluation-works
+  - /docs/platform/policies/policy-lifecycle-and-quorum
+  - /docs/platform/policies/rule-reference
+---
+
+By the end of this guide your organisation will enforce a policy with two rules:
+
+1. Block any transfer worth more than $50,000.
+2. Require one approval for any transfer worth more than $10,000.
+
+Anything at or below $10,000 matches neither rule. You will test that case too.
+
+## Before you start
+
+- A sandbox API key with permission to manage policies, exported as `PLATFORM_API_KEY`. See [Set up your account](/docs/platform/account-setup).
+- A quorum policy with at least two approvers, configured in the Bitnob dashboard. Without one, the last step returns `422`. See [Activation always goes through quorum](/docs/platform/policies/policy-lifecycle-and-quorum#activation-always-goes-through-quorum).
+
+<Steps>
+  <Step title="Read the policy schema">
+    [Get policy schema](/api-reference/platform/policies/get-policy-schema) lists what you can put in a rule: categories, action types and their config, condition fields, and operators.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/policies/schema \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    Check two things in the response. `condition_fields` should include `amount_usd`, with `greater_than` in its `valid_operators`. And `action_types` gives the `config_schema` for `require_approval`, which you need in step 3.
+  </Step>
+
+  <Step title="Pick an approver">
+    [List approver candidates](/api-reference/platform/users/list-approver-candidates) returns the users and roles a `require_approval` rule can name.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/users/approver-candidates \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    ```json
+    {
+      "object": "list",
+      "data": [
+        { "object": "approver_candidate", "id": "admin", "type": "role", "name": "Admin", "member_count": 3 },
+        { "object": "approver_candidate", "id": "3f1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c", "type": "user", "name": "Jane Doe", "org_role": "operator" }
+      ],
+      "has_more": false
+    }
+    ```
+
+    Use a role where you can. It keeps working when people join or leave. This guide uses the `admin` role.
+  </Step>
+
+  <Step title="Lint the rules before you save them">
+    [Validate in-flight rule array](/api-reference/platform/policies/validate-in-flight-rule-array) checks a rule list without saving anything. Put the `block` rule first: rules run in order and the first match wins, so a transfer of $60,000 must hit the block before it hits the approval.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/policies/validate \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "Transfer limits",
+        "rules": [
+          {
+            "name": "Block over $50,000",
+            "order": 1,
+            "action_type": "block",
+            "conditions": [
+              { "field": "amount_usd", "operator": "greater_than", "value": "50000" }
+            ]
+          },
+          {
+            "name": "Approve over $10,000",
+            "order": 2,
+            "action_type": "require_approval",
+            "conditions": [
+              { "field": "amount_usd", "operator": "greater_than", "value": "10000" }
+            ],
+            "action_config": {
+              "required_approvals": 1,
+              "approvers": [{ "id": "admin", "type": "role" }]
+            }
+          }
+        ]
+      }'
+    ```
+
+    ```json
+    {
+      "valid": true,
+      "issue_count": { "error": 0, "warning": 0, "info": 0 },
+      "diagnostics": []
+    }
+    ```
+
+    <Note>
+      The keys inside `action_config` depend on the action type. Copy them from `action_types[].config_schema` in the schema response from step 1. The values here are illustrative.
+    </Note>
+
+    Try swapping the two `order` values and validating again. The block rule now comes second and can never match, because every transfer over $50,000 is also over $10,000. Validation reports it as `unreachable_rule`.
+  </Step>
+
+  <Step title="Create the draft">
+    [Create draft policy](/api-reference/platform/policies/create-draft-policy) saves the same body as a draft. It requires an `Idempotency-Key`, so a retry after a timeout doesn't create a second draft.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/policies \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: policy-transfer-limits-v1" \
+      -d '{
+        "name": "Transfer limits",
+        "category": "limits",
+        "description": "Block over $50k, approve over $10k",
+        "rules": [ ...the two rules from step 3... ]
+      }'
+    ```
+
+    The response is the policy, with `"status": "draft"` and an `id`. Save the `id` as `POLICY_ID`. A draft is not enforced, so nothing changes for your transactions yet.
+  </Step>
+
+  <Step title="Dry-run three transfers">
+    [Dry-run policy evaluation](/api-reference/platform/policies/dry-run-policy-evaluation) runs a sample request through a policy and returns the decision. Pass `policy_id` to evaluate the draft. Without it, the engine uses the enforced policy. Nothing is created or logged.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/policies/evaluate \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "policy_id": "'"$POLICY_ID"'",
+        "chain": "tron",
+        "asset_symbol": "USDT",
+        "amount_usd": "25000"
+      }'
+    ```
+
+    A $25,000 transfer skips rule 1 and matches rule 2:
+
+    ```json
+    {
+      "allowed": false,
+      "result": "matched_rule",
+      "requires_approval": true,
+      "required_approvals": 1,
+      "rule_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "trace": [
+        {
+          "rule_index": 0,
+          "rule_name": "Block over $50,000",
+          "matched": false,
+          "failed_condition": { "field": "amount_usd", "operator": "greater_than", "expected": "50000", "actual": "25000" }
+        },
+        {
+          "rule_index": 1,
+          "rule_name": "Approve over $10,000",
+          "matched": true,
+          "terminal": true,
+          "action": "require_approval"
+        }
+      ]
+    }
+    ```
+
+    Run it again with `"amount_usd": "60000"` and you get `"action": "block"` on rule 0. With `"amount_usd": "500"` neither rule matches, and `result` is `no_match`. If any result surprises you, fix the draft with the rule endpoints and dry-run again. [Test rules with dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation) explains every field of the trace.
+  </Step>
+
+  <Step title="Validate the stored draft">
+    [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) runs the same checks as step 3 against what you actually saved.
+
+    ```bash
+    curl -X POST https://api.platform.bitnob.com/v1/policies/$POLICY_ID/validate \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    Continue only when `valid` is `true` and `issue_count.error` is `0`. Read any warnings. They usually point at a rule order you didn't intend.
+  </Step>
+
+  <Step title="Send it for activation">
+    [Activate policy](/api-reference/platform/policies/activate-policy) stages the draft for your quorum. The `comment` is recorded on the approval request for your approvers and the audit log.
+
+    ```bash
+    curl -X POST https://api.platform.bitnob.com/v1/policies/$POLICY_ID/activate \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: activate-transfer-limits-v1" \
+      -d '{ "comment": "Initial transfer limits, reviewed by security" }'
+    ```
+
+    ```json
+    {
+      "approval_request_id": "9b2e7a1c-3d4f-4a8b-9c0d-1e2f3a4b5c6d",
+      "policy_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "required_approvals": 2,
+      "status": "pending_authorization",
+      "expires_at": "2026-05-17T10:30:00Z"
+    }
+    ```
+
+    Your quorum approvers approve the request in the dashboard. Wait for the `policy.activated` event, or poll [Get policy](/api-reference/platform/policies/get-policy) until `status` is `enforced`.
+  </Step>
+
+  <Step title="Confirm it is enforced">
+    Dry-run the $25,000 case again, this time without `policy_id`, so the engine uses the enforced policy. You should get the same decision as in step 5. Your next real transfer over $10,000 returns `202` with `"status": "pending_authorization"`.
+  </Step>
+</Steps>
+
+## What to do next
+
+- Make sure your integration handles the `202` responses this policy now produces: [Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions).
+- Add a time lock for very large transfers: [Delay large transfers with a time lock](/docs/platform/policies/delay-large-transfers-with-a-time-lock).
+- When you need to change the rules: [Change an enforced policy](/docs/platform/policies/change-an-enforced-policy).

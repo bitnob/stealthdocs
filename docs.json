@@ -308,11 +308,42 @@
                     "pages": [
                       "docs/platform/best-practices"
                     ]
+                  }
+                ]
+              },
+              {
+                "group": "Policies",
+                "icon": "shield-check",
+                "pages": [
+                  "docs/platform/policies/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/platform/policies/how-policy-evaluation-works",
+                      "docs/platform/policies/policy-lifecycle-and-quorum"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/platform/policies/write-and-activate-your-first-policy"
+                    ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "docs/platform/exchange-integration-guide"
+                      "docs/platform/policies/require-approval-for-high-value-transfers",
+                      "docs/platform/policies/delay-large-transfers-with-a-time-lock",
+                      "docs/platform/policies/test-rules-with-dry-run-evaluation",
+                      "docs/platform/policies/change-an-enforced-policy",
+                      "docs/platform/policies/handle-held-and-rejected-transactions"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/platform/policies/rule-reference",
+                      "docs/platform/policies/statuses-and-webhook-events"
                     ]
                   }
                 ]
@@ -336,6 +367,13 @@
                       "docs/bitcoin/user-managed-self-custodial-wallets"
                     ]
                   }
+                ]
+              },
+              {
+                "group": "Use cases",
+                "icon": "briefcase",
+                "pages": [
+                  "docs/platform/exchange-integration-guide"
                 ]
               }
             ]

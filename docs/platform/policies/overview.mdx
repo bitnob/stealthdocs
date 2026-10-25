@@ -1,0 +1,68 @@
+---
+title: "Transaction policies on Bitnob Enterprise"
+sidebarTitle: "Overview"
+description: "Policies are ordered rules the Bitnob Secure Enclave checks before it signs. Use them to block, hold, delay, or flag transactions."
+related:
+  - /docs/platform/policies/how-policy-evaluation-works
+  - /docs/platform/policies/write-and-activate-your-first-policy
+  - /docs/platform/policies/rule-reference
+---
+
+A policy is the set of rules your organisation enforces on every signing request. The Bitnob Secure Enclave evaluates the policy before it produces a signature, so a rule that blocks a transfer blocks it in hardware, not in your application code. An API key can only move funds the policy allows.
+
+Your organisation enforces one policy at a time. That policy holds an ordered list of rules. Each rule has conditions, such as an amount above a threshold or a destination outside a set of addresses, and an action to take when every condition matches.
+
+## What a policy can do
+
+| Action | What happens to the transaction |
+|---|---|
+| `allow` | It is signed and broadcast. |
+| `block` | It is rejected before signing. Nothing is broadcast. |
+| `require_approval` | It is held in `pending_authorization` until enough approvers approve it. |
+| `delay` | It is held in `delayed` until a time lock expires, then executes on its own. |
+| `alert` | It proceeds, and the match is recorded so your team can review it. |
+
+The first rule whose conditions all match decides the outcome. [How policy evaluation works](/docs/platform/policies/how-policy-evaluation-works) covers the order, the conditions, and what happens when nothing matches.
+
+## Why policies are safe to rely on
+
+- **No single key can change them.** Activating a policy always goes through your organisation's quorum, which needs at least two approvers. An API key can draft a policy but never enforce one by itself. See [Policy lifecycle and quorum](/docs/platform/policies/policy-lifecycle-and-quorum).
+- **The enforced policy is immutable.** You change it by drafting a replacement and activating that, so every change is reviewed and recorded.
+- **You can test before you enforce.** [Dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation) runs any draft against a sample request and returns a per-rule trace, with no side effects.
+- **Every change is audited.** Each policy carries an audit log of who created, edited, and activated it.
+
+## How you work with policies
+
+<Steps>
+  <Step title="Discover what you can write">
+    [Get policy schema](/api-reference/platform/policies/get-policy-schema) lists the categories, actions, condition fields, and operators your organisation supports.
+  </Step>
+  <Step title="Draft and lint">
+    Create a draft with [Create draft policy](/api-reference/platform/policies/create-draft-policy), then check it with [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy). Drafts are never enforced.
+  </Step>
+  <Step title="Test against real scenarios">
+    Run sample transfers through [Dry-run policy evaluation](/api-reference/platform/policies/dry-run-policy-evaluation) with the draft's `policy_id`.
+  </Step>
+  <Step title="Activate through quorum">
+    [Activate policy](/api-reference/platform/policies/activate-policy) stages the draft. It becomes `enforced` once your quorum approvers approve it.
+  </Step>
+</Steps>
+
+[Write and activate your first policy](/docs/platform/policies/write-and-activate-your-first-policy) walks through all four steps with working requests.
+
+## In this section
+
+<Columns cols={2}>
+  <Card title="Concepts" icon="lightbulb" href="/docs/platform/policies/how-policy-evaluation-works">
+    How rules are evaluated, and how a draft becomes the enforced policy.
+  </Card>
+  <Card title="Get started" icon="rocket" href="/docs/platform/policies/write-and-activate-your-first-policy">
+    Draft, test, and activate a policy end to end.
+  </Card>
+  <Card title="Guides" icon="book" href="/docs/platform/policies/require-approval-for-high-value-transfers">
+    Approvals, time locks, testing, changing a live policy, and handling held transactions.
+  </Card>
+  <Card title="Reference" icon="list" href="/docs/platform/policies/rule-reference">
+    Actions, operators, condition fields, validation codes, statuses, and events.
+  </Card>
+</Columns>

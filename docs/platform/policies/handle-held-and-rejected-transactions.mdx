@@ -1,0 +1,84 @@
+---
+title: "Handle transactions held or rejected by policy"
+sidebarTitle: "Handle held transactions"
+description: "Branch on 201 and 202 from Create transaction, track pending_authorization and delayed transfers, and show customers an honest status."
+related:
+  - /docs/platform/policies/statuses-and-webhook-events
+  - /docs/platform/best-practices
+  - /docs/platform/webhooks
+---
+
+Once a policy is enforced, [Create transaction](/api-reference/platform/transactions/create-transaction) no longer always means "sent". Your integration has to handle three outcomes: the transfer goes ahead, it is held, or it is blocked.
+
+## Branch on the response
+
+| Response | `status` in body | What it means | What to do |
+|---|---|---|---|
+| `201 Created` | `signed`, `broadcasting`, or later | Allowed. Signed and submitted. | Track it to a terminal status as usual. |
+| `202 Accepted` | `pending_authorization` | Held by a `require_approval` rule. | Record it as awaiting approval. Don't retry. |
+| `202 Accepted` | `delayed` | Held by a `delay` rule until `execute_at`. | Record the expected send time. Don't retry. |
+| Error | No transaction | Blocked by a `block` rule. | Don't retry unchanged. Tell the requester why. |
+
+In both `202` cases the transaction is persisted and its funds are locked. It executes on its own once approved or once the time lock expires.
+
+<Warning>
+  Never resubmit a held transaction to "unstick" it. A second Create transaction with a new idempotency key creates a second transfer, which is held or sent on its own. Use the same `Idempotency-Key` for retries after network errors, as described in [Making requests](/docs/platform/making-requests#idempotency).
+</Warning>
+
+```javascript
+const res = await fetch("https://api.platform.bitnob.com/v1/transactions", {
+  method: "POST",
+  headers: {
+    "X-API-Key": process.env.PLATFORM_API_KEY,
+    "Content-Type": "application/json",
+    "Idempotency-Key": withdrawal.id,
+  },
+  body: JSON.stringify({
+    wallet_id: withdrawal.walletId,
+    to_address: withdrawal.toAddress,
+    asset: "USDT_TRX",
+    amount: withdrawal.amount,
+  }),
+});
+
+const tx = await res.json();
+
+if (res.status === 201) {
+  await markSubmitted(withdrawal, tx.id);
+} else if (res.status === 202 && tx.status === "pending_authorization") {
+  await markAwaitingApproval(withdrawal, tx.id);
+} else if (res.status === 202 && tx.status === "delayed") {
+  await markScheduled(withdrawal, tx.id, tx.execute_at);
+} else {
+  await markRefused(withdrawal, tx.error);
+}
+```
+
+## Track held transactions to the end
+
+A held transaction can stay non-terminal for hours. Track it the same way as any other transaction, through webhooks first and polling as a fallback:
+
+- Subscribe to `transaction.signed`, `transaction.completed`, `transaction.failed`, and `transaction.cancelled`. A held transaction that is approved, or whose time lock expires, emits `transaction.signed` and then follows the normal path.
+- Subscribe to `policy.violation` to be told when a request breaks a policy rule.
+- Poll [Get transaction](/api-reference/platform/transactions/get-transaction) for anything still non-terminal after your expected window, and stop at a terminal status: `completed`, `failed`, `cancelled`, or `rejected`.
+
+`rejected` means an approver turned the transfer down. It is terminal. Return the funds to the customer's balance in your ledger and tell them.
+
+[Webhooks](/docs/platform/webhooks) covers signature verification, and [Best practices](/docs/platform/best-practices#treat-transactions-as-asynchronous) covers reconciling missed events.
+
+## Tell customers the truth
+
+Map each status to something a customer can act on. Don't show a held transfer as "sent".
+
+| Status | Customer-facing message |
+|---|---|
+| `pending_authorization` | "Your withdrawal is being reviewed. This usually takes up to N hours." |
+| `delayed` | "Your withdrawal is scheduled to send at {execute_at}." |
+| `rejected` | "Your withdrawal was not approved. The funds are back in your balance." |
+| Blocked by policy | "This withdrawal exceeds your limit." Then explain the limit or how to raise it. |
+
+Don't expose rule names or thresholds to customers. They describe your controls, and showing them helps someone find the amount just below a limit.
+
+## Reconcile ledger balances
+
+Treat the funds of a held transaction as reserved. Debit the customer's available balance when Create transaction returns `201` or `202`. Release the reservation only on `failed`, `cancelled`, or `rejected`. This prevents a customer from spending the same balance twice while an approval is pending.

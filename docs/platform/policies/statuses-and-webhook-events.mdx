@@ -1,0 +1,75 @@
+---
+title: "Policy statuses, errors, and webhook events"
+sidebarTitle: "Statuses and events"
+description: "Policy and transaction statuses that policies produce, the errors the policy endpoints return, and the policy webhook events to subscribe to."
+related:
+  - /docs/platform/policies/policy-lifecycle-and-quorum
+  - /docs/platform/policies/handle-held-and-rejected-transactions
+  - /docs/platform/webhooks
+---
+
+## Policy statuses
+
+| Status | Meaning |
+|---|---|
+| `draft` | Not enforced. Editable. Also the status while an activation waits for quorum, and after one is rejected or expires. |
+| `enforced` | The policy your organisation evaluates every signing request against. At most one at a time. |
+| `archived` | Previously enforced, then replaced. Read-only. |
+
+## Activation response
+
+[Activate policy](/api-reference/platform/policies/activate-policy) returns `202 Accepted` with an approval request:
+
+| Field | Meaning |
+|---|---|
+| `status` | Always `pending_authorization`. |
+| `approval_request_id` | Matches the request in the dashboard and in webhook events. There is no endpoint to fetch it. |
+| `required_approvals` | How many quorum approvals are needed. |
+| `expires_at` | When the request lapses if it hasn't been approved. |
+| `policy_id` | The policy being activated. Poll [Get policy](/api-reference/platform/policies/get-policy) for its `status`. |
+
+## Transaction statuses a policy can produce
+
+| Status | Set by | Terminal | Next |
+|---|---|---|---|
+| `pending_authorization` | `require_approval` | No | Signing once approved, or `rejected` |
+| `delayed` | `delay` | No | Signing at `execute_at` |
+| `rejected` | An approver | Yes | None |
+
+All transaction statuses are listed in [Transaction lifecycle](/docs/platform/core-concepts#transaction-lifecycle).
+
+## Errors
+
+| Endpoint | Status | Cause | Fix |
+|---|---|---|---|
+| Activate policy | `409` | The policy is already enforced. | Nothing to do. |
+| Activate policy | `422` | The quorum has fewer than two approvers, or a direct activation was attempted. | Configure a quorum with at least two approvers in the dashboard. |
+| Update, add rule, update rule, remove rule | `4xx` | The policy is not a draft. | Create a new draft. See [Change an enforced policy](/docs/platform/policies/change-an-enforced-policy). |
+| Delete draft policy | `409` | The policy is not a draft. | Enforced and archived policies can't be deleted. |
+| Create draft policy, add rule | `400` | `Idempotency-Key` is missing. | Send one on every create. |
+| Any idempotent write | `409` | The `Idempotency-Key` was reused with a different body. | Use a new key for a new request. |
+| Get quorum policy | `404` | No quorum is configured. | Configure one in the dashboard. |
+
+All errors share the structure described in [Errors](/docs/platform/making-requests#errors).
+
+## Webhook events
+
+Subscribe to these with [Create webhook](/api-reference/platform/webhooks/create-webhook) or [Create subscription](/api-reference/platform/subscriptions/create-subscription). [List supported event types](/api-reference/platform/webhooks/list-supported-event-types) returns the current list.
+
+| Event | Sent when |
+|---|---|
+| `policy.created` | A draft is created. |
+| `policy.updated` | A draft's metadata changes. |
+| `policy.rule.added` | A rule is added to a draft. |
+| `policy.rule.updated` | A rule on a draft changes. |
+| `policy.rule.deleted` | A rule is removed from a draft. |
+| `policy.activated` | Quorum approves an activation and the policy becomes `enforced`. |
+| `policy.archived` | A previously enforced policy is replaced. |
+| `policy.deleted` | A draft is deleted. |
+| `policy.violation` | A request breaks a rule in the enforced policy. |
+
+For approvals and time locks, follow the transaction itself: `transaction.signed` follows an approval or an expired time lock, and the transaction then moves through `transaction.broadcasting`, `transaction.confirmed`, and `transaction.completed`.
+
+<Tip>
+  Route `policy.activated`, `policy.archived`, and `policy.deleted` to your security channel. A policy change you didn't expect is worth investigating straight away.
+</Tip>
