@@ -63,9 +63,20 @@ def infer_schema:
     ["post", "/api/bulk-transfers/schedules"],
     ["get", "/api/bulk-transfers/schedules"],
     ["put", "/api/bulk-transfers/schedules/{scheduleId}"],
-    ["get", "/api/bulk-transfers/schedules/{scheduleId}/executions"]
+    ["get", "/api/bulk-transfers/schedules/{scheduleId}/executions"],
+    ["post", "/api/bulk-transfers"],
+    ["get", "/api/bulk-transfers"],
+    ["post", "/api/bulk-transfers/upload-urls"],
+    ["post", "/api/bulk-transfers/previews"],
+    ["get", "/api/bulk-transfers/{batchId}"],
+    ["post", "/api/bulk-transfers/{batchId}/confirm"],
+    ["post", "/api/bulk-transfers/{batchId}/retry"],
+    ["post", "/api/bulk-transfers/executions/{executionId}/retry"]
   ) as [$method, $path] (.; del(.paths[$path][$method]))
 | .paths |= with_entries(select(.value | keys - ["parameters", "summary", "description", "servers"] | length > 0))
+# Drop tags that no remaining operation uses, such as Bulk transfers.
+| ([.paths[][] | objects | .tags[]?] | unique) as $used
+| if .tags then .tags |= map(select(.name as $name | $used | index($name))) else . end
 # Responses captured from the sandbox by capture-responses.mjs, passed in with
 # --slurpfile responses. They fill only success responses the spec leaves empty.
 | reduce (($ARGS.named.responses[0] // {}) | to_entries[]) as $captured (.;
@@ -74,8 +85,13 @@ def infer_schema:
     | ($captured.value.status | tostring) as $status
     | if .paths[$path][$method] == null then .
       elif [.paths[$path][$method].responses | to_entries[] | select(.key | startswith("2")) | .value.content] | any(. != null) then .
-      else .paths[$path][$method].responses[$status] |=
-        (. // {"description": "Successful response"}) + {"content": {"application/json": {"example": $captured.value.body}}}
+      # Replace the empty success responses, since the API may answer with a
+      # different code than the spec lists (201 instead of 200).
+      else .paths[$path][$method].responses |= (
+        ([to_entries[] | select(.key | startswith("2")) | .value.description] | first // "Successful response") as $description
+        | with_entries(select(.key | startswith("2") | not))
+        | .[$status] = {"description": $description, "content": {"application/json": {"example": $captured.value.body}}}
+      )
       end
   )
 | (.paths[][] | objects | .responses[]? | .content[]? | select((has("example") or has("examples")) and (has("schema") | not)))

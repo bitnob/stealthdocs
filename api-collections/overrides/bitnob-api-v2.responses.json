@@ -25,5 +25,40 @@
       },
       "timestamp": "2026-10-25T06:48:04.576046884Z"
     }
+  },
+  "POST /api/lightning/invoices": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "message": "Lightning invoice created successfully",
+      "data": {
+        "id": "01a1725f-9bd7-7bd0-9591-fc1032d46f02",
+        "payment_hash": "5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457",
+        "request": "lntb50u1p4dmj4xpp5twfre9mtn7yzfc6r3k9crrh3lpfeg4wjh73gkgdl2wqpq6yc23tsdpqg3hkxueqv4uxzmtsd3jjq6twwehkjcm9cqzpgxqrrs0sp5xraqk3u6zg2sgg7nez7sw9z3s7cx2d4txn4xahlddezdzjpgtdqs9qrsgq2frzzvxp902a59xuquexxpk9y3ra4kln27wwdcg97e6epcjpcrdpxd7vftuy2a2m66dmv332gd0upme2r50qne5gn2d7ffk8h7dtmvqptqtupq",
+        "amount_sat": "5000",
+        "description": "Docs example invoice",
+        "status": "pending",
+        "expires_at": "2026-10-25T10:23:50Z",
+        "created_at": "2026-10-25T09:23:50Z"
+      },
+      "timestamp": "2026-10-25T09:23:50.877504884Z"
+    }
+  },
+  "POST /api/lightning/decode": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Payment request decoded successfully",
+      "data": {
+        "payment_hash": "5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457",
+        "destination": "0378a9c9e82bb9c856e6a1cd0c5566bf3595bf5731e636b5c7121d9c1a8884e62a",
+        "amount_sat": "5000",
+        "amount_msat": "5000000",
+        "description": "Docs example invoice",
+        "expires_at": "1792923829",
+        "is_expired": false
+      },
+      "timestamp": "2026-10-25T09:25:07.028980345Z"
+    }
   }
 }

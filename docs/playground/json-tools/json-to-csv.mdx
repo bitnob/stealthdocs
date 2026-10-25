@@ -35,7 +35,3 @@ with open("payouts.csv", "w", newline="") as f:
     writer.writeheader()
     writer.writerows(rows)
 ```
-
-<Tip>
-  For bulk payouts, build your CSV from the API's own field names so the upload template and your reconciliation export stay in sync. See [Send payouts in bulk](/docs/payouts/mass-payouts).
-</Tip>

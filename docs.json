@@ -198,7 +198,6 @@
                     "pages": [
                       "docs/payouts/validate-a-beneficiary",
                       "docs/payouts/swift-payout",
-                      "docs/payouts/mass-payouts",
                       "docs/payouts/webhook-payout",
                       "docs/payouts/error-handling",
                       "api-reference/payouts/usage-example",
@@ -477,21 +476,6 @@
               "GET /api/payouts/banks/{countryCode}",
               "GET /api/payouts",
               "GET /api/payouts/{id}"
-            ]
-          },
-          {
-            "group": "Bulk transfers",
-            "icon": "layer-group",
-            "expanded": true,
-            "pages": [
-              "POST /api/bulk-transfers",
-              "GET /api/bulk-transfers",
-              "POST /api/bulk-transfers/upload-urls",
-              "POST /api/bulk-transfers/previews",
-              "GET /api/bulk-transfers/{batchId}",
-              "POST /api/bulk-transfers/{batchId}/confirm",
-              "POST /api/bulk-transfers/{batchId}/retry",
-              "POST /api/bulk-transfers/executions/{executionId}/retry"
             ]
           },
           {
@@ -1086,6 +1070,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/docs/payouts/mass-payouts",
+      "destination": "/docs/payouts/overview"
+    },
     {
       "source": "/changelog/overview",
       "destination": "/changelog"

@@ -6,6 +6,9 @@
 //   --param name=value   value for a path parameter, e.g. --param pair=BTCUSD
 //   --allow "POST /path" also call this non-GET endpoint, with the request
 //                        example from the spec as its body (repeatable)
+//   --body "POST /path={...}"
+//                        send this JSON instead of the spec's request example
+//   --only "POST /path"  call only these endpoints (repeatable)
 //   --dry-run            list what would be called without calling it
 //
 // Only GET endpoints run by default, since other calls create or change things
@@ -28,13 +31,19 @@ const specPath = join(root, "api-collections/swagger/bitnob-api-v2.openapi.json"
 const outPath = join(here, "bitnob-api-v2.responses.json");
 
 function parseArgs(argv) {
-  const args = { params: {}, allow: new Set(), dryRun: false };
+  const args = { params: {}, allow: new Set(), bodies: {}, only: new Set(), dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--param") {
       const [name, ...value] = argv[++i].split("=");
       args.params[name] = value.join("=");
     } else if (argv[i] === "--allow") {
       args.allow.add(argv[++i]);
+    } else if (argv[i] === "--body") {
+      const value = argv[++i];
+      const split = value.indexOf("=");
+      args.bodies[value.slice(0, split)] = JSON.parse(value.slice(split + 1));
+    } else if (argv[i] === "--only") {
+      args.only.add(argv[++i]);
     } else if (argv[i] === "--dry-run") {
       args.dryRun = true;
     } else {
@@ -155,6 +164,7 @@ const spec = JSON.parse(readFileSync(specPath, "utf8"));
 const saved = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : {};
 
 for (const { key, method, path, op } of missingOperations(spec)) {
+  if (args.only.size && !args.only.has(key)) continue;
   if (method !== "GET" && !args.allow.has(key)) {
     console.log(`skip   ${key}  (not a GET; pass --allow "${key}" to call it)`);
     continue;
@@ -170,7 +180,8 @@ for (const { key, method, path, op } of missingOperations(spec)) {
     continue;
   }
 
-  const result = await call(env, method, resolved, method === "GET" ? undefined : requestExample(op));
+  const body = method === "GET" ? undefined : (args.bodies[key] ?? requestExample(op));
+  const result = await call(env, method, resolved, body);
   if (result.status >= 300 || result.json === undefined) {
     console.log(`fail   ${key}  ${result.status} ${result.text.slice(0, 200)}`);
     continue;

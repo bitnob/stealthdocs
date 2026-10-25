@@ -58,8 +58,6 @@ tags:
   description: Point-in-time conversion rates between supported currencies.
 - name: Trading
   description: 'Spot trading: quotes, orders, scheduled DCA, and target (limit-style) orders.'
-- name: Bulk transfers
-  description: Batched disbursements from CSV or inline items, with optional recurring schedules.
 - name: Virtual accounts
   description: Dedicated NGN bank account numbers issued against a customer. Deposits credit your NGN balance.
 - name: Cards
@@ -2855,811 +2853,6 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-  /api/bulk-transfers:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Create draft batch
-      description: Creates a draft with inline items. Amounts are in base units.
-      operationId: post_api_bulk_transfers
-      responses:
-        '200':
-          description: Successful response
-        '201':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer draft created successfully
-                data:
-                  batch:
-                    id: 019edf7e-e18d-75e5-a339-3c58967a37a3
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: March payroll batch
-                    status: draft
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-19T10:48:14.991283525Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  items:
-                  - id: 019edf7e-e18d-75ef-8f44-43de117656ab
-                    batch_id: 019edf7e-e18d-75e5-a339-3c58967a37a3
-                    row_index: 1
-                    chain: ethereum
-                    currency: USDT
-                    address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                    amount: '1'
-                    description: payout
-                    status: pending
-                    failure_reason: ''
-                    retries: 0
-                    withdrawal_id: ''
-                timestamp: '2026-06-19T10:48:15.001010438Z'
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      batch:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          company_id:
-                            type: string
-                            format: uuid
-                          description:
-                            type: string
-                          status:
-                            type: string
-                          total_items:
-                            type: number
-                          success_count:
-                            type: number
-                          failed_count:
-                            type: number
-                          created_at:
-                            type: string
-                            format: date-time
-                          submitted_at:
-                            type: string
-                          completed_at:
-                            type: string
-                      items:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              format: uuid
-                            batch_id:
-                              type: string
-                              format: uuid
-                            row_index:
-                              type: number
-                            chain:
-                              type: string
-                            currency:
-                              type: string
-                            address:
-                              type: string
-                            amount:
-                              type: string
-                            description:
-                              type: string
-                            status:
-                              type: string
-                            failure_reason:
-                              type: string
-                            retries:
-                              type: number
-                            withdrawal_id:
-                              type: string
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                description:
-                  type: string
-                  example: March payroll batch
-                items:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      row_index:
-                        type: integer
-                      chain:
-                        type: string
-                        example: ethereum
-                      currency:
-                        type: string
-                        example: USDT
-                      address:
-                        type: string
-                        example: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                      amount:
-                        type: string
-                        example: '100000000'
-                      reference:
-                        type: string
-                        example: bulk-item-1
-                    required:
-                    - row_index
-                    - chain
-                    - currency
-                    - address
-                    - amount
-                    - reference
-              required:
-              - description
-              - items
-            example:
-              description: March payroll batch
-              items:
-              - row_index: 1
-                chain: ethereum
-                currency: USDT
-                address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                amount: '1'
-                description: payout
-    get:
-      tags:
-      - Bulk transfers
-      summary: List batches
-      description: Paginated batch history.
-      operationId: get_api_bulk_transfers
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfers retrieved successfully
-                data:
-                  batches:
-                  - id: 019edbc7-445b-724e-93a0-3e903e14d6ee
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: Docs sample batch
-                    status: draft
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-18T17:28:50.016413Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  - id: 019edbba-a534-7c1a-9f32-c0be4b403516
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: audit draft
-                    status: draft
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-18T17:15:02.84441Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  - id: 019edb3b-3c7a-7875-be2e-043fd58cfa79
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: March payroll batch
-                    status: draft
-                    total_items: 2
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-18T14:55:52.963515Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  next_page_token: ''
-                timestamp: '2026-06-19T10:46:57.751333739Z'
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      batches:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              format: uuid
-                            company_id:
-                              type: string
-                              format: uuid
-                            description:
-                              type: string
-                            status:
-                              type: string
-                            total_items:
-                              type: number
-                            success_count:
-                              type: number
-                            failed_count:
-                              type: number
-                            created_at:
-                              type: string
-                              format: date-time
-                            submitted_at:
-                              type: string
-                            completed_at:
-                              type: string
-                      next_page_token:
-                        type: string
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers/upload-urls:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Get upload URL (S3 presigned)
-      description: Returns a presigned PUT URL for uploading a CSV. Upload directly to S3, then call **Preview uploaded file** with the returned `upload_id`.
-      operationId: post_api_bulk_transfers_upload_urls
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filename:
-                  type: string
-                  example: payroll.csv
-              required:
-              - filename
-            example:
-              filename: payroll.csv
-  /api/bulk-transfers/previews:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Preview uploaded file
-      description: Parses and validates the uploaded CSV, returning row-level status before confirmation.
-      operationId: post_api_bulk_transfers_previews
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                upload_id:
-                  type: string
-                  example: '{{upload_id}}'
-              required:
-              - upload_id
-            example:
-              upload_id: '{{upload_id}}'
-  /api/bulk-transfers/{batchId}:
-    get:
-      tags:
-      - Bulk transfers
-      summary: Get batch
-      description: Single batch with per-item status.
-      operationId: get_api_bulk_transfers_batchId
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: batchId identifier
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer retrieved successfully
-                data:
-                  batch:
-                    id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: Docs verified batch
-                    status: processing
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-19T11:23:12.045402Z'
-                    submitted_at: '2026-06-19T11:23:12.851565Z'
-                    completed_at: ''
-                  items:
-                  - id: 019edf9e-e12b-735c-85ea-7ebd7f76f778
-                    batch_id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    row_index: 1
-                    chain: ethereum
-                    currency: USDT
-                    address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                    amount: '1'
-                    description: verify
-                    status: pending
-                    failure_reason: ''
-                    retries: 0
-                    withdrawal_id: ''
-                timestamp: '2026-06-19T11:23:13.665366937Z'
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      batch:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          company_id:
-                            type: string
-                            format: uuid
-                          description:
-                            type: string
-                          status:
-                            type: string
-                          total_items:
-                            type: number
-                          success_count:
-                            type: number
-                          failed_count:
-                            type: number
-                          created_at:
-                            type: string
-                            format: date-time
-                          submitted_at:
-                            type: string
-                            format: date-time
-                          completed_at:
-                            type: string
-                      items:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              format: uuid
-                            batch_id:
-                              type: string
-                              format: uuid
-                            row_index:
-                              type: number
-                            chain:
-                              type: string
-                            currency:
-                              type: string
-                            address:
-                              type: string
-                            amount:
-                              type: string
-                            description:
-                              type: string
-                            status:
-                              type: string
-                            failure_reason:
-                              type: string
-                            retries:
-                              type: number
-                            withdrawal_id:
-                              type: string
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers/{batchId}/confirm:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Confirm batch
-      description: Promotes a draft batch to execution. Irreversible — funds are debited.
-      operationId: post_api_bulk_transfers_batchId_confirm
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: batchId identifier
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer confirmed successfully
-                data:
-                  batch:
-                    id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: Docs verified batch
-                    status: processing
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-19T11:23:12.045402Z'
-                    submitted_at: '2026-06-19T11:23:12.851565556Z'
-                    completed_at: ''
-                timestamp: '2026-06-19T11:23:12.856906512Z'
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      batch:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            format: uuid
-                          company_id:
-                            type: string
-                            format: uuid
-                          description:
-                            type: string
-                          status:
-                            type: string
-                          total_items:
-                            type: number
-                          success_count:
-                            type: number
-                          failed_count:
-                            type: number
-                          created_at:
-                            type: string
-                            format: date-time
-                          submitted_at:
-                            type: string
-                            format: date-time
-                          completed_at:
-                            type: string
-                  timestamp:
-                    type: string
-                    format: date-time
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-            example: {}
-  /api/bulk-transfers/{batchId}/retry:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Retry failed items
-      description: Retries only the listed item ids within a partially-failed batch.
-      operationId: post_api_bulk_transfers_batchId_retry
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: batchId identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                item_ids:
-                  type: array
-                  items:
-                    type: string
-                    example: item-uuid-1
-              required:
-              - item_ids
-            example:
-              item_ids:
-              - item-uuid-1
-              - item-uuid-2
-  /api/bulk-transfers/executions/{executionId}/retry:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Retry failed execution
-      description: Retries an execution that failed partway. No-op if already completed.
-      operationId: post_api_bulk_transfers_executions_executionId_retry
-      parameters:
-      - name: executionId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: executionId identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-            example: {}
   /api/virtual-accounts:
     post:
       tags:
@@ -7000,8 +6193,6 @@ paths:
       description: Issues a BOLT11 invoice for the given customer. Amount is in satoshis.
       operationId: post_api_lightning_invoices
       responses:
-        '200':
-          description: Successful response
         '400':
           description: Validation error
           content:
@@ -7032,6 +6223,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                success: true
+                message: Lightning invoice created successfully
+                data:
+                  id: 01a1725f-9bd7-7bd0-9591-fc1032d46f02
+                  payment_hash: 5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457
+                  request: lntb50u1p4dmj4xpp5twfre9mtn7yzfc6r3k9crrh3lpfeg4wjh73gkgdl2wqpq6yc23tsdpqg3hkxueqv4uxzmtsd3jjq6twwehkjcm9cqzpgxqrrs0sp5xraqk3u6zg2sgg7nez7sw9z3s7cx2d4txn4xahlddezdzjpgtdqs9qrsgq2frzzvxp902a59xuquexxpk9y3ra4kln27wwdcg97e6epcjpcrdpxd7vftuy2a2m66dmv332gd0upme2r50qne5gn2d7ffk8h7dtmvqptqtupq
+                  amount_sat: '5000'
+                  description: Docs example invoice
+                  status: pending
+                  expires_at: '2026-10-25T10:23:50Z'
+                  created_at: '2026-10-25T09:23:50Z'
+                timestamp: '2026-10-25T09:23:50.877504884Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      payment_hash:
+                        type: string
+                      request:
+                        type: string
+                      amount_sat:
+                        type: string
+                      description:
+                        type: string
+                      status:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+                      created_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
       requestBody:
         required: true
         content:
@@ -7151,6 +6391,36 @@ paths:
           type: string
         description: id identifier
       responses:
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (bad HMAC signature or client id)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Semantic validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '200':
           description: Successful response
           content:
@@ -7228,36 +6498,6 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
   /api/lightning/decode:
     post:
       tags:
@@ -7266,8 +6506,6 @@ paths:
       description: Structurally decodes a BOLT11 string into amount, expiry, description, routing hints, etc. Does not initiate payment.
       operationId: post_api_lightning_decode
       responses:
-        '200':
-          description: Successful response
         '400':
           description: Validation error
           content:
@@ -7298,6 +6536,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                success: true
+                message: Payment request decoded successfully
+                data:
+                  payment_hash: 5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457
+                  destination: 0378a9c9e82bb9c856e6a1cd0c5566bf3595bf5731e636b5c7121d9c1a8884e62a
+                  amount_sat: '5000'
+                  amount_msat: '5000000'
+                  description: Docs example invoice
+                  expires_at: '1792923829'
+                  is_expired: false
+                timestamp: '2026-10-25T09:25:07.028980345Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payment_hash:
+                        type: string
+                      destination:
+                        type: string
+                      amount_sat:
+                        type: string
+                      amount_msat:
+                        type: string
+                      description:
+                        type: string
+                      expires_at:
+                        type: string
+                      is_expired:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
       requestBody:
         required: true
         content:
