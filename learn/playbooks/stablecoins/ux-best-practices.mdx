@@ -8,8 +8,8 @@ If advanced users want control, expose a "Select Network" dropdown, populated fr
 
 - Network name (e.g., Solana (SPL))
 - Token type (e.g., USDT)
-- Estimated fee (e.g., ~\$0.01)
-- Average confirmation time (e.g., ~10s)
+- Withdrawal fee (\$1 flat, the same on every chain)
+- Typical confirmation time for that chain
 
 Educate the user at the moment of decision, not in a separate guide.
 
@@ -18,7 +18,7 @@ Educate the user at the moment of decision, not in a separate guide.
 For every transfer or deposit:
 
 - Show “Pending” with a live progress bar (e.g., “6/15 confirmations”)
-- Auto-update to “Confirmed” when Bitnob emits the [webhook](/api-reference/addresses/webhooks#webhook)
+- Auto-update to “Confirmed” when Bitnob emits the [webhook](/docs/stablecoins/address-webhook-events#webhook)
 
 On failure (transfer.failed), see the [error responses](/api-reference/withdrawals/initiate-withdrawal) for the codes you may receive, surface:
 
@@ -34,12 +34,12 @@ Before submitting a send:
 
 - You’re sending: \$100 USDT
 - Network: Polygon (USDT)
-- Estimated Network Fee: \$0.02
-- You will be charged: \$100.02
+- Fee: \$1.00 (flat on every chain)
+- You will be charged: \$101.00
 
 After confirmation:
 
-- Display amount, centFees, chain, txHash, all returned by [Create Withdrawal](/api-reference/withdrawals/initiate-withdrawal)
+- Display the amount and chain from [Create withdrawal](/api-reference/withdrawals/initiate-withdrawal), and read `fee` and the on-chain hash from [Get transaction](/api-reference/transactions/get-transaction-by-id). The create response has no fee field.
 - Let users click to view the transaction in a block explorer
 
 ## Reuse the reference field for trust & transparency
@@ -102,7 +102,7 @@ Surface a support contact flow with:
 
 ## Real-time alerts
 
-Integrate [Bitnob webhooks](/api-reference/addresses/webhooks#overview) with:
+Integrate [Bitnob webhooks](/docs/stablecoins/address-webhook-events#overview) with:
 
 - Toasts/snackbars on successful deposits or transfers
 - In-app notifications

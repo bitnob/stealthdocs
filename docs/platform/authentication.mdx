@@ -1,16 +1,16 @@
 ---
-title: "Platform authentication"
+title: "Bitnob Enterprise API authentication"
 sidebarTitle: "Authentication"
-description: "How Platform API keys are issued, scoped to a permission set, and used to sign requests."
+description: "How Bitnob Enterprise API keys are issued, scoped to a permission set, and used to sign requests."
 related:
   - /docs/platform/core-concepts
   - /docs/platform/exchange-integration-guide
 ---
 <Note>
-  This page covers **Platform**, the non-custodial product. The custodial Bitnob API used for payouts, cards, and trading signs requests with HMAC instead. See [API authentication](/api-reference/authentication/authentication).
+  This page covers the **Bitnob Enterprise API**, the non-custodial product. The custodial Bitnob Business API used for payouts, cards, and trading signs requests with HMAC instead. See [Business API authentication](/api-reference/authentication/authentication).
 </Note>
 
-Every request to the Platform API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
+Every request to the Bitnob Enterprise API is authenticated with an API key. Keys are issued from the Bitnob dashboard and carry a permission set that is bound to your organisation at issue time.
 
 ## Base URL
 
@@ -31,7 +31,7 @@ Content-Type: application/json
 The organisation context is resolved automatically from the key. You never need to send an org ID header.
 
 <Warning>
-  Keep keys server-side. Never expose a Platform API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
+  Keep keys server-side. Never expose a Bitnob Enterprise API key in a mobile app, frontend JavaScript bundle, or public repository. A leaked key grants the same authority a signed-in admin user does, up to the limits of its permission set and configured policies. All signing should happen in your backend.
 </Warning>
 
 ## Required headers
@@ -39,8 +39,9 @@ The organisation context is resolved automatically from the key. You never need 
 | Header | Required | Description |
 |---|---|---|
 | `X-API-Key` | Yes | Your API key. Organisation is derived from the key automatically. |
-| `X-API-VERSION` | No | API version. Defaults to `v1` if not supplied. |
+| `API-Version` | No | Pins the API version, for example `v1`. Leave it out to use the current default. See [Versioning](/docs/platform/making-requests#versioning). |
 | `Content-Type` | For writes | Must be `application/json` for all POST, PUT, and PATCH requests. |
+| `Idempotency-Key` | For writes | Required on endpoints that create resources or move value. See [Idempotency](/docs/platform/making-requests#idempotency). |
 
 ## How authorization works
 
@@ -55,62 +56,6 @@ The authorization flow for every transaction is:
 
 A leaked key cannot exfiltrate funds beyond what its policies permit. Spending limits, address whitelists, velocity caps, and approval quorums all enforce constraints independently of the key's permission set.
 
-## API versioning
+## Next
 
-The Platform API supports two versioning strategies. Both are valid and can be used interchangeably.
-
-**Header-based (recommended)**
-
-```http
-GET /wallets HTTP/1.1
-X-API-VERSION: v1
-X-API-Key: <your_api_key>
-```
-
-**Path-based**
-
-```http
-GET /v1/wallets HTTP/1.1
-X-API-Key: <your_api_key>
-```
-
-Routes in the API reference are shown without a version prefix. Prepend `/v1/` or set the `X-API-VERSION: v1` header as needed.
-
-## Errors
-
-Platform returns a nested `error` object. This differs from the Bitnob API, which uses a flat RFC 7807 body, so do not share one error handler between the two products.
-
-```json
-{
-  "error": {
-    "type": "authentication_error",
-    "code": "not_authenticated",
-    "message": "X-API-Key header is required"
-  }
-}
-```
-
-| Field | Use |
-|---|---|
-| `error.type` | The error class, for example `authentication_error` or `not_found_error`. |
-| `error.code` | The stable machine-readable code. Branch on this. |
-| `error.message` | A human-readable explanation. Do not parse it. |
-
-Common authentication codes:
-
-| Code | Meaning |
-|---|---|
-| `not_authenticated` | The `X-API-Key` header is missing, or the key format is invalid. |
-| `route_not_found` | The endpoint does not exist. Check the path and the version prefix. |
-
-## Idempotency
-
-All mutation endpoints that create resources (vaults, [wallets](/api-reference/platform/wallets/create-wallet), [transactions](/api-reference/platform/transactions/create-transaction)) require an `idempotency_key` in the request body. This is a client-generated string of 1–64 characters that identifies the request uniquely.
-
-- If a request succeeds, resubmitting the same `idempotency_key` returns the original result without re-executing.
-- If the original request is still in-flight, resubmitting returns `409 Conflict`.
-- Use UUIDs or a composite key (e.g. `withdrawal-cust12345-001`) to ensure global uniqueness.
-
-<Tip>
-  Always include an `idempotency_key` so you can safely retry a timed-out request without risk of creating duplicate transactions.
-</Tip>
+Versioning, idempotency, pagination, errors, and rate limits are covered in [Making requests](/docs/platform/making-requests).

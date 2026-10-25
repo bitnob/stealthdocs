@@ -98,8 +98,8 @@ The reads behind these screens are [Get Orders](/api-reference/trading/list-orde
 ## Trade flow reminders for support and product
 
 - All trades must use a unique reference
-- Use quoteId to lock a rate and prevent price fluctuation
-- Never allow users to confirm a trade after expiresAt
+- Use `quote_id` to lock a rate and prevent price fluctuation
+- Never allow users to confirm a trade after `expires_at`
 - Rely on trade.completed webhook to confirm success
 - Reconcile trade outcomes with wallet crediting in your app
 

@@ -115,9 +115,17 @@ The reference comes back on the object and on the webhook event. That is what le
 
 ## Handle a duplicate response
 
-If you resubmit a reference that already exists, we do not execute it again. Read the response rather than treating it as a failure.
+What a reused reference does depends on the endpoint:
 
-A `409` means the action already exists. Fetch it by reference and continue as though your request succeeded. See [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries).
+| Endpoint | Reused reference |
+|---|---|
+| Payouts | Returns the existing payout instead of creating a second one. |
+| Withdrawals | Rejected with `409` `DUPLICATE_KEY_ERROR`. Nothing is sent. Look the original up with [Get transaction](/api-reference/transactions/get-transaction-by-id). |
+| Trading, NGN pairs | Returns the original order with the same `id`. Nothing executes twice. |
+| Trading, crypto pairs | **Not checked.** A second request with the same reference can execute a second trade. Look the order up with `GET /api/trading/orders/{reference}` before you resend. |
+| Virtual accounts | Returns the existing account. |
+
+In every case, generate the reference before the first attempt and never mint a new one for a retry. A UUID is fine, as long as you store it against the transaction before the first attempt. See [Errors and retries](/docs/getting-started/api-best-practices/errors-and-retries).
 
 ## Worked example
 

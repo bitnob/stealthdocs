@@ -1,0 +1,65 @@
+---
+title: "Bitnob Enterprise API best practices"
+sidebarTitle: "Best practices"
+description: "How to run a Bitnob Enterprise API integration safely: key scopes, policies, idempotent writes, asynchronous transactions, amounts, webhooks, and rate limits."
+related:
+  - /docs/platform/making-requests
+  - /docs/platform/webhooks
+---
+
+The Bitnob Enterprise API signs and broadcasts transactions on your behalf as soon as a request passes your policies. These practices keep a bug, a retry, or a leaked key from turning into a lost transfer.
+
+## Give each key only the scopes it needs
+
+A key carries a fixed set of scopes, such as `wallets:read`, `wallets:create`, `transactions:create`, `transactions:sign`, and `policies:manage`. A call outside them fails with `403` `insufficient_permissions`.
+
+- Issue a separate key per service. A reporting job needs `wallets:read` and `transactions:read`; only the service that sends funds needs `transactions:create`.
+- Check what a key can do with [Get API key info](/api-reference/platform/meta/get-api-key-info), which lists its `scopes`.
+- Keep keys server-side only. Never ship one in a mobile app, a browser bundle, or a public repository.
+- Where the key supports an IP allowlist, use it. A request from outside the list fails with `403` `ip_not_allowed`.
+
+## Let policies set the limits
+
+Policies are checked before every signature, independently of the key's scopes, so they're your control if a key leaks. Use them for spending limits, address allowlists, velocity caps, and approvals on large transfers.
+
+Build your flow around the two outcomes policies can produce. A transaction that needs approval comes back `202` with `status: "pending_authorization"`, and one held by a time lock comes back `202` with `status: "delayed"` and an `execute_at` timestamp. Its funds are locked in both cases, so show it as pending rather than failed.
+
+## Make every write idempotent
+
+Send an `Idempotency-Key` on every `POST`, `PATCH`, and `DELETE`. It's required when you create wallets, addresses, or transactions.
+
+- Generate the key and store it with your own record **before** you send the request.
+- After a timeout or a network error, retry with the **same** key. A completed request replays its original response, and a failed one runs again.
+- Use a new key for each distinct operation. Reusing one with a different body fails with `409` `idempotency_conflict`.
+- Keys expire after 24 hours, so don't rely on them for retries older than that.
+
+## Treat transactions as asynchronous
+
+A `201` means the transaction was signed and submitted, not that it's final. Track it to a terminal state with [Get transaction](/api-reference/platform/transactions/get-transaction) or a webhook.
+
+| Group | Statuses |
+|---|---|
+| Still in progress | `pending_signature`, `pending_authorization`, `delayed`, `signed`, `awaiting_sponsorship`, `broadcasting`, `confirming`, `pending_screening` |
+| Final | `completed`, `failed`, `cancelled`, `rejected` |
+
+An empty `tx_hash` means the transaction hasn't been broadcast yet. Once it has, `confirmations` rises until the transaction is `completed`. Only credit or release funds on `completed`.
+
+## Handle amounts as strings
+
+Amounts are JSON strings in two forms: `amount` in the asset's display unit, and `amount_raw` in its smallest unit. Parse them with a decimal type, never a float. Read `fee_asset` and `fee_decimals` from each response, because the fee is often paid in the chain's native coin rather than the asset you sent.
+
+## Verify webhooks and plan for missed ones
+
+Verify the signature on every delivery and reject old timestamps; see [Webhooks](/docs/platform/webhooks). Don't let a webhook be the only way you learn a transaction finished. Reconcile anything you still hold as in progress against Get transaction on a schedule.
+
+## Stay inside rate limits
+
+Limits apply per key and per organisation. Read `X-Ratelimit-Remaining` and the `X-Org-X-Ratelimit-*` headers and slow down before you reach zero. On a `429`, wait for the `Retry-After` delay before retrying.
+
+## Pin the version and watch for deprecations
+
+Send `API-Version` on every request so a new default can't change behaviour under you. Alert on `Deprecation` and `Sunset` response headers, and migrate before the sunset date.
+
+## Log the request ID
+
+Store the `X-Request-Id` from every response with your own record of the call. It identifies the exact request when you need to investigate an issue with support.

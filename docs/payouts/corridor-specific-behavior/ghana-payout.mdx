@@ -13,16 +13,16 @@ While traditional bank accounts exist and are growing, mobile money (especially 
 
 For payout products, the practical reality is:
 
- Primary rail: Mobile money (wallet-to-wallet payouts),
-
-Secondary rail: Bank transfers (lower penetration, used mainly by businesses and formal salaried workers).
+- **Two rails:** bank transfer and mobile money. Most retail payouts go to mobile money.
+- **Mobile money covers MTN MoMo, Telecel Cash and AirtelTigo Money.** Send the `network` that matches the recipient's number.
+- Read the destination types and their fields from [Country requirements](/api-reference/payouts/country-requirements) at runtime rather than hardcoding them.
 
 ## 2. Settlement methods available
 
 | Method | Description |
 |---|---|
-| Mobile Money Payouts (MTN MoMo, Vodafone Cash, AirtelTigo Money) | Mobile phone number-based wallets. Payouts are sent to wallet IDs linked to SIM cards. |
-| Bank Transfers | Used for business payouts, higher value transactions. Settlement typically same day, not instant. |
+| Bank transfer | Payouts to Ghanaian bank accounts. Take the `bank_code` from [Get banks](/api-reference/payouts/banks-by-country). |
+| Mobile money | Payouts to MTN MoMo, Telecel Cash and AirtelTigo Money wallets, identified by phone number. Send `network` as `mtn`, `vodafone` (Telecel) or `airtel` (AirtelTigo). |
 
 <Note>
   Over 90% of retail and micro-merchant payouts favor Mobile Money channels, especially MTN.
@@ -30,16 +30,23 @@ Secondary rail: Bank transfers (lower penetration, used mainly by businesses and
 
 ## 3. Beneficiary validation standards
 
-Validation processes differ between mobile money and bank payouts. In both cases, confirm the destination with [Account Lookup](/api-reference/payouts/account-lookup) (for mobile money, pass the provider as the `bank_code`), and take provider/bank codes from [Get Banks](/api-reference/payouts/banks-by-country).
+How you validate a GHS beneficiary depends on the rail.
+
+- **Mobile money:** for MTN numbers, confirm the wallet with [Account lookup](/api-reference/payouts/account-lookup). Pass `country=GH`, `type=mobile_money`, `MTN` as the `bank_code` (case doesn't matter), and the phone number as the `account_number`, either as `233XXXXXXXXX` or `0XXXXXXXXX`. Leave out `type=mobile_money` and the lookup fails with `400`.
+- **Bank account:** Account lookup doesn't support Ghana bank accounts yet. A lookup with a Ghana bank code returns `400` `VALIDATION_ERROR`. Take the `bank_code` from [Get banks](/api-reference/payouts/banks-by-country) (for example `GH190100` for Stanbic Bank, `GH040100` for GCB Bank Ltd) and collect the `account_name` from your user.
+
+<Warning>
+  Because a Ghana bank account name can't be checked up front, a wrong account number is only caught when the bank rejects the transfer. Have your user confirm the account number and name before you finalize.
+</Warning>
 
 | Type | Validation Process |
 |---|---|
-| Mobile Money Wallets | Validate phone number format (Ghana mobile prefixes, 024, 054, 055, etc.). Validate mobile money provider mapping (MTN, Vodafone, AirtelTigo). Some integrations allow real-time wallet status checks. |
-| Bank Accounts | Validate account number format (usually 10–12 digits). Validate Bank code (institution codes) where possible. |
+| Mobile Money Wallets | Validate the phone number format and work out the network from its prefix. Resolve MTN wallet names with Account lookup. |
+| Bank Accounts | Check the `bank_code` against Get banks for GH. Check the account number is digits only and matches the length your user's bank uses. Account lookup isn't available, so have the user confirm the account name. |
 
  Best Practices for Mobile Money Validation
 
- Confirm correct mobile money network based on user’s phone number prefix.
+ Work out the network from the number's prefix and send the matching `network`.
 
  Normalize mobile numbers (e.g., remove leading 0, standardize to international format if needed, e.g., 23324xxxxxxx).
 
@@ -51,7 +58,7 @@ Validation processes differ between mobile money and bank payouts. In both cases
 
 Mobile money accounts in Ghana are often tiered based on KYC. The corridor min/max Bitnob enforces comes from [Get Limits](/api-reference/payouts/payout-limits):
 
-| Wellet Tier | Limits |
+| Wallet tier | Limits |
 |---|---|
 | Tier 0 (Basic Registration) | Low daily transaction limit (~GHS 1,000) and low wallet balance cap. |
 | Tier 1 (Full KYC with ID) | Higher daily limits (~GHS 5,000–10,000) and wallet caps. |
@@ -75,94 +82,71 @@ Some providers may hold funds temporarily pending user wallet upgrade (rare but 
 |---|---|
 | Funding Confirmation (Bitcoin/Stablecoin) | \<15 minutes (depending on network congestion). |
 | Mobile Money Payout Processing | Instant |
+| Bank Account Payout Processing | 1 to 10 minutes |
 
-## Ghana mobile money networks and prefixes
+## Ghana mobile money network and prefixes
 
-## 1. MTN Ghana (MTN mobile money)
+GHS mobile money payouts go to MTN MoMo, Telecel Cash and AirtelTigo Money. Send the `network` that matches the recipient's number.
 
- MTN is the largest mobile network operator in Ghana and the dominant mobile money provider (over 90% of wallet market share).
+MTN is the largest mobile network operator in Ghana and the dominant mobile money provider, with over 90% of the wallet market.
 
- Active Mobile Number Prefixes for MTN:
+| Network | `network` value | Prefixes |
+|---|---|---|
+| MTN MoMo | `mtn` | 024, 054 (original ranges); 025, 055, 059 (added later) |
+| Telecel Cash (formerly Vodafone Cash) | `vodafone` | 020, 050 |
+| AirtelTigo Money | `airtel` | 026, 056 |
 
-| Prefix |
-|---|
-| 024 |
-| 025 |
-| 054 |
-| 055 |
-| 059 |
+Mobile money wallets are tied to these phone numbers.
 
-<Note>
-  024, 054 are original MTN legacy ranges.
-</Note>
-
-025, 055, and 059 were introduced later as MTN expanded its numbering range.
-
-MTN MoMo wallets are tightly linked to these phone numbers.
-
-## 2. Vodafone Ghana (Vodafone cash)
-
-Vodafone Cash is the second-largest mobile money provider in Ghana.
-
-Active Mobile Number Prefixes for Vodafone:
-
-| Prefix |
-|---|
-| 020 |
-| 050 |
-
-<Note>
-  020 is Vodafone’s original mobile range.
-</Note>
-
-050 introduced for expanded mobile money and mobile user registrations.
-
-## 3. AirtelTigo (AirtelTigo money)
-
-Airtel and Tigo merged into AirtelTigo in Ghana.
-
-Their mobile money service is AirtelTigo Money (smaller market share compared to MTN and Vodafone).
-
-Active Mobile Number Prefixes for AirtelTigo:
-
-| Prefix |
-|---|
-| 026 |
-| 056 |
-
-<Note>
-  026 comes from original Tigo numbering.
-</Note>
-
-056 expansion added after merger.
-
-## 4. Summary table
-
-| Network | Common Prefixes |
-|---|---|
-| MTN Ghana | 024, 025, 054, 055, 059 |
-| Vodafone Ghana | 020, 050 |
-| AirtelTigo Ghana | 026, 056 |
-
-### 5. Validation best practices for Ghana mobile money
+## Validation best practices for Ghana mobile money
 
 | Step | Best Practice |
 |---|---|
-| Phone Format | Normalize numbers (drop leading 0 if formatting for international +233 dialing). Example: 024xxxxxxx → 23324xxxxxxx |
-| Carrier Mapping | Validate number against correct mobile money network prefix before payout. |
-| Network-Specific Rules | MTN and Vodafone highly reliable; AirtelTigo may have slower response times in rural areas. |
-| Wallet Status Check | If possible, query provider API to validate if mobile wallet is active and capable of receiving payouts. |
-| Amount Limits | Respect wallet tier transaction limits, especially for Tier 0/Tier 1 users. |
+| Phone format | Normalize numbers to one format. Example: 024xxxxxxx → 23324xxxxxxx. |
+| Carrier check | Work out the network from the prefix and send the matching `network`. |
+| Wallet status | Resolve the wallet with Account lookup before you pay out. |
+| Amount limits | Respect wallet tier limits, especially for Tier 0 and Tier 1 users. |
+
+## Common failure modes
+
+| Failure mode | Description | Response |
+|---|---|---|
+| Wrong network | The `network` sent doesn't match the recipient's number, for example `mtn` for a Telecel Cash number. | Work out the network from the prefix before paying out. |
+| Invalid mobile number | Wrong length or format. Ghanaian mobile numbers are 10 digits nationally (0XXXXXXXXX). | Normalize to one format and validate the prefix before submitting. |
+| Inactive or unregistered wallet | The mobile money account is closed, dormant, or never completed registration. | Resolve the account name with Account lookup before paying. Fail fast and refund rather than retrying blindly. |
+| Limit exceeded | Payout above the recipient's daily limit. | Split large payouts into compliant amounts. |
+| Invalid bank account or bank code | The account number doesn't exist at the bank, or the `bank_code` doesn't match the recipient's bank. | Take bank codes from Get banks rather than hardcoding them. Because Account lookup isn't available for Ghana bank accounts, have the user confirm the details before finalizing. |
+
+## Operational best practices
+
+| Area | Recommendation |
+|---|---|
+| Network detection | Work out the network from the phone number prefix and send the matching `network` value. |
+| Number normalization | Store one canonical format (for example 23324xxxxxxx), so 024xxxxxxx, +233 24 xxx xxxx and 23324xxxxxxx all resolve to the same wallet. |
+| Validation | For MTN numbers, resolve the beneficiary name with Account lookup before releasing funds, passing `MTN` as the `bank_code`. Ghana bank accounts can't be looked up yet. |
+| Bank payouts | Take bank codes from Get banks rather than hardcoding them, and show the user the account name and number to confirm before you finalize. Set expectations that bank payouts take 1 to 10 minutes. |
+
+## Quick reference
+
+| Field | Value |
+|---|---|
+| Rails | Mobile money (MTN MoMo, Telecel Cash, AirtelTigo Money) and bank account |
+| Destination type | `mobile_money` or `bank` |
+| Mobile money `network` | `mtn`, `vodafone` (Telecel), `airtel` (AirtelTigo) |
+| Bank codes | From [Get banks](/api-reference/payouts/banks-by-country) for GH, for example `GH190100` (Stanbic Bank), `GH040100` (GCB Bank Ltd) |
+| Number format | 10 digits nationally (0XXXXXXXXX); 233XXXXXXXXX internationally |
+| Prefixes | MTN 024, 025, 054, 055, 059; Telecel 020, 050; AirtelTigo 026, 056 |
+| Timing | Mobile money instant; bank account 1 to 10 minutes; funding confirmation under 15 minutes |
+| Main risks | Wrong `network` for the number, wallet tier limits, inactive or unregistered wallets, unverified bank account details |
+| Validation endpoints | [Account lookup](/api-reference/payouts/account-lookup) (MTN mobile money), [Get banks](/api-reference/payouts/banks-by-country), [Payout limits](/api-reference/payouts/payout-limits) |
 
 ## Closing note
 
-Correct mobile network detection based on prefixes is a critical first step in ensuring fast, successful, and user-trusted mobile money payouts in Ghana.
+For mobile money, sending the right `network` for the number is the critical first step to fast, successful payouts in Ghana. For bank payouts, the equivalent is confirming the bank code and account details with your user, since they can't be looked up.
 
-Mistakes in network matching can lead to:
+Paying out with the wrong network or a wrong number can lead to:
 
 - Delayed refunds,
 - Auto-reversals,
 - User frustration,
 - Increased operational costs.
-
-Well-built payout products in Ghana embed prefix-based validation directly into user onboarding and payout flows.

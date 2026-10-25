@@ -23,7 +23,7 @@ flowchart TD
 
 ## Act on deposit.success
 
-The payload carries everything needed to credit and reconcile; [verify the signature](/api-reference/addresses/webhooks#verifying-events) first, then match on `address` and record `hash` as the on-chain proof.
+The payload carries everything needed to credit and reconcile; [verify the signature](/api-reference/webhooks#verify-every-delivery) first, then match on `address` and record `hash` as the on-chain proof.
 
 ```json
 {
@@ -43,7 +43,7 @@ The payload carries everything needed to credit and reconcile; [verify the signa
 }
 ```
 
-`amount` is in the token's smallest unit, 6 decimals, so `1100000` is 1.10 USDC. Field-by-field documentation is under [the deposit webhook reference](/api-reference/addresses/webhooks#webhook), and the credited balance is visible in [List balances](/api-reference/balances/list-balances).
+`amount` is in the token's smallest unit, 6 decimals, so `1100000` is 1.10 USDC. Field-by-field documentation is under [the deposit webhook reference](/docs/stablecoins/address-webhook-events#webhook), and the credited balance is visible in [List balances](/api-reference/balances/list-balances).
 
 ## Let users pick a network
 

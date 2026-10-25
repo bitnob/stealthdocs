@@ -33,7 +33,7 @@ You request a quote with the source asset, the destination currency, and the amo
 
 ## Stage 2: Initialization
 
-The user accepts the quote and supplies the beneficiary: a bank account, a mobile money wallet, or a cash pickup point. You receive a funding address or a Lightning invoice.
+The user accepts the quote and supplies the beneficiary: a bank account or a mobile money wallet. You receive a funding address or a Lightning invoice.
 
 **What fails here.** The beneficiary details are wrong, or the user pays on a different chain from the address you issued.
 
@@ -63,7 +63,7 @@ The local rail moves the money to the beneficiary. Each rail has its own speed.
 | Nigeria NIP | Minutes |
 | UK Faster Payments | Minutes |
 | SEPA | Hours, sometimes the next working day |
-| Cash pickup | Available when the agent is open |
+| Mobile money | Seconds to minutes |
 
 **What fails here.** The bank rejects the account. The mobile money operator is down. The rail runs out of local liquidity.
 

@@ -1,7 +1,7 @@
 ---
 title: "Virtual card webhook events"
-sidebarTitle: "Webhooks"
-description: "Virtual card event types, payload shapes, and how to verify and acknowledge each delivery."
+sidebarTitle: "Webhook payloads"
+description: "Virtual card event types and the payload fields each one carries, from creation to transactions and KYC."
 ---
 Learn how to listen for events that happen on your virtual cards.
 
@@ -20,66 +20,9 @@ All JSON keys use **camelCase**. The `event` name itself stays dot-delimited (e.
 }
 ```
 
-## Verifying events
-
-Verifying that these events come from Bitnob is necessary to avoid acting on a forged event.
-
-To verify events, validate the **x-bitnob-signature** header sent with the event. The HMAC SHA512 signature is the raw event body signed with your **secret key.**
-
-### Notification retries
-
-When delivering notifications we expect a `200` response. If the response is not `200`, we retry up to 3 times with exponential backoff. Use the top-level `eventId` to deduplicate retries.
-
-***Don't rely on webhooks entirely***
-
 <Note>
-  We recommend that you also poll the card transactions endpoint as a safety net in case webhook delivery fails.
+  Signature verification, retries, source IPs, and local testing work the same way for every Bitnob Business API webhook. They're covered once, on [Webhooks](/api-reference/webhooks).
 </Note>
-
-### Testing webhooks
-
-Webhook endpoints must be publicly accessible. While developing locally, use a tunnelling tool like [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/) and point your test webhook URL at the tunnel.
-
-Only use tunnels in test environments to avoid leaking data publicly.
-
-```javascript
-const crypto = require('crypto');
-const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
-// Using Express
-app.post("/webhook_url", function(req, res) {
-  //validate event
-  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
-  if (hash == req.headers['x-bitnob-signature']) {
-  // Retrieve the request's body
-  const event = req.body;
-  // Do something with event
-  }
-  res.send(200);
-});
-```
-
-## Source IPs
-
-If your firewall restricts inbound traffic, allow requests from the addresses below so our events can reach your endpoint.
-
-| Ip Address | Use |
-|---|---|
-| 18.171.51.218 | Webhook delivery |
-| 13.134.154.133 | Webhook delivery |
-
-These addresses can change. We announce changes ahead of time, but an allowlist is not a substitute for verifying the **x-bitnob-signature** header. Signature verification is the check that stays correct even if our infrastructure moves.
-
-<Warning>
-  **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
-</Warning>
-
-```nginx
-location /webhook_url {
-  allow 18.171.51.218;
-  allow 13.134.154.133;
-  deny  all;
-}
-```
 
 ## Wire conventions for transaction events
 

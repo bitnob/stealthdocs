@@ -3,7 +3,7 @@ title: "Send a SWIFT payout"
 description: "When to reach for the SWIFT rail, which currencies it covers, and what beneficiary detail a wire requires."
 related:
   - /docs/payouts/supported-currencies
-  - /api-reference/payouts/swift-payouts
+  - /docs/payouts/swift-payout
 ---
 Cross-border payouts use the SWIFT destination type when the destination country or currency has **no local corridor** (no ACH, SEPA, domestic GBP, mobile money, etc.). SWIFT is the fallback wire rail for `USD`, `EUR`, `HKD`, and similar currencies into most countries around the world.
 
@@ -13,7 +13,7 @@ Cross-border payouts use the SWIFT destination type when the destination country
 
 ## The three-step flow
 
-SWIFT payouts are **three separate HTTP calls**, [SWIFT Payouts](/api-reference/payouts/swift-payouts) in the API reference documents each one. Beneficiary details go on the **initialize** call, not on the quote.
+SWIFT payouts are **three separate HTTP calls**, [SWIFT Payouts](/docs/payouts/swift-payout) in the API reference documents each one. Beneficiary details go on the **initialize** call, not on the quote.
 
 ```http
 1. POST /api/payouts/quotes                    → returns { quote_id }
@@ -27,7 +27,7 @@ SWIFT payouts are **three separate HTTP calls**, [SWIFT Payouts](/api-reference/
 
 ## Step 1: Create the quote
 
-Describes the currency, amount, and destination country. No beneficiary info. Full schema: [SWIFT Step 1 - Quote](/api-reference/payouts/swift-payouts#step-1-create-quote).
+Describes the currency, amount, and destination country. No beneficiary info. Full schema: [SWIFT Step 1 - Quote](/docs/payouts/swift-payout#step-1-create-the-quote).
 
 ```http
 POST /api/payouts/quotes
@@ -78,10 +78,6 @@ x-auth-signature: <hmac-signature>
   Client-generated idempotency / tracking key.
 </ParamField>
 
-<ParamField body="client_meta_data" type="string">
-  Arbitrary metadata string for your own bookkeeping.
-</ParamField>
-
 
 ### Example request
 
@@ -119,7 +115,7 @@ x-auth-signature: <hmac-signature>
 
 ## Step 2: Initialize with the SWIFT beneficiary
 
-The initialize call carries the full SWIFT beneficiary payload: see [SWIFT Step 2 - Initialize](/api-reference/payouts/swift-payouts#step-2-initialize-the-swift-payload). The server validates the `beneficiary` object against the corridor schema registered for `(country, destination_type)`.
+The initialize call carries the full SWIFT beneficiary payload: see [SWIFT Step 2 - Initialize](/docs/payouts/swift-payout#step-2-initialize-with-the-swift-beneficiary). The server validates the `beneficiary` object against the corridor schema registered for `(country, destination_type)`.
 
 ```http
 POST /api/payouts/:quoteId/initialize
@@ -146,10 +142,6 @@ Content-Type: application/json
 
 <ParamField body="callback_url" type="string">
   Per-payout webhook override URL.
-</ParamField>
-
-<ParamField body="client_meta_data" type="string">
-  Arbitrary client metadata.
 </ParamField>
 
 
@@ -324,7 +316,7 @@ influencer_payment
 
 ## Step 3: Finalize
 
-No request body. Just the URL. Finalize settles the payout and returns the final `Payout` record: see [SWIFT Step 3 - Finalize](/api-reference/payouts/swift-payouts#step-3-finalize).
+No request body. Just the URL. Finalize settles the payout and returns the final `Payout` record: see [SWIFT Step 3 - Finalize](/docs/payouts/swift-payout#step-3-finalize).
 
 ```http
 POST /api/payouts/:quoteId/finalize
@@ -452,7 +444,7 @@ POST /api/payouts/:quoteId/finalize
 
 ## Discover SWIFT support for a country
 
-Before building the payload, fetch the corridor config for the destination country: see [Discovering SWIFT Corridors](/api-reference/payouts/swift-payouts#discovering-swift-enabled-countries) and [Get Country Details](/api-reference/payouts/country-requirements):
+Before building the payload, fetch the corridor config for the destination country: see [Discovering SWIFT Corridors](/docs/payouts/swift-payout#discover-swift-support-for-a-country) and [Get Country Details](/api-reference/payouts/country-requirements):
 
 ```http
 GET /api/payouts/supported-countries/GB
@@ -472,7 +464,7 @@ The returned `destination_types["swift"]` block carries the exact field schema. 
 
 ## Validation failures
 
-The same codes are documented under [SWIFT Validation Failures](/api-reference/payouts/swift-payouts#validation-failures), and corridor min/max amounts come from [Get Limits](/api-reference/payouts/payout-limits).
+The same codes are documented under [SWIFT Validation Failures](/docs/payouts/swift-payout#validation-failures), and corridor min/max amounts come from [Get Limits](/api-reference/payouts/payout-limits).
 
 | Http | Error Code | Cause |
 |---|---|---|

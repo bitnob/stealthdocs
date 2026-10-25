@@ -1,74 +1,15 @@
 ---
 title: "Payout webhook events"
-sidebarTitle: "Webhooks"
-description: "Payout event types, payload shapes, and how to verify and acknowledge each delivery."
+sidebarTitle: "Webhook events"
+description: "Payout event types and the payload fields each one carries, from initialized to withdrawal success or expiry."
 ---
 Learn how to listen for transactions that happen on your account
 
 A webhook is a URL on your server where we send payloads for transaction events. For example, if you implement webhooks, we will immediately notify your server with a btc.lightning.received.success event Once a lightning payment is received. Whenever you receive a webhook notification from us, return a 200 OK to avoid resending the same event again from our server.
 
-## Verifying events
-
-Verifying that these events come from Bitnob is necessary to avoid creating transactions due to a fraudulent event.
-
-To verify events, validate the **x-bitnob-signature** header sent with the event. The HMAC SHA512 signature is the event payload signed with your **secret key.**
-
-### Notification retries
-
-When posting notifications, we expect to receive a 200 response code from you. If the response code is not 200, we retry sending the event 3 times after the first failure.
-
-This way, whenever you experience downtime on your end, your updates will still be sent.
-
-***Don't rely on webhooks entirely***
-
 <Note>
-  We recommend that you set up a service to always query transactions, in the event that webhooks keep failing.
+  Signature verification, retries, source IPs, and local testing work the same way for every Bitnob Business API webhook. They're covered once, on [Webhooks](/api-reference/webhooks).
 </Note>
-
-### Testing webhooks
-
-Since notifications must always be available on a publicly accessible URL, you are likely to run into issues while starting to build your application in a local environment. You can get around this by using a tool like [ngrok](https://ngrok.com/) or [localtunnel](https://theboroer.github.io/localtunnel-www/)
-
-Create a tunnel, and update the new webhook URL setting on your dashboard. Only do this in your test environment to avoid leaking data to the public.
-
-```javascript
-const crypto = require('crypto');
-const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
-// Using Express
-app.post("/webhook_url", function(req, res) {
-  //validate event
-  const hash = crypto.createHmac('sha512', webhookSecret).update(JSON.stringify(req.body)).digest('hex');
-  if (hash == req.headers['x-bitnob-signature']) {
-  // Retrieve the request's body
-  const event = req.body;
-  // Do something with event  
-  }
-  res.send(200);
-});
-```
-
-## Source IPs
-
-If your firewall restricts inbound traffic, allow requests from the addresses below so our events can reach your endpoint.
-
-| Ip Address | Use |
-|---|---|
-| 18.171.51.218 | Webhook delivery |
-| 13.134.154.133 | Webhook delivery |
-
-These addresses can change. We announce changes ahead of time, but an allowlist is not a substitute for verifying the **x-bitnob-signature** header. Signature verification is the check that stays correct even if our infrastructure moves.
-
-<Warning>
-  **Don't allowlist by IP alone.** Any host can send a request from an allowlisted address. Always validate the signature on every event, whether or not you filter by IP.
-</Warning>
-
-```nginx
-location /webhook_url {
-  allow 18.171.51.218;
-  allow 13.134.154.133;
-  deny  all;
-}
-```
 
 ### Payout webhooks
 
@@ -130,40 +71,61 @@ Fired when a payout has been initialized against a quote and accepted for proces
 
    Fee charged for processing the payout, in from_asset.
 
-13. `data.beneficiary` (object)
+13. `data.fee_currency` (string)
 
-   The destination the funds are headed to. Contains country, bank_code and a masked account_number (e.g. '****7654').
+   Currency the fee is denominated in. For example, 'USD'.
 
-14. `data.created_at` (timestamp)
+14. `data.source_fee` (string)
+
+   The source fee for the payout.
+
+15. `data.total_amount` (string)
+
+   Total to be debited in from_asset.
+
+16. `data.payment_reason` (string)
+
+   The payment reason you sent on Initialize payout.
+
+17. `data.beneficiary` (object)
+
+   The destination the funds are headed to. Contains `account_name`, `country`, `bank_code`, and a masked `account_number` (e.g. '****6789').
+
+18. `data.created_at` (timestamp)
 
    When the payout record was created (ISO 8601, UTC).
 
-15. `data.updated_at` (timestamp)
+19. `data.updated_at` (timestamp)
 
-When the payout record was last updated (ISO 8601, UTC).
+   When the payout record was last updated (ISO 8601, UTC).
 
 ```json
 {
   "event": "payouts.initialized",
-  "event_id": "802561d3-78fa-4436-a3cc-fdbebe4772ed",
+  "event_id": "7dd98428-2a13-4ce7-8ca2-ec98ee3afcf1",
   "data": {
-    "id": "019f8132-4969-7e63-a2da-c439ace1613d",
-    "quote_id": "QT2_21434859",
-    "company_id": "8263c9991-6c68-477b-bd12-c759rjtg",
-    "reference": "6c9ace6b-891a-4b91-bff4-8bfdh784jc3f",
+    "id": "01a14838-6c0c-757a-a23c-6b1cb801d771",
+    "quote_id": "QT2_21052912",
+    "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+    "reference": "payout-1777919122721-wln774",
     "status": "initiated",
-    "from_asset": "btc",
+    "from_asset": "usdt",
     "to_currency": "ngn",
-    "amount": "0.00018555",
-    "settlement_amount": "16823.2",
+    "amount": "0.740422",
+    "settlement_amount": "1000",
     "fees": "0",
+    "fee_currency": "USD",
+    "source_fee": "0",
+    "total_amount": "0.740422",
+    "payment_reason": "vendor_payment",
     "beneficiary": {
-      "country": "ng",
-      "bank_code": "100004",
-      "account_number": "****3123"
+      "account_name": "OKEY JOY CHIDIMMA",
+      "account_number": "****6789",
+      "bank_code": "058",
+      "country": "NG"
     },
-    "created_at": "2026-07-20T20:23:04.297953Z",
-    "updated_at": "2026-07-20T20:23:25.444269082Z"
+    "created_at": "2026-10-17T04:56:59.666426Z",
+    "updated_at": "2026-10-17T04:57:00.611584458Z"
   }
 }
 ```

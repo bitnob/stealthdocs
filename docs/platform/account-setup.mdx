@@ -1,0 +1,66 @@
+---
+title: "Set up your Bitnob Enterprise account"
+sidebarTitle: "Set up your account"
+description: "Create your Bitnob account, issue a Bitnob Enterprise API key with the scopes each service needs, store it safely, and confirm it works."
+related:
+  - /docs/platform/quickstart
+  - /docs/platform/authentication
+  - /docs/platform/core-concepts
+---
+
+This guide takes you from no account to a working Bitnob Enterprise API key: register, create a key with the scopes you need, and confirm it works.
+
+<Note>
+  Building on the Bitnob Business API instead? See [Set up your account](/docs/getting-started/account-setup).
+</Note>
+
+## Create your account
+
+<Steps>
+  <Step title="Register">
+    Go to [accounts.bitnob.com](https://accounts.bitnob.com/auth/signup) and enter a valid email address.
+  </Step>
+  <Step title="Confirm your email">
+    Enter the confirmation code we send you.
+  </Step>
+  <Step title="Set a password">
+    Use at least 12 characters, with letters, numbers, and symbols.
+  </Step>
+  <Step title="Sign in to the dashboard">
+    Go to [app.bitnob.com](https://app.bitnob.com/). The dashboard holds your API keys and settings.
+  </Step>
+</Steps>
+
+<Tip>
+  Invite your colleagues from account settings before you start building. Shared access avoids credential sharing later.
+</Tip>
+
+## Create an API key
+
+The Bitnob Enterprise API uses a single API key, sent in the `X-API-Key` header. There's no request signing. Create the key in the Bitnob dashboard.
+
+- **The key decides the environment.** A live key works on mainnet, and a sandbox key on testnets.
+- **Each key carries a fixed set of scopes.** Create a separate key for each service, with only the scopes it needs. [Authentication](/docs/platform/authentication) lists the scopes.
+
+## Store your key
+
+Store the key server-side only, never in client code or source control.
+
+```bash
+BITNOB_PLATFORM_API_KEY=yourApiKey
+```
+
+In production, read it from a secret manager rather than a file.
+
+## Verify your key
+
+Call [Get API key info](/api-reference/platform/meta/get-api-key-info). A `200` returns the key's name, its organisation, and its scopes.
+
+```bash
+curl https://api.platform.bitnob.com/v1/me \
+  -H "X-API-Key: $BITNOB_PLATFORM_API_KEY"
+```
+
+A `401` with `not_authenticated` means the key is missing, wrong, or expired.
+
+Next, make your first calls in the [Quickstart](/docs/platform/quickstart).

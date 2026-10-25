@@ -42,7 +42,7 @@ The secret you sign with decides which environment you are in.
     Run a tunnel, such as `ngrok http 3000`, and set the public URL as your webhook URL in the dashboard.
   </Step>
   <Step title="Confirm your credentials">
-    Call `/api/whoami`. A `200` means signing works.
+    Call `/api/whoami`. A `200` means signing works, and the response returns `"environment": "sandbox"` so you can confirm which environment the secret selects.
   </Step>
 </Steps>
 
@@ -103,7 +103,7 @@ See [Quote lifecycle and expiry](/docs/getting-started/api-best-practices/quote-
 
 ## Test webhook delivery and retries
 
-We retry a failed delivery 3 times after the first failure. Confirm your handler behaves under those retries before you rely on it.
+A `5xx`, a timeout, and most `4xx` responses are retried, up to the retry count set on your webhook. `400`, `404`, `410`, `422`, and `451` are final. [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates) has the full rules. Confirm your handler behaves under retries before you rely on it.
 
 <Steps>
   <Step title="Return a failure on purpose">
@@ -118,7 +118,7 @@ We retry a failed delivery 3 times after the first failure. Confirm your handler
     Simulate a deposit and watch the retries arrive in your log.
   </Step>
   <Step title="Confirm the retry count and spacing">
-    Compare what you see against the documented behaviour in [Webhooks](/api-reference/addresses/webhooks).
+    Compare what you see against the documented behaviour in [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates). By default the delays are about 1, 5, 15, and 60 minutes, so a full retry cycle takes over an hour.
   </Step>
   <Step title="Process the same event twice">
     Return `200` and replay the event. Confirm the second run changes nothing.
@@ -132,7 +132,7 @@ Most integrations test the happy path and ship. These four errors are worth prod
 | Condition | How to produce it | What to confirm |
 |---|---|---|
 | Bad signature | Sign with the wrong secret | You return a clear error and do not retry blindly |
-| Duplicate reference | Submit the same reference twice | You treat the conflict as success, not failure |
+| Duplicate reference | Submit the same withdrawal reference twice | You treat the `409` as "already done", not a failure |
 | Insufficient balance | Request more than your sandbox balance | You surface the reason to the user |
 | Unreachable webhook | Stop your tunnel, then trigger an event | Your reconciliation job catches the gap |
 

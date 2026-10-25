@@ -4,7 +4,7 @@ sidebarTitle: "Overview"
 description: "Prepaid USD virtual Visa cards over the API: issuance, funding from your Bitnob balance, and the full lifecycle of freeze, unfreeze, terminate, and monitor."
 ---
 
-The card issuing API creates USD-denominated virtual Visa cards on demand, backed by regulated card issuers. Cards are prepaid: you fund them from your Bitnob balance (BTC, USDT, USDC, or NGN, converted internally), and the cardholder spends online anywhere Visa is accepted, or in store via Apple or Google Wallet tap-to-pay.
+The card issuing API creates USD-denominated virtual Visa cards on demand, backed by regulated card issuers. Cards are prepaid: you fund them from your Bitnob company balance, and the cardholder spends online anywhere Visa is accepted, or in store via Apple or Google Wallet tap-to-pay.
 
 Bitnob is the technology and distribution layer. Licensed issuing banks and Visa programme managers handle issuance, onboarding, and merchant settlement, so you integrate one API without managing Visa relationships or card compliance yourself.
 
@@ -16,7 +16,7 @@ Bitnob is the technology and distribution layer. Licensed issuing banks and Visa
 |---|---|
 | A fintech or crypto app | Let users spend wallet or stablecoin balance anywhere Visa works. |
 | Payroll or remittance | Deliver spendable cards instead of bank deposits. |
-| Corporate spend control | Issue per-employee or per-department cards with spend limits. |
+| Corporate spend control | Issue per-employee or per-department cards, fund each with only what it needs, and cap it with [spending limits](/docs/card-issuing/spending-limits). |
 | Programmatic disbursement | Auto-issue a funded card per payout, campaign, or event. |
 
 Cards are online-first and restricted by design: no ATM withdrawals, USD only, and no 3DS yet. That trade keeps fraud low and issuance instant.
@@ -24,17 +24,20 @@ Cards are online-first and restricted by design: no ATM withdrawals, USD only, a
 ## How it works
 
 <Steps>
-  <Step title="Create a card">
-    One call to [Create card](/api-reference/cards/create-card-embedded-customer) issues the card and creates the customer together. Pass `customer_id` instead for an existing customer. The card number, CVV, and expiry are available as soon as the card goes `active`.
+  <Step title="Verify the cardholder">
+    Submit the cardholder to [Card KYC](/api-reference/cards/card-kyc). Approval returns the `customer_id` every card for that person is issued against. With a BVN, approval can come back in the same response.
   </Step>
-  <Step title="Fund it">
-    Load USD value from your balance with [Fund or withdraw balance](/api-reference/cards/fund-or-withdraw-balance). Bitnob converts BTC, USDT, USDC, or NGN internally; you never need to hold USD.
+  <Step title="Create the card">
+    Call [Create card](/api-reference/cards/create-card) with the `customer_id` and the opening `amount`. The card comes back `pending` and goes `active` once the issuer provisions it, usually within seconds. [Get card](/api-reference/cards/get-card) then shows the last four digits; the full card details come from [Get secure card details](/api-reference/cards/get-secure-card-details).
+  </Step>
+  <Step title="Top it up">
+    Add value later with [Fund or withdraw balance](/api-reference/cards/fund-or-withdraw-balance).
   </Step>
   <Step title="Spend and monitor">
     The cardholder pays online or via tap-to-pay. Every authorisation, settlement, refund, and decline reaches you as a [webhook event](/docs/card-issuing/webhooks) and in the [transaction history](/api-reference/cards/list-card-transactions-by-card).
   </Step>
   <Step title="Control the lifecycle">
-    [Freeze or unfreeze](/api-reference/cards/freeze-or-unfreeze) in real time, [terminate](/api-reference/cards/terminate-card) permanently, and cap exposure with [spend limits](/api-reference/cards/update-spend-limits).
+    [Freeze or unfreeze](/api-reference/cards/freeze-or-unfreeze) in real time, and [terminate](/api-reference/cards/terminate-card) permanently.
   </Step>
 </Steps>
 
@@ -43,12 +46,11 @@ Cards are online-first and restricted by design: no ATM withdrawals, USD only, a
 | Topic | Detail |
 |---|---|
 | Currency | USD only |
-| Funding assets | USDT (TRC20, ERC20), USDC, BTC, NGN |
-| FX | Handled internally at funding time |
+| Funded from | Your company balance. If it can't cover a card, the error's `extensions.currency` names the balance that was checked. |
 | Balance model | Prepaid; no overdraft or credit |
 | Amounts | Integers in micro-units: 1 USD = 1,000,000 |
 
-Fees for creation, funding, cross-border use, and declines are on [Fees and decline rules](/docs/card-issuing/card-fees).
+Creating a card costs the opening `amount` plus a \$1.00 creation fee plus the top-up fee on that amount (\$1.00 below \$100). A \$2.00 card takes \$4.00 from your balance. Every fee is on [Fees and decline rules](/docs/card-issuing/card-fees).
 
 ## Where to go next
 

@@ -27,7 +27,9 @@ const app = express();
 
 const secret = process.env.BITNOB_WEBHOOK_SECRET;
 
-app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+// Read the raw bytes whatever Content-Type says: deliveries can arrive as
+// "application/json, application/json", which type: 'application/json' rejects
+app.post('/webhook', express.raw({ type: () => true }), (req, res) => {
   const signature = req.headers['x-bitnob-signature'] || '';
   const expected = crypto.createHmac('sha512', secret).update(req.body).digest('hex');
 
@@ -43,7 +45,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
 });
 ```
 
-Reference implementations and the published [Source IPs](/api-reference/addresses/webhooks#source-ips) are under [Verifying events](/api-reference/addresses/webhooks#verifying-events). Treat any IP allowlist as a second layer; the signature is the check that counts.
+Reference implementations and the published [Source IPs](/api-reference/webhooks#source-ips) are under [Verifying events](/api-reference/webhooks#verify-every-delivery). Treat any IP allowlist as a second layer; the signature is the check that counts.
 
 ## The payloads
 
@@ -61,9 +63,11 @@ All three events share one `data` shape. `amount` is in the token's smallest uni
     "chain": "tron",
     "currency": "USDT",
     "fee": "0",
+    "from_address": "TQrY8tryqsYVCYS3MFbtffiPp2ccyn4rkr",
     "hash": "2426850248470ae3c24ff8ae62a5efbde325ea0c496475befb63947a65f5c122",
     "reference": "RCV_SBLNC_cc309ba8c361",
-    "timestamp": "2025-12-12T20:38:23Z"
+    "timestamp": "2025-12-12T20:38:23Z",
+    "transaction_id": "8c3d1332-bd52-40f4-972f-768a2c4106f3"
   }
 }
 ```
@@ -104,11 +108,11 @@ All three events share one `data` shape. `amount` is in the token's smallest uni
 
 </CodeGroup>
 
-Field-by-field documentation lives under the [deposit](/api-reference/addresses/webhooks#webhook) and [transfer](/api-reference/withdrawal/webhooks#webhook) webhook references. Lightning receipts arrive separately as `btc.lightning.received.success`.
+Field-by-field documentation lives under the [deposit](/docs/stablecoins/address-webhook-events#webhook) and [transfer](/docs/stablecoins/withdrawal-webhook-events#webhook) webhook references. Lightning receipts arrive separately as `btc.lightning.received.success`.
 
 ## Delivery semantics
 
-- Return `200` quickly; non-200 responses are retried 3 times after the first failure.
+- Return `200` quickly. A timeout, a `5xx`, or most `4xx` responses are retried with increasing delays, up to the retry count set on your webhook (1 to 5 attempts in total). `400`, `404`, `410`, `422`, and `451` are final and never retried. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates).
 - Retries mean duplicates: de-duplicate on `event_id`.
 - Endpoints must be HTTPS and respond within 5 seconds; process asynchronously.
 - Keep the backstop: sweep [List transactions](/api-reference/transactions/list-transactions) on a schedule so a missed delivery never becomes a wrong balance. [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a single reference.

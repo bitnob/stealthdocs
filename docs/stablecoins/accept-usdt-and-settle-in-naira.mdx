@@ -246,32 +246,13 @@ POST /api/payouts/:quoteId/finalize
 
 The payout moves to PENDING. The USDT address stays valid until `expires_at`, once the deposit lands, settlement proceeds automatically.
 
-## Simulate deposit (sandbox only)
+## Testing in sandbox
 
-For testing purposes, you can simulate a deposit.
-
-```http
-POST /api/addresses/simulate-deposit
-```
-
-**Example request:**
-
-```json
-{
-  "address": "TJZCwdcH2GZRLjt8aAphrhCZtEbJLqEAfC",
-  "amount": "1000000000",
-  "currency": "USDT",
-  "chain": "tron"
-}
-```
-
-<Note>
-  **Sandbox-only helper:** This endpoint exists only in sandbox. It tells the simulator to act as if the user just deposited the specified `amount` of `currency` at `address` on `chain`. The resulting transaction shows up in the Transactions API with `metadata.is_simulated: "true"` and a `sim_*` reference. Production accounts will reject the call.
-</Note>
+Sandbox has no endpoint that simulates a stablecoin deposit to a payout address, so a payout you don't fund stays pending. Test the quote and initialize steps, and the webhook handling with your own signed test payloads.
 
 ## Settlement lifecycle (what happens after deposit)
 
-Once the user funds the address, Bitnob handles the rest of the flow: track it with [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) or the [payout webhooks](/api-reference/payouts/webhooks#payout-webhooks):
+Once the user funds the address, Bitnob handles the rest of the flow: track it with [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) or the [payout webhooks](/docs/payouts/webhook-events#payout-webhooks):
 
 1. It confirms receipt (usually within 1–2 blocks for TRC20)
 2. Converts the USDT to NGN at the locked quote rate
@@ -294,7 +275,7 @@ If a withdrawal fails (e.g., due to an invalid account), the payout record moves
 
 Always display the exact amount and chain to the user.
 
-Poll [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) if you don't implement [webhooks](/api-reference/payouts/webhooks#payout-webhooks) yet.
+Poll [Get Payout by ID](/api-reference/payouts/list-payouts#get-payout-by-id) if you don't implement [webhooks](/docs/payouts/webhook-events#payout-webhooks) yet.
 
 Use a unique reference per payout. This is your trace ID.
 

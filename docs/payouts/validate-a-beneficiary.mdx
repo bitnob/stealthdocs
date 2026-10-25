@@ -74,6 +74,10 @@ For mobile money, pass `type=mobile_money`, use the provider as `bank_code`, and
 
 Proceed only when `is_verified` is `true`, and show `account_name` to whoever is entering the details so they can confirm it is the person they mean. Mobile money lookups may return `bank_code` and `bank_name` empty; that is normal.
 
+<Warning>
+  Account lookup doesn't support Ghana bank accounts yet. A lookup with a Ghana bank code returns `400` `VALIDATION_ERROR`. For GHS bank payouts, skip the lookup, take the `bank_code` from Get banks, and have your user confirm the account number and name before you finalize. See [Ghana](/docs/payouts/corridor-specific-behavior/ghana-payout).
+</Warning>
+
   </Step>
 </Steps>
 

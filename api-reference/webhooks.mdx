@@ -1,0 +1,511 @@
+---
+title: "Bitnob Business API webhooks"
+sidebarTitle: "Webhooks"
+description: "Verify Bitnob Business API webhooks, handle retries and duplicates, rotate your secret, and find the events for each product."
+---
+
+Bitnob sends a webhook to your server when something happens on your account: a deposit lands, a payout completes, a card is charged. Set your webhook URL and webhook secret in the dashboard. Some requests, such as Create card and Initialize payout, also take a per-request URL.
+
+## Verify every delivery
+
+Each delivery is an HTTPS `POST` with a JSON body of the form `{"data": {...}, "event": "...", "event_id": "..."}` and two headers:
+
+- `x-bitnob-signature`: the hex-encoded HMAC SHA-512 of the **raw request body**, keyed with the webhook secret from your dashboard. Your API client secret doesn't sign webhooks.
+- `x-bitnob-event-id`: the event's unique ID, also in the body. Use it to de-duplicate.
+
+To verify a delivery:
+
+1. Read the request body as raw bytes, before any JSON parsing.
+2. Compute the HMAC SHA-512 of those bytes with your webhook secret, and hex-encode it.
+3. Compare it with `x-bitnob-signature` in constant time (`crypto.timingSafeEqual`, `hmac.compare_digest`, `hmac.Equal`). If the header is missing or doesn't match, respond `401` and do nothing else.
+4. Parse the JSON, skip the event if you've already processed its ID, and respond `200`.
+
+<Warning>
+  Don't parse the body and serialise it again before checking. `JSON.stringify`, `json.dumps`, and `json_encode` change spacing, key order, and escaping. Bitnob sends `<`, `>`, and `&` as `\u003c`, `\u003e`, and `\u0026`, so a re-serialised body passes for some events and fails for others.
+</Warning>
+
+<CodeGroup>
+
+```javascript Node.js (Express)
+const crypto = require('crypto');
+const express = require('express');
+const app = express();
+const webhookSecret = process.env.BITNOB_WEBHOOK_SECRET;
+
+// Read the raw bytes for any Content-Type header
+app.post('/webhook_url', express.raw({ type: () => true }), (req, res) => {
+  const expected = crypto.createHmac('sha512', webhookSecret).update(req.body).digest('hex');
+  const received = req.headers['x-bitnob-signature'] || '';
+  const valid =
+    received.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(received), Buffer.from(expected));
+  if (!valid) return res.sendStatus(401);
+
+  res.sendStatus(200);
+  // Parse the body only after the signature checks out
+  const event = JSON.parse(req.body);
+  // De-duplicate on the event ID, then process
+});
+
+app.listen(3000);
+```
+
+```python Python (Flask)
+import hashlib
+import hmac
+import json
+import os
+
+from flask import Flask, abort, request
+
+app = Flask(__name__)
+WEBHOOK_SECRET = os.environ["BITNOB_WEBHOOK_SECRET"].encode()
+
+@app.route("/webhook_url", methods=["POST"])
+def handle_webhook():
+    raw_body = request.get_data()
+    expected = hmac.new(WEBHOOK_SECRET, raw_body, hashlib.sha512).hexdigest()
+    if not hmac.compare_digest(expected, request.headers.get("x-bitnob-signature", "")):
+        abort(401)
+
+    # Parse the raw body yourself rather than with request.json
+    event = json.loads(raw_body)
+    # De-duplicate on the event ID, then process
+    return "", 200
+```
+
+```go Go
+package webhooks
+
+import (
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
+	"encoding/json"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+)
+
+var webhookSecret = os.Getenv("BITNOB_WEBHOOK_SECRET")
+
+func BitnobWebhook(w http.ResponseWriter, r *http.Request) {
+	// Read the exact bytes Bitnob signed, before any decoding
+	rawBody, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	if err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	mac := hmac.New(sha512.New, []byte(webhookSecret))
+	mac.Write(rawBody)
+	expected := hex.EncodeToString(mac.Sum(nil))
+	received := strings.ToLower(strings.TrimSpace(r.Header.Get("X-Bitnob-Signature")))
+	if received == "" || !hmac.Equal([]byte(expected), []byte(received)) {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// Parse the body only after the signature checks out
+	var event map[string]any
+	if err := json.Unmarshal(rawBody, &event); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	// De-duplicate on the event ID, then process
+	w.WriteHeader(http.StatusOK)
+}
+```
+
+</CodeGroup>
+
+## Retries and duplicates
+
+Respond as soon as the signature checks out, then process the event in the background. Bitnob reads your status code like this:
+
+| Your response | What Bitnob does |
+|---|---|
+| Any `2xx` | Marks the event delivered and doesn't send it again. |
+| `400`, `404`, `410`, `422`, or `451` | Treats it as a permanent rejection. The event is **not retried**. |
+| Anything else: `5xx`, `401`, `403`, `408`, `429`, a timeout, or no response | Retries with increasing delays, by default about 1, 5, 15, and 60 minutes, up to the retry count set on your webhook: 1 to 5 delivery attempts in total. If you send a `Retry-After` header, Bitnob waits that long before retrying, up to a cap. |
+
+<Warning>
+  If your own processing fails temporarily, for example your database is down, respond with a `5xx` so the event is retried. A `400` or `422` drops it for good.
+</Warning>
+
+- **Expect duplicates.** The same event can arrive more than once, even after you returned `2xx`. De-duplicate on the event ID: `event_id` on most events, and `eventId` on card events.
+- **Don't assume order.** A retried delivery can land after a later event. Use the status in the payload, not arrival order, to decide what happened.
+- **Reconcile on a schedule.** Retries are finite, so an endpoint that's down for long enough misses events for good. Check the relevant list endpoint for anything you still hold as pending.
+
+## Your webhook secret
+
+You set the webhook secret in the dashboard under **Settings → Webhooks**. Keep it on your server only, never in client-side code or source control.
+
+Change it if it may have been exposed, and deploy the new secret to your receiver as close as you can to the moment you change it in the dashboard. Deliveries that arrive while the two don't match fail your signature check. Your `401` is retried, so they're redelivered as long as the switch finishes within the retry window; reconcile anything that still goes missing.
+
+## Complete Python receiver
+
+A ready-to-run receiver with no third-party packages, for Python 3.8 or later. It:
+
+- Verifies the signature over the raw body with a constant-time comparison.
+- Responds `401` to a missing or wrong signature, and `200` to a duplicate without processing it again.
+- Marks an event processed only after your handler succeeds. If the handler fails, it responds `500`, so the retry is processed rather than skipped.
+- Includes a self-test: `python bitnob_webhook.py --self-test`.
+
+Save it as `bitnob_webhook.py`, replace `handle_event` with your own logic, and start it with `BITNOB_WEBHOOK_SECRET=your_webhook_secret python bitnob_webhook.py --port 8000`. It listens on `POST /webhooks/bitnob`. In production, store processed event IDs in your database rather than in memory, and run the receiver behind HTTPS.
+
+<Accordion title="bitnob_webhook.py">
+
+```python bitnob_webhook.py
+"""Receive and verify Bitnob webhooks in Python.
+
+No third-party packages needed (Python 3.8+).
+
+How Bitnob signs a webhook
+--------------------------
+Every webhook is a POST with a JSON body shaped like:
+
+    {"data": {...}, "event": "withdrawal.success", "event_id": "..."}
+
+and these headers:
+
+    x-bitnob-signature   hex HMAC-SHA512 of the raw request body,
+                         keyed with your webhook secret
+    x-bitnob-event-id    the event id, for deduplicating retries
+
+Always verify against the RAW request body bytes. Do not parse the JSON and
+re-serialise it (json.dumps, JSON.stringify): spacing, key order and escaping
+(Bitnob sends "<", ">" and "&" as \\u003c, \\u003e, \\u0026) will differ, and
+the signature will not match.
+
+Bitnob treats any 2xx as delivered. 400, 404, 410, 422 and 451 are final and
+never retried; anything else (5xx, 401, timeouts...) is retried. The same event
+can arrive more than once, so deduplicate on the event id. If your handler
+fails temporarily, respond 5xx (this receiver returns 500) so Bitnob retries.
+
+Usage
+-----
+    python bitnob_webhook.py --self-test           # check everything works
+    BITNOB_WEBHOOK_SECRET=... python bitnob_webhook.py --port 8000
+
+The receiver listens on POST /webhooks/bitnob.
+
+Using a web framework instead? Only verify_signature() is needed:
+
+    # Flask
+    raw = request.get_data()
+    ok = verify_signature(raw, request.headers.get("x-bitnob-signature"), SECRET)
+
+    # Django
+    ok = verify_signature(request.body, request.headers.get("x-bitnob-signature"), SECRET)
+
+    # FastAPI
+    raw = await request.body()
+    ok = verify_signature(raw, request.headers.get("x-bitnob-signature"), SECRET)
+
+Reject the request with 401 when ok is False.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import hmac
+import json
+import os
+import sys
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Optional
+
+SIGNATURE_HEADER = "x-bitnob-signature"
+EVENT_ID_HEADER = "x-bitnob-event-id"
+WEBHOOK_PATH = "/webhooks/bitnob"
+MAX_BODY_BYTES = 1024 * 1024
+
+
+def compute_signature(raw_body: bytes, secret: str) -> str:
+    """Hex HMAC-SHA512 of the raw body, keyed with the webhook secret."""
+    return hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha512).hexdigest()
+
+
+def verify_signature(raw_body: bytes, signature: Optional[str], secret: str) -> bool:
+    """True only when the signature header matches the body.
+
+    Uses a constant-time comparison so the check can't be timed.
+    """
+    if not secret:
+        raise ValueError("webhook secret is not configured")
+    if not signature:
+        return False
+    expected = compute_signature(raw_body, secret)
+    return hmac.compare_digest(expected, signature.strip().lower())
+
+
+# --- Your business logic -----------------------------------------------------
+
+def handle_event(event: dict) -> None:
+    """Called once per verified, non-duplicate event. Replace with your logic."""
+    name = event.get("event", "")
+    data = event.get("data") or {}
+    if name == "deposit.success":
+        print(f"deposit confirmed: reference={data.get('reference')} amount={data.get('amount')}", flush=True)
+    elif name.startswith("withdrawal."):
+        print(f"{name}: reference={data.get('reference')} status={data.get('status')}", flush=True)
+    else:
+        print(f"unhandled event: {name}", flush=True)
+
+
+# --- HTTP receiver (standard library only) -----------------------------------
+
+class EventStore:
+    """Remembers processed event ids. Use your database in production.
+
+    An event counts as processed only after handle_event succeeds. If handling
+    fails, the claim is released so Bitnob's retry is processed, not skipped.
+    """
+
+    def __init__(self) -> None:
+        self._done = set()
+        self._in_progress = set()
+        self._lock = threading.Lock()
+
+    def claim(self, event_id: str) -> bool:
+        """False if the event was already processed or is being processed now."""
+        with self._lock:
+            if event_id in self._done or event_id in self._in_progress:
+                return False
+            self._in_progress.add(event_id)
+            return True
+
+    def complete(self, event_id: str) -> None:
+        with self._lock:
+            self._in_progress.discard(event_id)
+            self._done.add(event_id)
+
+    def release(self, event_id: str) -> None:
+        with self._lock:
+            self._in_progress.discard(event_id)
+
+
+def make_handler(secret: str, store: EventStore, on_event=handle_event):
+    class WebhookHandler(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:
+            if self.path != WEBHOOK_PATH:
+                return self._reply(404)
+
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+            except ValueError:
+                return self._reply(400)
+            if length <= 0 or length > MAX_BODY_BYTES:
+                return self._reply(400)
+            raw_body = self.rfile.read(length)
+
+            if not verify_signature(raw_body, self.headers.get(SIGNATURE_HEADER), secret):
+                return self._reply(401)
+
+            try:
+                event = json.loads(raw_body)
+            except json.JSONDecodeError:
+                return self._reply(400)
+
+            event_id = self.headers.get(EVENT_ID_HEADER) or event.get("event_id") or ""
+            if event_id and not store.claim(event_id):
+                return self._reply(200)  # duplicate delivery: acknowledge, do nothing
+
+            try:
+                on_event(event)
+            except Exception as exc:  # non-200 makes Bitnob retry later
+                if event_id:
+                    store.release(event_id)  # so the retry is processed, not skipped
+                print(f"failed to handle event {event_id}: {exc}", file=sys.stderr)
+                return self._reply(500)
+            if event_id:
+                store.complete(event_id)
+            return self._reply(200)
+
+        def _reply(self, status: int) -> None:
+            self.send_response(status)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, fmt, *args) -> None:
+            sys.stderr.write(f"[bitnob-webhook] {self.address_string()} {fmt % args}\n")
+
+    return WebhookHandler
+
+
+def serve(secret: str, host: str, port: int) -> None:
+    server = ThreadingHTTPServer((host, port), make_handler(secret, EventStore()))
+    print(f"Listening on http://{host}:{port}{WEBHOOK_PATH}")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+
+
+# --- Self-test ---------------------------------------------------------------
+
+# A real payload and signature produced by Bitnob's signer, with the secret
+# "test_secret". The reference contains <, > and & to cover Bitnob's escaping.
+VECTOR_SECRET = "test_secret"
+VECTOR_BODY = (
+    b'{"data":{"amount":"9000000","chain":"tron","reference":"ref\\u003c1\\u003e\\u0026x"},'
+    b'"event":"withdrawal.success","event_id":"evt_1"}'
+)
+VECTOR_SIGNATURE = (
+    "380e5000acdb890ba06f7727c9667bcc7a1bb9d8270963d015926209c150e53b"
+    "51a11a05912372eb4e64f0fb91942b7b63fe646b63d669d0f06a800e483b4fdb"
+)
+
+
+def self_test() -> int:
+    import urllib.error
+    import urllib.request
+
+    failures = []
+
+    def check(name: str, condition: bool) -> None:
+        print(f"  {'PASS' if condition else 'FAIL'}  {name}")
+        if not condition:
+            failures.append(name)
+
+    print("Signature checks")
+    check("Bitnob-signed body verifies", verify_signature(VECTOR_BODY, VECTOR_SIGNATURE, VECTOR_SECRET))
+    check("uppercase signature header verifies",
+          verify_signature(VECTOR_BODY, VECTOR_SIGNATURE.upper(), VECTOR_SECRET))
+    check("wrong secret is rejected", not verify_signature(VECTOR_BODY, VECTOR_SIGNATURE, "wrong"))
+    check("tampered amount is rejected",
+          not verify_signature(VECTOR_BODY.replace(b"9000000", b"9900000"), VECTOR_SIGNATURE, VECTOR_SECRET))
+    check("missing signature is rejected", not verify_signature(VECTOR_BODY, None, VECTOR_SECRET))
+    check("re-serialised JSON does not verify (use the raw body!)",
+          not verify_signature(json.dumps(json.loads(VECTOR_BODY)).encode(), VECTOR_SIGNATURE, VECTOR_SECRET))
+
+    print("HTTP receiver checks")
+    handled = []
+    fail_next = []
+
+    def record(event: dict) -> None:
+        if fail_next:
+            fail_next.pop()
+            raise RuntimeError("simulated failure, e.g. database down")
+        handled.append(event)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0),
+                                 make_handler(VECTOR_SECRET, EventStore(), record))
+    server.RequestHandlerClass.log_message = lambda *a, **k: None  # quiet during the test
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{server.server_address[1]}{WEBHOOK_PATH}"
+
+    def post(body: bytes, signature: Optional[str], event_id: str = "evt_1") -> int:
+        headers = {"Content-Type": "application/json", EVENT_ID_HEADER: event_id}
+        if signature is not None:
+            headers[SIGNATURE_HEADER] = signature
+        req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                return resp.status
+        except urllib.error.HTTPError as err:
+            return err.code
+
+    try:
+        check("valid webhook -> 200", post(VECTOR_BODY, VECTOR_SIGNATURE) == 200)
+        check("event handed to handle_event once", len(handled) == 1 and handled[0]["event_id"] == "evt_1")
+        check("duplicate delivery -> 200, not handled again",
+              post(VECTOR_BODY, VECTOR_SIGNATURE) == 200 and len(handled) == 1)
+        check("bad signature -> 401", post(VECTOR_BODY, "deadbeef", "evt_2") == 401)
+        check("missing signature -> 401", post(VECTOR_BODY, None, "evt_3") == 401)
+        check("rejected events are not handled", len(handled) == 1)
+        fail_next.append(True)
+        check("handler failure -> 500 so Bitnob retries", post(VECTOR_BODY, VECTOR_SIGNATURE, "evt_4") == 500)
+        check("retry after a failure is processed, not skipped",
+              post(VECTOR_BODY, VECTOR_SIGNATURE, "evt_4") == 200 and len(handled) == 2)
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    print()
+    if failures:
+        print(f"{len(failures)} check(s) failed")
+        return 1
+    print("All checks passed")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Bitnob webhook receiver")
+    parser.add_argument("--self-test", action="store_true", help="run the built-in checks and exit")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
+
+    secret = os.environ.get("BITNOB_WEBHOOK_SECRET", "")
+    if not secret:
+        print("Set BITNOB_WEBHOOK_SECRET to your Bitnob webhook secret", file=sys.stderr)
+        return 2
+    serve(secret, args.host, args.port)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+</Accordion>
+
+## Source IPs
+
+If your firewall restricts inbound traffic, allow the addresses Bitnob sends webhooks from:
+
+| IP address | Use |
+|---|---|
+| `18.171.51.218` | Webhook delivery |
+| `13.134.154.133` | Webhook delivery |
+
+```nginx
+location /webhook_url {
+  allow 18.171.51.218;
+  allow 13.134.154.133;
+  deny  all;
+}
+```
+
+<Warning>
+  An IP allowlist isn't a security boundary. Any host can send a request from an allowlisted address, and these addresses can change. Verify the signature on every event, whether or not you filter by IP.
+</Warning>
+
+## Test your endpoint
+
+Webhooks need a public HTTPS URL. While you build, expose your local server with a tunnel such as [ngrok](https://ngrok.com/), and set the tunnel URL as your webhook URL in the sandbox dashboard. Only do this in sandbox.
+
+To check your verification code without waiting for a real event, sign a sample body with your webhook secret and post it yourself. The signed request should get `200`. Change one character of the body without re-signing, and it should get `401`.
+
+```bash
+BODY='{"data":{"reference":"test_ref"},"event":"withdrawal.success","event_id":"evt_test_1"}'
+SIG=$(printf '%s' "$BODY" | openssl dgst -sha512 -hmac "$BITNOB_WEBHOOK_SECRET" | awk '{print $NF}')
+
+curl -X POST https://your-tunnel.example.com/webhook_url \
+  -H 'Content-Type: application/json' \
+  -H "x-bitnob-signature: $SIG" \
+  -H 'x-bitnob-event-id: evt_test_1' \
+  --data-binary "$BODY"
+```
+
+## Events by product
+
+| Product | Events |
+|---|---|
+| Stablecoin deposits | [Address webhook events](/docs/stablecoins/address-webhook-events) |
+| Stablecoin and bitcoin withdrawals | [Withdrawal webhook events](/docs/stablecoins/withdrawal-webhook-events) |
+| Payouts | [Payout webhook events](/docs/payouts/webhook-events) |
+| Card issuing | [Card webhook payloads](/docs/card-issuing/webhook-payloads) |
+| Trading | [Trade webhooks](/docs/trading/trade-webhooks) |
+| Virtual accounts | [Deposit webhook](/docs/virtual-accounts/deposit-webhook) |
+| Bitcoin | [Confirmations and webhook events](/docs/bitcoin/confirmations-and-webhook-events) |

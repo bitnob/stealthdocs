@@ -1,13 +1,18 @@
 ---
-title: "GET request example"
-description: "GET Request Example"
+title: "Making Bitnob Business API requests"
+sidebarTitle: "Making requests"
+description: "Signed GET and POST requests in Node.js and Python, and how to confirm your credentials with whoami."
 ---
 
-## GET request example
+These examples use the `generateAuthHeaders` (Node.js) and `generate_auth_headers` (Python) helpers from [Authentication](/api-reference/authentication/authentication#reference-implementations). Save the helper as `auth.js` or `auth.py` next to your code.
 
-These examples show how to make an authenticated **GET** request to the Bitnob API using the signing function defined above. For GET requests without a body, pass null as the body parameter. The signature is computed over just your client ID, timestamp, and nonce.
+The one rule that matters: **sign exactly the bytes you send.** For a GET, sign an empty body. For a POST, pass the same body to the helper and to your HTTP client.
 
-```javascript
+## GET request
+
+<CodeGroup>
+
+```javascript Node.js
 const { generateAuthHeaders } = require('./auth');
 
 const CLIENT_ID = process.env.CLIENT_ID;
@@ -15,214 +20,119 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const BASE_URL = 'https://api.bitnob.com';
 
 async function getBalances() {
-  const authHeaders = generateAuthHeaders(CLIENT_ID, CLIENT_SECRET, null);
-
-  const response = await fetch(`${BASE_URL}/api/balances`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-    },
-  });
-
+  // GET requests have no body, so sign an empty payload
+  const headers = generateAuthHeaders(CLIENT_ID, CLIENT_SECRET, null);
+  const response = await fetch(`${BASE_URL}/api/balances`, { headers });
   return response.json();
 }
 
-getBalances()
-  .then((data) => console.log('Balances:', data))
-  .catch((err) => console.error(err));
+getBalances().then((data) => console.log(JSON.stringify(data, null, 2)));
 ```
 
-```go
-package main
-
-import (
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
-
-	"yourproject/auth"
-)
-
-var (
-	ClientID     = os.Getenv("CLIENT_ID")
-	ClientSecret = os.Getenv("CLIENT_SECRET")
-	BaseURL      = "https://api.bitnob.com"
-)
-
-func getBalances() (map[string]interface{}, error) {
-	headers, err := auth.GenerateAuthHeaders(ClientID, ClientSecret, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req, _ := http.NewRequest("GET", BaseURL+"/api/balances", nil)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Client", headers.XAuthClient)
-	req.Header.Set("X-Auth-Timestamp", headers.XAuthTimestamp)
-	req.Header.Set("X-Auth-Nonce", headers.XAuthNonce)
-	req.Header.Set("X-Auth-Signature", headers.XAuthSignature)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	return result, nil
-}
-
-func main() {
-	balances, err := getBalances()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("Balances: %v\n", balances)
-}
-```
-
-## POST request example
-
-For **POST**/**PUT** requests, pass the JSON body to generateAuthHeaders so it is included in the HMAC computation. Any change to the payload, even reordering keys, will invalidate the signature, so sign the exact byte sequence you send on the wire.
-
-<Note>
-  Use the /api/whoami endpoint to quickly verify your authentication is set up correctly before making other API calls.
-</Note>
-
-```python
+```python Python
 import os
 import requests
 from auth import generate_auth_headers
 
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-BASE_URL = 'https://api.bitnob.com'
+CLIENT_ID = os.environ["CLIENT_ID"]
+CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+BASE_URL = "https://api.bitnob.com"
 
-def get_balances():
-    headers = generate_auth_headers(CLIENT_ID, CLIENT_SECRET)
-    resp = requests.get(
-        f'{BASE_URL}/api/balances',
-        headers={'Content-Type': 'application/json', **headers}
-    )
-    return resp.json()
-
-if __name__ == '__main__':
-    print('Balances:', get_balances())
+# GET requests have no body, so sign an empty payload
+headers = generate_auth_headers(CLIENT_ID, CLIENT_SECRET)
+response = requests.get(f"{BASE_URL}/api/balances", headers=headers)
+print(response.json())
 ```
 
-```json
+</CodeGroup>
+
+```json Response
 {
   "success": true,
   "message": "Company balances retrieved successfully",
   "data": {
     "accounts": [
       {
-        "account_id": "199d9585-8e36-42b8-839a-c227a34d7d11",
-        "account_number": "7264979918",
-        "currency": "USDT",
-        "ledger_balance": "5101335847",
-        "available_balance": "5101335847",
-        "ledger_balance_formatted": "5101.335847 USDT",
-        "available_balance_formatted": "5101.335847 USDT",
-        "created_at": "2025-12-24T15:11:57.531010+00:00"
+        "account_id": "8868ad8a-35dc-4897-95a4-b852c8f24470",
+        "account_number": "8242613710",
+        "currency": "BTC",
+        "ledger_balance": "3691",
+        "available_balance": "3691",
+        "ledger_balance_formatted": "0.00003691 BTC",
+        "available_balance_formatted": "0.00003691 BTC",
+        "created_at": "2026-09-15T14:39:11.486049+00:00"
       }
-    ],
-    "company_id": "1bc7caba-08b9-49ff-a911-2a8fb570cbb9"
-  },
-  "timestamp": "2026-04-17T14:43:12.608723155Z"
+    ]
+  }
 }
 ```
 
-## Validate authentication
+## POST request
 
-Use the /api/whoami endpoint to verify your credentials are working correctly. This endpoint accepts any HTTP method and any payload, and returns your authenticated client info.
+<CodeGroup>
 
-It works with HMAC signature authentication.
-
-### Response fields
-
-1. successboolean
-
-   Whether the request was successfully authenticated. Returns true when the HMAC signature is valid.
-
-2. messagestring
-
-   Human-readable status message. 'Authenticated' when the HMAC signature is valid.
-
-3. dataobject
-
-   The authenticated client info. Contains the fields below.
-
-4. data.activeboolean
-
-   Whether the client is currently active. Inactive clients cannot make authenticated requests.
-
-5. data.active_company_idstring
-
-   UUID of the company this client is currently acting on behalf of.
-
-6. data.auth_methodstring
-
-   The authentication mode used to sign the request. Always 'hmac'.
-
-7. data.client_idstring
-
-   UUID of the client (API app) that made the request.
-
-8. data.client_namestring
-
-   Human-readable name of the client, as configured on the Bitnob dashboard.
-
-9. data.environmentstring
-
-   The environment the request was made against. One of 'sandbox' or 'live'.
-
-10. data.permissionsarray \| null
-
-   List of scoped permissions granted to this client. Null when the client has no scoped permissions (e.g. full account-level access).
-
-11. timestampstring
-
-RFC 3339 / ISO 8601 server timestamp of when the request was processed (UTC).
-
-```javascript
+```javascript Node.js
 const { generateAuthHeaders } = require('./auth');
 
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const BASE_URL = 'https://api.bitnob.com';
 
-async function createCustomer(customerData) {
-  const body = JSON.stringify(customerData);
-  const authHeaders = generateAuthHeaders(CLIENT_ID, CLIENT_SECRET, body);
-
-  const response = await fetch(`${BASE_URL}/api/customers`, {
+async function validateAddress(address, chain) {
+  const body = { address, chain };
+  // Sign the same body you send: the helper and fetch both use JSON.stringify
+  const headers = generateAuthHeaders(CLIENT_ID, CLIENT_SECRET, body);
+  const response = await fetch(`${BASE_URL}/api/addresses/validate`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-    },
-    body,
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
-
   return response.json();
 }
 
-createCustomer({
-  email: 'john.doe@example.com',
-  first_name: 'John',
-  last_name: 'Doe',
-  phone_number: '+1234567890',
-  customer_type: 'individual',
-})
-  .then((data) => console.log('Customer created:', data))
-  .catch((err) => console.error(err));
+validateAddress('TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN', 'tron').then((data) =>
+  console.log(JSON.stringify(data, null, 2))
+);
 ```
+
+```python Python
+import os
+import requests
+from auth import generate_auth_headers
+
+CLIENT_ID = os.environ["CLIENT_ID"]
+CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+BASE_URL = "https://api.bitnob.com"
+
+body = {"address": "TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN", "chain": "tron"}
+
+# requests serializes json= the same way the helper's json.dumps does,
+# so the bytes sent match the bytes signed
+headers = generate_auth_headers(CLIENT_ID, CLIENT_SECRET, body)
+response = requests.post(f"{BASE_URL}/api/addresses/validate", json=body, headers=headers)
+print(response.json())
+```
+
+</CodeGroup>
+
+```json Response
+{
+  "success": true,
+  "message": "Address validation completed",
+  "data": {
+    "valid": true,
+    "address": "TRMPscTMrXg21YuDFuvpXRUkwEbipHEZXN",
+    "chain": "tron"
+  },
+  "timestamp": "2026-10-18T07:32:46.692379293Z"
+}
+```
+
+If you build the body string yourself, for example compact JSON, pass that exact string to the helper and send that same string. A body that differs from the signed one by even a space fails with `401` `Invalid HMAC signature`.
+
+## Confirm your credentials
+
+[`GET /api/whoami`](/api-reference/identity/who-am-i) returns the client your signature authenticated as. It's the quickest way to check signing works, and to confirm which environment your secret selects.
 
 ```json
 {
@@ -230,13 +140,20 @@ createCustomer({
   "message": "Authenticated",
   "data": {
     "active": true,
-    "active_company_id": "1bc7caba-08b9-49ff-a911-2a8fb570cbb9",
+    "active_company_id": "b1ebb43e-068f-4b6a-bbab-5c3027bc1510",
     "auth_method": "hmac",
-    "client_id": "2d94f264-bf10-4250-99fe-8c571927099e",
-    "client_name": "EasyPut",
+    "client_id": "9213f0c7-486f-4c8a-9c57-ab3fe68ee696",
+    "client_name": "DC",
     "environment": "sandbox",
     "permissions": null
   },
-  "timestamp": "2026-04-17T13:16:20.25597752Z"
+  "timestamp": "2026-10-18T07:33:30.881661173Z"
 }
 ```
+
+| Field | Meaning |
+|---|---|
+| `data.environment` | `sandbox` or `live`, set by the secret you signed with |
+| `data.active_company_id` | The company the client acts for |
+| `data.auth_method` | Always `hmac` |
+| `data.permissions` | The client's scoped permissions, or `null` when it has full account access |

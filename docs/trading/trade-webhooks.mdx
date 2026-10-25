@@ -13,7 +13,7 @@ The order response returns immediately, but the outcome arrives as a webhook. Up
 | `trade.completed` | The trade executed and settled. | Credit your ledger, show success. |
 | `trade.failed` | The trade failed: quote expiry, balance, or system error. | Unlock any UI hold, show the reason, offer a re-quote. |
 
-Deliveries are HTTPS POSTs signed with the `x-bitnob-signature` header; verify before acting, exactly as for [stablecoin webhooks](/docs/stablecoins/webhooks). Handlers must be idempotent, since duplicates happen; de-duplicate on `event_id`.
+Deliveries are HTTPS POSTs from the addresses listed under [Source IPs](/api-reference/webhooks#source-ips). Each one carries an `x-bitnob-signature` header: an HMAC SHA-512 of the raw request body, keyed with your webhook secret. Verify it before you parse the body, comparing in constant time, as shown in [Verifying events](/docs/stablecoins/address-webhook-events).
 
 ## Payloads
 
@@ -59,9 +59,17 @@ Deliveries are HTTPS POSTs signed with the `x-bitnob-signature` header; verify b
 
 `reference` is your join key back to the order you submitted; `reason` on failures carries the cause, for example `Quote expired` or `Insufficient balance`.
 
+## Delivery, retries and ordering
+
+- Return a `200` as soon as the signature checks out, then process. A slow handler times out, and a timeout counts as a failed delivery.
+- A `2xx` response marks the event delivered. `400`, `404`, `410`, `422`, and `451` are final and not retried. Anything else, including a timeout, is retried with increasing delays, up to the retry count set on your webhook (1 to 5 attempts in total). After that, delivery stops. See [Retries and duplicates](/api-reference/webhooks#retries-and-duplicates).
+- The same event can arrive more than once. De-duplicate on `event_id`.
+- Events can arrive in any order, because a retried delivery may land after a later one. Each trade ends in exactly one terminal event: `trade.completed` or `trade.failed`.
+- Retries are finite, so an endpoint that is down for long enough misses events for good. Reconcile anything you still hold as pending with [Get order](/api-reference/trading/get-order-by-id-or-reference).
+
 ## Handler checklist
 
 - Match `reference` against your ledger before mutating anything.
 - Log every event with delivery timestamp and processing outcome.
-- Reconcile on a schedule against [List orders](/api-reference/trading/list-orders), so a missed delivery never strands a trade as pending.
+- Reconcile on a schedule, so a missed delivery never strands a trade as pending. [List orders](/api-reference/trading/list-orders) returns crypto-pair orders only; fetch NGN orders one at a time with [Get order](/api-reference/trading/get-order-by-id-or-reference).
 - Alert internally when `trade.failed` volume spikes; a burst usually means a systemic cause, not user error.

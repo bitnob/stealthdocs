@@ -1,14 +1,14 @@
 ---
-title: "API authentication and request signing"
-sidebarTitle: "Overview"
-description: "Base URL, HMAC signing scheme, and the headers every Bitnob API request must carry."
+title: "Bitnob Business API authentication and request signing"
+sidebarTitle: "Authentication"
+description: "Base URL, HMAC signing scheme, and the headers every Bitnob Business API request must carry."
 ---
 
 <Note>
-  This page covers the **Bitnob API**, the custodial product behind payouts, cards, trading, and virtual accounts. Platform is a separate, non-custodial product with its own base URL and a simpler `X-API-Key` scheme. See [Platform authentication](/docs/platform/authentication).
+  This page covers the **Bitnob Business API**, the custodial product behind payouts, cards, trading, and virtual accounts. Platform is a separate, non-custodial product with its own base URL and a simpler `X-API-Key` scheme. See [Platform authentication](/docs/platform/authentication).
 </Note>
 
-Every request goes to `https://api.bitnob.com` and is signed with HMAC-SHA256. There is one authentication mode, and it needs both your `CLIENT_ID` and `CLIENT_SECRET`. Signing binds each request to a timestamp and a nonce, so a captured request cannot be replayed or altered.
+Every request goes to `https://api.bitnob.com` and is signed with HMAC-SHA256. There is one authentication mode, and it needs both your `CLIENT_ID` and `CLIENT_SECRET`. Signing binds each request to its body and a timestamp, so a captured request can't be altered, and it stops being accepted after about five minutes.
 
 ## Credentials
 
@@ -94,7 +94,11 @@ Send all four headers on every request. A request missing any of them is rejecte
   </Step>
 </Steps>
 
-The API rejects a request if the timestamp falls outside an acceptable window (roughly five minutes), if the nonce has been seen before, or if the computed signature does not match the one you sent.
+The API rejects a request with `401` if the timestamp is more than about five minutes in the past or the future, or if the signature doesn't match the exact bytes you sent.
+
+<Warning>
+  Don't rely on the nonce to block replays. A request sent again with the same nonce isn't guaranteed to be rejected, so a captured request can be replayed until its timestamp expires. Generate a fresh nonce for every request anyway, send everything over HTTPS, and protect writes from duplicates with a unique `reference`.
+</Warning>
 
 ## Reference implementations
 
@@ -268,6 +272,10 @@ def generate_auth_headers(client_id: str, client_secret: str, body=None) -> dict
 
 </CodeGroup>
 
+<Note>
+  Each helper signs the body exactly as it serializes it, so send that same string. The Node.js helper uses `JSON.stringify`, which produces compact JSON. The Python helper uses `json.dumps`, which adds a space after `:` and `,`. That matches `requests.post(url, json=body)`, which serializes the same way. If your HTTP client serializes differently (for example, compact JSON), pass the body to the helper as the exact string you'll send.
+</Note>
+
 ## Verify your setup
 
 Sign a request to `/api/whoami`. It takes no body, so the payload segment of the canonical message is an empty string, which makes it the simplest way to confirm your signing function is correct.
@@ -278,4 +286,9 @@ Sign a request to `/api/whoami`. It takes no body, so the payload segment of the
 | `GET /api/balances` | Reads your balances |
 | `POST /api/customers` | Creates a customer |
 
-A `401` means the signature did not verify. Check that you signed the exact body string you sent, that the timestamp is in seconds rather than milliseconds, and that the nonce is hex-encoded.
+A `401` means the request didn't authenticate. The `detail` field tells you which check failed:
+
+| `detail` | Usual cause |
+|---|---|
+| `Invalid HMAC signature` | The body you sent isn't byte-for-byte the string you signed, or the client ID or secret has stray characters. A `.env` file saved with Windows line endings adds a hidden `\r` to each value. |
+| `Authentication failed` | The timestamp is in milliseconds instead of seconds, or it's more than about five minutes from the current time. |

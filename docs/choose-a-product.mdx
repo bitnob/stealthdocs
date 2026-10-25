@@ -1,0 +1,32 @@
+---
+title: "Choose between the Bitnob Business API and the Bitnob Enterprise API"
+sidebarTitle: "Choose a product"
+description: "Bitnob offers two APIs with different custody models, authentication, and base URLs. Compare them and pick the right starting point."
+---
+
+Bitnob has two separate APIs. They don't share credentials, base URLs, or authentication, so start by picking the one that fits what you're building.
+
+| | Bitnob Business API | Bitnob Enterprise API |
+|---|---|---|
+| Custody | Bitnob holds the balance and settles for you. | Non-custodial. Keys stay in a hardware enclave, and transactions are signed only when your policies allow them. |
+| What you build | Payouts, card issuing, trading, virtual accounts, stablecoin and bitcoin payments. | Wallets, addresses, and policy-governed signing across chains. |
+| Base URL | `https://api.bitnob.com` | `https://api.platform.bitnob.com` |
+| Authentication | HMAC-signed requests with a `CLIENT_ID` and `CLIENT_SECRET`. | An `X-API-Key` header. |
+| Sandbox or live | Chosen by the secret you sign with. | Chosen by the key. Live keys use mainnet, sandbox keys use testnets. |
+| Start here | [Business quickstart](/docs/getting-started/quickstart) | [Enterprise quickstart](/docs/platform/quickstart) |
+| API reference | [Business API](/api-reference/authentication/authentication) | [Bitnob Enterprise API](/docs/platform/authentication) |
+
+Some companies use both: Bitnob Enterprise to hold and govern assets, and the Bitnob Business API to pay out in local currency.
+
+## Bitcoin works with both
+
+Bitcoin is the one product that spans the two APIs, depending on who holds the keys.
+
+| You want | Use | Start with |
+|---|---|---|
+| A bitcoin wallet Bitnob runs for you: balances, on-chain and Lightning send and receive | Bitnob Business API | [Bitcoin overview](/docs/bitcoin/overview) |
+| To hold the keys yourself, or let your users hold them | Bitnob Enterprise API | [Custody models](/docs/bitcoin/custody-models) |
+
+## Not sure yet?
+
+Start with the Bitnob Business API. Every account comes with a custodial wallet and sandbox credentials, so you can make a working call in minutes and move to Platform later if you need to hold keys yourself.

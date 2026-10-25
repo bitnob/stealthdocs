@@ -1,15 +1,17 @@
 ---
 title: "Set up your account"
-description: "Account creation, sandbox and production credentials, safe storage, and a call that confirms they work."
+description: "Create your Bitnob account, issue Bitnob Business API credentials for sandbox and production, store them safely, and confirm they work."
 related:
   - /docs/getting-started/quickstart
   - /docs/getting-started/core-concepts-and-architecture
   - /docs/getting-started/api-best-practices/api-keys-and-credentials
 ---
 
-This guide takes you from no account to a verified credential pair. It covers registration, credential creation, storage, and one call that proves the setup works.
+This guide takes you from no account to working Bitnob Business API credentials: register, complete your profile, then create a `CLIENT_ID` and `CLIENT_SECRET` pair and confirm it works.
 
-Everything after this page assumes you hold a `CLIENT_ID` and a `CLIENT_SECRET`. The [Quickstart](/docs/getting-started/quickstart) picks up here and shows you how to sign a request with them.
+<Note>
+  Building on Bitnob Enterprise instead? See [Set up your Bitnob Enterprise account](/docs/platform/account-setup).
+</Note>
 
 ## Create your account
 
@@ -53,7 +55,7 @@ To unlock production and raise your limits, open **Identity & Compliance** and s
 
 Review usually takes 24 to 48 hours. We email you the result.
 
-## Create API credentials
+## Create Bitnob Business API credentials
 
 Your credentials are a pair: a `CLIENT_ID` that identifies you, and a `CLIENT_SECRET` that signs your requests.
 
@@ -95,7 +97,7 @@ The secret you sign with selects the environment. There is no environment header
 
 Sandbox data resets from time to time. Do not use it for records you need to keep.
 
-## Store your credentials
+### Store your credentials
 
 Keep credentials out of source control and out of client applications.
 
@@ -106,7 +108,7 @@ BITNOB_CLIENT_SECRET=yourSecretKey
 
 In production, read them from a secret manager rather than a file. [API keys and credential security](/docs/getting-started/api-best-practices/api-keys-and-credentials) covers storage, rotation, and leak response.
 
-## Verify the setup
+### Verify your Business API credentials
 
 Call `/api/whoami`. It returns your authenticated account details and nothing else, so it is safe to call at any time.
 
@@ -126,9 +128,3 @@ A `401` means the signature, the timestamp, or the client id is wrong. The [Quic
 <Note>
   To sign this request from application code, copy a signing helper for Node.js, Go, or Python from [Authentication](/api-reference/authentication/authentication).
 </Note>
-
-## Platform API credentials
-
-The Platform API is separate. It uses a different base URL and an `X-API-Key` header instead of HMAC signing.
-
-If you need it, see the [Platform authentication guide](/docs/platform/authentication).

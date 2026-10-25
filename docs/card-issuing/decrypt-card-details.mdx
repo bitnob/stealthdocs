@@ -1,0 +1,748 @@
+---
+title: "Decrypt card secured details"
+sidebarTitle: "Decrypt card details"
+description: "Generate an RSA key pair, register the public key, and decrypt the card number and CVV that Get card secure returns encrypted to you."
+related:
+  - /docs/card-issuing/issue-your-first-card
+  - /docs/card-issuing/card-issuance
+---
+
+[Get secure card details](/api-reference/cards/get-secure-card-details) returns card credentials encrypted. The card number and CVV are sealed with a public key you register with us, so no readable PAN passes through the gateways, proxies, log stores, or error trackers that handle the response in transit.
+
+Decryption takes place in your own systems, using the private key that pairs with the registered public key. We never receive that private key and cannot decrypt the response ourselves.
+
+Setup is two steps: generate an RSA key pair, then register the public key in the dashboard. After that, every card details response is decrypted in your own code.
+
+## Key pair roles
+
+Setup produces one RSA key pair: two files with distinct roles. Mixing them is the most common cause of integration failure.
+
+|              | `bitnob-cards-public.pem`                                       | `bitnob-cards-private.pem`       |
+| ------------ | --------------------------------------------------------------- | -------------------------------- |
+| Function     | Encrypts the response                                           | Decrypts the response            |
+| Distribution | Registered with us in [step 2](#step-2-register-the-public-key) | Never disclosed, to us or anyone |
+| Storage      | No restrictions                                                 | Secret manager                   |
+
+Only the public key leaves your environment. It encrypts each response; the corresponding private key is the only key that can decrypt one. **Decryption always uses the private key.**
+
+<Note>
+  Disclosure of the private key voids the protection entirely: any holder can decrypt every response encrypted under the matching public key. We do not retain a copy and cannot restore it. If the key is lost or compromised, generate a new pair and register the new public key.
+</Note>
+
+## Step 1: Generate your keys
+
+Generate an RSA key pair of 2048 bits or greater. The five implementations below are equivalent — select a language from the dropdown. On Windows use JavaScript, Python, Go or PowerShell; the Shell option needs `openssl`, which Windows does not install by default.
+
+<CodeGroup>
+
+```javascript JavaScript
+// Save as generate-keys.js, then run: node generate-keys.js
+
+const { generateKeyPairSync } = require('crypto');
+const fs = require('fs');
+
+const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+  modulusLength: 2048,
+  privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+  publicKeyEncoding: { type: 'spki', format: 'pem' },
+});
+
+fs.writeFileSync('bitnob-cards-private.pem', privateKey, { mode: 0o600 });
+fs.writeFileSync('bitnob-cards-public.pem', publicKey);
+
+console.log('\n=== Register THIS with Bitnob (public — safe to share) ===\n');
+console.log(publicKey);
+console.log('=== Private key written to bitnob-cards-private.pem (mode 0600) ===');
+console.log('=== Move it to your secret manager. Never send it to anyone. ===\n');
+```
+
+```python Python
+# Save as generate_keys.py, then run: python3 generate_keys.py
+# Requires: pip install cryptography
+
+import os
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+private_pem = key.private_bytes(
+    serialization.Encoding.PEM,
+    serialization.PrivateFormat.PKCS8,
+    serialization.NoEncryption(),
+)
+public_pem = key.public_key().public_bytes(
+    serialization.Encoding.PEM,
+    serialization.PublicFormat.SubjectPublicKeyInfo,
+)
+
+# Create the private key with 0600 from the outset, so it is never
+# briefly world-readable.
+fd = os.open("bitnob-cards-private.pem", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+with os.fdopen(fd, "wb") as f:
+    f.write(private_pem)
+
+with open("bitnob-cards-public.pem", "wb") as f:
+    f.write(public_pem)
+
+print("\n=== Register THIS with Bitnob (public — safe to share) ===\n")
+print(public_pem.decode())
+print("=== Private key written to bitnob-cards-private.pem (mode 0600) ===")
+print("=== Move it to your secret manager. Never send it to anyone. ===\n")
+```
+
+```bash Shell
+# Requires openssl (preinstalled on macOS and most Linux distributions)
+openssl genrsa -out bitnob-cards-private.pem 2048
+openssl rsa -in bitnob-cards-private.pem -pubout -out bitnob-cards-public.pem
+chmod 600 bitnob-cards-private.pem
+cat bitnob-cards-public.pem
+```
+
+```go Go
+// Save as generate-keys.go, then run: go run generate-keys.go
+
+package main
+
+import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"log"
+	"os"
+)
+
+func main() {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	privDER, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		log.Fatal(err)
+	}
+	privPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privDER})
+
+	pubDER, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+
+	// 0600 so the private key is not world-readable.
+	if err := os.WriteFile("bitnob-cards-private.pem", privPEM, 0o600); err != nil {
+		log.Fatal(err)
+	}
+	if err := os.WriteFile("bitnob-cards-public.pem", pubPEM, 0o644); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print("\n=== Register THIS with Bitnob (public — safe to share) ===\n\n")
+	fmt.Print(string(pubPEM))
+	fmt.Println("=== Private key written to bitnob-cards-private.pem (mode 0600) ===")
+	fmt.Print("=== Move it to your secret manager. Never send it to anyone. ===\n\n")
+}
+```
+
+```powershell PowerShell
+# Save as generate-keys.ps1, then run: pwsh ./generate-keys.ps1
+# Requires PowerShell 7 / .NET 5+ — these methods do not exist in Windows PowerShell 5.1
+
+$rsa = [System.Security.Cryptography.RSA]::Create(2048)
+
+# Wrap at 64 characters with LF. Do not use ToBase64String's InsertLineBreaks:
+# it wraps at 76 with CRLF, which fails the length check in step 2.
+function Format-Pem($label, $bytes) {
+    $b64 = [Convert]::ToBase64String($bytes)
+    $lines = for ($i = 0; $i -lt $b64.Length; $i += 64) {
+        $b64.Substring($i, [Math]::Min(64, $b64.Length - $i))
+    }
+    "-----BEGIN $label-----`n" + ($lines -join "`n") + "`n-----END $label-----`n"
+}
+
+$privPem = Format-Pem 'PRIVATE KEY' $rsa.ExportPkcs8PrivateKey()
+$pubPem  = Format-Pem 'PUBLIC KEY'  $rsa.ExportSubjectPublicKeyInfo()
+
+# WriteAllText emits the exact string, so the PEM keeps its LF line endings.
+[System.IO.File]::WriteAllText("$PWD/bitnob-cards-private.pem", $privPem)
+[System.IO.File]::WriteAllText("$PWD/bitnob-cards-public.pem", $pubPem)
+
+# Restrict the private key to the current user - the Windows equivalent of chmod 600.
+icacls bitnob-cards-private.pem /inheritance:r /grant:r "${env:USERNAME}:(R,W)" | Out-Null
+
+Write-Host "`n=== Register THIS with Bitnob (public - safe to share) ===`n"
+Write-Host $pubPem
+Write-Host "=== Private key written to bitnob-cards-private.pem (current user only) ==="
+Write-Host "=== Move it to your secret manager. Never send it to anyone. ===`n"
+```
+
+</CodeGroup>
+
+### Store the private key
+
+Move `bitnob-cards-private.pem` into your secret manager and delete the local copy. Pipe the file directly rather than printing and pasting it the key is not recoverable if lost, and we hold no copy.
+
+```bash Store the private key
+# 1Password
+op document create bitnob-cards-private.pem --title "bitnob-cards-private-key"
+
+# AWS Secrets Manager
+aws secretsmanager create-secret \
+  --name bitnob/cards/private-key \
+  --secret-string file://bitnob-cards-private.pem
+
+# HashiCorp Vault
+vault kv put secret/bitnob/cards private_key=@bitnob-cards-private.pem
+```
+
+At decryption time, read the key from the secret store rather than from the repository or a build image. The [decryption examples](#decrypting-a-response) load the key from the path in `BITNOB_CARDS_PRIVATE_KEY_PATH`.
+
+### Verify the key format
+
+Confirm the first line of the public key before proceeding. An incorrect header is the most common cause of rejection in [step 2](#step-2-register-the-public-key):
+
+```bash Confirm the public key format
+head -1 bitnob-cards-public.pem
+```
+
+The output must be `-----BEGIN PUBLIC KEY-----`. Any other header — `-----BEGIN RSA PUBLIC KEY-----`, for instance — is rejected in [step 2](#step-2-register-the-public-key); see [when something goes wrong](#when-something-goes-wrong) for the conversion.
+
+## Step 2: Register the public key
+
+The public key is registered from the dashboard, under **Settings → Controls → Card encryption key**. There is no API for this step — the key cannot be submitted programmatically.
+
+Open [**Settings**](https://app.bitnob.com/settings) in the dashboard.
+
+Select the **Controls** tab.
+
+Select **Card encryption key**.
+
+Click on **Add new key**, paste the contents of `bitnob-cards-public.pem` into the field, and save.
+
+<Note>
+  To skip the navigation, open [Settings → Controls → Card encryption key](https://app.bitnob.com/settings?section=controls&control=card-encryption-key&view=endpoints) directly.
+</Note>
+
+### What to paste
+
+The whole file, both armour lines included, with the line breaks exactly as they appear in the file:
+
+```text bitnob-cards-public.pem
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA…
+…
+-----END PUBLIC KEY-----
+```
+
+The armour lines are how the key is located at all; a value without them is rejected regardless of how well formed the rest is. Line breaks _inside_ the base64 body are optional wrapped at 64 characters (what the step 1 generators produce) and a single unbroken run are both accepted.
+
+<Note>
+  **Copy the file; do not retype or hand-edit it.** Every rejection listed in [when something goes wrong](#when-something-goes-wrong) comes from a key that was reassembled by hand or truncated in transit. Do not paste a JSON-escaped value either — literal `\n` sequences are not valid base64 and will be rejected.
+</Note>
+
+### Confirm the key is complete
+
+A 2048-bit public key from [step 1](#step-1-generate-your-keys) always has the same shape, so a truncated paste is visible without running anything:
+
+**Nine lines** — the two armour lines and seven lines of base64.
+
+**The body ends `IDAQAB`.** This encodes the public exponent 65537, which every key generated in step 1 uses.
+
+If the value is shorter, or does not end that way, it was clipped between the file and the dashboard — copy the file again.
+
+On macOS, Linux, or Git Bash you can count the base64 body directly. It is **392 characters**:
+
+```bash Check the base64 body
+grep -v -- '-----' /path/to/bitnob-cards-public.pem | tr -d '\n' | wc -c
+```
+
+Replace `/path/to/` with the folder you generated the key in. The `-----` is not a placeholder — it is the text `grep` matches to strip the `BEGIN` and `END` lines, leaving only the base64 body to count.
+
+<Note>
+  Registering a key again **replaces** the stored one, which is how you rotate. See [rotating your key](#rotating-your-key).
+</Note>
+
+
+## Decrypting a response
+
+Decryption uses the **private** key — the half that never left your machine. The example below fetches a card and returns the plain details; select a language from the dropdown. It depends only on the `generateAuthHeaders` helper from [Authentication](/api-reference/authentication/authentication).
+
+<CodeGroup>
+
+```javascript JavaScript
+// Save as bitnob-cards.js
+
+const crypto = require('crypto');
+const fs = require('fs');
+const { generateAuthHeaders } = require('./auth');
+
+const ALGORITHM = 'RSA-OAEP-256+AES-256-GCM';
+
+/**
+ * Turns an encrypted_details object into the plain card details.
+ * privateKeyPem is the contents of bitnob-cards-private.pem.
+ */
+function decryptCardDetails(encryptedDetails, privateKeyPem) {
+  const { encrypted_data, encrypted_key, algorithm } = encryptedDetails;
+
+  if (algorithm !== ALGORITHM) {
+    throw new Error(`unexpected algorithm ${algorithm}; expected ${ALGORITHM}`);
+  }
+
+  // 1. Unwrap the one-time AES key with your private key.
+  //    oaepHash MUST be sha256 — Node defaults to sha1 and would fail here.
+  const aesKey = crypto.privateDecrypt(
+    {
+      key: privateKeyPem,
+      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+      oaepHash: 'sha256',
+    },
+    Buffer.from(encrypted_key, 'base64'),
+  );
+
+  // 2. Layout is: nonce (12 bytes) | ciphertext | tag (16 bytes)
+  const raw = Buffer.from(encrypted_data, 'base64');
+  const nonce = raw.subarray(0, 12);
+  const tag = raw.subarray(raw.length - 16);
+  const ciphertext = raw.subarray(12, raw.length - 16);
+
+  // 3. Decrypt. Throws if the data was altered.
+  const decipher = crypto.createDecipheriv('aes-256-gcm', aesKey, nonce);
+  decipher.setAuthTag(tag);
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+
+  return JSON.parse(plaintext.toString('utf8'));
+}
+
+const BASE_URL = process.env.BITNOB_BASE_URL || 'https://api.bitnob.com';
+const PRIVATE_KEY = fs.readFileSync(process.env.BITNOB_CARDS_PRIVATE_KEY_PATH, 'utf8');
+
+async function getCardDetails(cardId) {
+  const res = await fetch(`${BASE_URL}/api/cards/${cardId}/secure`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...generateAuthHeaders(process.env.CLIENT_ID, process.env.CLIENT_SECRET, null),
+    },
+  });
+
+  const { data } = await res.json(); // every response is wrapped in `data`
+
+  // The balance sits outside the blob, so read it before decrypting if you
+  // only need that; it arrives as a string.
+  return {
+    ...decryptCardDetails(data.encrypted_details, PRIVATE_KEY),
+    balance_currency: data.balance_currency,
+  };
+}
+
+module.exports = { decryptCardDetails, getCardDetails };
+```
+
+```python Python
+# Save as bitnob_cards.py  (pip install cryptography requests)
+
+import base64
+import json
+import os
+
+import requests
+from auth import generate_auth_headers
+
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+ALGORITHM = "RSA-OAEP-256+AES-256-GCM"
+
+
+def decrypt_card_details(encrypted_details: dict, private_key_pem: bytes) -> dict:
+    """Turns an encrypted_details object into the plain card details.
+
+    private_key_pem is the contents of bitnob-cards-private.pem.
+    """
+    if encrypted_details["algorithm"] != ALGORITHM:
+        raise ValueError(
+            f"unexpected algorithm {encrypted_details['algorithm']}; expected {ALGORITHM}"
+        )
+
+    private_key = serialization.load_pem_private_key(private_key_pem, password=None)
+
+    # 1. Unwrap the one-time AES key with your private key (OAEP with SHA-256).
+    aes_key = private_key.decrypt(
+        base64.b64decode(encrypted_details["encrypted_key"]),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
+
+    # 2. Layout is: nonce (12 bytes) | ciphertext | tag (16 bytes).
+    #    AESGCM.decrypt wants the ciphertext and tag together, so only the
+    #    nonce is split off.
+    raw = base64.b64decode(encrypted_details["encrypted_data"])
+    nonce, ciphertext_and_tag = raw[:12], raw[12:]
+
+    # 3. Decrypt. Raises if the data was altered.
+    plaintext = AESGCM(aes_key).decrypt(nonce, ciphertext_and_tag, None)
+
+    return json.loads(plaintext)
+
+
+BASE_URL = os.environ.get("BITNOB_BASE_URL", "https://api.bitnob.com")
+PRIVATE_KEY = open(os.environ["BITNOB_CARDS_PRIVATE_KEY_PATH"], "rb").read()
+
+
+def get_card_details(card_id: str) -> dict:
+    headers = generate_auth_headers(
+        os.environ["CLIENT_ID"], os.environ["CLIENT_SECRET"], None
+    )
+    data = requests.get(
+        f"{BASE_URL}/api/cards/{card_id}/secure",
+        headers={"Content-Type": "application/json", **headers},
+        timeout=30,
+    ).json()["data"]  # every response is wrapped in `data`
+
+    # The balance sits outside the blob, so read it before decrypting if you
+    # only need that; it arrives as a string.
+    return {
+        **decrypt_card_details(data["encrypted_details"], PRIVATE_KEY),
+        "balance_currency": data["balance_currency"],
+    }
+```
+
+```go Go
+package main
+
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"encoding/pem"
+	"fmt"
+	"net/http"
+	"os"
+
+	"yourproject/auth"
+)
+
+const Algorithm = "RSA-OAEP-256+AES-256-GCM"
+
+// DecryptCardDetails turns an encrypted_details object into the plain details.
+func DecryptCardDetails(encryptedKey, encryptedData, algorithm string, priv *rsa.PrivateKey) (map[string]any, error) {
+	if algorithm != Algorithm {
+		return nil, fmt.Errorf("unexpected algorithm %q; expected %q", algorithm, Algorithm)
+	}
+
+	// 1. Unwrap the one-time AES key (OAEP with SHA-256).
+	wrapped, err := base64.StdEncoding.DecodeString(encryptedKey)
+	if err != nil {
+		return nil, err
+	}
+	aesKey, err := rsa.DecryptOAEP(sha256.New(), nil, priv, wrapped, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Layout is: nonce | ciphertext | tag. Go's GCM expects the tag to stay
+	//    attached to the ciphertext, so only the nonce is split off.
+	raw, err := base64.StdEncoding.DecodeString(encryptedData)
+	if err != nil {
+		return nil, err
+	}
+	block, err := aes.NewCipher(aesKey)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) < gcm.NonceSize() {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	// 3. Decrypt. Errors if the data was altered.
+	plaintext, err := gcm.Open(nil, raw[:gcm.NonceSize()], raw[gcm.NonceSize():], nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var out map[string]any
+	if err := json.Unmarshal(plaintext, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// LoadPrivateKey reads the PKCS#8 key written in step 1.
+func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	blk, _ := pem.Decode(raw)
+	if blk == nil {
+		return nil, fmt.Errorf("no PEM block found in %s", path)
+	}
+	parsed, err := x509.ParsePKCS8PrivateKey(blk.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	priv, ok := parsed.(*rsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("not an RSA private key")
+	}
+	return priv, nil
+}
+
+// GetCardDetails fetches a card and returns the decrypted credentials.
+func GetCardDetails(cardID string, priv *rsa.PrivateKey) (map[string]any, error) {
+	baseURL := os.Getenv("BITNOB_BASE_URL")
+	if baseURL == "" {
+		baseURL = "https://api.bitnob.com"
+	}
+
+	headers, err := auth.GenerateAuthHeaders(os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"), "")
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", baseURL+"/api/cards/"+cardID+"/secure", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Auth-Client", headers.XAuthClient)
+	req.Header.Set("X-Auth-Timestamp", headers.XAuthTimestamp)
+	req.Header.Set("X-Auth-Nonce", headers.XAuthNonce)
+	req.Header.Set("X-Auth-Signature", headers.XAuthSignature)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var body struct {
+		Data struct {
+			EncryptedDetails struct {
+				EncryptedData string `json:"encrypted_data"`
+				EncryptedKey  string `json:"encrypted_key"`
+				Algorithm     string `json:"algorithm"`
+			} `json:"encrypted_details"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return nil, err
+	}
+
+	ed := body.Data.EncryptedDetails
+	return DecryptCardDetails(ed.EncryptedKey, ed.EncryptedData, ed.Algorithm, priv)
+}
+```
+
+</CodeGroup>
+
+This completes the integration. Validate it against the [test vector](#test-vector) before calling the endpoint with a live card.
+
+## Test vector
+
+A decryption failure against a live card has two possible causes — a defect in your decryption code, or an incorrect key registration — and both present identically. The vector below isolates them. It is a genuine encrypted payload built with the scheme documented on this page, and requires no API call: if your code decrypts it successfully, your implementation is correct and the fault lies in registration.
+
+<Note>
+  **Test key only.** The private key below is published intentionally and is for testing only. It secures nothing. **Do not** use it in your integration, and do not confuse it with `bitnob-cards-private.pem`, which you generated in [step 1](#step-1-generate-your-keys) and must never disclose.
+</Note>
+
+```text test-private-key.pem
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCwbdGVfreHSC0U
+23xkIDt2s+27Xm28QgkYH+WfdWx3BpDzF8rLW63LVKT5zykH7sWrSxtn2kWRdhQj
+RuPOxWRaVMS/+br/uwJMZiMPPImenB28ZUiHmfH/A3YrYdhOuSkPmiPFI2R7x7g1
+Ehre9Tem5WbjyXEoiN3dx78ySeKEUd2CeMAynGMRwlnnJEoR0raxlbzsN5Rm0YvK
+K77xQKWdQZoVIowEvPSQ0qWxMykZmZgRcxJJFF3uIdbHYMD7Rx5MvYXK1VZ1f9gh
+6Fevxh9N0cZYnTZ6VrV84jh5j3qlEyfX5RtI76XrRFAVFx0FYkYeE6zWNQjWMwCp
+QT4p45/ZAgMBAAECggEAFROlgk+/UprBgfifkWGVYP6pQ6VKBD+6UOa8mpJfWQ/Q
+gK4CtM0Yw83yoIJKU0+Hz0kbdsppXbGGwdkd7W2A6davI4UMvTDE20YnYZJYmXlq
+hv9tjP+L3Kx38UJQ4kS1/k5qgApUnoHzRGnLin+ufJJyunst+MrzAGP0uCgB9s8T
+BUGhX81HOQSVJ0q3NwNNdP7K8MLwRQ9ZuGRmeLy5vJ8P9PyDzjvk/a8nR+QjSezx
+6opYxY92T9d8BMPhWe3SSRzIfo2G0f6sCpivz3Sl7hSSEADeYDyTRI5tFxypX3D0
+yjAMi8/llXfIIY6Sd8W5jVgHreaqAQNq2v2fW4cqgQKBgQDgtCox0OLXo7LZ2j4H
+SIZPiGiCxkFi5gMvy6UMt0A5QXu9K2AC6b6VlUn/vHoGZM5WhN9Ji2PYb6ikaLQE
+F4J0t4ImI1rlcLL/IUuRMMRK1ZwYAt7mtY2ivSiRBBLhfb37ZdiEIP0g+2s0fWF0
+w3uWBdehPrQNLh9JzSgJglSSwQKBgQDJAGlU3DTED6jwCV9TGnANhrNpyY+3ls7O
+1nFZUx2IjqhLFkucqKityCs5LUCY2Y4bpQKnCmhSDOEhr4xSfzueWF7nk5jnWgs5
+1BQeGOjJgAhbZwjf+rSzyjkbEbvJlYOMS3AwU2FT4uVbq17or3+IIJ5ut72sZjOV
+KuavKRMLGQKBgQC5RxT7mndQwyO3yeIXc097yMgT/JDxkSLTiCEBiSAllb8HzfoO
+rNl+0WgAvFIJb5lLcagDJjIfxoHRfpvgO9pPjvh7pe9O/Ew7XiLHBuTzp4pbqhJN
+PSoaI8qNOESxNVMvNV0AJYtSZLySvUdcVctTemHADMm9jGg0HDuFC7fcgQKBgQCp
+gCFTIIeWtqX+Fck/KVJI9ciicwkxBonLvubDLuX+3F5rQ5frugbU1bIte024F+5Q
+vawo9QvX9Wh8oa8xen3qIBeYLc2Je1NwJrn4T4UvNzrU6WSAjMiJvQS/IQs9CUpv
+qsYm2ol+1h4YWcGlcymWv/sa3vOiSGVDa3QxTe/zMQKBgB9Vc0+HN9X5nXoP5GzP
+h6lkxPbwvKE87Yp9sr38AlD4g7wxlbm0T/29cCf0WUWlaIKykGWAuq24BpgxrANC
+Bx6tID4Yandl6bkCDuSIhQiAWF0RgJ5B9v6MdLbsK+5YzfBkL3rCknpCLkDvnp8V
+MoYVZOvraCcYjnPGm5Ot5yeI
+-----END PRIVATE KEY-----
+```
+
+Feed your decrypt function this `encrypted_details` object, using the key above:
+
+```json encrypted_details wrap
+{
+  "encrypted_data": "i3MDji03VQvO7qJM57rA43zfE/rhrtSLrq6SVzXPmo2ySQoPv0jARdQ3EOSClBrgFh0E0ozuIkoL2dGS8IE2JTrE3jSlW8Ug0bloaVFDAcmhpO2YSUU2e9HHz8RNGtbdXItcm09cpb5oepWHiKlGp6FOIErCa/wltDoRxl0SI6Jvj2BGlnUNnlBKSQQ37/4wZ3Daxviv2p7ExlNIih3o2eTPcmKoj7SV2zhlhXxPwqrp+0y/IatLh+yNhWd8OIfBkfz5sPmxyU+dI32i+KD2S2x3o0rBIfbfZNmMHUBS3enZAvd+NWYFqCEGAD4=",
+  "encrypted_key": "nTFuvhXfz3hMBFSo0Gzixj5276ZacDjq84uW/NijHUInwQHO0G+JURXtguOlkYERpaU1fXb4thEczCYPxYSV8uiMEXQOBpqKw9DX+oHDxZKjtsp5X2/K4sbG6hJf0ZJZyoA2WuAAKDfY1MK99JIgnLrOYRa2Sqvyjt+HHw0NhJYDCS/LjX+R12xaWj+MxmwAf5bEqPofSDQg132M6fPu+t8zQ58Yphh5YD9ak9jhtik2iMtip3x81+RCstmXIQbreUCeIlOI/08/WynTQD80lwcWmUGbqQ3C8md/kvkSZ0ipyNl4lUjxvgwoCm4h3tD4yDWTq6TCKZqn5Ix/UevYtA==",
+  "algorithm": "RSA-OAEP-256+AES-256-GCM"
+}
+```
+
+Passing both to your decrypt function must return this object:
+
+```json Expected plaintext
+{
+  "card_id": "550e8400-e29b-41d4-a716-446655440000",
+  "card_number": "4111111111111111",
+  "cvv": "123",
+  "expiry_month": "11",
+  "expiry_year": "2029",
+  "name": "ADA LOVELACE",
+  "balance_amount": 5000000,
+  "balance_currency": "USD"
+}
+```
+
+If the vector decrypts but a live card does not, the implementation is correct and the registration is at fault; see [check your key pair](#check-your-key-pair). If the vector fails, the defect is in your decryption code; see [when something goes wrong](#when-something-goes-wrong).
+
+## What you get back
+
+Every response carries `data.encrypted_details`:
+
+```json Response
+{
+  "success": true,
+  "message": "Card details retrieved successfully",
+  "data": {
+    "encrypted_details": {
+      "encrypted_data": "base64…",
+      "encrypted_key": "base64…",
+      "algorithm": "RSA-OAEP-256+AES-256-GCM"
+    },
+    "balance_amount": "5000000",
+    "balance_currency": "USD"
+  },
+  "request_id": "req_…",
+  "timestamp": "2026-09-15T12:00:00Z"
+}
+```
+
+<Note>
+  **`data.balance_amount` is a STRING.** The API serializes 64-bit integers as JSON strings, so it arrives as `"5000000"`, not `5000000`. Convert it (`Number(...)` / `int(...)`) before doing arithmetic. The copy _inside_ the encrypted blob is a real number — see below.
+</Note>
+
+### What decryption gives you
+
+Decrypting `encrypted_details` yields the card itself, with the balance carried alongside it as a real number:
+
+```json Decrypted details
+{
+  "card_id": "550e8400-e29b-41d4-a716-446655440000",
+  "card_number": "4111111111111111",
+  "cvv": "123",
+  "expiry_month": "11",
+  "expiry_year": "2029",
+  "name": "ADA LOVELACE",
+  "balance_amount": 5000000,
+  "balance_currency": "USD"
+}
+```
+
+The balance is therefore available two ways: from `data.balance_amount` without decrypting anything (convert the string), or from the decrypted object (already a number).
+
+`data.balance_amount` and `data.balance_currency` sit **outside** the encrypted blob deliberately, so you can show a balance without decrypting anything.
+
+## When something goes wrong
+
+### Decryption fails
+
+| What you see                                                          | Cause                                                                                                                    |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| RSA unwrap fails / `oaep decoding error`                              | The OAEP hash is SHA-1. It must be **SHA-256** — in Node, pass `oaepHash: 'sha256'`. This is the most common cause       |
+| RSA unwrap fails and the hash is right                                | Wrong private key — it is not the mate of the public key you registered. See [check your key pair](#check-your-key-pair) |
+| `Unsupported state or unable to authenticate data` / GCM auth failure | The nonce or tag was split wrong. The layout is `nonce(12) ‖ ciphertext ‖ tag(16)`                                       |
+| The plaintext is not valid JSON                                       | base64-decoded twice, or the two fields were concatenated                                                                |
+| You are trying to decrypt with `bitnob-cards-public.pem`              | The public key only encrypts. Decryption uses the private half — see [Key pair roles](#key-pair-roles)                           |
+
+A GCM authentication failure is **never** safe to work around by skipping the tag check. It means the bytes are not the ones we sealed.
+
+If you have not already done so, run the [test vector](#test-vector) to establish whether the fault lies in your decryption code or in your key registration.
+
+### Registration is rejected
+
+| What you see                              | Cause                                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `400` — "invalid RSA public key"          | Wrong PEM. It must begin `-----BEGIN PUBLIC KEY-----` and be 2048-bit or larger                                          |
+| `503`                                     | We could not read your registered key. Transient — retry                                                                 |
+
+### `no PEM block found`
+
+Every value below is rejected with the same message. All of them come from hand-editing the key instead of copying the file verbatim:
+
+| Value                                                     | Why                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `MIIBIjANBg…`                                             | no armour lines                                                                                  |
+| `\nMIIBIjANBg…\n`                                         | escaped newlines, but still no armour                                                            |
+| `-----BEGIN PUBLIC KEY-----MIIB…-----END PUBLIC KEY-----` | flattened onto one line; the breaks after BEGIN and before END are missing                       |
+| `-----BEGIN PUBLIC KEY-----\n⏎MIIB…`                      | a JSON-escaped value was pasted — the literal `\` and `n` are not base64                         |
+| `-----BEGIN RSA PUBLIC KEY-----…`                         | PKCS#1, not SPKI. Convert it: `openssl rsa -RSAPublicKey_in -in pkcs1.pem -pubout -out spki.pem` |
+
+## Check your key pair
+
+If the [test vector](#test-vector) passes but a live card fails, the private key you are decrypting with is probably not the mate of the public key we hold. The two hashes must match:
+
+```bash Check the key pair
+openssl rsa -in bitnob-cards-private.pem -noout -modulus | openssl sha256
+openssl rsa -pubin -in bitnob-cards-public.pem -noout -modulus | openssl sha256
+```
+
+If they differ, the two files are from different pairs — regenerate ([step 1](#step-1-generate-your-keys)) and register the new public key ([step 2](#step-2-register-the-public-key)).
+
+If the hashes match, the key registered with us may differ from the file you hold. Re-register `bitnob-cards-public.pem` to confirm the stored key corresponds to your private key.
+
+## Handling the decrypted details
+
+The decrypted payload contains a live card number and CVV. PCI scope applies to it and to any system it reaches.
+
+**Never log it**, at any level. Log the `card_id` instead.
+
+**Do not persist it.** Retrieve the details again when required; we do not store them either.
+
+**Keep it out of URLs**, query strings, analytics and error trackers.
+
+Return it to a browser only over TLS, and only to the cardholder.
+
+## Rotating your key
+
+Generate a new pair ([step 1](#step-1-generate-your-keys)) and register the new public key ([step 2](#step-2-register-the-public-key)); it replaces the old one.
+
+Rotation is **not retroactive**: a response already encrypted to the old key can only be opened with the old private key. Keep the previous private key until you are certain nothing you fetched under it is still in flight.
+
+## How it works
+
+Envelope encryption, the same shape as JWE. RSA cannot encrypt a payload this size — a 2048-bit OAEP-SHA256 key holds at most 190 bytes and the details JSON is larger — so:
+
+| Field            | Contents                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `encrypted_key`  | a fresh 32-byte AES-256 key, wrapped with your RSA public key using **OAEP with SHA-256** |
+| `encrypted_data` | the details JSON under **AES-256-GCM**, laid out as `nonce ‖ ciphertext ‖ tag`            |
+|                  | nonce **12 bytes** at the front · tag **16 bytes** at the end · **no AAD**                |
+
+Both fields are standard, padded base64. The AES key is generated per request and never stored on our side.
+
+We hold only your public key, so we cannot decrypt what we send you — by design, not by policy.

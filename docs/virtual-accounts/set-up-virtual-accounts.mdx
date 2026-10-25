@@ -1,0 +1,126 @@
+---
+title: "Set up NGN virtual accounts"
+sidebarTitle: "Set up virtual accounts"
+description: "Prepare a BVN-verified customer, issue their virtual account at the bank you choose, test deposits in sandbox, and handle the errors on the way."
+related:
+  - /docs/virtual-accounts/overview
+  - /docs/getting-started/core-concepts-and-architecture/currencies-and-amounts
+---
+
+This guide takes one customer from nothing to a working naira account number. For what virtual accounts are and how deposits are credited, start with the [overview](/docs/virtual-accounts/overview).
+
+Before you start, make sure virtual accounts are enabled on your account. The Bitnob team switches them on after your KYB review; until then, calls in production are rejected.
+
+## Issue a virtual account
+
+<Steps>
+  <Step title="Make sure the customer can pass verification">
+    Nigerian regulation requires identity verification behind every naira account. The [customer record](/api-reference/customers/create-customer) must carry `first_name`, `last_name`, `email`, `phone_number`, `date_of_birth` (18 or over), `id_type: "bvn"`, and the 11-digit BVN as `id_number`.
+
+    ```json
+    {
+      "email": "ada@example.com",
+      "customer_type": "individual",
+      "first_name": "Ada",
+      "last_name": "Okafor",
+      "date_of_birth": "1994-03-21",
+      "phone_number": "8012345678",
+      "dial_code": "+234",
+      "id_type": "bvn",
+      "id_number": "12345678901",
+      "country": "NGA"
+    }
+    ```
+
+    The BVN lives on the customer, not on the virtual account request; add it at creation or [patch an existing customer](/api-reference/customers/update-customer).
+
+    <Warning>
+      Customers are matched on `email`, `phone_number` and BVN (`id_number`). If you send an email, phone number or BVN that already belongs to one of your customers, you get `201 Created` with **that existing customer**, and the other fields you sent are ignored. Compare the returned `email`, phone number and name with what you sent. If they differ, one of those details is already in use, and the virtual account would be issued against the existing customer's details.
+    </Warning>
+
+    <Warning>
+      The name and date of birth must exactly match what is registered against the BVN in the national registry. If either differs, verification fails even when the BVN itself is valid.
+    </Warning>
+  </Step>
+  <Step title="Create the account">
+    Full schema: [Create virtual account](/api-reference/virtual-accounts/create-virtual-account).
+
+    ```http
+    POST /api/virtual-accounts
+    ```
+
+    ```json
+    {
+      "reference": "your-unique-reference",
+      "currency": "NGN",
+      "customer_id": "<customer uuid>",
+      "account_alias": "Optional internal label",
+      "bank": "globus"
+    }
+    ```
+
+    `reference` is your idempotency key: sending the same reference again returns the existing account, even if you change `bank`. `account_alias` is an optional label for your own records. NGN is currently the only supported currency. The response returns the account number the customer can pay into.
+
+    `bank` chooses the issuing bank: `nomba` (Nombank MFB) or `globus` (Globus Bank). It isn't case-sensitive. Leave it out and the account opens at the default bank, currently Nomba. `bank_name` on the response names the bank, but in sandbox it's always `Sandbox Bank`, whichever you choose.
+
+    A customer can hold as many accounts as you need, including one at each bank. Send a new `reference` for each.
+  </Step>
+  <Step title="Test it in sandbox">
+    [`POST /api/virtual-accounts/:id/simulate-deposit`](/api-reference/virtual-accounts/simulate-deposit-sandbox) fakes an inbound transfer so you can exercise the crediting flow without real money. It needs no request body: each call credits a fixed ₦1,000 to your company NGN balance and fires [`virtual_account.deposit.success`](/docs/virtual-accounts/deposit-webhook), exactly as a real transfer would. It is rejected in production.
+  </Step>
+</Steps>
+
+## Business customers
+
+To open an account for a company, set `customer_type` to `business` and add the company's details to the customer:
+
+| Field | Notes |
+|---|---|
+| `company_name` | The company's registered name |
+| `registration_number` | For example `RC1487263` |
+
+The personal fields (`first_name`, `last_name`, `date_of_birth`, `email`, `phone_number`, `dial_code`, `id_type`, and `id_number`) are those of a director or authorised representative, and follow the same rules as for an individual. The account is created with `account_type: "business"`.
+
+```json
+{
+  "customer_type": "business",
+  "company_name": "Okonkwo Agro Foods Ltd",
+  "registration_number": "RC1487263",
+  "first_name": "Ada",
+  "last_name": "Okonkwo",
+  "date_of_birth": "1990-04-12",
+  "id_type": "bvn",
+  "id_number": "22187465039",
+  "email": "ada.okonkwo@example.com",
+  "phone_number": "8012345678",
+  "dial_code": "+234",
+  "country": "NGA"
+}
+```
+
+## Working with issued accounts
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/virtual-accounts` | List your accounts |
+| GET | `/api/virtual-accounts/:id` | Fetch one |
+| GET | `/api/virtual-accounts/:id/transactions` | Deposits into that account |
+| PATCH | `/api/virtual-accounts/:id/alias` | Change your internal label. Payers don't see it. |
+| GET | `/api/virtual-accounts/supported-currencies` | Currently returns NGN |
+
+## When something fails
+
+<AccordionGroup>
+  <Accordion title="Rejected in production">
+    Virtual accounts aren't enabled on your account yet. They're switched on after KYB review; contact Bitnob before retrying anything.
+  </Accordion>
+  <Accordion title="Validation error naming missing customer fields">
+    The customer record is incomplete. The error lists every missing field at once, for example `customer <id> is missing bvn, date_of_birth`, so fix them in one pass. It refers to the **customer record**, not the request you just sent; update the customer and retry.
+  </Accordion>
+  <Accordion title="bank must be one of: nomba, globus">
+    `bank` was set to something other than `nomba` or `globus`. The request fails with `400` `VALIDATION_ERROR`. Leave `bank` out to use the default bank.
+  </Accordion>
+  <Accordion title="Verification failure">
+    The BVN did not match the customer's registered name or date of birth. Correct the customer record to match the registry.
+  </Accordion>
+</AccordionGroup>

@@ -1,12 +1,12 @@
 ---
 title: "Errors and retries"
-description: "Error semantics shared by every Bitnob API: HTTP status meanings, the error body, rate limits, and retry discipline that never duplicates money movement."
+description: "Error semantics shared by every Bitnob Business API endpoint: HTTP status meanings, the error body, rate limits, and retry discipline that never duplicates money movement."
 related:
   - /docs/getting-started/api-best-practices/idempotency-and-reference-integrity
   - /docs/getting-started/api-best-practices/observability-logging-and-traceability
 ---
 
-Every Bitnob API shares one error model. Product sections document their own failure scenarios, [payouts](/docs/payouts/error-handling), [stablecoins](/docs/stablecoins/error-handling-and-failure-scenarios), [trading](/docs/trading/error-handling-patterns), [cards](/docs/card-issuing/card-fees); this page covers what they all have in common.
+Every Bitnob Business API endpoint shares one error model. The Bitnob Enterprise API uses a different one; see [Making Bitnob Enterprise API requests](/docs/platform/making-requests#errors). Product sections document their own failure scenarios, [payouts](/docs/payouts/error-handling), [stablecoins](/docs/stablecoins/error-handling-and-failure-scenarios), [trading](/docs/trading/error-handling-patterns), [cards](/docs/card-issuing/card-fees); this page covers what they all have in common.
 
 ## Status codes
 
@@ -16,10 +16,10 @@ Every Bitnob API shares one error model. Product sections document their own fai
 | `401` | Authentication failed: missing header, bad signature, stale timestamp. | After fixing signing; see [Quickstart](/docs/getting-started/quickstart). |
 | `403` | Authenticated but not permitted: feature not enabled, IP not whitelisted. | No; resolve the permission. |
 | `404` | No such resource, or a reference that does not exist on your account. | No; check the identifier. |
-| `409` | Conflict, typically a duplicate `reference`. | No; fetch the original result. |
+| `409` | Conflict, typically a duplicate `reference` on a withdrawal. | No; fetch the original result. |
 | `410` | Gone, typically an expired quote. | With a fresh quote. |
-| `422` | Semantically invalid: insufficient balance, out-of-limits amount. | After the condition changes. |
-| `429` | Rate limited. | Yes, with backoff; respect `Retry-After`. |
+| `422` | Precondition failed: insufficient balance, an expired or already-used trading quote. | After the condition changes, or with a fresh quote. |
+| `429` | Rate limited. | Yes, with backoff; wait for `X-Ratelimit-Reset`. |
 | `5xx` | Temporary problem on Bitnob's side. | Yes, with backoff. |
 
 ## The error body
@@ -49,7 +49,7 @@ Every error body carries `correlation_id`, and repeats it as `request_id`. Log `
 
 ## Rate limits
 
-Keys are rate limited, 60 requests per minute by default, with brief bursts tolerated. On `429`, back off exponentially and respect `Retry-After`. Enterprise volumes can be raised through support. Design batch jobs to pace themselves rather than racing the limiter; see [Send payouts in bulk](/docs/payouts/mass-payouts) for the pattern.
+The API allows 500 requests per minute. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset`, so you can see how close you are before you're throttled. A request over the limit returns `429`: back off exponentially and retry after the reset. Design batch jobs to pace themselves rather than racing the limiter; see [Send payouts in bulk](/docs/payouts/mass-payouts) for the pattern.
 
 ## The retry discipline
 
@@ -60,7 +60,7 @@ Money movement makes naive retries dangerous, and one habit removes the danger:
     Generate a unique `reference` per payout, transfer, trade, or card operation, before the first attempt, and persist it with the intent.
   </Step>
   <Step title="Retry with the same reference">
-    On timeout or `5xx`, re-submit the identical request. If the original succeeded, you get its result back; nothing executes twice. This is why a timeout is never a reason to panic or to mint a new reference.
+    On timeout or `5xx`, re-submit the identical request. For most endpoints, if the original succeeded you get its result back or a `409`, and nothing executes twice. **Crypto-pair trades are the exception:** the reference isn't checked there, so look the order up before you resend. Either way, a timeout is never a reason to mint a new reference.
   </Step>
   <Step title="Treat 409 as an answer, not an error">
     A duplicate-reference conflict means the action already exists. Fetch it by reference and continue as success.

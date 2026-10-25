@@ -1,23 +1,22 @@
 ---
 title: "Fund a card"
-description: "Load USD onto a prepaid card from your Bitnob balance, with the constraints to check first and the failure cases to handle."
+description: "Load USD onto a prepaid card from your company balance, move it back with a withdrawal, and handle the limits and failures on the way."
 related:
   - /docs/card-issuing/transaction-monitoring
   - /docs/card-issuing/card-fees
 ---
 
-Cards are prepaid, so they hold nothing until you load them. Funding draws on your Bitnob balance in BTC, USDT, USDC, or NGN; Bitnob converts to USD internally at funding time, so you never need to hold USD yourself.
+Cards are prepaid, so they hold nothing beyond what you load. A top-up is debited from your company balance, together with its fee. If that balance can't cover both, the call fails, and the error's `extensions.currency` names the balance that was checked.
 
 ## Check before you fund
 
 | Constraint | Value |
 |---|---|
-| Minimum per top-up | \$2 |
+| Minimum per top-up | \$2. Less fails with `400` "amount below minimum funding of \$2". |
 | Maximum per transaction | \$2,500 |
 | Maximum card balance | \$50,000 |
 | Card status | Must be `active`. Frozen and terminated cards cannot be funded. |
-| Source balance | The debit fails if your balance cannot cover amount plus fee. |
-| FX tolerance | Funding fails if the source asset's value moves too far between quote and execution. Retry to get a fresh rate. |
+| Source balance | Must cover the amount plus the fee: a \$2.00 top-up needs \$3.00. |
 
 Funding fees are on [Fees and decline rules](/docs/card-issuing/card-fees): \$1 flat below \$100, 1% at \$100 and above.
 
@@ -49,7 +48,44 @@ POST /api/cards/{cardId}/balance
   Your unique identifier for this operation, and its idempotency key: retrying with the same reference returns the original transaction instead of creating a duplicate.
 </ParamField>
 
-The response returns the funding transaction in status `pending`, including `balance_before`, `balance_after`, and the `fee_amount` charged.
+The response returns the funding transaction in status `pending`, including `balance_before`, `balance_after`, and the `fee_amount` charged:
+
+```json
+{
+  "success": true,
+  "message": "Card funded successfully",
+  "data": {
+    "message": "Card funding processing",
+    "success": false,
+    "transaction": {
+      "amount": "2000000",
+      "balance_after": "1000000",
+      "balance_before": "1000000",
+      "business_pool": false,
+      "card_id": "01a14943-44cf-7b97-832e-5a70803c54b9",
+      "cardholder_name": "Amaka Eze",
+      "company_id": "b1ebb43e-068f-4b6a-bbab-5c3027bc1510",
+      "created_at": "2026-10-17T10:36:35.887667882Z",
+      "created_by": "b1ebb43e-068f-4b6a-bbab-5c3027bc1510",
+      "currency": "USD",
+      "description": "Card funding",
+      "display_amount": 2,
+      "fee_amount": "1000000",
+      "fee_type": "funding_fee",
+      "id": "01a1496f-56af-7ab1-86a3-387d23ba991a",
+      "last_four_digit": "7725",
+      "reference": "docs-fund-57bc9c8a",
+      "status": "pending",
+      "transaction_date": "2026-10-17T10:36:35.887667882Z",
+      "type": "funding",
+      "updated_at": "2026-10-17T10:36:35.960913151Z"
+    }
+  },
+  "timestamp": "2026-10-17T10:36:35.96458935Z"
+}
+```
+
+The top-level `success: true` means the request was accepted. The nested `data.success: false` and `status: "pending"` mean the load hasn't finished yet. Your ledger shows the debit as a `CARD_TOPUP` entry carrying the fee.
 
 ## Confirm with the webhook
 
@@ -79,18 +115,29 @@ A failed load arrives as `virtualcard.topup.failed` with the same shape and `sta
 
 <AccordionGroup>
   <Accordion title="Insufficient balance (400)">
-    Your Bitnob balance cannot cover the amount plus fee. Check with [List balances](/api-reference/balances/list-balances) before funding, then top up your account.
+    Your company balance can't cover the amount plus fee. The error carries `extensions.error_code: "COMPANY_INSUFFICIENT_BALANCE"`, the `currency` of the balance that was checked, and the `required` and `available` amounts. Top up that balance, then retry.
+  </Accordion>
+  <Accordion title="Amount below the minimum (400)">
+    Top-ups start at \$2.00 (`2000000`). The error reads "amount below minimum funding of \$2".
   </Accordion>
   <Accordion title="Card is frozen or terminated (403)">
     Only `active` cards can be funded. Check status with [Get card](/api-reference/cards/get-card) first, and [unfreeze](/api-reference/cards/freeze-or-unfreeze) if appropriate.
   </Accordion>
-  <Accordion title="Unsupported source asset (400)">
-    Funding draws only on supported assets: USDT, USDC, BTC, NGN.
-  </Accordion>
-  <Accordion title="Exchange rate expired (409)">
-    The conversion rate moved too much mid-funding. Retry the call; it will pick up a fresh rate.
-  </Accordion>
 </AccordionGroup>
+
+## Withdraw from a card
+
+Send `type: "withdraw"` to move card balance back to your company balance. Withdrawals carry no fee, and appear in your ledger as a `CARD_WITHDRAWAL` credit.
+
+```json
+{
+  "type": "withdraw",
+  "amount": 1000000,
+  "reference": "WITHDRAW_7c1e9f42"
+}
+```
+
+Each card allows one withdrawal every 300 seconds. A second one inside that window fails with `400` "rate limit exceeded: please wait 300 seconds before making another withdrawal".
 
 ## Funding patterns
 
@@ -101,4 +148,4 @@ A failed load arrives as `virtualcard.topup.failed` with the same shape and `sta
 | Per event | You load the card right before a known spend, for example at payout time. |
 | Recurring | Scheduled loads for allowances and spend programmes. |
 
-All funding is platform-initiated through your API; cardholders cannot fund cards directly. Whatever the pattern, log the rate used per funding for reconciliation, and confirm each load from the webhook rather than assuming it.
+All funding is platform-initiated through your API; cardholders cannot fund cards directly. Whatever the pattern, log the reference and fee of each load for reconciliation, and confirm each load from the webhook rather than assuming it.

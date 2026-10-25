@@ -8,7 +8,7 @@ related:
 The Trade Status & History endpoints allow you to:
 
 - Fetch a single trade by ID or reference
-- List all trades across your account (optionally filtered)
+- List crypto-pair trades across your account
 - Monitor conversion volumes, timestamps, and trade outcomes
 - Power your ledger, dashboards, and audit flows
 
@@ -24,9 +24,9 @@ GET /api/trading/orders/:id
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| id | string | Yes | Trade ID or reference ID |
+| id | string | Yes | Order ID, or your `reference` for a crypto-pair order |
 
-You can use either a Bitnob-generated tradeId or your own reference to fetch the trade.
+Use the order `id` for any pair. Lookup by your own `reference` works for crypto-pair orders only; an NGN reference returns `400` `invalid id`.
 
 ### Example request
 
@@ -71,7 +71,7 @@ curl --location 'https://api.bitnob.com/api/trading/orders/4ac59dd0-3c25-43c7-8e
 
 ## List orders
 
-Full reference, including the supported filters: [Get Orders](/api-reference/trading/list-orders).
+Full reference: [Get Orders](/api-reference/trading/list-orders). The list returns crypto-pair orders only. NGN trades aren't included, so fetch those one at a time by ID with [Get Order By ID](/api-reference/trading/get-order-by-id-or-reference).
 
 ```bash
 GET /api/trading/orders
@@ -81,13 +81,10 @@ GET /api/trading/orders
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| from | string | No | Filter by source asset (usdt, usdc, btc, or ngn) |
-| to | string | No | Filter by target asset (usdt, usdc, btc, or ngn) |
-| status | string | No | Filter by status (completed, failed) |
-| startDate | string | No | ISO8601 format: return trades after this date |
-| endDate | string | No | ISO8601 format: return trades before this date |
-| limit | integer | No | Number of trades per page (default 20, max 100) |
-| cursor | string | No | Cursor for pagination |
+| status | string | No | Filter by order status: `pending`, `filled`, `rejected`, or `cancelled`. |
+| limit | integer | No | Number of orders per page. |
+
+The response carries `total_count`, `has_more`, and `next_cursor` alongside the `orders` array.
 
 ### Example request
 
@@ -109,28 +106,35 @@ curl --location 'https://api.bitnob.com/api/trading/orders' \
     "data": {
         "orders": [
             {
-                "id": "4bcda61a-c24d-434a-a31c-3ab31e8281d2",
-                "base_currency": "USDT",
-                "quote_currency": "BTC",
-                "side": "SELL",
+                "id": "9671943f-43ef-43b3-b435-1441280d2a43",
+                "base_currency": "BTC",
+                "quote_currency": "USDT",
+                "side": "BUY",
                 "order_type": "limit",
-                "quantity": "10",
-                "price": "69920.93408475",
+                "quantity": "0.00002000",
+                "price": "83125.17242500",
                 "status": "filled",
-                "created_at": "2026-03-23T12:07:17.344023000Z",
-                "updated_at": "2026-03-23T12:07:18.214985000Z",
-                "filled_quantity": "9.9993927834600975",
+                "created_at": "2026-10-08T10:17:46.195624000Z",
+                "updated_at": "2026-10-08T10:17:47.571335000Z",
+                "filled_quantity": "0.00002000",
                 "remaining_quantity": "0",
-                "quote_id": ""
+                "quote_id": "50a8d856-af0f-45a1-b246-7532fca46f82",
+                "reference": "order-1781868270"
             }
-        ]
+        ],
+        "total_count": "15",
+        "has_more": false,
+        "next_cursor": ""
     },
-    "metadata": {
-        "request_id": "req_019d1a9b-d4f6-71c6-bd99-0c71a1e644d4"
-    },
-    "timestamp": "2026-03-23T12:11:53.506843746Z"
+    "timestamp": "2026-10-20T12:27:30.055875261Z"
 }
 ```
+
+| Field | Meaning |
+|---|---|
+| `total_count` | Number of orders that match, as a string. |
+| `has_more` | `true` when there are more orders after this page. |
+| `next_cursor` | Cursor for the next page. Empty when `has_more` is `false`. |
 
 ## Order statuses
 
@@ -138,6 +142,7 @@ curl --location 'https://api.bitnob.com/api/trading/orders' \
 |---|---|
 | `pending` | Accepted, not yet filled. |
 | `filled` | Executed completely. The terminal success state. |
+| `rejected` | Not executed. `filled_quantity` stays `0`. |
 | `cancelled` | Cancelled before fill via [Cancel order](/api-reference/trading/cancel-order). |
 
 ## What to build on it

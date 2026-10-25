@@ -1,16 +1,16 @@
 ---
-title: "Platform core concepts"
+title: "Bitnob Enterprise core concepts"
 sidebarTitle: "Core concepts"
-description: "Vaults, wallets, policies, and approvals: the objects to model your Platform integration around."
+description: "Vaults, wallets, policies, and approvals: the objects to model your Bitnob Enterprise integration around."
 related:
   - /docs/platform/authentication
   - /docs/platform/exchange-integration-guide
 ---
-These are the building blocks behind Bitnob Platform. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
+These are the building blocks behind Bitnob Enterprise. Understanding them will help you model your integration correctly and configure policies that reflect your actual security requirements.
 
 ## Custody model
 
-Bitnob Platform is non-custodial. You hold the assets, and Bitnob cannot move them. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
+Bitnob Enterprise is non-custodial. You hold the assets, and Bitnob cannot move them. Private keys are generated inside the Bitnob Secure Enclave, a key management system built on AWS Nitro Enclaves, and never leave that hardware boundary.
 
 The platform itself cannot move funds without an authenticated API call that satisfies every configured policy. Every signing event is recorded as an immutable activity entry for compliance and audit.
 
@@ -84,7 +84,7 @@ A root quorum is a special policy of category `quorum` that protects policy chan
 
 ## Gas stations
 
-A gas station is a pre-funded, organisation-owned account whose sole job is to sponsor transaction fees on behalf of customer wallets: see [Gas Stations](/api-reference/platform/gas-stations/list-gas-stations) and [Sponsor and Broadcast](/api-reference/platform/gas-stations/sponsor-and-broadcast-external-tron-transaction).
+A gas station is a pre-funded, organisation-owned account whose sole job is to sponsor transaction fees on behalf of customer wallets: see [Gas Stations](/api-reference/platform/gasstations/list-gas-stations) and [Sponsor and Broadcast](/api-reference/platform/gasstations/sponsor-and-broadcast-external-tron-transaction).
 
 - Gas stations are scoped per chain and network.
 - When a customer wallet has insufficient native gas, the gas station tops it up automatically before broadcasting.

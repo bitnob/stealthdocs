@@ -19,18 +19,41 @@ flowchart TD
     C --> E[virtualcard.created.failed]
 ```
 
-Your [Create card](/api-reference/cards/create-card-embedded-customer) call returns immediately with the card in status `pending` and `created_status: processing`. The issuer then provisions the card, usually within seconds. `virtualcard.created.completed` confirms it is `active`; only then are the PAN, CVV, and expiry retrievable via [Get secure card details](/api-reference/cards/get-secure-card-details).
+Your [Create card](/api-reference/cards/create-card) call returns immediately with the card in status `pending` and `created_status: processing`. The issuer then provisions the card, usually within seconds. `virtualcard.created.completed` confirms it is `active`; only then are the PAN, CVV, and expiry retrievable via [Get secure card details](/api-reference/cards/get-secure-card-details).
 
 Treat the webhook, not the HTTP response, as the signal to show the card to a user.
 
-## Why the customer object exists
+## Verify the cardholder first
 
-Every card belongs to a customer, and the issuing bank requires that customer's identity: name, date of birth, ID document, and address. Two ways to satisfy it:
+Every card belongs to a verified customer, and the issuing bank requires that customer's identity: name, date of birth, ID document, and address. Run each cardholder through [Card KYC](/api-reference/cards/card-kyc) before you create a card for them. Approval returns a `customer_id`, which you pass to Create card. Because the identity details were captured during KYC, you don't send them again.
 
-- **New customer**: pass the nested `customer` object on the create call; the customer and card are created together.
-- **Existing customer**: pass `customer_id` and skip the object.
+Cards are virtual only. Lite cards, created with [Create lite card](/api-reference/cards/create-lite-card), also need approved Card KYC, plus `card_brand`, `swipe_count`, and `terminate_date`.
 
-You remain responsible for verifying your end users before creating cards on their behalf. Bitnob enforces platform-level KYC, and higher volumes or limits can require additional cardholder verification.
+Higher volumes or limits can require additional cardholder verification.
+
+## What creating a card costs
+
+Create card takes the opening `amount` from your company balance, plus two fees: the \$1.00 card creation fee, and the top-up fee on the opening amount (\$1.00 flat below \$100, 1% at \$100 and above). They show up as separate ledger entries: a `CARD_TOPUP` carrying the top-up fee, and a `CARD_CREATION_FEES` debit. A \$2.00 card therefore needs \$4.00.
+
+If your balance can't cover all three, Create card fails before anything is issued:
+
+```json
+{
+  "type": "https://api.bitnob.com/errors/VALIDATION_ERROR",
+  "title": "Validation Error",
+  "status": 400,
+  "detail": "Insufficient company balance for card creation: required 4.00, available 0.11 USDC",
+  "code": "VALIDATION_ERROR",
+  "extensions": {
+    "error_code": "COMPANY_INSUFFICIENT_BALANCE",
+    "currency": "USDC",
+    "required": "4.00",
+    "available": "0.11"
+  }
+}
+```
+
+`extensions.currency` tells you which balance was checked, and `required` is the full amount including fees. Top that balance up, then retry.
 
 ## What kind of card you get
 
@@ -42,6 +65,7 @@ You remain responsible for verifying your end users before creating cards on the
 | Spend scope | Online (card-not-present), plus in-store tap-to-pay via Apple or Google Wallet when contactless is enabled |
 | 3DS | Not currently supported |
 | Cards per customer | Up to 3 active cards |
+| Billing address | A fixed US billing address issued with the card and returned in `billing_address` |
 
 ## When to issue
 
@@ -49,7 +73,7 @@ You remain responsible for verifying your end users before creating cards on the
 |---|---|
 | User wants to shop online | One general-purpose card linked to their account, reused across merchants. |
 | Subscriptions | A persistent card left active for recurring charges. |
-| Business spend | Per-employee or per-department cards, each with [spend limits](/api-reference/cards/update-spend-limits). |
+| Business spend | Per-employee or per-department cards, each funded with only what that person needs. |
 | One-time purchase | A disposable card, terminated after use. |
 | Payout-to-spend | Issue and fund a card at payout time instead of transferring fiat. |
 
@@ -72,4 +96,4 @@ Creating a card is not idempotent by customer: calling create twice makes two ca
   </Accordion>
 </AccordionGroup>
 
-Ready to build? [Issue your first card](/docs/card-issuing/issue-your-first-card) walks the whole lifecycle, and [Create card](/api-reference/cards/create-card-embedded-customer) has the full request schema.
+Ready to build? [Issue your first card](/docs/card-issuing/issue-your-first-card) walks the whole lifecycle, and [Create card](/api-reference/cards/create-card) has the full request schema.

@@ -34,16 +34,16 @@ Every event carries an `event` name, an `event_id`, and a `data` object holding 
 Each product documents its own events:
 
 <Columns cols={2}>
-  <Card title="Deposits and addresses" icon="location-dot" href="/api-reference/addresses/webhooks">
+  <Card title="Deposits and addresses" icon="location-dot" href="/docs/stablecoins/address-webhook-events">
     `deposit.success`, `transfer.success`, `transfer.failed`.
   </Card>
-  <Card title="Payouts" icon="money-bill-transfer" href="/api-reference/payouts/webhooks">
+  <Card title="Payouts" icon="money-bill-transfer" href="/docs/payouts/webhook-events">
     `payouts.initialized`, `payouts.processing`, `payouts.withdrawal.success`.
   </Card>
-  <Card title="Withdrawals" icon="arrow-up-from-bracket" href="/api-reference/withdrawal/webhooks">
+  <Card title="Withdrawals" icon="arrow-up-from-bracket" href="/docs/stablecoins/withdrawal-webhook-events">
     Withdrawal lifecycle events.
   </Card>
-  <Card title="Virtual cards" icon="credit-card" href="/api-reference/virtual-cards/webhooks">
+  <Card title="Virtual cards" icon="credit-card" href="/docs/card-issuing/webhook-payloads">
     Card creation, top-up, and transaction events.
   </Card>
 </Columns>
@@ -64,7 +64,9 @@ const crypto = require("crypto");
 
 app.post(
   "/webhooks/bitnob",
-  express.raw({ type: "application/json" }),
+  // Read the raw bytes whatever Content-Type says: deliveries can arrive as
+  // "application/json, application/json", which type: "application/json" rejects
+  express.raw({ type: () => true }),
   (req, res) => {
     const expected = crypto
       .createHmac("sha512", process.env.BITNOB_WEBHOOK_SECRET)
@@ -118,7 +120,7 @@ Return `200` as soon as the signature is valid. Do the real work afterwards.
 A handler that writes to a database, calls a third-party service, and sends an email before responding will eventually exceed our timeout. We then treat the delivery as failed and send the event again, even though you processed it.
 
 ```javascript
-app.post("/webhooks/bitnob", express.raw({ type: "application/json" }), (req, res) => {
+app.post("/webhooks/bitnob", express.raw({ type: () => true }), (req, res) => {
   if (!verifySignature(req)) {
     return res.status(401).send("invalid signature");
   }
@@ -131,12 +133,15 @@ Any durable queue works: BullMQ or BeeQueue on Node.js, Sidekiq on Ruby, Celery 
 
 ## Retry behaviour
 
-We expect a `200`. If we do not get one, we send the event again **3 times after the first failure**.
+How we read your response:
 
-A delivery counts as failed when:
+| Your response | What happens |
+|---|---|
+| Any `2xx` | Delivered. We don't send the event again. |
+| `400`, `404`, `410`, `422`, or `451` | Permanent rejection. We **don't retry**. |
+| `5xx`, `401`, `403`, `408`, `429`, a timeout, or no response | Retried with increasing delays (by default about 1, 5, 15, and 60 minutes), up to the retry count set on your webhook: 1 to 5 attempts in total. A `Retry-After` header you send is honoured, up to a cap. |
 
-- Your endpoint is unreachable or times out.
-- Your server returns any status other than `200`.
+If your own processing fails temporarily, for example your database is down, return a `5xx` so the event comes back. Return `400` or `422` only when retrying would never help.
 
 <Warning>
   Retries are finite. After the final attempt we stop. An endpoint that is down for an extended period will miss events permanently, so you also need reconciliation.
@@ -149,6 +154,7 @@ Redelivery means your handler will see the same event more than once. Processing
 Check the reference before you act, and record it after.
 
 ```python
+import json
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -158,7 +164,9 @@ def webhook_handler():
     if not verify_signature(request):
         return 'invalid signature', 401
 
-    payload = request.get_json()
+    # Parse the raw body yourself: get_json() rejects the
+    # "application/json, application/json" Content-Type deliveries can carry
+    payload = json.loads(request.get_data())
     reference = payload['data']['reference']
 
     if already_processed(reference):

@@ -1,14 +1,14 @@
 ---
 title: "Currencies and amounts"
-description: "Why the API uses integer base units, how to store and display them, and where precision is most often lost."
+description: "Which unit each Bitnob product uses for amounts, how to store and display them, and where precision is most often lost."
 related:
   - /docs/getting-started/api-best-practices/idempotency-and-reference-integrity
   - /docs/getting-started/api-best-practices/errors-and-retries
 ---
 
-The Bitnob API represents every amount as an integer in the smallest unit of its currency. One BTC is 100,000,000 satoshis. One USDT is 1,000,000 base units. One NGN is 100 kobo.
+Bitnob doesn't use one unit everywhere. Balances, transactions, and withdrawals use integers in the smallest unit of the currency. Trading and payouts use decimal strings in major units. Cards use micro-units. Check the [units by product](#units-by-product) table before you parse or send an amount.
 
-This page explains why, and what it means for how you store, convert, and display value.
+Whatever unit the API uses, your own ledger should store integers in the smallest unit. This page explains why, and how to convert safely.
 
 ## Why integers
 
@@ -27,7 +27,7 @@ The rule is short:
   Never hold a monetary amount in a float or a double. Hold an integer count of the smallest unit, and convert only for display.
 </Warning>
 
-## The units
+## Smallest units
 
 | Currency | Smallest unit | Multiplier |
 |---|---|---|
@@ -42,6 +42,27 @@ Token decimals are a property of the token, not of the chain. USDT uses 6 decima
 <Note>
   Keep the multiplier for each asset in one place in your code. A multiplier hard-coded at three call sites will eventually disagree with itself.
 </Note>
+
+## Units by product
+
+| Product | Field | Unit | Example |
+|---|---|---|---|
+| Balances and transactions | `available_balance`, `amount`, `fee` | Smallest unit, as an integer string | USDT `"2200126"` = 2.200126 USDT. NGN `"5881"` = ₦58.81. BTC `"1691"` = 1,691 sats. |
+| Virtual accounts | `amount`, `new_balance` | Kobo, as an integer string | `"100000"` = ₦1,000.00 |
+| Virtual account webhook | `payload.amount` | Kobo, as an integer string | `"5000000"` = ₦50,000.00 |
+| Withdrawals | `amount` | Smallest unit, as an integer string | `"2000000"` = 2 USDT. `"150000"` = 0.0015 BTC. |
+| Trading | `quantity`, `price` | Major units, as a decimal string | `"0.001"` BTC. `"100"` USDT. `"5000"` = ₦5,000. |
+| Virtual cards (API and webhooks) | `amount`, `feeAmount`, spend limits | Micro-units: 1 USD = 1,000,000 | `500000` = \$0.50 |
+| Virtual card webhooks | `displayAmount` | Major units as a number, for display only | `0.5` |
+| Payouts | `amount`, `settlement_amount`, `fees` | Major units, as a decimal string | `settlement_amount` `"1000"` = ₦1,000 |
+| Payouts | `cent_amount`, `cent_fees` | Minor units of the same values | `cent_amount` `"100000"` = ₦1,000.00 |
+| Exchange rates | `amount` on `/convert` | Major units | `amount=100` = 100 USDT |
+
+<Warning>
+  On card webhooks, `amount` is the integer to store and reconcile against. `displayAmount` is the same value as a floating-point number in dollars, there so you can show it without dividing. Never do arithmetic on `displayAmount`.
+</Warning>
+
+When an endpoint takes or returns major-unit decimal strings, parse them with a decimal library straight into your smallest-unit integer. Never pass them through a float.
 
 ## Convert at the edges only
 
@@ -122,7 +143,7 @@ Precision bugs hide at the extremes. Cover these cases:
 
 ## Summary
 
-1. Store integers in the smallest unit.
+1. Check which unit each endpoint uses, then store integers in the smallest unit.
 2. Calculate in that unit.
 3. Convert and round only for display.
 4. Store the rate and the time with every conversion.

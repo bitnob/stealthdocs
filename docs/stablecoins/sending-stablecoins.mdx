@@ -8,7 +8,36 @@ related:
 
 Outbound transfers go through one endpoint regardless of chain. You name the destination, amount, token, and chain; Bitnob broadcasts, tracks confirmations, and reports the outcome as a webhook.
 
-The minimum send is \$1. Sends draw on your balance, checked with [List balances](/api-reference/balances/list-balances), and network fees are deducted from it too.
+Sends draw on your balance, checked with [List balances](/api-reference/balances/list-balances).
+
+## Limits, fees, and timing
+
+| Item | Detail |
+|---|---|
+| Minimum per withdrawal | \$1. Below that, the request fails with `422` `PRECONDITION_FAILED`: "withdrawal amount below minimum: minimum is \$1 USD". |
+| Maximum per withdrawal | None |
+| Daily or monthly limit | None |
+| Fee | \$1, charged on top, in the currency withdrawn. A 1 USDT send debits 2 USDT. |
+| Time to `transfer.success` | Depends on the chain, but no longer than 15 minutes |
+
+## Supported chains
+
+Which chains you can send on depends on the stablecoin and the environment. [Supported chains](/api-reference/addresses/supported-chains) is the authoritative list for your account, so drive your chain picker from it rather than from this table.
+
+| Chain | Sandbox | Production |
+|---|---|---|
+| `arbitrum` | none | USDT, USDC |
+| `avalanche` | USDT, USDC | USDT, USDC |
+| `base` | USDC | USDC |
+| `bsc` | none | USDT, USDC |
+| `ethereum` | USDT, USDC | USDT, USDC |
+| `optimism` | USDT, USDC | USDT, USDC |
+| `plasma` | none | USDT |
+| `polygon` | USDT, USDC | USDT, USDC |
+| `solana` | USDT, USDC | USDT, USDC |
+| `tron` | none | USDT |
+
+## Send a withdrawal
 
 <Steps>
   <Step title="Validate the destination">
@@ -49,14 +78,14 @@ The minimum send is \$1. Sends draw on your balance, checked with [List balances
     </ParamField>
 
     <ParamField body="reference" type="string" required>
-      Your unique identifier, and the idempotency key: the same reference never sends twice.
+      Your unique identifier, and the idempotency key. A reference that already belongs to a withdrawal is rejected with `409` `DUPLICATE_KEY_ERROR`, and nothing is sent.
     </ParamField>
 
     <ParamField body="description" type="string">
       Free-text note for your records.
     </ParamField>
 
-    The response returns the transfer in a pending state with fees visible in `centFees`. Pending is expected: broadcasting and confirmation happen asynchronously.
+    The response returns the transfer in a pending state. It doesn't carry a fee field: read `fee` back from [Get transaction](/api-reference/transactions/get-transaction-by-id) using the `transaction_id` from the response. On that endpoint, `amount` is the total debit including the fee (`-2000000` for a 1 USDT send), while [List transactions](/api-reference/transactions/list-transactions) shows the sent amount (`-1000000`) and the fee separately. Pending is expected: broadcasting and confirmation happen asynchronously.
   </Step>
   <Step title="Confirm from the webhook">
     `transfer.success` fires once the chain's confirmation threshold is met; `transfer.failed` if the transfer is rejected, reverted, or times out, with held funds returned to your balance. Act on the events rather than polling; [Get transaction by id](/api-reference/transactions/get-transaction-by-id) resolves a reference if you need to re-check one. See [Receive stablecoin webhooks](/docs/stablecoins/webhooks) for payloads and verification.
@@ -69,6 +98,6 @@ Forward any memo the destination gives you exactly as provided; exchanges routin
 
 ## Keep fees legible
 
-Fees are dynamic per chain and visible per send in `centFees`. Two habits keep users happy: prefer low-fee chains, such as Tron or Polygon, for small amounts, and show the arithmetic in your UI: sending \$1.00, network fee \$0.01, recipient gets \$0.99.
+The withdrawal fee is a flat \$1, charged on top, so the recipient gets the full amount you send. Because it isn't an estimate, show the exact arithmetic before the user confirms: sending \$10.00, fee \$1.00, total debited \$11.00, recipient gets \$10.00.
 
 For transfers between wallets on your own Bitnob account, skip the chain entirely: [internal transfers](/docs/stablecoins/internal-wallet-to-wallet-transfers) settle instantly with no gas.
