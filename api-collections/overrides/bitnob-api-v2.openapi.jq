@@ -5,6 +5,32 @@
 # playground ask for a signature. These two schemes ask for the client id and
 # the sandbox secret instead, and test-playground.js signs the request with them.
 # The secret header is removed in the browser and never sent.
+#
+# Most responses in the published spec carry an example but no schema, so the
+# docs show the example and an empty field list. infer_schema builds a schema
+# from the example wherever one is missing; a schema from the spec always wins.
+
+def infer_schema:
+  if type == "object" then
+    {"type": "object", "properties": map_values(infer_schema)}
+  elif type == "array" then
+    {"type": "array", "items": (
+      if length == 0 then {}
+      # Merge every item so keys that only some items carry are still listed.
+      elif all(.[]; type == "object") then reduce .[] as $item ({}; . * $item) | infer_schema
+      else .[0] | infer_schema
+      end
+    )}
+  elif type == "string" then
+    {"type": "string"}
+    + if test("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$") then {"format": "uuid"}
+      elif test("^[0-9]{4}-[0-9]{2}-[0-9]{2}T") then {"format": "date-time"}
+      else {}
+      end
+  elif type == "number" then {"type": "number"}
+  elif type == "boolean" then {"type": "boolean"}
+  else {"nullable": true}
+  end;
 
 .components.securitySchemes |= (del(.BitnobHmacAuth) + {
   "BitnobClientId": {
@@ -21,3 +47,23 @@
   }
 })
 | .security = [{"BitnobClientId": [], "BitnobClientSecret": []}]
+# Responses captured from the sandbox by capture-responses.mjs, passed in with
+# --slurpfile responses. They fill only success responses the spec leaves empty.
+| reduce (($ARGS.named.responses[0] // {}) | to_entries[]) as $captured (.;
+    ($captured.key | split(" ")) as [$method, $path]
+    | ($method | ascii_downcase) as $method
+    | ($captured.value.status | tostring) as $status
+    | if .paths[$path][$method] == null then .
+      elif [.paths[$path][$method].responses | to_entries[] | select(.key | startswith("2")) | .value.content] | any(. != null) then .
+      else .paths[$path][$method].responses[$status] |=
+        (. // {"description": "Successful response"}) + {"content": {"application/json": {"example": $captured.value.body}}}
+      end
+  )
+| (.paths[][] | objects | .responses[]? | .content[]? | select((has("example") or has("examples")) and (has("schema") | not)))
+  |= . + {"schema": (
+    if has("example") then .example
+    # Named examples: merge them all so the schema lists every field they show.
+    else [.examples[].value] | if all(.[]; type == "object") then reduce .[] as $value ({}; . * $value) else .[0] end
+    end
+    | infer_schema
+  )}

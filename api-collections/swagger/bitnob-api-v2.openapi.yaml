@@ -97,6 +97,35 @@ paths:
                   environment: sandbox
                   permissions: null
                 timestamp: '2026-06-19T10:39:49.945108267Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      active:
+                        type: boolean
+                      active_company_id:
+                        type: string
+                        format: uuid
+                      auth_method:
+                        type: string
+                      client_id:
+                        type: string
+                        format: uuid
+                      client_name:
+                        type: string
+                      environment:
+                        type: string
+                      permissions:
+                        nullable: true
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -178,6 +207,45 @@ paths:
                     created_at: '2026-06-04T07:35:05.574532+00:00'
                   company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
                 timestamp: '2026-06-19T10:39:50.811363982Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      accounts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            account_id:
+                              type: string
+                              format: uuid
+                            account_number:
+                              type: string
+                            currency:
+                              type: string
+                            ledger_balance:
+                              type: string
+                            available_balance:
+                              type: string
+                            ledger_balance_formatted:
+                              type: string
+                            available_balance_formatted:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                      company_id:
+                        type: string
+                        format: uuid
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -238,6 +306,32 @@ paths:
                   pending_balance: '0'
                   total_balance: '5017200'
                 timestamp: '2026-06-19T10:39:51.424374223Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      account_number:
+                        type: string
+                      available_balance:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      currency:
+                        type: string
+                      pending_balance:
+                        type: string
+                      total_balance:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -292,6 +386,35 @@ paths:
                   label: test-address
                   reference: addr-1781865600
                 timestamp: '2026-06-19T10:40:01.010497229Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      chain:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      label:
+                        type: string
+                      reference:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -525,6 +648,47 @@ paths:
                   next_cursor: ''
                   has_more: false
                 timestamp: '2026-06-19T10:40:01.677696254Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      addresses:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            address:
+                              type: string
+                            company_id:
+                              type: string
+                              format: uuid
+                            label:
+                              type: string
+                            chain:
+                              type: string
+                            status:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            reference:
+                              type: string
+                      next_cursor:
+                        type: string
+                      has_more:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -587,6 +751,38 @@ paths:
                   created_at: '2026-06-19T10:40:00.865575Z'
                   reference: addr-1781865600
                 timestamp: '2026-06-19T10:40:02.298371085Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      address:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      label:
+                        type: string
+                      chain:
+                        type: string
+                      status:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      reference:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -637,6 +833,25 @@ paths:
                   address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
                   chain: ethereum
                 timestamp: '2026-06-19T10:40:02.968832668Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                      address:
+                        type: string
+                      chain:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -768,6 +983,42 @@ paths:
                     - symbol: USDC
                       decimals: 6
                 timestamp: '2026-06-19T10:40:04.611879891Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      chains:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            chain:
+                              type: string
+                            native_token:
+                              type: object
+                              properties:
+                                symbol:
+                                  type: string
+                                decimals:
+                                  type: number
+                            stablecoins:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  symbol:
+                                    type: string
+                                  decimals:
+                                    type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1000,6 +1251,116 @@ paths:
                   total_count: 10
                   has_more: true
                 timestamp: '2026-06-19T10:40:05.927542085Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            transaction_id:
+                              type: string
+                              format: uuid
+                            account_number:
+                              type: string
+                            currency:
+                              type: string
+                            type:
+                              type: string
+                            state:
+                              type: string
+                            amount:
+                              type: string
+                            fee:
+                              type: string
+                            reference:
+                              type: string
+                              format: uuid
+                            idempotency_key:
+                              type: string
+                            trade_id:
+                              type: string
+                              format: uuid
+                            metadata:
+                              type: object
+                              properties:
+                                flow_type:
+                                  type: string
+                                from_address:
+                                  type: string
+                                base_amount:
+                                  type: string
+                                card_id:
+                                  type: string
+                                  format: uuid
+                                company_id:
+                                  type: string
+                                  format: uuid
+                                customer_id:
+                                  type: string
+                                  format: uuid
+                                fee_amount:
+                                  type: string
+                                operation:
+                                  type: string
+                                provider_transaction_id:
+                                  type: string
+                                settled_at:
+                                  type: string
+                                  format: date-time
+                                transaction_id:
+                                  type: string
+                                  format: uuid
+                                tx_id:
+                                  type: string
+                                  format: uuid
+                                type:
+                                  type: string
+                                fill_id:
+                                  type: string
+                                  format: uuid
+                                order_side:
+                                  type: string
+                                order_type:
+                                  type: string
+                                settlement_type:
+                                  type: string
+                                order_id:
+                                  type: string
+                                  format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            value_date:
+                              type: string
+                            amount_formatted:
+                              type: string
+                            fee_formatted:
+                              type: string
+                            side:
+                              type: string
+                      next_cursor:
+                        type: string
+                      previous_cursor:
+                        type: string
+                      total_count:
+                        type: number
+                      has_more:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1084,6 +1445,89 @@ paths:
                   fee_formatted: 1.0 USDC
                   side: Debit
                 timestamp: '2026-06-19T10:40:06.83128084Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transaction_id:
+                        type: string
+                        format: uuid
+                      account_number:
+                        type: string
+                      currency:
+                        type: string
+                      type:
+                        type: string
+                      state:
+                        type: string
+                      amount:
+                        type: string
+                      fee:
+                        type: string
+                      reference:
+                        type: string
+                        format: uuid
+                      idempotency_key:
+                        type: string
+                      trade_id:
+                        type: string
+                      metadata:
+                        type: object
+                        properties:
+                          flow_type:
+                            type: string
+                          from_address:
+                            type: string
+                          base_amount:
+                            type: string
+                          card_id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          fee_amount:
+                            type: string
+                          operation:
+                            type: string
+                          provider_transaction_id:
+                            type: string
+                          settled_at:
+                            type: string
+                          transaction_id:
+                            type: string
+                            format: uuid
+                          tx_id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                      value_date:
+                        type: string
+                      amount_formatted:
+                        type: string
+                      fee_formatted:
+                        type: string
+                      side:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1281,6 +1725,57 @@ paths:
                       - 'GBP: rate not available: GBP'
                       - 'EUR: rate not available: EUR'
                     timestamp: '2026-06-19T10:39:52.616058133Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      base_currency:
+                        type: string
+                      target_currency:
+                        type: string
+                      buy_rate:
+                        type: string
+                      sell_rate:
+                        type: string
+                      mid_rate:
+                        type: string
+                      inverse_rate:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                      valid_for_seconds:
+                        type: number
+                      percent_change_24h:
+                        type: string
+                      rates:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            target_currency:
+                              type: string
+                            buy_rate:
+                              type: string
+                            sell_rate:
+                              type: string
+                            inverse_rate:
+                              type: string
+                            percent_change_24h:
+                              type: string
+                      skipped_currencies:
+                        type: array
+                        items:
+                          type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1356,6 +1851,32 @@ paths:
                   rate_used: '1375.59771120'
                   timestamp: '2026-06-19T10:39:17Z'
                 timestamp: '2026-06-19T10:39:53.318011355Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      from_currency:
+                        type: string
+                      to_currency:
+                        type: string
+                      from_amount:
+                        type: string
+                      to_amount:
+                        type: string
+                      rate_used:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1431,6 +1952,45 @@ paths:
                         price: '62460.650'
                         as_of: '2026-06-19T10:50:02.880752101Z'
                     timestamp: '2026-06-19T10:50:02.922017174Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      prices:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            base_currency:
+                              type: string
+                            quote_currency:
+                              type: string
+                            price:
+                              type: string
+                            as_of:
+                              type: string
+                              format: date-time
+                      price:
+                        type: object
+                        properties:
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          price:
+                            type: string
+                          as_of:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1543,6 +2103,60 @@ paths:
                       receive_quantity: '0.001'
                       receive_currency: BTC
                 timestamp: '2026-06-19T10:46:52.85245707Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      quote:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            type: string
+                            format: date-time
+                          original_quantity:
+                            type: string
+                          consumed_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          is_exhausted:
+                            type: boolean
+                          exchange:
+                            type: object
+                            properties:
+                              send_quantity:
+                                type: string
+                              send_currency:
+                                type: string
+                              receive_quantity:
+                                type: string
+                              receive_currency:
+                                type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1647,6 +2261,39 @@ paths:
                   is_exhausted: false
                   consumption_count: '0'
                 timestamp: '2026-06-19T11:53:21.142152573Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      quote_id:
+                        type: string
+                        format: uuid
+                      original_quantity:
+                        type: string
+                      consumed_quantity:
+                        type: string
+                      remaining_quantity:
+                        type: string
+                      price:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+                      is_expired:
+                        type: boolean
+                      is_exhausted:
+                        type: boolean
+                      consumption_count:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1722,6 +2369,84 @@ paths:
                     remaining_quantity: '0'
                     is_exhausted: true
                 timestamp: '2026-06-19T11:24:38.520718534Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          order_type:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          filled_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          quote_id:
+                            type: string
+                            format: uuid
+                          reference:
+                            type: string
+                      fills:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            order_id:
+                              type: string
+                              format: uuid
+                            counterparty_order_id:
+                              type: string
+                            quantity:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                      quote_consumption:
+                        type: object
+                        properties:
+                          quote_id:
+                            type: string
+                            format: uuid
+                          consumed_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          is_exhausted:
+                            type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1888,6 +2613,63 @@ paths:
                   has_more: false
                   next_cursor: ''
                 timestamp: '2026-06-19T10:46:53.757762926Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      orders:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            base_currency:
+                              type: string
+                            quote_currency:
+                              type: string
+                            side:
+                              type: string
+                            order_type:
+                              type: string
+                            quantity:
+                              type: string
+                            price:
+                              type: string
+                            status:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            filled_quantity:
+                              type: string
+                            remaining_quantity:
+                              type: string
+                            quote_id:
+                              type: string
+                              format: uuid
+                            reference:
+                              type: string
+                              format: uuid
+                      total_count:
+                        type: string
+                      has_more:
+                        type: boolean
+                      next_cursor:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1957,6 +2739,54 @@ paths:
                     quote_id: fd4e18d5-7075-458f-b333-cab9ae490b03
                     reference: order-1781868277
                 timestamp: '2026-06-19T11:24:39.086668061Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          order_type:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          filled_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          quote_id:
+                            type: string
+                            format: uuid
+                          reference:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -2025,6 +2855,53 @@ paths:
                     quote_id: ''
                     reference: order-1781868277
                 timestamp: '2026-06-19T11:24:40.444335629Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          order_type:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          filled_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          quote_id:
+                            type: string
+                          reference:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
   /api/trading/scheduled-orders:
     post:
       tags:
@@ -2523,6 +3400,76 @@ paths:
                     retries: 0
                     withdrawal_id: ''
                 timestamp: '2026-06-19T10:48:15.001010438Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      batch:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          description:
+                            type: string
+                          status:
+                            type: string
+                          total_items:
+                            type: number
+                          success_count:
+                            type: number
+                          failed_count:
+                            type: number
+                          created_at:
+                            type: string
+                            format: date-time
+                          submitted_at:
+                            type: string
+                          completed_at:
+                            type: string
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            batch_id:
+                              type: string
+                              format: uuid
+                            row_index:
+                              type: number
+                            chain:
+                              type: string
+                            currency:
+                              type: string
+                            address:
+                              type: string
+                            amount:
+                              type: string
+                            description:
+                              type: string
+                            status:
+                              type: string
+                            failure_reason:
+                              type: string
+                            retries:
+                              type: number
+                            withdrawal_id:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -2652,6 +3599,49 @@ paths:
                     completed_at: ''
                   next_page_token: ''
                 timestamp: '2026-06-19T10:46:57.751333739Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      batches:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            description:
+                              type: string
+                            status:
+                              type: string
+                            total_items:
+                              type: number
+                            success_count:
+                              type: number
+                            failed_count:
+                              type: number
+                            created_at:
+                              type: string
+                              format: date-time
+                            submitted_at:
+                              type: string
+                            completed_at:
+                              type: string
+                      next_page_token:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -2838,6 +3828,77 @@ paths:
                     retries: 0
                     withdrawal_id: ''
                 timestamp: '2026-06-19T11:23:13.665366937Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      batch:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          description:
+                            type: string
+                          status:
+                            type: string
+                          total_items:
+                            type: number
+                          success_count:
+                            type: number
+                          failed_count:
+                            type: number
+                          created_at:
+                            type: string
+                            format: date-time
+                          submitted_at:
+                            type: string
+                            format: date-time
+                          completed_at:
+                            type: string
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            batch_id:
+                              type: string
+                              format: uuid
+                            row_index:
+                              type: number
+                            chain:
+                              type: string
+                            currency:
+                              type: string
+                            address:
+                              type: string
+                            amount:
+                              type: string
+                            description:
+                              type: string
+                            status:
+                              type: string
+                            failure_reason:
+                              type: string
+                            retries:
+                              type: number
+                            withdrawal_id:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -2903,6 +3964,46 @@ paths:
                     submitted_at: '2026-06-19T11:23:12.851565556Z'
                     completed_at: ''
                 timestamp: '2026-06-19T11:23:12.856906512Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      batch:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          description:
+                            type: string
+                          status:
+                            type: string
+                          total_items:
+                            type: number
+                          success_count:
+                            type: number
+                          failed_count:
+                            type: number
+                          created_at:
+                            type: string
+                            format: date-time
+                          submitted_at:
+                            type: string
+                            format: date-time
+                          completed_at:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3039,6 +4140,54 @@ paths:
                     created_at: '2026-06-19T11:53:30.473116012Z'
                     updated_at: '2026-06-19T11:53:30.473116012Z'
                 timestamp: '2026-06-19T11:53:30.482716971Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          template_batch_id:
+                            type: string
+                            format: uuid
+                          frequency:
+                            type: string
+                          execution_time:
+                            type: string
+                          day_of_week:
+                            type: number
+                          day_of_month:
+                            type: number
+                          start_date:
+                            type: string
+                          end_date:
+                            type: string
+                          next_run_at:
+                            type: string
+                            format: date-time
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3187,6 +4336,54 @@ paths:
                     created_at: '2026-06-19T11:53:30.473116Z'
                     updated_at: '2026-06-19T11:54:11.749895763Z'
                 timestamp: '2026-06-19T11:54:11.755260825Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          template_batch_id:
+                            type: string
+                            format: uuid
+                          frequency:
+                            type: string
+                          execution_time:
+                            type: string
+                          day_of_week:
+                            type: number
+                          day_of_month:
+                            type: number
+                          start_date:
+                            type: string
+                          end_date:
+                            type: string
+                          next_run_at:
+                            type: string
+                            format: date-time
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3273,6 +4470,24 @@ paths:
                   executions: []
                   next_page_token: ''
                 timestamp: '2026-06-19T11:54:12.481462097Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      executions:
+                        type: array
+                        items: {}
+                      next_page_token:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3389,6 +4604,53 @@ paths:
                     created_at: '2026-08-09T21:13:22Z'
                     updated_at: '2026-08-09T21:13:22Z'
                 timestamp: '2026-08-09T21:13:22.411398413Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_account:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          account_number:
+                            type: string
+                          account_name:
+                            type: string
+                          bank_name:
+                            type: string
+                          reference:
+                            type: string
+                          customer_id:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          status:
+                            type: string
+                          account_alias:
+                            type: string
+                          account_type:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3645,6 +4907,64 @@ paths:
                     has_previous_page: false
                     total: 13
                 timestamp: '2026-08-09T21:13:25.479924666Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_accounts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            account_number:
+                              type: string
+                            account_name:
+                              type: string
+                            bank_name:
+                              type: string
+                            reference:
+                              type: string
+                            customer_id:
+                              type: string
+                              format: uuid
+                            currency:
+                              type: string
+                            status:
+                              type: string
+                            account_alias:
+                              type: string
+                            account_type:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3697,6 +5017,29 @@ paths:
                   limit: 20
                   offset: 0
                 timestamp: '2026-08-09T21:13:26.03958539Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      currencies:
+                        type: array
+                        items:
+                          type: string
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3765,6 +5108,53 @@ paths:
                     created_at: '2026-08-09T21:13:22Z'
                     updated_at: '2026-08-09T21:13:24Z'
                 timestamp: '2026-08-09T21:13:24.942852888Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_account:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          account_number:
+                            type: string
+                          account_name:
+                            type: string
+                          bank_name:
+                            type: string
+                          reference:
+                            type: string
+                          customer_id:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          status:
+                            type: string
+                          account_alias:
+                            type: string
+                          account_type:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3835,6 +5225,59 @@ paths:
                   limit: 20
                   offset: 0
                 timestamp: '2026-08-09T21:13:23.822837247Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            virtual_account_id:
+                              type: string
+                              format: uuid
+                            provider_transaction_id:
+                              type: string
+                            ledger_transaction_id:
+                              type: string
+                              format: uuid
+                            amount:
+                              type: string
+                            currency:
+                              type: string
+                            type:
+                              type: string
+                            status:
+                              type: string
+                            reference:
+                              type: string
+                            metadata:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3903,6 +5346,53 @@ paths:
                     created_at: '2026-08-09T21:13:22Z'
                     updated_at: '2026-08-09T21:13:24Z'
                 timestamp: '2026-08-09T21:13:24.388662373Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_account:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          account_number:
+                            type: string
+                          account_name:
+                            type: string
+                          bank_name:
+                            type: string
+                          reference:
+                            type: string
+                          customer_id:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          status:
+                            type: string
+                          account_alias:
+                            type: string
+                          account_type:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3985,6 +5475,53 @@ paths:
                     updated_at: '2026-08-09T21:13:23Z'
                   new_balance: '800000'
                 timestamp: '2026-08-09T21:13:23.264249227Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transaction:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          virtual_account_id:
+                            type: string
+                            format: uuid
+                          provider_transaction_id:
+                            type: string
+                          ledger_transaction_id:
+                            type: string
+                            format: uuid
+                          amount:
+                            type: string
+                          currency:
+                            type: string
+                          type:
+                            type: string
+                          status:
+                            type: string
+                          reference:
+                            type: string
+                          metadata:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                      new_balance:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4061,6 +5598,86 @@ paths:
                     created_at: '2026-06-22T15:36:28Z'
                     updated_at: '2026-06-22T15:36:28Z'
                 timestamp: '2026-06-22T15:36:28.262981966Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          created_status:
+                            type: string
+                          card_brand:
+                            type: string
+                          name:
+                            type: string
+                          preferred_name:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          display_amount:
+                            type: number
+                          contactless_payment:
+                            type: boolean
+                          card_limits:
+                            type: object
+                            properties: {}
+                          reference:
+                            type: string
+                          webhook_url:
+                            type: string
+                          user_metadata:
+                            type: string
+                          billing_address:
+                            type: object
+                            properties:
+                              line1:
+                                type: string
+                              line2:
+                                type: string
+                              city:
+                                type: string
+                              state:
+                                type: string
+                              postal_code:
+                                type: string
+                              country:
+                                type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4232,6 +5849,103 @@ paths:
                     next_cursor: eyJpZCI6ImE1NTYwOWIyLThiNjItNDI1MS04ZWM3LWI3YzBjMjVmM2U4NSIsInRpbWVzdGFtcCI6IjIwMjYtMDUtMjVUMTQ6NDU6MzcuNDE4ODgyWiJ9
                     total: 1
                 timestamp: '2026-06-19T10:46:58.655780895Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cards:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            customer_id:
+                              type: string
+                              format: uuid
+                            card_type:
+                              type: string
+                            status:
+                              type: string
+                            created_status:
+                              type: string
+                            card_brand:
+                              type: string
+                            name:
+                              type: string
+                            preferred_name:
+                              type: string
+                            first_six_digit:
+                              type: string
+                            last_four_digit:
+                              type: string
+                            masked_pan:
+                              type: string
+                            balance_amount:
+                              type: string
+                            balance_currency:
+                              type: string
+                            display_amount:
+                              type: number
+                            contactless_payment:
+                              type: boolean
+                            card_limits:
+                              type: object
+                              properties: {}
+                            reference:
+                              type: string
+                            user_metadata:
+                              type: string
+                            billing_address:
+                              type: object
+                              properties:
+                                line1:
+                                  type: string
+                                line2:
+                                  type: string
+                                city:
+                                  type: string
+                                state:
+                                  type: string
+                                postal_code:
+                                  type: string
+                                country:
+                                  type: string
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          previous_cursor:
+                            type: string
+                          next_cursor:
+                            type: string
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4286,6 +6000,34 @@ paths:
                   last_name: Okafor
                   normalized_status: approved
                 timestamp: '2026-04-18T13:01:06.145180019Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      customer_id:
+                        type: string
+                        format: uuid
+                      status:
+                        type: string
+                      completion_link:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      last_name:
+                        type: string
+                      normalized_status:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4508,6 +6250,84 @@ paths:
                     created_at: '2026-06-22T15:48:24Z'
                     updated_at: '2026-06-22T15:48:24Z'
                 timestamp: '2026-06-22T15:48:24.073616886Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          created_status:
+                            type: string
+                          name:
+                            type: string
+                          preferred_name:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          display_amount:
+                            type: number
+                          contactless_payment:
+                            type: boolean
+                          card_limits:
+                            type: object
+                            properties: {}
+                          reference:
+                            type: string
+                          webhook_url:
+                            type: string
+                          user_metadata:
+                            type: string
+                          billing_address:
+                            type: object
+                            properties:
+                              line1:
+                                type: string
+                              line2:
+                                type: string
+                              city:
+                                type: string
+                              state:
+                                type: string
+                              postal_code:
+                                type: string
+                              country:
+                                type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4722,6 +6542,88 @@ paths:
                     next_cursor: eyJpZCI6IjZjMDNkNTFiLThiZDYtNDUwMS04Y2ZkLWU1YzAzZGMyYWZlOCIsInRpbWVzdGFtcCI6IjIwMjYtMDUtMjVUMTQ6NDU6MzcuNDI4NzQ5WiJ9
                     total: 3
                 timestamp: '2026-06-19T10:46:59.926822816Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            card_id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            type:
+                              type: string
+                            status:
+                              type: string
+                            amount:
+                              type: string
+                            currency:
+                              type: string
+                            reference:
+                              type: string
+                            display_amount:
+                              type: number
+                            provider_transaction_id:
+                              type: string
+                            balance_before:
+                              type: string
+                            balance_after:
+                              type: string
+                            fee_amount:
+                              type: string
+                            fee_type:
+                              type: string
+                            description:
+                              type: string
+                            metadata:
+                              type: string
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            transaction_date:
+                              type: string
+                              format: date-time
+                            cardholder_name:
+                              type: string
+                            last_four_digit:
+                              type: string
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          previous_cursor:
+                            type: string
+                          next_cursor:
+                            type: string
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4810,6 +6712,96 @@ paths:
                     created_at: '2026-06-19T12:38:36Z'
                     updated_at: '2026-06-19T12:38:37Z'
                 timestamp: '2026-06-19T12:38:37.529102254Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          created_status:
+                            type: string
+                          card_brand:
+                            type: string
+                          name:
+                            type: string
+                          preferred_name:
+                            type: string
+                          first_six_digit:
+                            type: string
+                          last_four_digit:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          display_amount:
+                            type: number
+                          contactless_payment:
+                            type: boolean
+                          card_limits:
+                            type: object
+                            properties: {}
+                          reference:
+                            type: string
+                          user_metadata:
+                            type: string
+                          billing_address:
+                            type: object
+                            properties:
+                              line1:
+                                type: string
+                              line2:
+                                type: string
+                              city:
+                                type: string
+                              state:
+                                type: string
+                              postal_code:
+                                type: string
+                              country:
+                                type: string
+                          topup_current_month:
+                            type: string
+                          display_topup_current_month:
+                            type: number
+                          spent_current_month:
+                            type: string
+                          display_spent_current_month:
+                            type: number
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4931,6 +6923,35 @@ paths:
                     expiry_year: '2033'
                     name: Ifeoma Okafor
                 timestamp: '2026-06-19T12:38:37.991298572Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      details:
+                        type: object
+                        properties:
+                          card_id:
+                            type: string
+                            format: uuid
+                          card_number:
+                            type: string
+                          cvv:
+                            type: string
+                          expiry_month:
+                            type: string
+                          expiry_year:
+                            type: string
+                          name:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5032,6 +7053,84 @@ paths:
                     next_cursor: eyJpZCI6IjAxOWVkZmUzLWVjNDUtNzNiZS04MGM3LWYxMWUzYjE0MGVlMyIsInRpbWVzdGFtcCI6IjIwMjYtMDYtMTlUMTI6Mzg6MzYuODY5Mjc2WiJ9
                     total: 2
                 timestamp: '2026-06-19T12:38:46.314683543Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            card_id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            type:
+                              type: string
+                            status:
+                              type: string
+                            amount:
+                              type: string
+                            currency:
+                              type: string
+                            reference:
+                              type: string
+                            display_amount:
+                              type: number
+                            balance_before:
+                              type: string
+                            balance_after:
+                              type: string
+                            fee_amount:
+                              type: string
+                            fee_type:
+                              type: string
+                            description:
+                              type: string
+                            metadata:
+                              type: string
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            transaction_date:
+                              type: string
+                              format: date-time
+                            cardholder_name:
+                              type: string
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          previous_cursor:
+                            type: string
+                          next_cursor:
+                            type: string
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5113,6 +7212,69 @@ paths:
                     transaction_date: '2026-06-19T12:38:37.038082Z'
                     cardholder_name: Ifeoma Okafor
                 timestamp: '2026-06-19T12:38:46.788722789Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transaction:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          card_id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                          status:
+                            type: string
+                          amount:
+                            type: string
+                          currency:
+                            type: string
+                          reference:
+                            type: string
+                          display_amount:
+                            type: number
+                          balance_before:
+                            type: string
+                          balance_after:
+                            type: string
+                          fee_amount:
+                            type: string
+                          fee_type:
+                            type: string
+                          description:
+                            type: string
+                          metadata:
+                            type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          transaction_date:
+                            type: string
+                            format: date-time
+                          cardholder_name:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5191,6 +7353,75 @@ paths:
                     cardholder_name: Ifeoma Okafor
                     last_four_digit: '9781'
                 timestamp: '2026-06-19T12:43:05.912774441Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                      transaction:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          card_id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                          status:
+                            type: string
+                          amount:
+                            type: string
+                          currency:
+                            type: string
+                          reference:
+                            type: string
+                          display_amount:
+                            type: number
+                          balance_before:
+                            type: string
+                          balance_after:
+                            type: string
+                          fee_amount:
+                            type: string
+                          fee_type:
+                            type: string
+                          description:
+                            type: string
+                          metadata:
+                            type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          transaction_date:
+                            type: string
+                            format: date-time
+                          cardholder_name:
+                            type: string
+                          last_four_digit:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5282,6 +7513,50 @@ paths:
                     reference: CARD_CREATE_019EDFE3EC3F
                     display_amount: 2
                 timestamp: '2026-06-19T12:38:47.407353587Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          card_brand:
+                            type: string
+                          name:
+                            type: string
+                          reference:
+                            type: string
+                          display_amount:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5352,6 +7627,23 @@ paths:
                   success: true
                   message: Spending limits updated successfully
                 timestamp: '2026-06-19T12:39:38.453369897Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5446,6 +7738,23 @@ paths:
                   success: true
                   message: Card contact updated successfully
                 timestamp: '2026-06-21T22:14:07.464989465Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5513,6 +7822,29 @@ paths:
                   dispatched: false
                   skip_reason: no callback URL configured on card and no provider URL resolved
                 timestamp: '2026-05-26T11:58:59.285804528Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      event_type:
+                        type: string
+                      reference:
+                        type: string
+                      callback_url:
+                        type: string
+                      dispatched:
+                        type: boolean
+                      skip_reason:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5665,6 +7997,28 @@ paths:
                   page: 1
                   page_size: 20
                 timestamp: '2026-06-19T10:47:00.859028243Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      invoices:
+                        type: array
+                        items: {}
+                      total_count:
+                        type: string
+                      page:
+                        type: number
+                      page_size:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7362,6 +9716,38 @@ paths:
                     dial_code: '+263'
                     flag: 🇿🇼
                 timestamp: '2026-06-19T10:39:53.938116026Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      countries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            code:
+                              type: string
+                            code3:
+                              type: string
+                            currency_code:
+                              type: string
+                            currency_name:
+                              type: string
+                            dial_code:
+                              type: string
+                            flag:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7417,6 +9803,22 @@ paths:
                 data:
                   states: []
                 timestamp: '2026-06-19T10:39:54.603810092Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      states:
+                        type: array
+                        items: {}
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7478,6 +9880,48 @@ paths:
                   phone_number: '+2348012345678'
                   updated_at: '2026-06-18T20:21:55.397813Z'
                 timestamp: '2026-06-19T10:39:55.355654126Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      company_id:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      created_by:
+                        type: string
+                        format: uuid
+                      customer_type:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      id:
+                        type: string
+                        format: uuid
+                      is_active:
+                        type: boolean
+                      last_name:
+                        type: string
+                      metadata:
+                        type: string
+                      phone_number:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7642,6 +10086,77 @@ paths:
                   page_size: 20
                   total: 3
                 timestamp: '2026-06-19T10:39:55.895559697Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      customers:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            company_id:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            created_by:
+                              type: string
+                              format: uuid
+                            customer_type:
+                              type: string
+                            email:
+                              type: string
+                            first_name:
+                              type: string
+                            id:
+                              type: string
+                              format: uuid
+                            is_active:
+                              type: boolean
+                            last_name:
+                              type: string
+                            metadata:
+                              type: string
+                            phone_number:
+                              type: string
+                            updated_at:
+                              type: string
+                              format: date-time
+                            city:
+                              type: string
+                            country:
+                              type: string
+                            date_of_birth:
+                              type: string
+                            dial_code:
+                              type: string
+                            id_number:
+                              type: string
+                            id_type:
+                              type: string
+                            line1:
+                              type: string
+                            postal_code:
+                              type: string
+                            state:
+                              type: string
+                      page:
+                        type: number
+                      page_size:
+                        type: number
+                      total:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7708,6 +10223,48 @@ paths:
                   phone_number: '+2348012345678'
                   updated_at: '2026-06-18T20:21:55.397813Z'
                 timestamp: '2026-06-19T10:39:56.678282817Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      company_id:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      created_by:
+                        type: string
+                        format: uuid
+                      customer_type:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      id:
+                        type: string
+                        format: uuid
+                      is_active:
+                        type: boolean
+                      last_name:
+                        type: string
+                      metadata:
+                        type: string
+                      phone_number:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7773,6 +10330,48 @@ paths:
                   phone_number: '+00000000000'
                   updated_at: '2026-06-19T15:10:02.664939383Z'
                 timestamp: '2026-06-19T15:10:02.670980824Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      company_id:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      created_by:
+                        type: string
+                        format: uuid
+                      customer_type:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      id:
+                        type: string
+                        format: uuid
+                      is_active:
+                        type: boolean
+                      last_name:
+                        type: string
+                      metadata:
+                        type: string
+                      phone_number:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7858,6 +10457,50 @@ paths:
                   created_at: '2026-06-18T18:11:01.180899Z'
                   updated_at: '2026-06-18T18:11:38.825552Z'
                 timestamp: '2026-06-19T10:39:57.956753903Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      company_id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                      name:
+                        type: string
+                      wallet_address:
+                        type: string
+                      currency:
+                        type: string
+                      network:
+                        type: string
+                      destination:
+                        type: string
+                      is_blacklisted:
+                        type: boolean
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8001,6 +10644,61 @@ paths:
                   offset: 0
                   total: 5
                 timestamp: '2026-06-19T10:39:58.652709368Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      beneficiaries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            type:
+                              type: string
+                            name:
+                              type: string
+                            destination:
+                              type: string
+                            is_blacklisted:
+                              type: boolean
+                            is_active:
+                              type: boolean
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            wallet_address:
+                              type: string
+                            currency:
+                              type: string
+                            network:
+                              type: string
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                      total:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8068,6 +10766,50 @@ paths:
                   created_at: '2026-06-18T18:11:01.180899Z'
                   updated_at: '2026-06-18T18:11:38.825552Z'
                 timestamp: '2026-06-19T10:39:59.395686981Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      company_id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                      name:
+                        type: string
+                      wallet_address:
+                        type: string
+                      currency:
+                        type: string
+                      network:
+                        type: string
+                      destination:
+                        type: string
+                      is_blacklisted:
+                        type: boolean
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8134,6 +10876,50 @@ paths:
                   created_at: '2026-06-18T18:11:01.180899Z'
                   updated_at: '2026-06-19T10:40:00.20999369Z'
                 timestamp: '2026-06-19T10:40:00.217004617Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      company_id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                      name:
+                        type: string
+                      wallet_address:
+                        type: string
+                      currency:
+                        type: string
+                      network:
+                        type: string
+                      destination:
+                        type: string
+                      is_blacklisted:
+                        type: boolean
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8227,6 +11013,84 @@ paths:
                     created_at: '2026-07-04T21:56:36.911340825Z'
                     updated_at: '2026-07-04T21:56:36.911340825Z'
                 timestamp: '2026-07-04T21:56:36.919134356Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payout:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          quote_id:
+                            type: string
+                          company_id:
+                            type: string
+                            format: uuid
+                          status:
+                            type: string
+                          source:
+                            type: string
+                          from_asset:
+                            type: string
+                          to_currency:
+                            type: string
+                          sat_amount:
+                            type: string
+                          btc_amount:
+                            type: string
+                          cent_amount:
+                            type: string
+                          amount:
+                            type: string
+                          settlement_amount:
+                            type: string
+                          cent_fees:
+                            type: string
+                          fees:
+                            type: string
+                          exchange_rate:
+                            type: object
+                            properties:
+                              rate:
+                                type: string
+                              btc_rate:
+                                type: string
+                              currency:
+                                type: string
+                              effective_rate:
+                                type: string
+                          trip:
+                            type: object
+                            properties:
+                              quote_at:
+                                type: string
+                                format: date-time
+                          payment_reason:
+                            type: string
+                          reference:
+                            type: string
+                          country:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8360,6 +11224,88 @@ paths:
                     updated_at: null
                   data: null
                 timestamp: '2026-07-04T21:56:37.105232508Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payout:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          quote_id:
+                            type: string
+                          company_id:
+                            type: string
+                          status:
+                            type: string
+                          source:
+                            type: string
+                          from_asset:
+                            type: string
+                          to_currency:
+                            type: string
+                          sat_amount:
+                            type: string
+                          btc_amount:
+                            type: string
+                          amount:
+                            type: string
+                          settlement_amount:
+                            type: string
+                          cent_fees:
+                            type: string
+                          fees:
+                            type: string
+                          exchange_rate:
+                            type: object
+                            properties:
+                              rate:
+                                type: string
+                              btc_rate:
+                                type: string
+                              currency:
+                                type: string
+                              effective_rate:
+                                type: string
+                          beneficiary:
+                            type: object
+                            properties:
+                              account_name:
+                                type: string
+                              account_number:
+                                type: string
+                              bank_code:
+                                type: string
+                              country:
+                                type: string
+                              destination_type:
+                                type: string
+                          payment_reason:
+                            type: string
+                          reference:
+                            type: string
+                          country:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            nullable: true
+                          updated_at:
+                            nullable: true
+                      data:
+                        nullable: true
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8650,6 +11596,31 @@ paths:
                   country: NG
                   is_verified: true
                 timestamp: '2026-06-19T10:47:03.950149804Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      account_name:
+                        type: string
+                      account_number:
+                        type: string
+                      bank_code:
+                        type: string
+                      bank_name:
+                        type: string
+                      country:
+                        type: string
+                      is_verified:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -9827,6 +12798,43 @@ paths:
                       - bank
                       - swift
                 timestamp: '2026-06-19T10:47:01.371886375Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      countries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                            name:
+                              type: string
+                            flag:
+                              type: string
+                            dial_code:
+                              type: string
+                            corridors:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  currency:
+                                    type: string
+                                  destination_types:
+                                    type: array
+                                    items:
+                                      type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -10637,6 +13645,95 @@ paths:
                       - bank_code
                       - account_number
                 timestamp: '2026-06-19T10:47:01.987567118Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      name:
+                        type: string
+                      flag:
+                        type: string
+                      dial_code:
+                        type: string
+                      destination_types:
+                        type: object
+                        properties:
+                          bank:
+                            type: object
+                            properties:
+                              key:
+                                type: string
+                              label:
+                                type: string
+                              fields:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    key:
+                                      type: string
+                                    label:
+                                      type: string
+                                    type:
+                                      type: string
+                                    required:
+                                      type: boolean
+                                    component:
+                                      type: string
+                                    options:
+                                      type: array
+                                      items: {}
+                                    options_ref:
+                                      type: string
+                                    fields:
+                                      type: array
+                                      items: {}
+                                    variants:
+                                      type: object
+                                      properties: {}
+                                    pattern:
+                                      type: string
+                                    description:
+                                      type: string
+                                    placeholder:
+                                      type: string
+                              banks:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    code:
+                                      type: string
+                              limits:
+                                type: object
+                                properties:
+                                  min_amount:
+                                    type: string
+                                  max_amount:
+                                    type: string
+                                  currency:
+                                    type: string
+                              lookup_fields:
+                                type: array
+                                items:
+                                  type: string
+                              receipt_fields:
+                                type: array
+                                items:
+                                  type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -10955,6 +14052,36 @@ paths:
                     min_amount_usd: '1.22'
                     max_amount_usd: '109753.42'
                 timestamp: '2026-06-19T10:47:02.758175719Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      limits:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            country:
+                              type: string
+                            currency:
+                              type: string
+                            min_amount:
+                              type: string
+                            max_amount:
+                              type: string
+                            min_amount_usd:
+                              type: string
+                            max_amount_usd:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11729,6 +14856,34 @@ paths:
                   country_name: Nigeria
                   total: 358
                 timestamp: '2026-06-19T10:47:03.309040201Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      banks:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            bank_name:
+                              type: string
+                            bank_code:
+                              type: string
+                      country_code:
+                        type: string
+                      country_name:
+                        type: string
+                      total:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11795,6 +14950,30 @@ paths:
                   offset: 0
                   has_more: false
                 timestamp: '2026-06-19T10:47:04.431490635Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items: {}
+                      total_count:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                      has_more:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11887,6 +15066,107 @@ paths:
                     created_at: '2026-06-19T11:50:18.933833Z'
                     updated_at: '2026-06-19T11:50:19.531892Z'
                 timestamp: '2026-06-19T11:51:05.77225279Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payout:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          quote_id:
+                            type: string
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          status:
+                            type: string
+                          source:
+                            type: string
+                          from_asset:
+                            type: string
+                          chain:
+                            type: string
+                          to_currency:
+                            type: string
+                          sat_amount:
+                            type: string
+                          btc_amount:
+                            type: string
+                          cent_amount:
+                            type: string
+                          amount:
+                            type: string
+                          settlement_amount:
+                            type: string
+                          cent_fees:
+                            type: string
+                          fees:
+                            type: string
+                          exchange_rate:
+                            type: object
+                            properties:
+                              rate:
+                                type: string
+                              btc_rate:
+                                type: string
+                              currency:
+                                type: string
+                              effective_rate:
+                                type: string
+                          beneficiary:
+                            type: object
+                            properties:
+                              account_name:
+                                type: string
+                              account_number:
+                                type: string
+                              bank_code:
+                                type: string
+                              country:
+                                type: string
+                              destination_type:
+                                type: string
+                          trip:
+                            type: object
+                            properties:
+                              quote_at:
+                                type: string
+                                format: date-time
+                              initialized_at:
+                                type: string
+                                format: date-time
+                          reference:
+                            type: string
+                          callback_url:
+                            type: string
+                          provider_settlement_id:
+                            type: string
+                          country:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
