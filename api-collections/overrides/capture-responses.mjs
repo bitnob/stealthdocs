@@ -11,7 +11,7 @@
 // Only GET endpoints run by default, since other calls create or change things
 // in the sandbox. Credentials come from .env.sandbox at the repo root:
 //   BITNOB_CLIENT_ID=...
-//   BITNOB_CLIENT_SECRET=...
+//   BITNOB_CLIENT_SECRET=...                 (or BITNOB_SANDBOX_CLIENT_SECRET)
 //   BITNOB_BASE_URL=https://api.bitnob.com   (optional)
 //
 // Saved responses are published in the docs, so review the file before
@@ -52,6 +52,7 @@ function loadEnv() {
     const match = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
     if (match) env[match[1]] = match[2].replace(/^["']|["']$/g, "");
   }
+  env.BITNOB_CLIENT_SECRET ??= env.BITNOB_SANDBOX_CLIENT_SECRET;
   if (!env.BITNOB_CLIENT_ID || !env.BITNOB_CLIENT_SECRET) {
     throw new Error(".env.sandbox needs BITNOB_CLIENT_ID and BITNOB_CLIENT_SECRET");
   }

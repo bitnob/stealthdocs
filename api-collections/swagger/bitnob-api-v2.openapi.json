@@ -11814,7 +11814,110 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful response"
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Lightning invoice retrieved successfully",
+                  "data": {
+                    "id": "01a167c7-7bc7-724b-8dd2-6585511bd3f2",
+                    "payment_hash": "db6ac3d735644215d68cb92b67b87120d447453140e942a2e53ebfddcac7e8f7",
+                    "request": "lntb51520n1p4dk9zepp5md4v84e4v3ppt45vhy4k0wr3yr2yw3f3gr559gh986lamjk8armsdqcf9h8vmmfvdjjqurp09kk2mn5cqzpgxqztzsp5zakyw5txml67njzv7t2y2068p57hqvslptypuhv00dzlhqh0dupq9qrsgqsrdek2s88u0wlz6qlm64am2hk439d5wksv5njcn9vgtmtg97dtnrzek4pc7wqmuuvu3qsnjmzr3g6c7cvkydam7yywghw4yxu8svlcqqzfaggm",
+                    "preimage": "a0631c45e28cf14d1c5731c5462e4fb8c5d951e73cf7ca8a6e6d00a8cf209e68",
+                    "amount_sat": "5152",
+                    "amount_msat": "5152000",
+                    "fee_sat": "0",
+                    "fee_msat": "0",
+                    "description": "Invoice payment",
+                    "status": "expired",
+                    "direction": "incoming",
+                    "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+                    "customer_id": "",
+                    "reference": "QT2_21053599",
+                    "expires_at": "1792742844",
+                    "created_at": "2026-10-23T08:01:29Z",
+                    "updated_at": "2026-10-23T08:07:41Z"
+                  },
+                  "timestamp": "2026-10-25T06:48:04.576046884Z"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "payment_hash": {
+                          "type": "string"
+                        },
+                        "request": {
+                          "type": "string"
+                        },
+                        "preimage": {
+                          "type": "string"
+                        },
+                        "amount_sat": {
+                          "type": "string"
+                        },
+                        "amount_msat": {
+                          "type": "string"
+                        },
+                        "fee_sat": {
+                          "type": "string"
+                        },
+                        "fee_msat": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "direction": {
+                          "type": "string"
+                        },
+                        "company_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "customer_id": {
+                          "type": "string"
+                        },
+                        "reference": {
+                          "type": "string"
+                        },
+                        "expires_at": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation error",
