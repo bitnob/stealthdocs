@@ -41,7 +41,8 @@ servers:
 - url: https://api.bitnob.com
   description: Production
 security:
-- BitnobHmacAuth: []
+- BitnobClientId: []
+  BitnobClientSecret: []
 tags:
 - name: Identity
   description: Authentication probe for verifying workspace credentials.
@@ -11918,18 +11919,28 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
-    BitnobHmacAuth:
+    BitnobClientId:
       type: apiKey
       in: header
-      name: X-Auth-Signature
+      name: X-Auth-Client
       description: |
-        HMAC-SHA256 authentication. All calls must include four headers:
+        Your workspace client id.
+
+        All calls must include four headers:
         - `X-Auth-Client`   — your workspace client id
         - `X-Auth-Timestamp` — Unix seconds
         - `X-Auth-Nonce`    — 16-byte random hex
         - `X-Auth-Signature` — hex(HMAC-SHA256(
           `{client_id}:{timestamp}:{nonce}:{compact_json_body}`,
           client_secret))
+
+        The playground computes the timestamp, nonce and signature for you.
+    BitnobClientSecret:
+      type: apiKey
+      in: header
+      name: X-Playground-Client-Secret
+      description: |
+        Your sandbox client secret. The playground uses it to sign the request in your browser and removes it before the request is sent. Never send your client secret as a header in your own integration.
   schemas:
     Error:
       type: object
