@@ -47,6 +47,25 @@ def infer_schema:
   }
 })
 | .security = [{"BitnobClientId": [], "BitnobClientSecret": []}]
+# Operations the published spec lists but the API does not serve: every call
+# returns "Cannot <METHOD> <path>" (checked against the sandbox on 2026-10-25).
+# Drop an entry here once its route is live, and add it back to docs.json.
+| reduce (
+    ["get", "/api/trading/prices/{pair}"],
+    ["post", "/api/trading/scheduled-orders"],
+    ["get", "/api/trading/scheduled-orders"],
+    ["get", "/api/trading/scheduled-orders/{id}"],
+    ["put", "/api/trading/scheduled-orders/{id}"],
+    ["get", "/api/trading/scheduled-orders/{id}/executions"],
+    ["post", "/api/trading/target-orders"],
+    ["get", "/api/trading/target-orders"],
+    ["get", "/api/trading/target-orders/{id}"],
+    ["post", "/api/bulk-transfers/schedules"],
+    ["get", "/api/bulk-transfers/schedules"],
+    ["put", "/api/bulk-transfers/schedules/{scheduleId}"],
+    ["get", "/api/bulk-transfers/schedules/{scheduleId}/executions"]
+  ) as [$method, $path] (.; del(.paths[$path][$method]))
+| .paths |= with_entries(select(.value | keys - ["parameters", "summary", "description", "servers"] | length > 0))
 # Responses captured from the sandbox by capture-responses.mjs, passed in with
 # --slurpfile responses. They fill only success responses the spec leaves empty.
 | reduce (($ARGS.named.responses[0] // {}) | to_entries[]) as $captured (.;
