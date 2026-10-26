@@ -45,7 +45,7 @@ This keeps every change reviewable: the new version is tested in full before it 
   <Step title="Compare old and new on the same requests">
     Run your regression cases against both policies. Pass `policy_id` as `LIVE_POLICY_ID` for the current behaviour, and as the new draft's `id` for the proposed behaviour. The cases whose results differ are the effect of your change. Check that they are the ones you intended and nothing else. See [Keep a regression suite](/docs/platform/policies/test-rules-with-dry-run-evaluation#keep-a-regression-suite).
 
-    For the threshold change above, a $7,500 transfer should go from `no_match` on the live policy to `requires_approval: true` on the draft. A $500 and a $60,000 transfer should give the same result on both.
+    For the threshold change above, a $7,500 transfer should go from `approved` on the live policy to `awaiting_approval` on the draft. A $500 and a $60,000 transfer should give the same result on both.
   </Step>
 
   <Step title="Validate and activate">

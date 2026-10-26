@@ -38,7 +38,7 @@ The `sign` block contains:
 | Field | Contents |
 |---|---|
 | `scheme` | `evm_7702` |
-| `authorization` | The EIP-7702 tuple to sign: `chainId`, `address` (the router contract), and `nonce` |
+| `authorization` | The EIP-7702 tuple to sign: `address` (the router contract), `chainId` (a number), and `nonce` |
 | `witness` | The EIP-712 typed data to sign |
 | `digests` | The 32-byte hashes of both, for signers that only sign hashes |
 
@@ -82,9 +82,36 @@ export async function signEvmQuote(quote, privateKey) {
 
 Both values are 0x-prefixed 65-byte signatures (`r`, `s`, `v`), which is the format Submit expects.
 
-<Note>
-  These examples assume `witness` is standard EIP-712 typed data, with `domain`, `types`, `primaryType`, and `message`, and that `digests` has `authorization` and `witness` keys. Log one sandbox quote and check its shape before building on it.
-</Note>
+`witness` is standard EIP-712 typed data. On Base it looks like this:
+
+```json
+"witness": {
+  "primaryType": "SponsoredTransfer",
+  "domain": {
+    "name": "BitnobSponsoredTransfer",
+    "version": "2",
+    "chainId": "8453",
+    "verifyingContract": "0xB5f556aC93732ebf08C745cEaD54ceDbC59543Ed"
+  },
+  "types": {
+    "EIP712Domain": [ ... ],
+    "SponsoredTransfer": [
+      { "name": "token", "type": "address" },
+      { "name": "recipient", "type": "address" },
+      { "name": "recipientAmount", "type": "uint256" },
+      { "name": "collector", "type": "address" },
+      { "name": "feeAmount", "type": "uint256" },
+      { "name": "partner", "type": "address" },
+      { "name": "partnerAmount", "type": "uint256" },
+      { "name": "nonce", "type": "uint256" },
+      { "name": "deadline", "type": "uint256" }
+    ]
+  },
+  "message": { "token": "0x8335...2913", "recipient": "0x6949...806A", "recipientAmount": "1000000", "feeAmount": "767192", ... }
+}
+```
+
+`verifyingContract` is the sender's own address, because EIP-7702 delegates it to the router. Amounts in `message` are in base units, such as `1000000` for 1 USDC. Show the user the decimal amounts from the quote, not these.
 
 ## Sign with a hardware or custom signer
 

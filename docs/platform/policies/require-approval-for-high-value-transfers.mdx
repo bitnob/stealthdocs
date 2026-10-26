@@ -86,7 +86,7 @@ Rules run in order and the first match wins, so order them from most to least re
 ```
 
 <Note>
-  Validation doesn't check `action_config` keys or condition values, so a typo saves without an error. Dry-run every tier, as below, and confirm `required_approvals` in each response before you activate.
+  `approvers` and `required_approvals` are both required. Saving the draft rejects a rule without them, or with an unknown key. The values `destination_type` takes aren't listed in the API reference: dry-run a real transfer between your own vaults and check the value in `failed_condition.actual`.
 </Note>
 
 Lint the rules with [Validate in-flight rule array](/api-reference/platform/policies/validate-in-flight-rule-array), then save them with [Create draft policy](/api-reference/platform/policies/create-draft-policy). [Write and activate your first policy](/docs/platform/policies/write-and-activate-your-first-policy) shows both calls.
@@ -97,11 +97,11 @@ Dry-run one request per row of the table, against the draft. Each should stop at
 
 | Request | Expected `trace` terminal rule | Expected decision |
 |---|---|---|
-| `"amount_usd": "300000"` | Block over $250,000 | `allowed: false` |
-| `"amount_usd": "75000"` | Two admins over $50,000 | `required_approvals: 2` |
-| `"amount_usd": "20000"` | One treasury officer over $10,000 | `required_approvals: 1` |
-| `"amount_usd": "300000", "is_automated": true, "destination_type": "vault"` | Allow automated internal sweeps | `allowed: true` |
-| `"amount_usd": "500"` | None | `result: no_match` |
+| `"amount_usd": "300000"` | Block over $250,000 | `result: rejected` |
+| `"amount_usd": "75000"` | Two admins over $50,000 | `result: awaiting_approval`, `required_approvals: 2` |
+| `"amount_usd": "20000"` | One treasury officer over $10,000 | `result: awaiting_approval`, `required_approvals: 1` |
+| `"amount_usd": "300000", "is_automated": true, "destination_type": "vault"` | Allow automated internal sweeps | `result: approved` |
+| `"amount_usd": "500"` | None | `result: approved` |
 
 The fourth row is worth checking closely: the sweep rule is above the block rule, so it lets a $300,000 automated sweep through. If that isn't what you want, add an `amount_usd` cap to the sweep rule.
 
@@ -109,7 +109,7 @@ When every row matches, validate the stored draft and activate it.
 
 ## What approvers see
 
-When a transfer is held, the dry-run fields `required_approvals` and `expiry_hours` describe the approval request it opens. Approvers act on the request in the Bitnob dashboard. The transaction then moves on:
+When a transfer is held, the dry-run fields `required_approvals` and `expiry_hours` describe the approval request it opens. Approvals expire after 24 hours by default. Approvers act on the request in the Bitnob dashboard. The transaction then moves on:
 
 - **Approved**: it continues to signing and broadcast, and you receive `transaction.signed` and then `transaction.completed` as normal.
 - **Rejected**: its status becomes `rejected`, which is terminal. Nothing is signed or broadcast.

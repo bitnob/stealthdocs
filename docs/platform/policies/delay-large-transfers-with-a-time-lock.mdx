@@ -52,7 +52,7 @@ This rule delays any transfer over $100,000 by one hour, unless it goes to one o
 ```
 
 <Note>
-  Validation doesn't check `action_config` keys or condition values. Save the draft and dry-run it: the response reports the window as `delay_minutes`, so you can confirm it took effect. Check the values `destination_type` takes by dry-running a real transfer from your setup.
+  `delay_minutes` is the only `action_config` key for `delay`. The values `destination_type` takes aren't listed in the API reference: dry-run a real transfer to your vault and check the value in `failed_condition.actual`.
 </Note>
 
 Place it among your other rules by how restrictive it is. A delay rule placed above a `block` rule for the same amounts would delay transfers you meant to block, then let them through. [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) warns about this kind of overlap.
@@ -72,7 +72,7 @@ curl https://api.platform.bitnob.com/v1/policies/evaluate \
   }'
 ```
 
-Expect `"result": "matched_rule"` and `"delay_minutes": 60`. Then dry-run the same amount with your vault as the destination, and confirm that the delay rule is not the terminal rule in `trace`.
+Expect `"result": "delayed"`, `"delay_minutes": 60`, and a `reason` such as "Transaction delayed 60 minutes by policy ...". Then dry-run the same amount with your vault as the destination, and confirm that the delay rule is not the terminal rule in `trace`.
 
 ## Choosing the window
 

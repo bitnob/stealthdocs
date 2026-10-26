@@ -48,16 +48,16 @@ Check whether `sign.approve` is present.
   "approve": {
     "needed": true,
     "digest": "0x9ad0...44c2",
-    "token": "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
-    "spender": "TRouter...contract",
-    "selector": "0x095ea7b3"
+    "token": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+    "spender": "TD4BmmpV1hdHEQf3NZmnhfpbjNL5uhaHco",
+    "selector": "approve(address,uint256)"
   }
 }
 ```
 
 The approval lets Bitnob's router contract, the `spender`, move this token from the sender's address. It is a one-time step for each sender and token. The quoted fee already covers it, so the sender pays nothing extra.
 
-Before you ask the user to sign an approval, check what it grants. `token` should be the token being sent, `spender` the router, and `selector` `0x095ea7b3`, which is the standard `approve(address,uint256)` function. Show the user that this is a one-time approval for the router.
+Before you ask the user to sign an approval, check what it grants. `token` should be the contract of the token being sent (`TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` for USDT on Tron mainnet), `spender` the router, and `selector` `approve(address,uint256)`, the standard token approval. Show the user that this is a one-time approval for the router.
 
 ## Sign
 

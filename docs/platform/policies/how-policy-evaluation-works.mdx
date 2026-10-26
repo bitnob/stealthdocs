@@ -59,7 +59,7 @@ A condition can compare any request attribute the engine evaluates. These includ
 | `is_automated`, `automation_rule_id` | Different rules for automated sweeps and manual transfers |
 | `operation_type`, `tx_type` | Different rules for each kind of operation |
 
-[Rule reference](/docs/platform/policies/rule-reference#condition-fields) describes each field. Validation doesn't reject a field name it doesn't know, so check names against that list: a misspelt field never matches, and the rule silently does nothing.
+[Rule reference](/docs/platform/policies/rule-reference#condition-fields) describes each field. Saving a rule with a field the engine doesn't know returns `400 invalid_condition_field`.
 
 <Tip>
   Prefer `amount_usd` for spending thresholds. A single USD rule covers every asset, and you don't need a separate rule per token with its own decimals.
@@ -67,7 +67,13 @@ A condition can compare any request attribute the engine evaluates. These includ
 
 ## When no rule matches
 
-If no rule matches, the result is `no_match`. When your organisation has no enforced policy and no quorum at all, every request is allowed, and dry-run returns `"result": "approved"` with the reason "No active policy and no quorum".
+If no rule matches, the request is allowed. A dry-run returns `"result": "approved"` and a trace in which every rule has `matched: false`. The same result comes back, with the reason "No active policy and no quorum", when your organisation has nothing enforced.
+
+So a policy that only lists what to block or hold allows everything else. If you want a default-deny posture, write the allow rules first and finish with a `block` rule that catches what's left.
+
+<Warning>
+  If the engine can't work out a request's USD value, conditions on `amount_usd` don't match, and the trace reports a resolution error such as "rate provider unavailable". A `block` rule that relies only on `amount_usd` then lets the request through. For your most important limits, add a matching rule on `amount` for the assets you hold.
+</Warning>
 
 Don't rely on an implicit default for anything security-relevant. End your rule list with an explicit decision for the cases you care about, and confirm the behaviour by dry-running a request that matches none of your other rules. See [Test rules with dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation).
 

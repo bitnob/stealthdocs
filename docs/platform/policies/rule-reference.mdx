@@ -35,17 +35,27 @@ This page describes the shape of policies and rules: their fields, actions, oper
 
 ## Actions
 
-| `action_type` | Effect | Typical `action_config` |
+| `action_type` | Effect | `action_config` |
 |---|---|---|
 | `allow` | The transaction proceeds to signing. | None |
 | `block` | The transaction is rejected before signing. | None |
-| `require_approval` | The transaction is held in `pending_authorization` until approved. | Number of approvals required, the `approvers` list (each with `id` and `type`), and an expiry window |
-| `delay` | The transaction is held in `delayed` until `execute_at`, then executes. | The delay window in minutes |
-| `alert` | The transaction proceeds and the match is recorded. | None |
+| `require_approval` | The transaction is held in `pending_authorization` until approved. | Required: `approvers`, a list of `{ "id", "type" }`, and `required_approvals`, a number |
+| `delay` | The transaction is held in `delayed` until `execute_at`, then executes. | `delay_minutes`, a number |
+| `alert` | The transaction proceeds, and `policy.alert` informs the targets. | Required: `targets`, a list of at least one `{ "type", "value" }` |
 
 Approver `id` and `type` values come from [List approver candidates](/api-reference/platform/users/list-approver-candidates). Roles include `owner`, `admin` (shown as Manager), `treasury_officer`, `compliance_officer`, `internal_auditor`, `operator`, `signer`, `developer`, and `viewer`.
 
-Validation doesn't check the keys inside `action_config`. Confirm them with a dry-run, which reports `required_approvals`, `expiry_hours`, and `delay_minutes` from the matched rule.
+```json
+"action_config": { "required_approvals": 2, "approvers": [{ "id": "admin", "type": "role" }] }
+"action_config": { "delay_minutes": 60 }
+"action_config": { "targets": [{ "type": "email", "value": "ops@example.com" }, { "type": "slack", "value": "https://hooks.slack.com/services/..." }] }
+```
+
+Alert target `type` is `email`, `slack`, or `webhook`. For `slack` and `webhook`, `value` must be an `https://` URL.
+
+Approvals expire after 24 hours by default, reported as `expiry_hours` in a dry-run.
+
+Saving a rule rejects an unknown `action_config` key with `unknown_action_config_field`, and a missing required key with `invalid_action_config`.
 
 ## Operators
 
@@ -93,7 +103,7 @@ The fields a condition can compare are the request attributes the engine evaluat
 | `is_automated`, `automation_rule_id` | Whether automation, such as a consolidation rule, initiated it, and which rule. |
 | `connection_id` | The connection the operation flows through, if any. |
 
-Validation doesn't reject a field name it doesn't know. A misspelt field never matches, so check names against this table.
+Saving a rule with a field not on this list returns `400 invalid_condition_field`. Numeric values are stored and returned as numbers.
 
 ## Evaluation results
 
@@ -101,13 +111,15 @@ The `result` field of a dry-run response:
 
 | `result` | Meaning |
 |---|---|
-| `matched_rule` | A rule matched and its action decided the outcome. `rule_id` names it. |
-| `no_match` | No rule matched. |
+| `approved` | Allowed. Returned when an `allow` rule matches, when no rule matches, and when your organisation has nothing enforced. |
+| `rejected` | A `block` rule matched. |
+| `awaiting_approval` | A `require_approval` rule matched. `required_approvals` and `expiry_hours` are set. |
+| `delayed` | A `delay` rule matched. `delay_minutes` is set. |
 | `quorum` | The decision came from the quorum policy. |
-| `awaiting_approval` | The request is held for approval. |
-| `approved` | Allowed. Also returned when your organisation has no enforced policy and no quorum, with the reason "No active policy and no quorum". |
-| `rejected` | An approver rejected the request. |
-| `delayed` | The request is held by a time lock. |
+
+The API reference also lists `matched_rule` and `no_match`. Branch on `allowed` first, and on `result` for the reason.
+
+`reason` is a readable sentence that names the policy and rule, for example "Blocked by policy Transfer limits / rule Block over $50,000". Log it, but don't parse it.
 
 ## Validation diagnostics
 
@@ -133,7 +145,7 @@ Diagnostics come in two tiers. Tier 1 is lexical and syntactic. Tier 2 is about 
 ```
 
 <Warning>
-  Validation does not reject unknown condition fields, unsupported operators such as `gt`, or a missing `action_config`. A rule list with those mistakes comes back `valid: true`. Check field and operator names against this page, and dry-run every rule before you activate.
+  The validate endpoints check how rules interact. They don't reject an unknown condition field, an unsupported operator such as `gt`, or a missing `action_config`: a rule list with those mistakes comes back `valid: true`. Those checks happen when you save the rule. Create draft policy and Add rule return `400` with `invalid_condition_field`, `invalid_operator`, `invalid_action_config`, or `unknown_action_config_field`.
 </Warning>
 
 ## Limits on editing
@@ -144,6 +156,6 @@ Diagnostics come in two tiers. Tier 1 is lexical and syntactic. Tier 2 is about 
 | Validate | Yes | Yes, read-only |
 | Dry-run with `policy_id` | Yes | Yes |
 | Activate | Yes, through quorum | `409 Conflict` |
-| Delete | Yes, soft delete | No |
+| Delete | Yes, soft delete, returns `204` | No |
 
 Dry-run accepts a policy in any status, including `archived`. Every other write applies to drafts only.

@@ -45,9 +45,11 @@ All transaction statuses are listed in [Transaction lifecycle](/docs/platform/co
 | Activate policy | `409` | The policy is already enforced. | Nothing to do. |
 | Activate policy | `422` | The quorum has fewer than two approvers, or a direct activation was attempted. | Configure a quorum with at least two approvers in the dashboard. |
 | Update, add rule, update rule, remove rule | `4xx` | The policy is not a draft. | Create a new draft. See [Change an enforced policy](/docs/platform/policies/change-an-enforced-policy). |
-| Delete draft policy | `409` | The policy is not a draft. | Enforced and archived policies can't be deleted. |
+| Create, add rule | `400` | `invalid_condition_field`, `invalid_operator`, `invalid_action_config`, or `unknown_action_config_field`. | Fix the rule. See [Rule reference](/docs/platform/policies/rule-reference). |
+| Create | `400` | `invalid_input`, for example "alert rules must specify at least one notify target". | Read `message`, and fix the rule. |
+| Delete draft policy | `409` | The policy is not a draft. | Enforced and archived policies can't be deleted. A successful delete returns `204`. |
 | Create draft policy, add rule | `400` | `Idempotency-Key` is missing. | Send one on every create. |
-| Any idempotent write | `409` | The `Idempotency-Key` was reused with a different body. | Use a new key for a new request. |
+| Any idempotent write | `422` | `idempotency_key_conflict`: the `Idempotency-Key` was reused with a different body. | Use a new key for a new request. |
 | Get quorum policy | `404` | No quorum is configured. | Configure one in the dashboard. |
 
 All errors share the structure described in [Errors](/docs/platform/making-requests#errors).

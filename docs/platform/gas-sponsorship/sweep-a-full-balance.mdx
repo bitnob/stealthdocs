@@ -42,7 +42,7 @@ curl https://api.platform.bitnob.com/v1/sponsored-transfers \
 }
 ```
 
-`total_debit` equals `amount`, so the address ends at exactly zero. Check that `treat_as_gross_amount` is `true` in the response before you ask the user to sign.
+`total_debit` equals `amount`, so the address ends at exactly zero. Check that `treat_as_gross_amount` is `true` in the response before you ask the user to sign. It is left out of the response in net mode.
 
 The fee here is illustrative. Tron fees are usually higher for a first-time sender, which needs the one-time approval, than for later transfers.
 

@@ -88,7 +88,7 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
     ```
 
     <Note>
-      The keys inside `action_config` depend on the action type, and validation doesn't check them. After you save the draft, dry-run it and confirm that `required_approvals` in the response is the number you set.
+      The keys inside `action_config` depend on the action type. A `require_approval` rule needs both `approvers` and `required_approvals`. This endpoint only checks how rules interact. The field, operator, and `action_config` checks happen when you save, in the next step.
     </Note>
 
     Try swapping the two `order` values and validating again. The block rule now comes second and can never match, because every transfer over $50,000 is also over $10,000. Validation returns a warning with the code `shadowed_by_different_action`, and a `suggested_fix` telling you to move the block rule up.
@@ -111,6 +111,8 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
     ```
 
     The response is the policy, with `"status": "draft"` and an `id`. Save the `id` as `POLICY_ID`. A draft is not enforced, so nothing changes for your transactions yet.
+
+    Saving checks every rule as you save it. An unknown condition field returns `400 invalid_condition_field`, an unsupported operator `invalid_operator`, and a missing or unrecognised `action_config` key `invalid_action_config` or `unknown_action_config_field`. Numeric condition values come back as numbers, for example `"value": 50000`.
   </Step>
 
   <Step title="Dry-run three transfers">
@@ -132,16 +134,20 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
 
     ```json
     {
+      "result": "awaiting_approval",
       "allowed": false,
-      "result": "matched_rule",
+      "reason": "Approval required by policy Transfer limits / rule Approve over $10,000",
       "requires_approval": true,
       "required_approvals": 1,
+      "expiry_hours": 24,
+      "policy_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
       "rule_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
       "trace": [
         {
           "rule_index": 0,
           "rule_name": "Block over $50,000",
           "matched": false,
+          "reason": "amount_usd: 25000 not > 50000",
           "failed_condition": { "field": "amount_usd", "operator": "greater_than", "expected": "50000", "actual": "25000" }
         },
         {
@@ -155,7 +161,7 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
     }
     ```
 
-    Run it again with `"amount_usd": "60000"` and you get `"action": "block"` on rule 0. With `"amount_usd": "500"` neither rule matches, and `result` is `no_match`. If any result surprises you, fix the draft with the rule endpoints and dry-run again. [Test rules with dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation) explains every field of the trace.
+    Run it again with `"amount_usd": "60000"` and you get `"result": "rejected"`, from rule 0. With `"amount_usd": "500"` neither rule matches, so the transfer is allowed: `result` is `approved`, and every rule appears in `trace` with `matched: false`. If any result surprises you, fix the draft with the rule endpoints and dry-run again. [Test rules with dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation) explains every field of the trace.
   </Step>
 
   <Step title="Validate the stored draft">

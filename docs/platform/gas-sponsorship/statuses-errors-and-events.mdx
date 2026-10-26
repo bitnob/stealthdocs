@@ -21,7 +21,7 @@ related:
 | `pending` | No | All | Broadcast. `tx_hash` is set, and `confirmations` increases. |
 | `completed` | Yes | All | Confirmed on chain. |
 | `failed` | Yes | All | Did not complete. See `failure_code` and `failure_reason`. |
-| `expired` | Yes | All | `expires_at` passed without a valid submission. |
+| `expired` | Yes | All | `expires_at` passed without a valid submission. A quote can still show `quoted` for a while after `expires_at`, so check the timestamp, not only the status. |
 | `cancelled` | Yes | All | Cancelled before broadcast. |
 
 ## Failure codes
@@ -40,14 +40,14 @@ Treat this list as open. Handle unknown codes with a generic message, and log `f
 
 | Endpoint | Status | `code` | Meaning |
 |---|---|---|---|
-| Create | `400` | `invalid_request` | Unsupported chain, asset, or network, a malformed address or amount, a gross `amount` that doesn't exceed the fees, or an invalid `partner_fee`. |
+| Create | `400` | `invalid_request` | Unsupported chain, asset, or network, a malformed address or amount, a gross `amount` that doesn't exceed the fees, an invalid `partner_fee`, or a Solana sender with no token account for the asset. |
 | Create | `429` | `rate_limited` | Quote rate limit reached. Honour `Retry-After`. |
 | Create | `429` | `budget_exceeded` | Daily sponsored-gas budget used up. Honour `Retry-After`. |
 | Create | `503` | `capacity_unavailable` | Sponsorship capacity briefly unavailable. Retry shortly. |
 | Submit | `409` | `quote_expired` | The quote expired. Request a new one. |
 | Submit | `409` | `conflict` | Already submitted. Track the existing transfer. |
 | Submit | `422` | `signature_invalid` | A signature didn't verify, or `tron_approve_signature` is missing. The quote is still valid. |
-| Create, submit | `409` | | The `Idempotency-Key` was reused with a different body. |
+| Create, submit | `422` | `idempotency_key_conflict` | The `Idempotency-Key` was reused with a different body. |
 
 All errors share the structure in [Errors](/docs/platform/making-requests#errors).
 
@@ -88,9 +88,9 @@ Both endpoints require an `Idempotency-Key` header.
 | `fee` | Bitnob's sponsorship fee: `amount`, `asset`, `usd`. |
 | `partner_fee` | Your markup: `address`, `amount`, `asset`, `usd`. Present only if requested. |
 | `total_debit` | What leaves the sender. Equals `recipient_amount` + `fee` + `partner_fee`. |
-| `treat_as_gross_amount` | Whether gross mode was applied. |
+| `treat_as_gross_amount` | Whether gross mode was applied. Left out when `false`. |
 | `sign` | What the sender signs. Present only while `quoted`. See [Signing by chain](/docs/platform/gas-sponsorship/signing-by-chain). |
-| `expires_at` | Quote expiry. Present only while `quoted`. |
+| `expires_at` | Quote expiry, about three minutes after creation. Present while `quoted`. |
 | `router_version` | EVM only. The router version quoted against. |
 | `tx_hash`, `confirmations` | Set once broadcast. |
 | `failure_code`, `failure_reason` | Set on `failed`. |

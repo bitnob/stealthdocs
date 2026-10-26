@@ -20,7 +20,7 @@ Most problems with a sponsored transfer fall into one of three groups, and each 
 
 | Response | Code | What to do |
 |---|---|---|
-| `400` | `invalid_request` | Fix the request: an unsupported chain, asset, or network, a malformed address or amount, a gross `amount` that doesn't cover the fees, or an invalid `partner_fee`. Don't retry unchanged. |
+| `400` | `invalid_request` | Fix the request: an unsupported chain, asset, or network, a malformed address or amount, a gross `amount` that doesn't cover the fees, an invalid `partner_fee`, or, on Solana, a sender that has never held the token. Read `message`. Don't retry unchanged. |
 | `429` | `rate_limited` | You're quoting too fast. Wait for `Retry-After`, then retry. |
 | `429` | `budget_exceeded` | Your organisation has used its daily sponsored-gas budget. Retrying soon won't help. Tell the user sponsored sends are unavailable for now, and alert your team. |
 | `503` | `capacity_unavailable` | Sponsorship capacity is briefly unavailable. Retry after a short backoff. |
@@ -55,7 +55,7 @@ Other codes may be added. Show `failure_reason` in your logs, and fall back to a
 
 ## Expired and cancelled transfers
 
-`expired` means the quote passed `expires_at` without a valid submission. Nothing was signed by Bitnob, and nothing moved. `cancelled` means the transfer was cancelled before broadcast. Both are terminal and safe to retry with a new quote.
+`expired` means the quote passed `expires_at` without a valid submission. Nothing was signed by Bitnob, and nothing moved. The status can lag: a quote may still read `quoted` shortly after `expires_at`. Treat any quote past `expires_at` as expired, whatever its status says. `cancelled` means the transfer was cancelled before broadcast. Both are terminal and safe to retry with a new quote.
 
 ## Never double-send
 

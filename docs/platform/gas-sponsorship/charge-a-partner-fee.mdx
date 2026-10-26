@@ -38,19 +38,19 @@ curl https://api.platform.bitnob.com/v1/sponsored-transfers \
 {
   "object": "sponsored_transfer",
   "status": "quoted",
-  "recipient_amount": "10.50",
-  "fee": { "amount": "0.02", "asset": "USDC", "usd": "0.02" },
+  "recipient_amount": "10.5",
+  "fee": { "amount": "0.004", "asset": "USDC", "usd": "0.004" },
   "partner_fee": {
     "address": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
     "amount": "0.20",
     "asset": "USDC",
     "usd": "0.20"
   },
-  "total_debit": "10.72"
+  "total_debit": "10.704"
 }
 ```
 
-The recipient still receives 10.50 USDC. The sender is debited 10.72: the transfer, plus 0.02 to Bitnob, plus 0.20 to you. Because the fee is part of the payload the user signs, the user approves your fee explicitly, and it can't be changed after they sign.
+The recipient still receives 10.50 USDC. The sender is debited 10.704: the transfer, plus the 0.004 sponsorship fee to Bitnob, plus 0.20 to you. The sponsorship fee here is an example. Because the fee is part of the payload the user signs, the user approves your fee explicitly, and it can't be changed after they sign.
 
 ## Rules
 

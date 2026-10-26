@@ -81,7 +81,7 @@ There is no endpoint for the approval request itself. The `approval_request_id` 
 
 ## Audit history
 
-[Get policy audit log](/api-reference/platform/policies/get-policy-audit-log) returns every recorded action on a policy, most recent first. Each entry has the `action` (for example `created`, `updated`, or `activated`), the `actor_id` and `actor_name`, a timestamp, and a `changes` map of the fields that changed. Use it for change review and to answer auditors.
+[Get policy audit log](/api-reference/platform/policies/get-policy-audit-log) returns every recorded action on a policy, most recent first. Each entry has the `action` (for example `created` or `rule_added`), the `actor_id` and `actor_name`, a timestamp, and a `changes` map of the fields that changed. Use it for change review and to answer auditors.
 
 ## Approvers in rules
 

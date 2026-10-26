@@ -42,20 +42,22 @@ A quote breaks the transfer into parts:
 - **Net mode, the default**: `amount` is what the recipient receives. The fees are added on top, so `total_debit` is more than `amount`. Use it for payments, where the recipient must get an exact amount.
 - **Gross mode**, with `treat_as_gross_amount: true`: `amount` is the sender's total debit. The fees come out of it, so the recipient gets less than `amount`. Use it to empty an address without overdrawing it. See [Sweep a full balance](/docs/platform/gas-sponsorship/sweep-a-full-balance).
 
-For a 10.50 USDC transfer with a 0.02 USDC fee and no partner fee:
+For a 10.50 USDC transfer with a 0.77 USDC fee and no partner fee:
 
 | | `amount` | `recipient_amount` | `fee` | `total_debit` |
 |---|---|---|---|---|
-| Net | `"10.50"` | `"10.50"` | `"0.02"` | `"10.52"` |
-| Gross | `"10.50"` | `"10.48"` | `"0.02"` | `"10.50"` |
+| Net | `"10.50"` | `"10.5"` | `"0.77"` | `"11.27"` |
+| Gross | `"10.50"` | `"9.73"` | `"0.77"` | `"10.50"` |
 
-The response echoes `treat_as_gross_amount`, so you can check which mode was applied.
+A gross-mode quote carries `"treat_as_gross_amount": true`, so you can check which mode was applied. Net-mode quotes leave the field out.
 
-Amounts are decimal strings in the token's normal units, for example `"10.50"` USDC. They are not base units.
+Amounts are decimal strings in the token's normal units, for example `"10.50"` USDC. They are not base units. Responses drop trailing zeros, so `"1.00"` comes back as `"1"`. Compare amounts as decimals, not as strings.
+
+The fee covers the network cost of the transfer, so it depends on the chain and on network conditions, and a first-time Tron sender pays more because the quote includes the one-time approval. As a guide, mainnet quotes for 1 unit have come back at about 0.77 USDC on Base and about 2.57 USDT for a first-time sender on Tron. Always show the user the quoted fee.
 
 ## Quotes expire
 
-A quote is valid until its `expires_at`, an RFC 3339 timestamp. The user must sign and you must submit before then. After it, Submit returns `409` with `quote_expired`, and you request a new quote.
+A quote is valid until its `expires_at`, an RFC 3339 timestamp about three minutes after it was created. The user must sign and you must submit before then. After it, Submit returns `409` with `quote_expired`, and you request a new quote. The quote's `status` may still read `quoted` for a short while after `expires_at`, so go by the timestamp.
 
 Keep the time between quote and submit short: request the quote when the user is ready to confirm, not when they open the screen. If the user takes a long time, re-quote, and show the new amounts before they sign again.
 

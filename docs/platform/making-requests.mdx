@@ -55,7 +55,7 @@ How keys behave:
 
 - A key is kept for 24 hours.
 - Retrying with the same key replays the original response and adds an `Idempotent-Replayed: true` header.
-- Reusing a key with a different request body fails with `409` `idempotency_conflict`. Generate a fresh key for every distinct operation.
+- Reusing a key with a different request body fails with `422` `idempotency_key_conflict`. Generate a fresh key for every distinct operation.
 - Only successful responses are stored, so a request that failed can be retried with the same key.
 
 ## Pagination
@@ -96,8 +96,8 @@ Branch on `code`, which is stable. Show `message` to people, but don't parse it.
 | `authentication_error` | 401 | `not_authenticated` |
 | `permission_error` | 403 | `insufficient_permissions`, `ip_not_allowed` |
 | `not_found_error` | 404 | `route_not_found`, `vault_not_found`, `wallet_not_found` |
-| `conflict_error` | 409 | `idempotency_conflict`, `wallet_archived` |
-| `unprocessable_entity_error` | 422 | A business rule blocked the request |
+| `conflict_error` | 409 | `wallet_archived` |
+| `unprocessable_entity_error` | 422 | `idempotency_key_conflict`, or a business rule blocked the request |
 | `rate_limit_error` | 429 | `rate_limit_exceeded` |
 | `api_error` | 500 | `internal_error` |
 | `service_unavailable_error` | 503 | `service_unavailable` |

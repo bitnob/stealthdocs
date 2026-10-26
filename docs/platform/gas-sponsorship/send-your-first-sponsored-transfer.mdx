@@ -14,6 +14,8 @@ This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. S
 
 - A sandbox API key exported as `PLATFORM_API_KEY`. See [Set up your account](/docs/platform/account-setup).
 - A test sender: a Solana keypair holding devnet USDC and **no SOL**. Get devnet USDC from [Circle's faucet](https://faucet.circle.com). Export the base58 secret key as `SENDER_SECRET_KEY`. Use a key you made for testing only.
+
+  The sender must already hold the token. A quote for an address that has never held USDC returns `400 invalid_request` with "sender has no token account for this asset".
 - A recipient address on devnet.
 - Node.js 20 or later, with `@solana/web3.js`, `tweetnacl`, and `bs58` installed.
 
@@ -44,11 +46,10 @@ This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. S
       "asset": "USDC",
       "from": "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
       "to": "3xTdGq5N9cMwvGq8FvdE1DbW9ZtCZr1k6Rr2nC9pHnQe",
-      "recipient_amount": "1.00",
-      "fee": { "amount": "0.02", "asset": "USDC", "usd": "0.02" },
-      "total_debit": "1.02",
-      "treat_as_gross_amount": false,
-      "expires_at": "2026-05-16T10:32:00Z",
+      "recipient_amount": "1",
+      "fee": { "amount": "0.004", "asset": "USDC", "usd": "0.004" },
+      "total_debit": "1.004",
+      "expires_at": "2026-05-16T10:33:00Z",
       "sign": {
         "scheme": "solana_ed25519",
         "signer": "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
@@ -57,11 +58,11 @@ This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. S
     }
     ```
 
-    The recipient gets `1.00` and the sender is debited `1.02`. Before going on, check that `sign.scheme` is `solana_ed25519`.
+    The recipient gets `1` and the sender is debited `1.004`. The fee here is an example: use the one in your quote. Before going on, check that `sign.scheme` is `solana_ed25519`.
   </Step>
 
   <Step title="Show the user what they're signing">
-    In a real app, show `recipient_amount`, `fee`, `total_debit`, and the recipient before you ask for a signature, and get the user's confirmation. Request the quote when they're ready to confirm, because it expires at `expires_at`.
+    In a real app, show `recipient_amount`, `fee`, `total_debit`, and the recipient before you ask for a signature, and get the user's confirmation. Request the quote when they're ready to confirm: it expires at `expires_at`, about three minutes later.
   </Step>
 
   <Step title="Sign the message">
