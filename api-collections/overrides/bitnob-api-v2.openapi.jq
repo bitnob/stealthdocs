@@ -94,6 +94,14 @@ def infer_schema:
       )
       end
   )
+# Some operations list both 200 and 201 but only describe one; drop the empty
+# success code so the docs do not show a blank response next to the real one.
+| (.paths[][] | objects | select(.responses) | .responses) |= (
+    if [to_entries[] | select(.key | startswith("2")) | .value.content] | any(. != null)
+    then with_entries(select((.key | startswith("2") | not) or .value.content != null))
+    else .
+    end
+  )
 | (.paths[][] | objects | .responses[]? | .content[]? | select((has("example") or has("examples")) and (has("schema") | not)))
   |= . + {"schema": (
     if has("example") then .example

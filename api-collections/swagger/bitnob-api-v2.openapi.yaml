@@ -2283,8 +2283,6 @@ paths:
       description: Execute a BUY or SELL. Supply the `quote_id` from a fresh quote for best pricing. NGN (Fiat Trading) pairs are supported; see the fiatTradingNgn example.
       operationId: post_api_trading_orders
       responses:
-        '200':
-          description: Successful response
         '201':
           description: Successful response
           content:
@@ -8300,8 +8298,6 @@ paths:
       description: Create a customer record. KYC fields (`id_type`, `id_number`) are required for card issuance in most regions.
       operationId: post_api_customers
       responses:
-        '200':
-          description: Successful response
         '201':
           description: Successful response
           content:
@@ -8876,8 +8872,6 @@ paths:
       description: Save a recipient for reuse. Crypto beneficiaries require `wallet_address`, `currency`, and `network`.
       operationId: post_api_beneficiaries
       responses:
-        '200':
-          description: Successful response
         '201':
           description: Successful response
           content:
