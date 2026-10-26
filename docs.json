@@ -198,7 +198,6 @@
                     "pages": [
                       "docs/payouts/validate-a-beneficiary",
                       "docs/payouts/swift-payout",
-                      "docs/payouts/mass-payouts",
                       "docs/payouts/webhook-payout",
                       "docs/payouts/error-handling",
                       "api-reference/payouts/usage-example",
@@ -454,21 +453,12 @@
             "expanded": true,
             "pages": [
               "GET /api/trading/prices",
-              "GET /api/trading/prices/{pair}",
               "POST /api/trading/quotes",
               "GET /api/trading/quotes/{id}",
               "POST /api/trading/orders",
               "GET /api/trading/orders",
               "GET /api/trading/orders/{id}",
-              "DELETE /api/trading/orders/{id}",
-              "POST /api/trading/scheduled-orders",
-              "GET /api/trading/scheduled-orders",
-              "GET /api/trading/scheduled-orders/{id}",
-              "PUT /api/trading/scheduled-orders/{id}",
-              "GET /api/trading/scheduled-orders/{id}/executions",
-              "POST /api/trading/target-orders",
-              "GET /api/trading/target-orders",
-              "GET /api/trading/target-orders/{id}"
+              "DELETE /api/trading/orders/{id}"
             ]
           },
           {
@@ -486,25 +476,6 @@
               "GET /api/payouts/banks/{countryCode}",
               "GET /api/payouts",
               "GET /api/payouts/{id}"
-            ]
-          },
-          {
-            "group": "Bulk transfers",
-            "icon": "layer-group",
-            "expanded": true,
-            "pages": [
-              "POST /api/bulk-transfers",
-              "GET /api/bulk-transfers",
-              "POST /api/bulk-transfers/upload-urls",
-              "POST /api/bulk-transfers/previews",
-              "GET /api/bulk-transfers/{batchId}",
-              "POST /api/bulk-transfers/{batchId}/confirm",
-              "POST /api/bulk-transfers/{batchId}/retry",
-              "POST /api/bulk-transfers/schedules",
-              "GET /api/bulk-transfers/schedules",
-              "PUT /api/bulk-transfers/schedules/{scheduleId}",
-              "GET /api/bulk-transfers/schedules/{scheduleId}/executions",
-              "POST /api/bulk-transfers/executions/{executionId}/retry"
             ]
           },
           {
@@ -1099,6 +1070,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/docs/payouts/mass-payouts",
+      "destination": "/docs/payouts/overview"
+    },
     {
       "source": "/changelog/overview",
       "destination": "/changelog"
