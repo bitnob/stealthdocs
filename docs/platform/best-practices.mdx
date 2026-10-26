@@ -20,7 +20,7 @@ A key carries a fixed set of scopes, such as `wallets:read`, `wallets:create`, `
 
 ## Let policies set the limits
 
-Policies are checked before every signature, independently of the key's scopes, so they're your control if a key leaks. Use them for spending limits, address allowlists, velocity caps, and approvals on large transfers.
+Policies are checked before every signature, independently of the key's scopes, so they're your control if a key leaks. Use them for spending limits, destination allowlists, time locks, and approvals on large transfers. See [Policies](/docs/platform/policies/overview).
 
 Build your flow around the two outcomes policies can produce. A transaction that needs approval comes back `202` with `status: "pending_authorization"`, and one held by a time lock comes back `202` with `status: "delayed"` and an `execute_at` timestamp. Its funds are locked in both cases, so show it as pending rather than failed.
 

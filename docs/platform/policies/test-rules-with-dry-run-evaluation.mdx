@@ -1,0 +1,121 @@
+---
+title: "Test policy rules with dry-run evaluation"
+sidebarTitle: "Test with dry runs"
+description: "Run sample transfers through a draft or the enforced policy, read the per-rule trace, and keep a regression suite for every policy change."
+related:
+  - /docs/platform/policies/how-policy-evaluation-works
+  - /docs/platform/policies/change-an-enforced-policy
+  - /docs/platform/policies/rule-reference
+---
+
+[Dry-run policy evaluation](/api-reference/platform/policies/dry-run-policy-evaluation) answers one question: what would the policy do with this request? It has no side effects. No transaction is created, no approval request is opened, and nothing is written to the audit log. You can call it as often as you like, against any policy, in any status.
+
+## Which policy is evaluated
+
+- **With `policy_id`**: that policy, whatever its status. Use this to test a draft before activation.
+- **Without `policy_id`**: the policy your organisation currently enforces. Use this to check live behaviour.
+
+If you leave out `policy_id` and your organisation has no enforced policy and no quorum, the result is `"approved"` with `allowed: true` and the reason "No active policy and no quorum". That tells you nothing about your rules, so always pass `policy_id` when testing a draft.
+
+## Build the request
+
+Every field in the request is optional. A field you leave out counts as not applicable, so a condition on that field won't match. Send the fields your rules depend on, with the values a real transfer would carry.
+
+```json
+{
+  "policy_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "wallet_id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "chain": "ethereum",
+  "network": "sepolia",
+  "asset_symbol": "USDC",
+  "amount": "15000",
+  "amount_usd": "15000",
+  "to_address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "actor_type": "apikey",
+  "is_automated": false
+}
+```
+
+<Warning>
+  A rule on `actor_type` never matches when you leave `actor_type` out. If your rules treat API keys and dashboard users differently, send `apikey` or `session` in every test.
+</Warning>
+
+## Read the response
+
+```json
+{
+  "result": "awaiting_approval",
+  "allowed": false,
+  "policy_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "rule_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "reason": "Approval required by policy Transfer limits / rule Approve over $10,000",
+  "requires_approval": true,
+  "required_approvals": 1,
+  "expiry_hours": 24,
+  "trace": [
+    {
+      "rule_index": 0,
+      "rule_name": "Block over $50,000",
+      "matched": false,
+      "reason": "amount_usd: 15000 not > 50000",
+      "failed_condition": {
+        "field": "amount_usd",
+        "operator": "greater_than",
+        "expected": "50000",
+        "actual": "15000"
+      }
+    },
+    {
+      "rule_index": 1,
+      "rule_name": "Approve over $10,000",
+      "matched": true,
+      "terminal": true,
+      "action": "require_approval"
+    }
+  ]
+}
+```
+
+The top-level fields are the decision:
+
+| Field | Meaning |
+|---|---|
+| `allowed` | Whether the request would go ahead without being held or blocked. |
+| `result` | How the decision was reached. See [Evaluation results](/docs/platform/policies/rule-reference#evaluation-results). |
+| `rule_id` | The rule that decided it, if one matched. |
+| `requires_approval`, `required_approvals`, `expiry_hours` | Set when the deciding rule is `require_approval`. |
+| `delay_minutes` | Set when the deciding rule is `delay`. |
+| `reason` | A readable explanation, useful in logs and test output. |
+
+`trace` shows the path. There is one entry per rule the engine reached, in order:
+
+- `matched: false` with `reason` and `failed_condition` tells you the first condition that stopped the rule, with the `expected` value and the `actual` value from your request. Later conditions in that rule were not checked.
+- `terminal: true` marks the rule that ended evaluation. Rules after it don't appear.
+
+When no rule matches, `trace` lists every rule with `matched: false`, and `result` is `approved`. `trace` is left out when your organisation has nothing enforced and you don't pass `policy_id`.
+
+## Debug a surprising result
+
+| Symptom | Likely cause |
+|---|---|
+| A rule you expected never appears in `trace` | An earlier rule matched first. Move your rule up, or narrow the earlier one. |
+| `failed_condition.actual` is missing | You didn't send that field, or it couldn't be resolved. For `amount_usd`, `reason` says "resolution error". Send `amount_usd` explicitly in tests. |
+| `actual` and `expected` look equal but the rule failed | Check the operator. `greater_than` excludes the boundary, `greater_than_or_equal` includes it. |
+| `in` against a list never matches | Values are compared exactly. Check case and the identifier format, for example `tron` and not `TRX` for `chain`. |
+| Every request returns `approved` with "No active policy" | You left out `policy_id` and nothing is enforced yet. Pass the draft's `policy_id`. |
+| Every request returns `approved` with all rules unmatched | Your conditions use fields you aren't sending. Check `failed_condition` on each rule. |
+
+## Keep a regression suite
+
+Policies change, and a rule order that was right last month can shadow a new rule. Keep a list of test cases next to your policy definition, and run all of them against every new draft before you activate it.
+
+```json
+[
+  { "name": "small payout passes",  "request": { "amount_usd": "500" },    "expect": { "result": "approved", "allowed": true } },
+  { "name": "mid payout held",      "request": { "amount_usd": "15000" },  "expect": { "result": "awaiting_approval", "required_approvals": 1 } },
+  { "name": "large payout blocked", "request": { "amount_usd": "60000" },  "expect": { "result": "rejected", "allowed": false } },
+  { "name": "boundary is not held", "request": { "amount_usd": "10000" },  "expect": { "result": "approved" } }
+]
+```
+
+Run each case with the draft's `policy_id`, and fail the check if any field in `expect` differs. Run it in CI when the policy definition lives in your repository, or by hand before you send a draft to quorum. Always include the boundary values of every threshold.

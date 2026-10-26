@@ -1,0 +1,62 @@
+---
+title: "Gas station fields, health, and webhook events"
+sidebarTitle: "Gas station reference"
+description: "Every gas station field and unit, how health_status is derived, the refill and update requests, and the gas station webhook events."
+related:
+  - /docs/platform/gas-sponsorship/how-gas-stations-work
+  - /docs/platform/gas-sponsorship/set-up-a-gas-station
+  - /docs/platform/gas-sponsorship/statuses-errors-and-events
+---
+
+## Gas station fields
+
+Returned by [Create](/api-reference/platform/gasstations/create-gas-station), [Get](/api-reference/platform/gasstations/get-gas-station), [List](/api-reference/platform/gasstations/list-gas-stations), and [Update](/api-reference/platform/gasstations/update-gas-station).
+
+| Field | Unit | Notes |
+|---|---|---|
+| `id` | | Use it with Get, Update, Refill, and Sponsor and broadcast. |
+| `name` | | Your label. |
+| `chain`, `network` | | The chain the station pays fees on. `network` follows your API key. |
+| `address` | | The station's on-chain address. |
+| `asset` | | The chain's native asset, for example `ETH` or `TRX`. |
+| `asset_decimals` | | For converting base units to display units. |
+| `balance` | Base units | Current balance, for example in wei or sun. There is no display-unit form. |
+| `threshold`, `threshold_raw` | Display, base | Below this balance, `health_status` is `low` and auto-refill triggers. |
+| `refill_amount`, `refill_amount_raw` | Display, base | How much each auto-refill moves. |
+| `auto_refill_enabled` | | Whether auto-refill is on. |
+| `refill_from_wallet_id` | | The wallet auto-refills draw from. |
+| `gas_strategy` | | The gas pricing strategy, for example `standard`. |
+| `health_status` | | `healthy` at or above `threshold`, `low` below it. |
+| `status` | | The station's status, for example `active`. |
+| `created_at`, `updated_at` | | ISO-8601 timestamps. |
+
+## Requests
+
+**Create**: `name`, `chain`, and `threshold` are required. `auto_refill_enabled`, `refill_amount`, `refill_from_wallet_id`, and `gas_strategy` are optional. `network` is deprecated: leave it out.
+
+**Update**: any of `name`, `threshold`, `refill_amount`, and `auto_refill_enabled`. Fields you leave out stay unchanged. The chain and source wallet can't be changed. Create a new station instead.
+
+**Refill**: `source_wallet_id` and `amount`, in display units. Requires an `Idempotency-Key`. Returns the funding transaction.
+
+**Sponsor and broadcast** (Tron): `from_address`, `to_address`, `asset`, `amount`, `network`, and `signed_tx` are required, with optional `fee_level` and `tx_hash`. Requires an `Idempotency-Key`. Returns `broadcast_accepted`, `status`, `tx_hash`, `sponsor_tx_id`, and the sponsored amount in `sponsor_amount_trx` and `sponsor_amount_sun`.
+
+## Sponsored transaction fields
+
+On a [transaction](/api-reference/platform/transactions/get-transaction) sent with `sponsor: true`:
+
+| Field | Meaning |
+|---|---|
+| `sponsored` | `true` when the fee was sponsored. |
+| `gas_station_id` | The gas station that paid. |
+| `status` | Includes `awaiting_sponsorship` while the fee is funded. |
+| `fee_amount`, `realized_fee_amount` | The estimated and actual network fee. |
+
+## Webhook events
+
+| Event | Sent when |
+|---|---|
+| `gas_station.low_balance` | The balance falls below `threshold`. |
+| `gas_station.critical_balance` | The balance is close to empty. |
+| `gas_station.auto_refilled` | An auto-refill completed. |
+
+[List supported event types](/api-reference/platform/webhooks/list-supported-event-types) returns the current list.

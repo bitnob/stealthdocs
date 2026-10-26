@@ -1,0 +1,153 @@
+---
+title: "Set up a gas station for your Enterprise wallets"
+sidebarTitle: "Set up a gas station"
+description: "Create and fund a gas station on Tron, turn on auto-refill from a treasury wallet, send a sponsored USDT transfer, and alert on low balance."
+related:
+  - /docs/platform/gas-sponsorship/how-gas-stations-work
+  - /docs/platform/gas-sponsorship/gas-station-reference
+  - /docs/platform/exchange-integration-guide
+---
+
+By the end of this guide, transfers out of your Tron wallets can be sponsored: a wallet that holds only USDT can send it, and the TRX for the fee comes from a gas station that keeps itself funded.
+
+## Before you start
+
+- A sandbox API key exported as `PLATFORM_API_KEY`.
+- A **treasury wallet** on Tron with some test TRX, to fund the gas station. Save its ID as `TREASURY_WALLET_ID`.
+- A **sending wallet** on Tron with test USDT and no TRX. Save its ID as `WALLET_ID`.
+
+[Create wallet](/api-reference/platform/wallets/create-wallet) and the [quickstart](/docs/platform/quickstart) cover creating wallets. A sandbox key works on Tron's Nile testnet.
+
+<Steps>
+  <Step title="Create the gas station">
+    [Create gas station](/api-reference/platform/gasstations/create-gas-station) needs a `name`, a `chain`, and a `threshold`. Turn on auto-refill at the same time, so the station tops itself up from the treasury wallet.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/gasstations \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: gas-station-tron-1" \
+      -d '{
+        "name": "Tron gas station",
+        "chain": "tron",
+        "threshold": "200",
+        "auto_refill_enabled": true,
+        "refill_amount": "1000",
+        "refill_from_wallet_id": "'"$TREASURY_WALLET_ID"'"
+      }'
+    ```
+
+    ```json
+    {
+      "object": "gas_station",
+      "id": "9b2e7a1c-3d4f-4a8b-9c0d-1e2f3a4b5c6d",
+      "name": "Tron gas station",
+      "chain": "tron",
+      "network": "nile",
+      "asset": "TRX",
+      "asset_decimals": 6,
+      "address": "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE",
+      "balance": "0",
+      "threshold": "200",
+      "threshold_raw": "200000000",
+      "auto_refill_enabled": true,
+      "refill_amount": "1000",
+      "refill_amount_raw": "1000000000",
+      "refill_from_wallet_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "health_status": "low",
+      "status": "active"
+    }
+    ```
+
+    Save the `id` as `GAS_STATION_ID`. The balance is zero, so `health_status` starts as `low`. `threshold` and `refill_amount` are in TRX. Don't send `network`: it follows your API key.
+  </Step>
+
+  <Step title="Fund it">
+    Refill it once by hand with [Refill gas station](/api-reference/platform/gasstations/refill-gas-station), from the treasury wallet.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/gasstations/$GAS_STATION_ID/refill \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: gas-station-tron-1-refill-1" \
+      -d '{
+        "source_wallet_id": "'"$TREASURY_WALLET_ID"'",
+        "amount": "1000"
+      }'
+    ```
+
+    The response is the funding transaction. Once it completes, [Get gas station](/api-reference/platform/gasstations/get-gas-station) shows `health_status` as `healthy`.
+  </Step>
+
+  <Step title="Estimate a sponsored transfer">
+    [Estimate transaction fee](/api-reference/platform/transactions/estimate-transaction-fee) with `sponsor: true` shows what the gas station will pay.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/transactions/estimate-fee \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "wallet_id": "'"$WALLET_ID"'",
+        "to_address": "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
+        "asset": "USDT_TRX",
+        "amount": "25",
+        "sponsor": true
+      }'
+    ```
+  </Step>
+
+  <Step title="Send it">
+    Send the same body to [Create transaction](/api-reference/platform/transactions/create-transaction), with an `Idempotency-Key`.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/transactions \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: withdrawal-0001" \
+      -d '{
+        "wallet_id": "'"$WALLET_ID"'",
+        "to_address": "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
+        "asset": "USDT_TRX",
+        "amount": "25",
+        "sponsor": true
+      }'
+    ```
+
+    The transaction passes through `awaiting_sponsorship` before `broadcasting`. When it completes, it has `"sponsored": true` and the `gas_station_id` that paid. The sending wallet's TRX balance is still zero.
+
+    If one of your policies holds the transaction, you get `202` instead. See [Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions).
+  </Step>
+
+  <Step title="Alert before it runs dry">
+    Subscribe to the gas station events with [Create webhook](/api-reference/platform/webhooks/create-webhook):
+
+    - `gas_station.low_balance` and `gas_station.critical_balance`: page whoever funds the treasury wallet.
+    - `gas_station.auto_refilled`: log it, and watch how often it fires.
+
+    Auto-refill keeps the station topped up only while the treasury wallet has TRX. Alert on the treasury wallet's balance too.
+  </Step>
+</Steps>
+
+## Sizing the threshold and refill
+
+Size both from your volume, not from a guess:
+
+- **`threshold`**: enough for the transfers you send in the time it takes a refill to confirm, plus a margin. On a busy chain, a few hours of fees.
+- **`refill_amount`**: enough for about a day of fees. Too small and you refill constantly, paying a fee each time. Too large and you hold idle native balance in a hot account.
+
+Review both after the first week, using the fees on your sponsored transactions and the number of `auto_refilled` events.
+
+## Change the configuration
+
+[Update gas station](/api-reference/platform/gasstations/update-gas-station) changes `name`, `threshold`, `refill_amount`, and `auto_refill_enabled`. Fields you leave out stay unchanged.
+
+```bash
+curl -X PATCH https://api.platform.bitnob.com/v1/gasstations/$GAS_STATION_ID \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "threshold": "500", "refill_amount": "2500" }'
+```
+
+## One per chain
+
+Create a gas station for each chain you send sponsored transfers on. [List gas stations](/api-reference/platform/gasstations/list-gas-stations) with `chain=tron` shows the stations you have on a chain. The [exchange integration guide](/docs/platform/exchange-integration-guide#step-4-set-up-gas-stations) shows a multi-chain setup.

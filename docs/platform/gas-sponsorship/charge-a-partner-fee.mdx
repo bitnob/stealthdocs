@@ -1,0 +1,81 @@
+---
+title: "Charge your own fee on sponsored transfers"
+sidebarTitle: "Charge a partner fee"
+description: "Add a flat partner fee to each sponsored transfer, paid in the same token to an address you control, settled with the transfer."
+related:
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/sweep-a-full-balance
+  - /docs/platform/gas-sponsorship/statuses-errors-and-events
+---
+
+A partner fee is your own charge on a sponsored transfer, on top of Bitnob's sponsorship fee. It is paid in the token being sent, to an address you choose, and settled as part of the transfer. You don't need a separate collection step, and you never hold the user's funds.
+
+Partner fees work on every supported chain: Solana, the EVM chains, and Tron.
+
+## Add it to the quote
+
+Pass `partner_fee` with an `address` and an `amount`. Both are required together.
+
+```bash
+curl https://api.platform.bitnob.com/v1/sponsored-transfers \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: transfer-0004" \
+  -d '{
+    "chain": "solana",
+    "asset": "USDC",
+    "from": "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
+    "to": "3xTdGq5N9cMwvGq8FvdE1DbW9ZtCZr1k6Rr2nC9pHnQe",
+    "amount": "10.50",
+    "partner_fee": {
+      "address": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+      "amount": "0.20"
+    }
+  }'
+```
+
+```json
+{
+  "object": "sponsored_transfer",
+  "status": "quoted",
+  "recipient_amount": "10.5",
+  "fee": { "amount": "0.004", "asset": "USDC", "usd": "0.004" },
+  "partner_fee": {
+    "address": "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
+    "amount": "0.20",
+    "asset": "USDC",
+    "usd": "0.20"
+  },
+  "total_debit": "10.704"
+}
+```
+
+The recipient still receives 10.50 USDC. The sender is debited 10.704: the transfer, plus the 0.004 sponsorship fee to Bitnob, plus 0.20 to you. The sponsorship fee here is an example. Because the fee is part of the payload the user signs, the user approves your fee explicitly, and it can't be changed after they sign.
+
+## Rules
+
+- **`amount`** is a flat amount in the token's normal units, for example `"0.20"` USDC. It is not a percentage. To charge a percentage, calculate it before you request the quote.
+- **The amount is capped per chain.** A quote over the cap returns `400`.
+- **`address` can't be the sender or the recipient.**
+- **On Solana**, `address` must already have a token account for the asset. Create the associated token account once, before your first quote. Otherwise the quote returns `400`.
+
+## Net and gross mode
+
+In net mode, the default, your fee is added on top: `total_debit` = `amount` + `fee` + `partner_fee`.
+
+In gross mode, with `treat_as_gross_amount: true`, your fee comes out of `amount` along with Bitnob's: `recipient_amount` = `amount` − `fee` − `partner_fee`. If `amount` doesn't exceed both fees together, the quote returns `400 invalid_request`. See [Sweep a full balance](/docs/platform/gas-sponsorship/sweep-a-full-balance).
+
+## Show it to the user
+
+List your fee separately from the network fee in your confirmation screen. Both appear on chain, so a single combined "fee" line can look like a hidden charge to a user who checks.
+
+| Line | Field |
+|---|---|
+| Recipient gets | `recipient_amount` |
+| Network fee | `fee.amount` |
+| Service fee | `partner_fee.amount` |
+| You pay | `total_debit` |
+
+## Reconcile your fees
+
+Your fee arrives at `partner_fee.address` when the transfer completes. To reconcile, match incoming credits to that address against sponsored transfers in `completed` status, using the stored `tx_hash` and `partner_fee.amount`. [List sponsored transfers](/api-reference/platform/sponsored-transfers/list-sponsored-transfers) returns only the most recent page, so store each transfer's `id`, `tx_hash`, and `partner_fee` in your own records as it completes, rather than relying on listing later.

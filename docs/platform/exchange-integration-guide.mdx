@@ -3,361 +3,211 @@ title: "Exchange integration guide"
 description: "An end-to-end exchange build, from vault topology and customer onboarding through deposits, gas sponsorship, withdrawals, and policy hardening."
 related:
   - /docs/platform/core-concepts
-  - "Enterprise API reference": /api-reference/platform/meta/get-api-key-info
+  - /docs/platform/policies/overview
+  - /docs/platform/gas-sponsorship/overview
 ---
 A complete walkthrough for building a production exchange on Bitnob Enterprise, from customer onboarding to policy-governed withdrawals.
 
-This guide covers the full integration lifecycle: creating the vault topology, onboarding customers, detecting deposits, setting up gas sponsorship, processing withdrawals, and locking down the system with layered policies.
+This guide covers the full integration lifecycle: finding your vault topology, onboarding customers, detecting deposits, setting up gas sponsorship, processing withdrawals, and locking down the system with a policy.
 
 <Note>
-  You need a Bitnob Enterprise API key with admin permissions. All requests use the `X-API-Key` header. See [Authentication](/docs/platform/authentication) for details.
+  You need a Bitnob Enterprise API key with permission to manage wallets, transactions, gas stations, and policies. All requests go to `https://api.platform.bitnob.com/v1` with the `X-API-Key` header, and every write takes an `Idempotency-Key` header. See [Authentication](/docs/platform/authentication) and [Making requests](/docs/platform/making-requests).
 </Note>
 
-## Step 1: Create a pool vault
+## Step 1: Find your pool vault
 
-Create one pool vault per chain your exchange supports. A pool vault holds unlimited wallets, which makes it the correct choice for assigning a dedicated deposit wallet to each customer. See [Vaults](/api-reference/platform/vaults/list-vaults) for the vault model, and [List Vaults](/api-reference/platform/vaults/list-vaults) to enumerate the ones you have created.
+Customer deposit wallets live in a **pool vault**, which holds an unlimited number of wallets. Vaults are created in the Bitnob dashboard. Find yours with [List vaults](/api-reference/platform/vaults/list-vaults), filtered by type:
 
-```http
-POST /vaults
-Content-Type: application/json
-X-API-Key: <api_key>
-
-{
-  "name": "Ethereum Deposit Pool",
-  "vault_type": "pool",
-  "idempotency_key": "eth-pool-init-001"
-}
+```bash
+curl "https://api.platform.bitnob.com/v1/vaults?vault_type=pool" \
+  -H "X-API-Key: $PLATFORM_API_KEY"
 ```
 
-```json
-{
-  "success": true,
-  "data": {
-    "id": "vault_eth_001",
-    "name": "Ethereum Deposit Pool",
-    "vault_type": "pool",
-    "status": "active",
-    "wallet_count": 0
-  }
-}
-```
-
-Repeat this for each chain you support, Bitcoin, Solana, Tron, Base, and so on. Which chains are available is returned by [List Chains](/api-reference/platform/assets/list-chains). Store the vault `id` for each chain, [Get Vault](/api-reference/platform/vaults/get-vault) reads one back, you will use it in the next step.
+Store the vault `id`. [Get vault](/api-reference/platform/vaults/get-vault) reads one back. [List chains](/api-reference/platform/assets/list-chains) returns the chains you can create wallets on.
 
 ## Step 2: Onboard customers
 
-For each customer, [create a wallet](/api-reference/platform/wallets/create-wallet) inside the pool vault using `customer_ref_id` to link it to your internal customer ID. The response includes pre-derived deposit addresses for every asset you specify. You can also [list](/api-reference/platform/wallets/list-addresses) or [add](/api-reference/platform/wallets/create-address) addresses later.
+For each customer and chain, [create a wallet](/api-reference/platform/wallets/create-wallet) in the pool vault. Set `customer_ref_id` to your internal customer ID. The chain's primary address is created with the wallet, so there's no second call.
 
-```http
-POST /vaults/:vault_id/wallets
-Content-Type: application/json
-X-API-Key: <api_key>
+```bash
+curl https://api.platform.bitnob.com/v1/wallets \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: cust-12345-ethereum" \
+  -d '{
+    "vault_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "name": "Customer 12345 - Ethereum",
+    "chain": "ethereum",
+    "customer_ref_id": "cust_12345",
+    "wallet_type": "hot"
+  }'
+```
 
+```json
 {
-  "name": "Customer 12345 - ETH",
+  "object": "wallet",
+  "id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "vault_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "name": "Customer 12345 - Ethereum",
   "chain": "ethereum",
   "customer_ref_id": "cust_12345",
   "wallet_type": "hot",
-  "asset_ids": ["ETH", "USDC_ETH", "USDT_ETH"],
-  "network": "mainnet",
-  "idempotency_key": "cust-12345-eth-001"
-}
-```
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "wallet_abc123",
-    "vault_type": "pool",
-    "customer_ref_id": "cust_12345",
-    "chain": "ethereum",
-    "wallet_type": "hot",
-    "status": "active",
-    "primary_addresses": [
-      {
-        "chain": "ethereum",
-        "address": "0x742d35Cc...",
-        "network": "mainnet"
-      }
-    ]
-  }
-}
-```
-
-Show the customer their deposit address from `primary_addresses`. Store the wallet `id` in your database mapped to the customer's account.
-
-## Step 3: Detect deposits
-
-Poll for inbound transactions with [List Transactions](/api-reference/platform/transactions/list-transactions), or use [Subscriptions](/api-reference/platform/subscriptions/list-subscriptions) to receive real-time notifications for each deposit.
-
-```http
-GET /transactions
-  ?wallet_id=<wallet_id>
-  &direction=inbound
-  &status=completed
-  &period=24h
-X-API-Key: <api_key>
-```
-
-```json
-{
-  "success": true,
-  "data": [
+  "status": "active",
+  "primary_address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "addresses": [
     {
-      "id": "tx_xyz789",
-      "direction": "inbound",
-      "status": "completed",
-      "asset_symbol": "USDC",
-      "amount_decimal": "250.00",
-      "from_address": "0xabc...",
-      "to_address": "0x742d35Cc...",
-      "confirmations": 12,
-      "confirmed_at": "2026-05-12T09:43:21Z"
+      "object": "address",
+      "id": "3f1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+      "chain": "ethereum",
+      "network": "mainnet",
+      "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      "is_primary": true
     }
   ]
 }
 ```
 
-Credit the customer's exchange balance when a deposit reaches `completed` status with sufficient confirmations. Always reconcile against `amount_decimal` and `asset_symbol`: do not rely on internal accounting alone.
+Show the customer `primary_address` as their deposit address, and store the wallet `id` against their account. On account-based chains (EVM chains, Solana, Tron, TON) a wallet has exactly one address, and it receives every token on that chain. Only Bitcoin wallets can [derive more addresses](/api-reference/platform/wallets/create-address).
 
-<Tip>
-  For production, subscribe to `incoming_token_tx` and `confirmation_threshold_met` events with [Create Subscription](/api-reference/platform/subscriptions/create-subscription) instead of polling. Delivery can be audited with [List Delivery Events](/api-reference/platform/subscriptions/list-subscription-delivery-events).
+Don't send `network`. It is deprecated: your API key decides it, with live keys on mainnet and sandbox keys on testnets.
 
-  ```http
-  POST /subscriptions
-  Content-Type: application/json
-  X-API-Key: <api_key>
+## Step 3: Detect deposits
 
-  {
-    "address": "0x742d35Cc...",
+Subscribe to each deposit address with [Create subscription](/api-reference/platform/subscriptions/create-subscription), so Bitnob posts on-chain events to your endpoint as they happen:
+
+```bash
+curl https://api.platform.bitnob.com/v1/subscriptions \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sub-cust-12345-ethereum" \
+  -d '{
+    "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
     "chain": "ethereum",
-    "network": "mainnet",
-    "event_type": "incoming_token_tx",
     "webhook_url": "https://exchange.example.com/webhooks/bitnob",
-    "label": "Customer deposit monitor"
-  }
-  ```
-</Tip>
+    "label": "Customer 12345 deposits"
+  }'
+```
+
+Leave `event_type` empty to receive every on-chain event type, or set one, such as `incoming_token_tx` or `confirmation_threshold_met`, to receive only that. [Webhooks](/docs/platform/webhooks) covers verifying deliveries.
+
+As a fallback, and for reconciliation, poll [List transactions](/api-reference/platform/transactions/list-transactions):
+
+```bash
+curl "https://api.platform.bitnob.com/v1/transactions?wallet_id=a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d&direction=inbound&status=completed&created_at%5Bgte%5D=2026-05-12T00:00:00Z" \
+  -H "X-API-Key: $PLATFORM_API_KEY"
+```
+
+Credit the customer when a deposit reaches `completed`. Reconcile on `amount` and `asset`, and use `id` or `tx_hash` to make sure each deposit is credited once.
 
 ## Step 4: Set up gas stations
 
-[Create one gas station](/api-reference/platform/gasstations/create-gas-station) per chain to sponsor withdrawal fees automatically. Without a gas station, your customers would need to hold native tokens (ETH, TRX, SOL, etc.) alongside their assets.
+Customer wallets hold tokens, not the native asset for gas. [Create a gas station](/api-reference/platform/gasstations/create-gas-station) for each chain, so withdrawals can be sponsored:
 
-```http
-POST /gasstations
-Content-Type: application/json
-X-API-Key: <api_key>
-
-{
-  "name": "ETH Gas Station",
-  "chain": "ethereum",
-  "network": "mainnet",
-  "threshold": "0.5",
-  "auto_refill_enabled": true,
-  "refill_amount": "1.0",
-  "refill_from_wallet_id": "<treasury_wallet_id>"
-}
+```bash
+curl https://api.platform.bitnob.com/v1/gasstations \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: gas-station-ethereum" \
+  -d '{
+    "name": "Ethereum gas station",
+    "chain": "ethereum",
+    "threshold": "0.5",
+    "auto_refill_enabled": true,
+    "refill_amount": "1.0",
+    "refill_from_wallet_id": "<treasury_wallet_id>"
+  }'
 ```
 
-<Note>
-  **Tron: stake TRX for energy.** On Tron, USDT transfers consume energy instead of TRX. Stake TRX from your gas station to get energy units. This dramatically reduces the per-transfer cost.
+`threshold` and `refill_amount` are in the native asset, ETH here. Read a station with [Get gas station](/api-reference/platform/gasstations/get-gas-station) and alert when `health_status` is `low`, or subscribe to the `gas_station.low_balance` and `gas_station.critical_balance` events. Top up by hand with [Refill gas station](/api-reference/platform/gasstations/refill-gas-station).
 
-  ```http
-  POST /gasstations/:id/stake
-  Content-Type: application/json
-  X-API-Key: <api_key>
-
-  {
-    "amount": "10000",
-    "resource": "ENERGY"
-  }
-  ```
-</Note>
-
-Monitor gas station health with `GET /gasstations/stats`, or read a single station with [Get Gas Station](/api-reference/platform/gasstations/get-gas-station). Set up alerting when `health_status` is `low`, and top up with [Refill Gas Station](/api-reference/platform/gasstations/refill-gas-station).
+[Set up a gas station](/docs/platform/gas-sponsorship/set-up-a-gas-station) covers sizing the threshold and refill amount.
 
 ## Step 5: Process withdrawals
 
-When a customer requests a withdrawal, [create a transaction](/api-reference/platform/transactions/create-transaction) with gas sponsorship enabled: see [Sponsor and Broadcast](/api-reference/platform/gasstations/sponsor-and-broadcast-external-tron-transaction). As long as every configured policy passes, the transaction is signed by the Enclave and broadcast automatically.
+When a customer requests a withdrawal, [create a transaction](/api-reference/platform/transactions/create-transaction) from their wallet with `sponsor: true`, so the gas station pays the network fee. Use your withdrawal ID as the `Idempotency-Key`.
 
-```http
-POST /transactions
-Content-Type: application/json
-X-API-Key: <api_key>
-
-{
-  "wallet_id": "<customer_wallet_id>",
-  "to_address": "0x742d35Cc6634C0532925a3b844Bc9e7595f1B8A1",
-  "amount": "100.0",
-  "asset_id": "USDC_ETH",
-  "network": "mainnet",
-  "fee_level": "medium",
-  "sponsor_gas": true,
-  "idempotency_key": "withdrawal-cust12345-001"
-}
+```bash
+curl https://api.platform.bitnob.com/v1/transactions \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: withdrawal-cust12345-001" \
+  -d '{
+    "wallet_id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "to_address": "0x28C6c06298d514Db089934071355E5743bf21d60",
+    "amount": "100.0",
+    "asset": "USDC_ETH",
+    "fee_level": "medium",
+    "sponsor": true
+  }'
 ```
 
-```json
-{
-  "success": true,
-  "data": {
-    "id": "tx_wd001",
-    "status": "signed",
-    "amount_decimal": "100.0",
-    "asset_symbol": "USDC",
-    "sponsored": true,
-    "to_address": "0x742d35Cc..."
-  }
-}
-```
+The response tells you what happened:
 
-If a policy requires multi-party approval, the response status will be `pending_authorization` instead of `signed`. Always wait for `completed` status, confirmed via a [subscription](/api-reference/platform/subscriptions/create-subscription) or by polling [Get Transaction](/api-reference/platform/transactions/get-transaction), before crediting or debiting exchange balances.
+- **`201 Created`**: the policy allowed it. It is signed and submitted, and `sponsored` is `true`.
+- **`202 Accepted`** with `status` `pending_authorization`: your policy requires approval. It executes once approvers approve.
+- **`202 Accepted`** with `status` `delayed`: a policy time lock holds it until `execute_at`.
 
-## Step 6: Configure policy layers
+In every case, wait for `completed`, by webhook or with [Get transaction](/api-reference/platform/transactions/get-transaction), before you finalise the customer's ledger entry. [Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions) covers the `202` cases.
 
-Build a layered policy stack for defense in depth. Policies are evaluated in priority order. Higher numbers are evaluated first.
+## Step 6: Configure your policy
 
-**Layer 1. Root quorum.** Protect policy changes themselves. Without this, any admin key can modify policies unilaterally.
+Your organisation enforces one policy at a time: an ordered list of rules, where the first rule that matches decides the outcome. Build it from the most restrictive rule down.
 
-```http
-POST /policies/quorum
-Content-Type: application/json
+**First, set up the quorum.** Configure your organisation's quorum in the Bitnob dashboard, with at least two approvers. The quorum approves every policy activation, so no single API key or person can weaken your controls. Without it, [Activate policy](/api-reference/platform/policies/activate-policy) returns `422`.
 
-{
-  "name": "Exchange Admin Quorum",
-  "description": "2-of-3 admins must approve policy changes",
-  "rules": [{
-    "name": "Dual admin approval",
-    "action_type": "require_approval",
-    "conditions": [
+**Then draft the policy.** This one blocks anything from a treasury wallet to an address you don't list, blocks withdrawals over $50,000, and holds withdrawals over $10,000 for one approval:
+
+```bash
+curl https://api.platform.bitnob.com/v1/policies \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: exchange-policy-v1" \
+  -d '{
+    "name": "Exchange withdrawal controls",
+    "category": "limits",
+    "rules": [
       {
-        "field": "operation",
-        "operator": "in",
-        "value": "policy.*,quorum.*"
-      }
-    ],
-    "action_config": { "required_approvals": 2 }
-  }]
-}
-```
-
-**Layer 2. Block large withdrawals.** Reject anything over \$50,000 outright.
-
-```http
-POST /policies
-Content-Type: application/json
-
-{
-  "name": "Block large withdrawals",
-  "category": "limits",
-  "priority": 200,
-  "rules": [{
-    "name": "Block over $50K",
-    "action_type": "block",
-    "conditions": [
+        "name": "Treasury sends only to known addresses",
+        "order": 1,
+        "action_type": "block",
+        "conditions": [
+          { "field": "wallet_id", "operator": "equal", "value": "<treasury_wallet_id>" },
+          { "field": "to_address", "operator": "not_in", "values": ["0x28C6c06298d514Db089934071355E5743bf21d60"] }
+        ]
+      },
       {
-        "field": "amount_usd",
-        "operator": "gt",
-        "value": "50000"
+        "name": "Block over $50,000",
+        "order": 2,
+        "action_type": "block",
+        "conditions": [
+          { "field": "amount_usd", "operator": "greater_than", "value": "50000" }
+        ]
+      },
+      {
+        "name": "Approve over $10,000",
+        "order": 3,
+        "action_type": "require_approval",
+        "conditions": [
+          { "field": "amount_usd", "operator": "greater_than", "value": "10000" }
+        ],
+        "action_config": {
+          "required_approvals": 1,
+          "approvers": [{ "id": "treasury_officer", "type": "role" }]
+        }
       }
     ]
-  }]
-}
+  }'
 ```
 
-**Layer 3, velocity limits.** Cap each wallet at \$100,000 per day; anything above needs an approval.
+**Test it, then activate it.** Dry-run sample withdrawals against the draft with [Dry-run policy evaluation](/api-reference/platform/policies/dry-run-policy-evaluation) and its `policy_id`. Then call [Activate policy](/api-reference/platform/policies/activate-policy), which sends it to your quorum. It becomes `enforced` once approved.
 
-```http
-POST /policies
-Content-Type: application/json
+[Write and activate your first policy](/docs/platform/policies/write-and-activate-your-first-policy) walks through every call, and [Require approval for high-value transfers](/docs/platform/policies/require-approval-for-high-value-transfers) shows tiered approvals.
 
-{
-  "name": "Daily velocity limit",
-  "category": "velocity",
-  "priority": 150,
-  "rules": [{
-    "name": "$100K daily cap",
-    "action_type": "require_approval",
-    "conditions": [
-      {
-        "field": "daily_volume_usd",
-        "operator": "gt",
-        "value": "100000"
-      }
-    ],
-    "action_config": { "required_approvals": 1 }
-  }]
-}
-```
+## Step 7: Monitor and reconcile
 
-## Step 7: Populate the address book
+Run daily reconciliation against your internal ledger:
 
-Add known safe addresses (exchange hot wallets, partner addresses, institutional counterparties), to the address book. Then create a `whitelist` category policy to block transfers to any non-listed destination. Address book entries are immutable and validated against their chain at creation; see [Core concepts](/docs/platform/core-concepts#address-book).
-
-```http
-POST /addressbook
-Content-Type: application/json
-
-{
-  "name": "Binance Hot Wallet",
-  "chain": "ethereum",
-  "network": "mainnet",
-  "address": "0x28C6c06298d514Db089934071355E5743bf21d60",
-  "notes": "Binance main hot wallet"
-}
-```
-
-```http
-POST /policies
-Content-Type: application/json
-
-{
-  "name": "Whitelist-only withdrawals",
-  "category": "whitelist",
-  "priority": 300,
-  "rules": [{
-    "name": "Block non-whitelisted destinations",
-    "action_type": "block",
-    "conditions": [
-      {
-        "field": "to_address",
-        "operator": "not_in",
-        "value": "addressbook"
-      }
-    ]
-  }]
-}
-```
-
-## Step 8: Monitor and export
-
-Use these endpoints to power your operational dashboards and run daily reconciliation. The documented reads are [List Transactions](/api-reference/platform/transactions/list-transactions), [List Gas Stations](/api-reference/platform/gasstations/list-gas-stations), and [List Delivery Events](/api-reference/platform/subscriptions/list-subscription-delivery-events) for notification health.
-
-```http
-# Gas station health
-GET /gasstations/stats
-
-# Policy coverage
-GET /policies/stats
-
-# Transaction analytics
-GET /transactions/analytics
-```
-
-```http
-GET /transactions/export
-  ?wallet_id=<id>
-  &from_date=2026-05-01T00:00:00Z
-  &to_date=2026-05-12T23:59:59Z
-  &format=csv
-X-API-Key: <api_key>
-```
-
-Run daily reconciliation by matching your internal ledger against the exported transaction history. Investigate any withdrawal that was initiated but lacks a final `completed` status within your expected settlement window.
-
-- Match `idempotency_key` against your internal withdrawal records.
-- Verify `amount_decimal` and `asset_symbol` against customer ledger entries.
-- Alert on any transaction stuck in `pending_authorization` beyond your SLA window: confirm state with [Get Transaction](/api-reference/platform/transactions/get-transaction).
-- Track gas station health daily and [refill](/api-reference/platform/gasstations/refill-gas-station) before `health_status` reaches `low`.
-- Retry any failed notification with [Retry Delivery Event](/api-reference/platform/subscriptions/retry-subscription-delivery).
+- **Transactions.** Page through [List transactions](/api-reference/platform/transactions/list-transactions) for the day with `created_at[gte]` and `created_at[lte]`. Match each one to your withdrawal records by the `Idempotency-Key` you sent, and check `amount` and `asset`.
+- **Stuck withdrawals.** Alert on any transaction in `pending_authorization` or `delayed` beyond your SLA, and confirm its state with [Get transaction](/api-reference/platform/transactions/get-transaction).
+- **Gas stations.** Check `health_status` with [List gas stations](/api-reference/platform/gasstations/list-gas-stations), and refill before it reaches `low`.
+- **Notification health.** Review [List subscription delivery events](/api-reference/platform/subscriptions/list-subscription-delivery-events) for failures, and retry them with [Retry subscription delivery](/api-reference/platform/subscriptions/retry-subscription-delivery).

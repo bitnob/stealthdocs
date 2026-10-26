@@ -1,0 +1,161 @@
+---
+title: "Bitnob Enterprise policy rule reference"
+sidebarTitle: "Rule reference"
+description: "Every policy rule field, action, operator, condition value shape, evaluation result, and validation diagnostic, in one place."
+related:
+  - /docs/platform/policies/how-policy-evaluation-works
+  - /docs/platform/policies/statuses-and-webhook-events
+---
+
+This page describes the shape of policies and rules: their fields, actions, operators, condition fields, and validation results. [Get policy schema](/api-reference/platform/policies/get-policy-schema) is documented to return the same lists in machine-readable form.
+
+## Policy fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | Required. 2 to 100 characters. |
+| `description` | string | Optional. Up to 1,000 characters. |
+| `category` | string | `access`, `whitelist`, `limits`, `approvals`, `velocity`, `compliance`, or `quorum`. Defaults to `access`. |
+| `rules` | array | Optional on create. Rules can also be added later with [Add rule](/api-reference/platform/policies/add-rule-to-draft-policy). |
+| `status` | string | Read-only. `draft`, `enforced`, or `archived`. |
+| `rule_count` | integer | Read-only. |
+| `created_by`, `created_by_name` | string | Read-only. Who created the draft. |
+| `is_active` | boolean | Deprecated. Read `status` instead. |
+
+## Rule fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | string | Required. 2 to 255 characters. |
+| `action_type` | string | Required. See [Actions](#actions). |
+| `conditions` | array | Every condition must match for the rule to match. Optional on a draft, required to activate. |
+| `action_config` | object | Configuration for the action. The shape depends on `action_type`. |
+| `order` | integer | Position in first-match-wins order. Lower runs first. Rules without one are appended in creation order. |
+| `description` | string | Optional. Up to 1,000 characters. |
+
+## Actions
+
+| `action_type` | Effect | `action_config` |
+|---|---|---|
+| `allow` | The transaction proceeds to signing. | None |
+| `block` | The transaction is rejected before signing. | None |
+| `require_approval` | The transaction is held in `pending_authorization` until approved. | Required: `approvers`, a list of `{ "id", "type" }`, and `required_approvals`, a number |
+| `delay` | The transaction is held in `delayed` until `execute_at`, then executes. | `delay_minutes`, a number |
+| `alert` | The transaction proceeds, and `policy.alert` informs the targets. | Required: `targets`, a list of at least one `{ "type", "value" }` |
+
+Approver `id` and `type` values come from [List approver candidates](/api-reference/platform/users/list-approver-candidates). Roles include `owner`, `admin` (shown as Manager), `treasury_officer`, `compliance_officer`, `internal_auditor`, `operator`, `signer`, `developer`, and `viewer`.
+
+```json
+"action_config": { "required_approvals": 2, "approvers": [{ "id": "admin", "type": "role" }] }
+"action_config": { "delay_minutes": 60 }
+"action_config": { "targets": [{ "type": "email", "value": "ops@example.com" }, { "type": "slack", "value": "https://hooks.slack.com/services/..." }] }
+```
+
+Alert target `type` is `email`, `slack`, or `webhook`. For `slack` and `webhook`, `value` must be an `https://` URL.
+
+Approvals expire after 24 hours by default, reported as `expiry_hours` in a dry-run.
+
+Saving a rule rejects an unknown `action_config` key with `unknown_action_config_field`, and a missing required key with `invalid_action_config`.
+
+## Operators
+
+| Operator | Arity | Value field | Example |
+|---|---|---|---|
+| `equal` | scalar | `value` | `{ "field": "chain", "operator": "equal", "value": "tron" }` |
+| `not_equal` | scalar | `value` | `{ "field": "actor_type", "operator": "not_equal", "value": "session" }` |
+| `greater_than` | scalar | `value` | `{ "field": "amount_usd", "operator": "greater_than", "value": "10000" }` |
+| `greater_than_or_equal` | scalar | `value` | `{ "field": "amount_usd", "operator": "greater_than_or_equal", "value": "10000" }` |
+| `less_than` | scalar | `value` | `{ "field": "amount_usd", "operator": "less_than", "value": "100" }` |
+| `less_than_or_equal` | scalar | `value` | `{ "field": "amount_usd", "operator": "less_than_or_equal", "value": "100" }` |
+| `between` | range | `min`, `max` | `{ "field": "amount_usd", "operator": "between", "min": "100", "max": "500" }` |
+| `not_between` | range | `min`, `max` | `{ "field": "amount_usd", "operator": "not_between", "min": "100", "max": "500" }` |
+| `in` | set | `values` | `{ "field": "chain", "operator": "in", "values": ["ethereum", "tron"] }` |
+| `not_in` | set | `values` | `{ "field": "to_address", "operator": "not_in", "values": ["0x742d..."] }` |
+| `contains` | scalar | `value` | `{ "field": "asset_symbol", "operator": "contains", "value": "USD" }` |
+
+Not every operator works on every field. Each entry in `condition_fields` lists its `valid_operators`.
+
+### Condition values
+
+- **Scalar operators** take one value in `value`. Send numbers as strings, for example `"10000"`, never as floats.
+- **Range operators** take `min` and `max` as separate fields. Don't send a bracketed array.
+- **Set operators** take a list in `values`.
+- `greater_than` and `less_than` exclude the boundary. Use the `_or_equal` forms to include it.
+
+## Condition fields
+
+The fields a condition can compare are the request attributes the engine evaluates. These are the same as the fields of [Dry-run policy evaluation](/api-reference/platform/policies/dry-run-policy-evaluation):
+
+| Field | Description |
+|---|---|
+| `amount` | Amount in the asset's display unit, as a decimal string. |
+| `amount_raw` | Amount in the asset's smallest unit, as an integer string. |
+| `amount_usd` | Approximate USD value. Use it for thresholds across assets. |
+| `asset_symbol` | Asset symbol, for example `USDT`. |
+| `token_address` | Token contract address, for token transfers. |
+| `chain`, `network` | Chain and network identifiers, for example `ethereum` and `sepolia`. |
+| `from_address`, `to_address` | Sender and recipient addresses. |
+| `wallet_id`, `vault_id` | The wallet and vault the operation uses. |
+| `source_type`, `destination_type` | Classification of where funds come from and go to. |
+| `operation_type`, `tx_type` | The kind of operation and transaction. |
+| `actor_type` | `apikey` or `session`. |
+| `actor_id`, `user_id` | The specific API key or user that initiated the request. |
+| `is_automated`, `automation_rule_id` | Whether automation, such as a consolidation rule, initiated it, and which rule. |
+| `connection_id` | The connection the operation flows through, if any. |
+
+Saving a rule with a field not on this list returns `400 invalid_condition_field`. Numeric values are stored and returned as numbers.
+
+## Evaluation results
+
+The `result` field of a dry-run response:
+
+| `result` | Meaning |
+|---|---|
+| `approved` | Allowed. Returned when an `allow` rule matches, when no rule matches, and when your organisation has nothing enforced. |
+| `rejected` | A `block` rule matched. |
+| `awaiting_approval` | A `require_approval` rule matched. `required_approvals` and `expiry_hours` are set. |
+| `delayed` | A `delay` rule matched. `delay_minutes` is set. |
+| `quorum` | The decision came from the quorum policy. |
+
+The API reference also lists `matched_rule` and `no_match`. Branch on `allowed` first, and on `result` for the reason.
+
+`reason` is a readable sentence that names the policy and rule, for example "Blocked by policy Transfer limits / rule Block over $50,000". Log it, but don't parse it.
+
+## Validation diagnostics
+
+[Validate in-flight rule array](/api-reference/platform/policies/validate-in-flight-rule-array) and [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) return a `diagnostics` list and an `issue_count` by severity. `valid` is `true` when there are no errors.
+
+| Field | Meaning |
+|---|---|
+| `code` | A stable, machine-readable code, for example `shadowed_by_different_action` or `unreachable_rule`. Branch on this, not on `message`. |
+| `severity` | `error` blocks activation. `warning` and `info` don't, but read them. |
+| `rule_index`, `rule_id` | The rule the finding is about. |
+| `message`, `suggested_fix` | A readable explanation and, where there is one, a fix. |
+
+Diagnostics come in two tiers. Tier 1 is lexical and syntactic. Tier 2 is about how rules interact, for example a later rule that an earlier rule subsumes, so it can never match:
+
+```json
+{
+  "rule_index": 1,
+  "severity": "warning",
+  "code": "shadowed_by_different_action",
+  "message": "rule 1 (block) is shadowed by rule 0 (require_approval) — every transaction that would match this rule is already caught by rule 0",
+  "suggested_fix": "move rule 1 above rule 0, or narrow rule 0's conditions to exclude rule 1's scope"
+}
+```
+
+<Warning>
+  The validate endpoints check how rules interact. They don't reject an unknown condition field, an unsupported operator such as `gt`, or a missing `action_config`: a rule list with those mistakes comes back `valid: true`. Those checks happen when you save the rule. Create draft policy and Add rule return `400` with `invalid_condition_field`, `invalid_operator`, `invalid_action_config`, or `unknown_action_config_field`.
+</Warning>
+
+## Limits on editing
+
+| Operation | Draft | Enforced |
+|---|---|---|
+| Update metadata, add, update, or remove rules | Yes | No |
+| Validate | Yes | Yes, read-only |
+| Dry-run with `policy_id` | Yes | Yes |
+| Activate | Yes, through quorum | `409 Conflict` |
+| Delete | Yes, soft delete, returns `204` | No |
+
+Dry-run accepts a policy in any status, including `archived`. Every other write applies to drafts only.

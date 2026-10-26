@@ -1,4 +1,5 @@
 node_modules/
 .DS_Store
 .mintlify/
-.env.sandbox
+.env
+.env.*

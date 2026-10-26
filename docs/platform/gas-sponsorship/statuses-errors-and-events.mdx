@@ -1,0 +1,105 @@
+---
+title: "Sponsored transfer statuses, errors, and tracking"
+sidebarTitle: "Sponsored transfer statuses"
+description: "Every sponsored transfer status, failure code, API error code, and request and response field, plus how to track a transfer."
+related:
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/handle-failures-and-expiry
+  - /docs/platform/webhooks
+---
+
+## Statuses
+
+| Status | Terminal | Chains | Meaning |
+|---|---|---|---|
+| `quoted` | No | All | Waiting for the sender's signature. `sign` and `expires_at` are present. |
+| `validating` | No | All | Bitnob is verifying the submitted signature. |
+| `submitted` | No | All | Verified and queued for broadcast. |
+| `assembled` | No | EVM | The fully signed transaction has been built. |
+| `tron_activating` | No | Tron | Activating a sender address that has never been used. |
+| `tron_approving` | No | Tron | Broadcasting the sender's one-time token approval. |
+| `pending` | No | All | Broadcast. `tx_hash` is set, and `confirmations` increases. |
+| `completed` | Yes | All | Confirmed on chain. |
+| `failed` | Yes | All | Did not complete. See `failure_code` and `failure_reason`. |
+| `expired` | Yes | All | `expires_at` passed without a valid submission. A quote can still show `quoted` for a while after `expires_at`, so check the timestamp, not only the status. |
+| `cancelled` | Yes | All | Cancelled before broadcast. |
+
+## Failure codes
+
+Set on transfers in `failed` status.
+
+| `failure_code` | Meaning |
+|---|---|
+| `insufficient_token_balance` | The sender's balance was below `total_debit`. |
+| `transfer_reverts` | The transfer would revert, so it was not broadcast. |
+| `reverted` | The transaction was mined and reverted. |
+
+Treat this list as open. Handle unknown codes with a generic message, and log `failure_reason`.
+
+## API errors
+
+| Endpoint | Status | `code` | Meaning |
+|---|---|---|---|
+| Create | `400` | `invalid_request` | Unsupported chain, asset, or network, a malformed address or amount, a gross `amount` that doesn't exceed the fees, an invalid `partner_fee`, or a Solana sender with no token account for the asset. |
+| Create | `429` | `rate_limited` | Quote rate limit reached. Honour `Retry-After`. |
+| Create | `429` | `budget_exceeded` | Daily sponsored-gas budget used up. Honour `Retry-After`. |
+| Create | `503` | `capacity_unavailable` | Sponsorship capacity briefly unavailable. Retry shortly. |
+| Submit | `409` | `quote_expired` | The quote expired. Request a new one. |
+| Submit | `409` | `conflict` | Already submitted. Track the existing transfer. |
+| Submit | `422` | `signature_invalid` | A signature didn't verify, or `tron_approve_signature` is missing. The quote is still valid. |
+| Create, submit | `422` | `idempotency_key_conflict` | The `Idempotency-Key` was reused with a different body. |
+
+All errors share the structure in [Errors](/docs/platform/making-requests#errors).
+
+## Request fields
+
+[Create sponsored transfer](/api-reference/platform/sponsored-transfers/create-sponsored-transfer-quote):
+
+| Field | Required | Notes |
+|---|---|---|
+| `chain` | Yes | `solana`, `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `bsc`, or `tron`. |
+| `asset` | Yes | A supported stablecoin symbol, for example `USDC` or `USDT`. |
+| `from` | Yes | The sender's own address. It holds the token and signs. |
+| `to` | Yes | The recipient address. |
+| `amount` | Yes | A decimal string in normal units. Net by default. |
+| `treat_as_gross_amount` | No | `true` makes `amount` the sender's total debit. |
+| `partner_fee` | No | `{ "address", "amount" }`. Your flat markup. |
+| `router_version` | No | EVM only. Pins the router contract version. Omit it to use the chain default. |
+| `network` | No | Deprecated and ignored. The network follows your API key. |
+
+[Submit signatures](/api-reference/platform/sponsored-transfers/submit-signatures), by `sign.scheme`:
+
+| Scheme | Fields |
+|---|---|
+| `solana_ed25519` | `signature` |
+| `evm_7702` | `signatures.authorization`, `signatures.witness` |
+| `tron_router` | `tron_signature`, and `tron_approve_signature` when `sign.approve` was present |
+
+Both endpoints require an `Idempotency-Key` header.
+
+## Response fields
+
+| Field | Notes |
+|---|---|
+| `id` | Use it with Get and Submit. |
+| `status` | See [Statuses](#statuses). |
+| `chain`, `network`, `asset`, `from`, `to` | Echo the request. `network` is resolved from your API key. |
+| `recipient_amount` | What the recipient receives. |
+| `fee` | Bitnob's sponsorship fee: `amount`, `asset`, `usd`. |
+| `partner_fee` | Your markup: `address`, `amount`, `asset`, `usd`. Present only if requested. |
+| `total_debit` | What leaves the sender. Equals `recipient_amount` + `fee` + `partner_fee`. |
+| `treat_as_gross_amount` | Whether gross mode was applied. Left out when `false`. |
+| `sign` | What the sender signs. Present only while `quoted`. See [Signing by chain](/docs/platform/gas-sponsorship/signing-by-chain). |
+| `expires_at` | Quote expiry, about three minutes after creation. Present while `quoted`. |
+| `router_version` | EVM only. The router version quoted against. |
+| `tx_hash`, `confirmations` | Set once broadcast. |
+| `failure_code`, `failure_reason` | Set on `failed`. |
+| `created_at` | When the quote was created. |
+
+## Listing
+
+[List sponsored transfers](/api-reference/platform/sponsored-transfers/list-sponsored-transfers) returns your most recent transfers, newest first, up to `limit`. It is not paginated: `has_more` is always `false`. Keep your own record of every transfer for history and reconciliation.
+
+## Tracking
+
+Sponsored transfer events are not among the [supported webhook event types](/api-reference/platform/webhooks/list-supported-event-types) yet. Track each transfer by polling [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) until it reaches a terminal status.

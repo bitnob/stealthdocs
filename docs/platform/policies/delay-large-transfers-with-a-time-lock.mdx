@@ -1,0 +1,85 @@
+---
+title: "Delay large transfers with a policy time lock"
+sidebarTitle: "Add a time lock"
+description: "Use a delay rule to hold large or unusual transfers for a fixed window before they execute, giving your team time to catch a bad one."
+related:
+  - /docs/platform/policies/require-approval-for-high-value-transfers
+  - /docs/platform/policies/handle-held-and-rejected-transactions
+  - /docs/platform/policies/rule-reference
+---
+
+A `delay` rule holds a matching transaction for a fixed time and then executes it automatically. Nobody has to approve it. The window gives your monitoring, or a person, the chance to notice a transfer that shouldn't go out.
+
+Use a delay when you want a safety net without making a person approve every transfer. Use [`require_approval`](/docs/platform/policies/require-approval-for-high-value-transfers) when nothing should leave without a sign-off.
+
+## How a delayed transaction behaves
+
+- [Create transaction](/api-reference/platform/transactions/create-transaction) returns `202 Accepted` with `"status": "delayed"`.
+- The response carries `execute_at`, an ISO-8601 timestamp for when the time lock expires.
+- The transaction is persisted and its funds are locked for the whole window.
+- At `execute_at` it moves on to signing and broadcast by itself. You don't resubmit it.
+
+```json
+{
+  "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "object": "transaction",
+  "status": "delayed",
+  "execute_at": "2026-05-16T11:30:00Z",
+  "amount": "120000",
+  "asset": "USDT",
+  "chain": "tron",
+  "to_address": "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE",
+  "tx_hash": ""
+}
+```
+
+`tx_hash` stays empty until the transaction is broadcast.
+
+## Write the rule
+
+This rule delays any transfer over $100,000 by one hour, unless it goes to one of your own vaults.
+
+```json
+{
+  "name": "One-hour hold over $100,000",
+  "action_type": "delay",
+  "conditions": [
+    { "field": "amount_usd", "operator": "greater_than", "value": "100000" },
+    { "field": "destination_type", "operator": "not_equal", "value": "vault" }
+  ],
+  "action_config": { "delay_minutes": 60 }
+}
+```
+
+<Note>
+  `delay_minutes` is the only `action_config` key for `delay`. The values `destination_type` takes aren't listed in the API reference: dry-run a real transfer to your vault and check the value in `failed_condition.actual`.
+</Note>
+
+Place it among your other rules by how restrictive it is. A delay rule placed above a `block` rule for the same amounts would delay transfers you meant to block, then let them through. [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) warns about this kind of overlap.
+
+## Test it
+
+Dry-run a transfer that should be delayed:
+
+```bash
+curl https://api.platform.bitnob.com/v1/policies/evaluate \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "policy_id": "'"$POLICY_ID"'",
+    "amount_usd": "120000",
+    "destination_type": "external"
+  }'
+```
+
+Expect `"result": "delayed"`, `"delay_minutes": 60`, and a `reason` such as "Transaction delayed 60 minutes by policy ...". Then dry-run the same amount with your vault as the destination, and confirm that the delay rule is not the terminal rule in `trace`.
+
+## Choosing the window
+
+- **Long enough to react.** Match it to how quickly your team or alerting can act. An hour you can't staff is the same as no delay.
+- **Short enough for customers.** Customer withdrawals that sit for a day generate support tickets. Scope the rule with conditions, such as `wallet_id`, `vault_id`, or `source_type`, so routine flows aren't affected.
+- **Make sure someone looks.** A transfer matches only one rule, so the delay rule can't also raise an alert. Subscribe to `transaction.created` and route delayed transactions to whoever watches the window.
+
+## Show the wait to your users
+
+While a transaction is `delayed`, show `execute_at` as the expected send time instead of a generic pending state. See [Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions).

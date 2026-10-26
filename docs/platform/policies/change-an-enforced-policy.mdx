@@ -1,0 +1,80 @@
+---
+title: "Change an enforced Bitnob Enterprise policy"
+sidebarTitle: "Change a live policy"
+description: "Enforced policies are immutable. Copy the live rules into a new draft, test the difference, and replace the policy through quorum."
+related:
+  - /docs/platform/policies/policy-lifecycle-and-quorum
+  - /docs/platform/policies/test-rules-with-dry-run-evaluation
+  - /docs/platform/policies/statuses-and-webhook-events
+---
+
+You can't edit the policy your organisation enforces. Update rule, Add rule, and Update draft policy all reject an enforced policy. Instead, you build a new draft that contains the change and activate it. When quorum approves, the new policy becomes `enforced` and the previous one is `archived`.
+
+This keeps every change reviewable: the new version is tested in full before it takes effect, and the switch needs two approvers.
+
+<Steps>
+  <Step title="Read the live policy">
+    Find the enforced policy with [List policies](/api-reference/platform/policies/list-policies) and `status=enforced`, then fetch it with its rules.
+
+    ```bash
+    curl "https://api.platform.bitnob.com/v1/policies?status=enforced" \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    Save its `id` as `LIVE_POLICY_ID`. Keep its rule list: it is the starting point for the new draft.
+  </Step>
+
+  <Step title="Create the replacement draft">
+    Create a new draft with [Create draft policy](/api-reference/platform/policies/create-draft-policy). Copy the live rules into `rules` with only the fields the create request takes: `name`, `description`, `order`, `action_type`, `conditions`, and `action_config`. Then make your change.
+
+    For example, to lower the approval threshold from $10,000 to $5,000, change one condition value:
+
+    ```diff
+       {
+         "name": "Approve over $10,000",
+    -    "conditions": [{ "field": "amount_usd", "operator": "greater_than", "value": "10000" }],
+    +    "name": "Approve over $5,000",
+    +    "conditions": [{ "field": "amount_usd", "operator": "greater_than", "value": "5000" }],
+         "action_type": "require_approval"
+       }
+    ```
+
+    Use a new `Idempotency-Key` for each new draft, for example one that includes a version number. Give the draft a name that says what changed. The name shows up in the approval request your quorum reviews.
+  </Step>
+
+  <Step title="Compare old and new on the same requests">
+    Run your regression cases against both policies. Pass `policy_id` as `LIVE_POLICY_ID` for the current behaviour, and as the new draft's `id` for the proposed behaviour. The cases whose results differ are the effect of your change. Check that they are the ones you intended and nothing else. See [Keep a regression suite](/docs/platform/policies/test-rules-with-dry-run-evaluation#keep-a-regression-suite).
+
+    For the threshold change above, a $7,500 transfer should go from `approved` on the live policy to `awaiting_approval` on the draft. A $500 and a $60,000 transfer should give the same result on both.
+  </Step>
+
+  <Step title="Validate and activate">
+    Run [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) on the draft, then [Activate policy](/api-reference/platform/policies/activate-policy) with a `comment` that summarises the change and the test result.
+
+    ```bash
+    curl -X POST https://api.platform.bitnob.com/v1/policies/$NEW_POLICY_ID/activate \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: activate-transfer-limits-v2" \
+      -d '{ "comment": "Lower approval threshold to $5k. 14/14 regression cases pass; 1 intended change." }'
+    ```
+
+    The live policy keeps being enforced, unchanged, until quorum approves the new one.
+  </Step>
+
+  <Step title="Confirm the switch">
+    When you receive `policy.activated`, or [Get policy](/api-reference/platform/policies/get-policy) shows the new draft as `enforced`, dry-run your regression cases once more without `policy_id`. They should now match the draft's results. The previous policy is `archived`.
+  </Step>
+</Steps>
+
+## Rolling back
+
+Activation stages a draft, so to roll back, repeat this guide with the archived policy's rules as the starting point, and activate that new draft. Keep each version's rule list in version control so a rollback is a copy, not a reconstruction.
+
+## Changing only the name or description
+
+Metadata changes go through the same process for an enforced policy. Most teams batch them with the next rule change.
+
+## Clean up
+
+Drafts you decide not to activate can be removed with [Delete draft policy](/api-reference/platform/policies/delete-draft-policy). Deleting is a soft delete. Enforced and archived policies can't be deleted.
