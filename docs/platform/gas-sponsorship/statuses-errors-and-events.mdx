@@ -1,7 +1,7 @@
 ---
-title: "Sponsored transfer statuses, errors, and events"
+title: "Sponsored transfer statuses, errors, and tracking"
 sidebarTitle: "Sponsored transfer statuses"
-description: "Every sponsored transfer status, failure code, API error code, request and response field, and the webhook events to subscribe to."
+description: "Every sponsored transfer status, failure code, API error code, and request and response field, plus how to track a transfer."
 related:
   - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
   - /docs/platform/gas-sponsorship/handle-failures-and-expiry
@@ -100,8 +100,6 @@ Both endpoints require an `Idempotency-Key` header.
 
 [List sponsored transfers](/api-reference/platform/sponsored-transfers/list-sponsored-transfers) returns your most recent transfers, newest first, up to `limit`. It is not paginated: `has_more` is always `false`. Keep your own record of every transfer for history and reconciliation.
 
-## Webhook events
+## Tracking
 
-Sponsored transfers emit `sponsored_transfer.*` events as they change status. [List supported event types](/api-reference/platform/webhooks/list-supported-event-types) returns the exact event names. Subscribe with [Create webhook](/api-reference/platform/webhooks/create-webhook), and verify every delivery as described in [Webhooks](/docs/platform/webhooks).
-
-Use events as the primary signal, and [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) to confirm the status before you act on one.
+Sponsored transfer events are not among the [supported webhook event types](/api-reference/platform/webhooks/list-supported-event-types) yet. Track each transfer by polling [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) until it reaches a terminal status.

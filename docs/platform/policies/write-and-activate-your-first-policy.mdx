@@ -21,17 +21,6 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
 - A quorum policy with at least two approvers, configured in the Bitnob dashboard. Without one, the last step returns `422`. See [Activation always goes through quorum](/docs/platform/policies/policy-lifecycle-and-quorum#activation-always-goes-through-quorum).
 
 <Steps>
-  <Step title="Read the policy schema">
-    [Get policy schema](/api-reference/platform/policies/get-policy-schema) lists what you can put in a rule: categories, action types and their config, condition fields, and operators.
-
-    ```bash
-    curl https://api.platform.bitnob.com/v1/policies/schema \
-      -H "X-API-Key: $PLATFORM_API_KEY"
-    ```
-
-    Check two things in the response. `condition_fields` should include `amount_usd`, with `greater_than` in its `valid_operators`. And `action_types` gives the `config_schema` for `require_approval`, which you need in step 3.
-  </Step>
-
   <Step title="Pick an approver">
     [List approver candidates](/api-reference/platform/users/list-approver-candidates) returns the users and roles a `require_approval` rule can name.
 
@@ -44,14 +33,16 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
     {
       "object": "list",
       "data": [
-        { "object": "approver_candidate", "id": "admin", "type": "role", "name": "Admin", "member_count": 3 },
-        { "object": "approver_candidate", "id": "3f1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c", "type": "user", "name": "Jane Doe", "org_role": "operator" }
+        { "object": "approver_candidate", "type": "role", "id": "owner", "name": "Owner", "member_count": 1 },
+        { "object": "approver_candidate", "type": "role", "id": "admin", "name": "Manager", "member_count": 3 },
+        { "object": "approver_candidate", "type": "role", "id": "treasury_officer", "name": "Treasury Officer", "member_count": 2 },
+        { "object": "approver_candidate", "type": "user", "id": "3f1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c", "name": "Jane Doe", "org_role": "operator" }
       ],
       "has_more": false
     }
     ```
 
-    Use a role where you can. It keeps working when people join or leave. This guide uses the `admin` role.
+    Use a role where you can. It keeps working when people join or leave. This guide uses the `admin` role, which the dashboard labels Manager. Use the `id`, not the display name. Check `member_count`: a role with no members can never approve.
   </Step>
 
   <Step title="Lint the rules before you save them">
@@ -97,10 +88,10 @@ Anything at or below $10,000 matches neither rule. You will test that case too.
     ```
 
     <Note>
-      The keys inside `action_config` depend on the action type. Copy them from `action_types[].config_schema` in the schema response from step 1. The values here are illustrative.
+      The keys inside `action_config` depend on the action type, and validation doesn't check them. After you save the draft, dry-run it and confirm that `required_approvals` in the response is the number you set.
     </Note>
 
-    Try swapping the two `order` values and validating again. The block rule now comes second and can never match, because every transfer over $50,000 is also over $10,000. Validation reports it as `unreachable_rule`.
+    Try swapping the two `order` values and validating again. The block rule now comes second and can never match, because every transfer over $50,000 is also over $10,000. Validation returns a warning with the code `shadowed_by_different_action`, and a `suggested_fix` telling you to move the block rule up.
   </Step>
 
   <Step title="Create the draft">

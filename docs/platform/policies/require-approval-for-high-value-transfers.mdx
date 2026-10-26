@@ -16,7 +16,7 @@ This guide builds a tiered approval policy for a treasury team:
 |---|---|
 | Over $250,000 | Blocked |
 | Over $50,000 | Two approvals from the `admin` role |
-| Over $10,000 | One approval from the `operator` role |
+| Over $10,000 | One approval from the `treasury_officer` role |
 | Automated sweeps between your own vaults, any value | Allowed |
 | Everything else | No match |
 
@@ -70,7 +70,7 @@ Rules run in order and the first match wins, so order them from most to least re
       }
     },
     {
-      "name": "One operator over $10,000",
+      "name": "One treasury officer over $10,000",
       "order": 4,
       "action_type": "require_approval",
       "conditions": [
@@ -78,7 +78,7 @@ Rules run in order and the first match wins, so order them from most to least re
       ],
       "action_config": {
         "required_approvals": 1,
-        "approvers": [{ "id": "operator", "type": "role" }]
+        "approvers": [{ "id": "treasury_officer", "type": "role" }]
       }
     }
   ]
@@ -86,7 +86,7 @@ Rules run in order and the first match wins, so order them from most to least re
 ```
 
 <Note>
-  Check the exact `action_config` keys for `require_approval`, and the values `destination_type` accepts, in [Get policy schema](/api-reference/platform/policies/get-policy-schema) before you save. The values above are illustrative.
+  Validation doesn't check `action_config` keys or condition values, so a typo saves without an error. Dry-run every tier, as below, and confirm `required_approvals` in each response before you activate.
 </Note>
 
 Lint the rules with [Validate in-flight rule array](/api-reference/platform/policies/validate-in-flight-rule-array), then save them with [Create draft policy](/api-reference/platform/policies/create-draft-policy). [Write and activate your first policy](/docs/platform/policies/write-and-activate-your-first-policy) shows both calls.
@@ -99,7 +99,7 @@ Dry-run one request per row of the table, against the draft. Each should stop at
 |---|---|---|
 | `"amount_usd": "300000"` | Block over $250,000 | `allowed: false` |
 | `"amount_usd": "75000"` | Two admins over $50,000 | `required_approvals: 2` |
-| `"amount_usd": "20000"` | One operator over $10,000 | `required_approvals: 1` |
+| `"amount_usd": "20000"` | One treasury officer over $10,000 | `required_approvals: 1` |
 | `"amount_usd": "300000", "is_automated": true, "destination_type": "vault"` | Allow automated internal sweeps | `allowed: true` |
 | `"amount_usd": "500"` | None | `result: no_match` |
 

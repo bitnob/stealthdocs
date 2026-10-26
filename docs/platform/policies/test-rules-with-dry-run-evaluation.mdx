@@ -15,7 +15,7 @@ related:
 - **With `policy_id`**: that policy, whatever its status. Use this to test a draft before activation.
 - **Without `policy_id`**: the policy your organisation currently enforces. Use this to check live behaviour.
 
-If you leave out `policy_id` and nothing is enforced, the result is `no_match` with `allowed: true`.
+If you leave out `policy_id` and your organisation has no enforced policy and no quorum, the result is `"approved"` with `allowed: true` and the reason "No active policy and no quorum". That tells you nothing about your rules, so always pass `policy_id` when testing a draft.
 
 ## Build the request
 
@@ -101,7 +101,8 @@ The top-level fields are the decision:
 | `failed_condition.actual` is empty | You didn't send that field in the request. |
 | `actual` and `expected` look equal but the rule failed | Check the operator. `greater_than` excludes the boundary, `greater_than_or_equal` includes it. |
 | `in` against a list never matches | Values are compared exactly. Check case and the identifier format, for example `tron` and not `TRX` for `chain`. |
-| Every request returns `no_match` | You left out `policy_id` and nothing is enforced yet, or your conditions use fields you aren't sending. |
+| Every request returns `approved` with "No active policy" | You left out `policy_id` and nothing is enforced yet. Pass the draft's `policy_id`. |
+| Every request returns `no_match` | Your conditions use fields you aren't sending, or a misspelt field name. Validation doesn't catch unknown fields. |
 
 ## Keep a regression suite
 

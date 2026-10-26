@@ -50,60 +50,52 @@ The type is set on [Create Wallet](/api-reference/platform/wallets/create-wallet
 
 ## Policy engine
 
-A policy is a declarative rule that runs before the Bitnob Secure Enclave signs a transaction. Policies are organisation-scoped and evaluated by category in priority order. The first matching rule wins.
+A policy is an ordered list of rules that runs before the Bitnob Secure Enclave signs a transaction. Your organisation enforces one policy at a time. Rules are evaluated in order, and the first rule whose conditions all match decides the outcome.
 
 | Action | Effect |
 |---|---|
+| `allow` | Sign and broadcast the transaction. |
 | `block` | Reject the transaction outright. No signing occurs. |
-| `alert` | Allow the transaction but notify stakeholders. |
-| `require_approval` | Pause the transaction in `pending_authorization` until enough approvers vote. |
-| `delay` | Queue the transaction for deferred execution. |
+| `alert` | Allow the transaction, and send `policy.alert` to the rule's notify targets. |
+| `require_approval` | Hold the transaction in `pending_authorization` until enough approvers approve it. |
+| `delay` | Hold the transaction in `delayed` until a time lock expires, then execute it. |
 
-Policies are evaluated by category:
-
-- `access`: who can access which wallets
-- `whitelist`: restrict destinations to known addresses only
-- `limits`: per-transaction spending caps
-- `approvals`: multi-signature requirements
-- `velocity`: daily, weekly, or monthly volume controls
-- `compliance`: regulatory controls
-- `quorum`: root-level governance for policy changes themselves
+Every policy has a category that describes its purpose: `access`, `whitelist`, `limits`, `approvals`, `velocity`, `compliance`, or `quorum`. `quorum` is reserved for the policy that governs administrative changes.
 
 To write, test, and activate a policy, see [Policies](/docs/platform/policies/overview).
 
 ## Approvals and root quorum
 
-When a policy fires `require_approval`, an approval request is created and the transaction stops at `pending_authorization`. Approvers then vote:
+When a rule fires `require_approval`, the transaction stops at `pending_authorization` until the rule's approvers act on it:
 
 - Once the required number of approvals is reached, the transaction proceeds automatically.
-- If any approver rejects, the transaction terminates as `rejected`.
+- If an approver rejects it, the transaction terminates as `rejected`.
 
-A root quorum is a special policy of category `quorum` that protects policy changes themselves. When a root quorum is active, creating, editing, or deleting any policy also requires quorum approval, preventing any single administrator from unilaterally weakening your security controls.
+The quorum is a special policy of category `quorum` that protects administrative operations, including policy activation. [Activate policy](/api-reference/platform/policies/activate-policy) never applies a policy directly: it opens an approval request for the quorum, and the policy becomes `enforced` only once enough quorum approvers approve. No single API key or administrator can change what your organisation enforces.
 
 <Warning>
-  Configure a root quorum before deploying to production. Without one, any API key with admin permission can modify policies unilaterally.
+  Configure the quorum in the Bitnob dashboard, with at least two approvers, before you go live. Until it has two, Activate policy returns `422`, so you can't enforce any policy through the API.
 </Warning>
+
+See [Policy lifecycle and quorum](/docs/platform/policies/policy-lifecycle-and-quorum).
 
 ## Gas stations
 
-A gas station is a pre-funded, organisation-owned account whose sole job is to sponsor transaction fees on behalf of customer wallets: see [Gas Stations](/api-reference/platform/gasstations/list-gas-stations) and [Sponsor and Broadcast](/api-reference/platform/gasstations/sponsor-and-broadcast-external-tron-transaction).
+A gas station is a pre-funded, organisation-owned balance of a chain's native asset that pays network fees for your wallets: see [Gas stations](/api-reference/platform/gasstations/list-gas-stations).
 
-- Gas stations are scoped per chain and network.
-- When a customer wallet has insufficient native gas, the gas station tops it up automatically before broadcasting.
-- Each gas-sponsored transfer emits a separate `gas_sponsorship` transaction linked to the original via `sponsor_tx_id`.
-- On Tron, gas stations support TRX staking and resource delegation: stake once for energy and bandwidth so USDT transfers cost near-zero TRX.
+- A gas station works on one chain. Create one for each chain you send sponsored transactions on.
+- Send with `sponsor: true` on [Create transaction](/api-reference/platform/transactions/create-transaction), and the gas station pays the fee. The transaction passes through `awaiting_sponsorship`, and records `sponsored` and the `gas_station_id` that paid.
+- On Tron, a gas station can also fund and broadcast a transaction someone else signed, with [Sponsor and broadcast](/api-reference/platform/gasstations/sponsor-and-broadcast-external-tron-transaction).
 
-Set an `auto_refill_enabled` threshold and a `refill_from_wallet_id` so the gas station tops itself up when its balance runs low. Monitor health via `GET /gasstations/stats`.
+Set a `threshold`, turn on `auto_refill_enabled`, and set a `refill_from_wallet_id`, so the gas station tops itself up when its balance runs low. Its `health_status` is `low` below the threshold, and the `gas_station.low_balance`, `gas_station.critical_balance`, and `gas_station.auto_refilled` events report on it.
 
 To set one up, and to sponsor transfers from your users' own addresses, see [Gas sponsorship](/docs/platform/gas-sponsorship/overview).
 
 ## Address book
 
-The address book is an organisation-level allowlist of named, validated recipient addresses. It works alongside `whitelist` policies to restrict outbound transfers to only known, pre-approved destinations.
+The address book is an organisation-level list of named, validated recipient addresses. A consolidation rule can sweep to an address book entry with `destination_address_book_id`.
 
-- Address book entries are immutable. The on-chain address string cannot be edited after creation. To change a destination, delete the entry and re-add it.
-- Addresses are validated against the specified chain at creation time.
-- Pair address book entries with a `whitelist` category policy to block all outbound transfers to non-whitelisted addresses.
+To restrict where a wallet can send, add a policy rule with a `to_address` `not_in` condition that blocks any address you haven't listed. See [Rule reference](/docs/platform/policies/rule-reference#operators).
 
 ## Transaction lifecycle
 
@@ -112,12 +104,16 @@ Every outbound transaction moves through a defined set of statuses. Understandin
 | Status | Description |
 |---|---|
 | `pending_signature` | Transaction created. Awaiting Enclave signing. |
-| `pending_authorization` | A policy requires multi-party approval. Transaction is paused until approvers vote. |
+| `pending_authorization` | A policy requires approval. Paused until approvers act. |
+| `delayed` | A policy time lock holds the transaction until `execute_at`, then it executes automatically. |
+| `pending_screening` | Waiting on compliance screening. |
 | `signed` | Signed by the Enclave. Not yet broadcast. |
-| `awaiting_sponsorship` | Native gas is being transferred from a gas station before broadcast. |
+| `awaiting_sponsorship` | A gas station is funding the network fee before broadcast. |
 | `broadcasting` | Submitted to the blockchain network. |
 | `confirming` | On-chain and accumulating block confirmations. |
 | `completed` | Confirmed with sufficient confirmations. Terminal. |
 | `failed` | Errored at any stage. Terminal. |
-| `cancelled` | Cancelled by the requester before broadcast. Terminal. |
-| `rejected` | An approver denied the approval request. Terminal. |
+| `cancelled` | Cancelled before broadcast. Terminal. |
+| `rejected` | An approver rejected the transaction. Terminal. |
+
+Create transaction returns `201` when the transaction was signed and submitted, and `202` when it is `pending_authorization` or `delayed`. In both `202` cases the transaction is persisted and its funds are locked.

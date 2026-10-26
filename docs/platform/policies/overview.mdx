@@ -20,7 +20,7 @@ Your organisation enforces one policy at a time. That policy holds an ordered li
 | `block` | It is rejected before signing. Nothing is broadcast. |
 | `require_approval` | It is held in `pending_authorization` until enough approvers approve it. |
 | `delay` | It is held in `delayed` until a time lock expires, then executes on its own. |
-| `alert` | It proceeds, and the match is recorded so your team can review it. |
+| `alert` | It proceeds, and a `policy.alert` event informs the rule's notify targets. |
 
 The first rule whose conditions all match decides the outcome. [How policy evaluation works](/docs/platform/policies/how-policy-evaluation-works) covers the order, the conditions, and what happens when nothing matches.
 
@@ -35,7 +35,7 @@ The first rule whose conditions all match decides the outcome. [How policy evalu
 
 <Steps>
   <Step title="Discover what you can write">
-    [Get policy schema](/api-reference/platform/policies/get-policy-schema) lists the categories, actions, condition fields, and operators your organisation supports.
+    [Rule reference](/docs/platform/policies/rule-reference) lists the categories, actions, condition fields, and operators. [List approver candidates](/api-reference/platform/users/list-approver-candidates) lists who can approve.
   </Step>
   <Step title="Draft and lint">
     Create a draft with [Create draft policy](/api-reference/platform/policies/create-draft-policy), then check it with [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy). Drafts are never enforced.

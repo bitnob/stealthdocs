@@ -52,7 +52,7 @@ This rule delays any transfer over $100,000 by one hour, unless it goes to one o
 ```
 
 <Note>
-  Copy the `action_config` keys for `delay` from `action_types[].config_schema` in [Get policy schema](/api-reference/platform/policies/get-policy-schema), and the values `destination_type` accepts from its `condition_fields`. The dry-run response reports the window as `delay_minutes`.
+  Validation doesn't check `action_config` keys or condition values. Save the draft and dry-run it: the response reports the window as `delay_minutes`, so you can confirm it took effect. Check the values `destination_type` takes by dry-running a real transfer from your setup.
 </Note>
 
 Place it among your other rules by how restrictive it is. A delay rule placed above a `block` rule for the same amounts would delay transfers you meant to block, then let them through. [Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) warns about this kind of overlap.

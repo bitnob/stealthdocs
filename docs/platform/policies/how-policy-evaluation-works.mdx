@@ -43,7 +43,7 @@ Three consequences follow, and most policy bugs come from one of them:
 - **Conditions within a rule are AND.** To express "chain is Tron **or** chain is Ethereum", use one condition with the `in` operator, not two conditions.
 - **Rules are OR.** To express "block if A, and separately block if B", write two rules.
 
-[Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) catches the first problem for you: it reports rules that are shadowed by an earlier rule as `unreachable_rule`.
+[Validate stored draft policy](/api-reference/platform/policies/validate-stored-draft-policy) catches the first problem for you: it warns about rules that are shadowed by an earlier rule, for example with the code `shadowed_by_different_action`.
 
 ## What the engine can see
 
@@ -59,7 +59,7 @@ A condition can compare any request attribute the engine evaluates. These includ
 | `is_automated`, `automation_rule_id` | Different rules for automated sweeps and manual transfers |
 | `operation_type`, `tx_type` | Different rules for each kind of operation |
 
-The authoritative list for your organisation, with each field's value type and the operators it accepts, comes from [Get policy schema](/api-reference/platform/policies/get-policy-schema) in `condition_fields`. Read it rather than hardcoding field names.
+[Rule reference](/docs/platform/policies/rule-reference#condition-fields) describes each field. Validation doesn't reject a field name it doesn't know, so check names against that list: a misspelt field never matches, and the rule silently does nothing.
 
 <Tip>
   Prefer `amount_usd` for spending thresholds. A single USD rule covers every asset, and you don't need a separate rule per token with its own decimals.
@@ -67,7 +67,7 @@ The authoritative list for your organisation, with each field's value type and t
 
 ## When no rule matches
 
-If no rule matches, the result is `no_match`. When your organisation has no enforced policy at all, `no_match` is allowed.
+If no rule matches, the result is `no_match`. When your organisation has no enforced policy and no quorum at all, every request is allowed, and dry-run returns `"result": "approved"` with the reason "No active policy and no quorum".
 
 Don't rely on an implicit default for anything security-relevant. End your rule list with an explicit decision for the cases you care about, and confirm the behaviour by dry-running a request that matches none of your other rules. See [Test rules with dry-run evaluation](/docs/platform/policies/test-rules-with-dry-run-evaluation).
 
@@ -76,10 +76,10 @@ Don't rely on an implicit default for anything security-relevant. End your rule 
 | Action | Decision | Transaction status | Create transaction returns |
 |---|---|---|---|
 | `allow` | Allowed | Moves on to `pending_signature` and `signed` | `201` |
-| `alert` | Allowed, match recorded | Moves on as normal | `201` |
+| `alert` | Allowed, `policy.alert` sent | Moves on as normal | `201` |
 | `require_approval` | Held for approval | `pending_authorization` | `202` |
 | `delay` | Held for a time lock | `delayed`, with `execute_at` set | `202` |
-| `block` | Rejected | Not signed | Error |
+| `block` | Rejected, `policy.violation` sent | Not signed | Error |
 
 A held transaction is persisted and its funds are locked. It does not need to be resubmitted: it executes on its own once it is approved or its time lock expires. [Handle held and rejected transactions](/docs/platform/policies/handle-held-and-rejected-transactions) covers the integration side.
 
@@ -87,7 +87,7 @@ A held transaction is persisted and its funds are locked. It does not need to be
 
 Every policy has a `category`: `access`, `whitelist`, `limits`, `approvals`, `velocity`, `compliance`, or `quorum`. If you leave it out, it defaults to `access`. The category describes what the policy is for and controls how it is evaluated. `quorum` is reserved for the policy that governs administrative changes, described in [Policy lifecycle and quorum](/docs/platform/policies/policy-lifecycle-and-quorum).
 
-[Get policy schema](/api-reference/platform/policies/get-policy-schema) returns the categories available to your organisation, with a description of each, in `categories`.
+[Rule reference](/docs/platform/policies/rule-reference#policy-fields) lists the categories.
 
 ## Policies and KYT screening
 

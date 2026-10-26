@@ -63,10 +63,11 @@ Subscribe to these with [Create webhook](/api-reference/platform/webhooks/create
 | `policy.rule.added` | A rule is added to a draft. |
 | `policy.rule.updated` | A rule on a draft changes. |
 | `policy.rule.deleted` | A rule is removed from a draft. |
-| `policy.activated` | Quorum approves an activation and the policy becomes `enforced`. |
-| `policy.archived` | A previously enforced policy is replaced. |
+| `policy.activated` | A draft becomes `enforced`, after quorum approves it. |
+| `policy.archived` | An enforced policy moves to `archived`. |
 | `policy.deleted` | A draft is deleted. |
-| `policy.violation` | A request breaks a rule in the enforced policy. |
+| `policy.violation` | A `block` rule in the enforced policy blocked a transaction. |
+| `policy.alert` | A transaction matched an `alert` rule. The rule's notify targets are informed. |
 
 For approvals and time locks, follow the transaction itself: `transaction.signed` follows an approval or an expired time lock, and the transaction then moves through `transaction.broadcasting`, `transaction.confirmed`, and `transaction.completed`.
 

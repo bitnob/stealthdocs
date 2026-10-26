@@ -106,7 +106,7 @@ This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. S
   </Step>
 
   <Step title="Track it to completed">
-    Subscribe to `sponsored_transfer.*` events, or poll [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) until the status is terminal.
+    Poll [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) until the status is terminal.
 
     ```bash
     curl https://api.platform.bitnob.com/v1/sponsored-transfers/$TRANSFER_ID \
@@ -164,7 +164,7 @@ while (!terminal.has(transfer.status)) {
 console.log(transfer.status, transfer.tx_hash, transfer.failure_code ?? "");
 ```
 
-Polling is fine for a test. In production, use webhooks and poll only as a fallback.
+Sponsored transfers aren't in the list of webhook event types yet, so polling is how you track them. Back off as the transfer ages: every few seconds while `pending`, and stop at a terminal status.
 
 ## Next steps
 

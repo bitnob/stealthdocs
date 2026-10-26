@@ -52,7 +52,7 @@ The asset is a supported stablecoin on that chain, typically USDC on Solana and 
     [Submit signatures](/api-reference/platform/sponsored-transfers/submit-signatures) before `expires_at`. Bitnob verifies, co-signs, and broadcasts.
   </Step>
   <Step title="Track">
-    Follow it to `completed` with `sponsored_transfer.*` webhooks or [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer).
+    Poll [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) until it reaches `completed` or another terminal status.
   </Step>
 </Steps>
 

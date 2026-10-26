@@ -45,16 +45,16 @@ The organisation context is resolved automatically from the key. You never need 
 
 ## How authorization works
 
-API key calls never receive a WebAuthn or MFA challenge. When the key has the required permission and the request passes every configured policy, the Bitnob Secure Enclave signs synchronously.
+API key calls never receive a WebAuthn or MFA challenge. When the key has the required permission and your enforced policy allows the request, the Bitnob Secure Enclave signs synchronously.
 
 The authorization flow for every transaction is:
 
 1. **API key is verified.** The key must exist, be active, and carry the permission required for the requested operation: inspect scopes on [Get API Key Info](/api-reference/platform/meta/get-api-key-info) to check.
-2. **Policies are evaluated.** Every active policy is checked against the transaction parameters, spending limits, address whitelists, velocity caps, and approval thresholds all run before signing.
-3. **Enclave signs or holds.** If every policy passes, the Enclave signs immediately. If a policy fires `require_approval`, the transaction is held in `pending_authorization` until approvers vote.
+2. **The policy is evaluated.** Your organisation's enforced policy is checked against the transaction. Its rules run in order, and the first rule that matches decides the outcome. See [How policy evaluation works](/docs/platform/policies/how-policy-evaluation-works).
+3. **Enclave signs, holds, or blocks.** If the policy allows the transaction, the Enclave signs immediately. A `require_approval` rule holds it in `pending_authorization` until approvers approve, a `delay` rule holds it in `delayed` until its time lock expires, and a `block` rule rejects it.
 4. **Transaction is broadcast.** After signing, the transaction is broadcast to the network. If gas sponsorship is needed, the gas station tops up the wallet first.
 
-A leaked key cannot exfiltrate funds beyond what its policies permit. Spending limits, address whitelists, velocity caps, and approval quorums all enforce constraints independently of the key's permission set.
+A leaked key cannot exfiltrate funds beyond what its policies permit. Spending limits, destination allowlists, time locks, and approvals all enforce constraints independently of the key's permission set.
 
 ## Next
 

@@ -5,10 +5,9 @@ description: "Every policy rule field, action, operator, condition value shape, 
 related:
   - /docs/platform/policies/how-policy-evaluation-works
   - /docs/platform/policies/statuses-and-webhook-events
-  - "Get policy schema": /api-reference/platform/policies/get-policy-schema
 ---
 
-This page describes the shape of policies and rules. The live lists of categories, condition fields, operators, and action config schemas for your organisation come from [Get policy schema](/api-reference/platform/policies/get-policy-schema). When this page and the schema response disagree, the schema response is correct.
+This page describes the shape of policies and rules: their fields, actions, operators, condition fields, and validation results. [Get policy schema](/api-reference/platform/policies/get-policy-schema) is documented to return the same lists in machine-readable form.
 
 ## Policy fields
 
@@ -44,7 +43,9 @@ This page describes the shape of policies and rules. The live lists of categorie
 | `delay` | The transaction is held in `delayed` until `execute_at`, then executes. | The delay window in minutes |
 | `alert` | The transaction proceeds and the match is recorded. | None |
 
-Each entry in `action_types` from Get policy schema carries a `config_schema` with the exact keys and types for that action. Approver `id` and `type` values come from [List approver candidates](/api-reference/platform/users/list-approver-candidates).
+Approver `id` and `type` values come from [List approver candidates](/api-reference/platform/users/list-approver-candidates). Roles include `owner`, `admin` (shown as Manager), `treasury_officer`, `compliance_officer`, `internal_auditor`, `operator`, `signer`, `developer`, and `viewer`.
+
+Validation doesn't check the keys inside `action_config`. Confirm them with a dry-run, which reports `required_approvals`, `expiry_hours`, and `delay_minutes` from the matched rule.
 
 ## Operators
 
@@ -92,7 +93,7 @@ The fields a condition can compare are the request attributes the engine evaluat
 | `is_automated`, `automation_rule_id` | Whether automation, such as a consolidation rule, initiated it, and which rule. |
 | `connection_id` | The connection the operation flows through, if any. |
 
-`condition_fields` in the schema response gives each field's `value_type`, its `valid_operators`, and its `allowed_values` where the set is fixed.
+Validation doesn't reject a field name it doesn't know. A misspelt field never matches, so check names against this table.
 
 ## Evaluation results
 
@@ -101,10 +102,10 @@ The `result` field of a dry-run response:
 | `result` | Meaning |
 |---|---|
 | `matched_rule` | A rule matched and its action decided the outcome. `rule_id` names it. |
-| `no_match` | No rule matched. With no enforced policy, `allowed` is `true`. |
+| `no_match` | No rule matched. |
 | `quorum` | The decision came from the quorum policy. |
 | `awaiting_approval` | The request is held for approval. |
-| `approved` | An approval requirement has been met. |
+| `approved` | Allowed. Also returned when your organisation has no enforced policy and no quorum, with the reason "No active policy and no quorum". |
 | `rejected` | An approver rejected the request. |
 | `delayed` | The request is held by a time lock. |
 
@@ -114,12 +115,26 @@ The `result` field of a dry-run response:
 
 | Field | Meaning |
 |---|---|
-| `code` | A stable, machine-readable code, for example `unreachable_rule`. Branch on this, not on `message`. |
+| `code` | A stable, machine-readable code, for example `shadowed_by_different_action` or `unreachable_rule`. Branch on this, not on `message`. |
 | `severity` | `error` blocks activation. `warning` and `info` don't, but read them. |
 | `rule_index`, `rule_id` | The rule the finding is about. |
 | `message`, `suggested_fix` | A readable explanation and, where there is one, a fix. |
 
-Diagnostics come in two tiers. Tier 1 is lexical and syntactic: unknown fields, unsupported operators, and malformed values. Tier 2 is about how rules interact, for example a rule that an earlier rule subsumes, so that it can never match. That case is reported as `unreachable_rule`.
+Diagnostics come in two tiers. Tier 1 is lexical and syntactic. Tier 2 is about how rules interact, for example a later rule that an earlier rule subsumes, so it can never match:
+
+```json
+{
+  "rule_index": 1,
+  "severity": "warning",
+  "code": "shadowed_by_different_action",
+  "message": "rule 1 (block) is shadowed by rule 0 (require_approval) — every transaction that would match this rule is already caught by rule 0",
+  "suggested_fix": "move rule 1 above rule 0, or narrow rule 0's conditions to exclude rule 1's scope"
+}
+```
+
+<Warning>
+  Validation does not reject unknown condition fields, unsupported operators such as `gt`, or a missing `action_config`. A rule list with those mistakes comes back `valid: true`. Check field and operator names against this page, and dry-run every rule before you activate.
+</Warning>
 
 ## Limits on editing
 

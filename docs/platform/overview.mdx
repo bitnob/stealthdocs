@@ -18,7 +18,7 @@ The Bitnob Enterprise API provides **non-custodial**, policy-governed wallets fo
 Three properties define it, and each is enforced in hardware rather than by policy alone.
 
 - **Keys never leave the enclave.** They are generated inside AWS Nitro Enclaves and are never exposed, including to Bitnob engineers.
-- **Every signature passes your policies first.** The enclave releases a signature only when every active rule permits it.
+- **Every signature passes your policies first.** The enclave releases a signature only when your enforced policy allows it.
 - **There is no administrative override.** Bitnob cannot sign a transaction for you. Root quorum governance applies even to Bitnob-side operations on your organisation.
 
 ## What the platform gives you
@@ -41,21 +41,23 @@ The live list for your organisation is returned by [List Chains](/api-reference/
 |---|---|---|---|
 | Ethereum | `ethereum` | ETH | mainnet, sepolia |
 | Bitcoin | `bitcoin` | BTC | mainnet, testnet |
-| Solana | `solana` | SOL | mainnet-beta, devnet |
-| Tron | `tron` | TRX | mainnet, shasta |
+| Solana | `solana` | SOL | mainnet, devnet |
+| Tron | `tron` | TRX | mainnet, nile |
 | Polygon | `polygon` | POL | mainnet, amoy |
 | Base | `base` | ETH | mainnet, sepolia |
-| Arbitrum | `arbitrum` | ETH | one, sepolia |
+| Arbitrum | `arbitrum` | ETH | mainnet, sepolia |
 | BSC | `bsc` | BNB | mainnet, testnet |
 | Optimism | `optimism` | ETH | mainnet, sepolia |
 | Avalanche | `avalanche` | AVAX | mainnet, fuji |
+| TON | `ton` | TON | mainnet, testnet |
+| Plasma | `plasma` | XPL | mainnet, testnet |
 
 ## Key features
 
 - **Bitnob Secure Enclave.** Private keys are generated and stored inside AWS Nitro Enclaves, hardware-isolated memory that never exposes key material, not even to Bitnob engineers. Every signing event is logged as an immutable audit trail.
-- **Declarative policy engine.** Set spending limits, address whitelists, velocity caps, time locks, and multi-signature approval thresholds as declarative rules. Policies run before every signing event. The Enclave only releases a signature when every rule passes.
+- **Declarative policy engine.** Set spending limits, destination allowlists, time locks, and multi-party approval thresholds as ordered rules. Your policy runs before every signing event, and the first matching rule decides whether the Enclave signs, holds, or blocks.
 - **HD vault hierarchy.** A single BIP-39 seed generates unlimited wallets and addresses across all supported chains. Use a dedicated [vault](/api-reference/platform/vaults/list-vaults) for treasury wallets or a pool vault to assign one [wallet](/api-reference/platform/wallets/list-wallets) per customer.
-- **Gas station abstraction.** Pre-fund gas stations once per chain and let Bitnob sponsor fees automatically on every outbound transaction. On Tron, stake TRX for energy and bandwidth to minimise costs further.
+- **Gas station abstraction.** Pre-fund a gas station once per chain, send with `sponsor: true`, and the gas station pays the network fee, so customer wallets never hold the native asset. For users who hold their own keys, [sponsored transfers](/docs/platform/gas-sponsorship/how-sponsored-transfers-work) take the fee in the token instead.
 - **50–100 ms signing latency.** The Bitnob Secure Enclave is optimised for low-latency signing. Fully governed transactions are signed and broadcast within milliseconds of request.
 
 ## Common use cases
