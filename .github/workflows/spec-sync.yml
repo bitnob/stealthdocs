@@ -66,6 +66,18 @@ jobs:
               echo "::warning::$url is not valid json, skipping"
               continue
             fi
+            # Layer local changes on the fetched copy before comparing, so they
+            # neither show up as a change nor get dropped by the sync.
+            override="api-collections/overrides/${name%.json}.jq"
+            captured="api-collections/overrides/${name%.openapi.json}.responses.json"
+            if [ -f "$override" ]; then
+              if [ -f "$captured" ]; then
+                jq --slurpfile responses "$captured" -f "$override" "$CHANGES_DIR/fetched-$name" > "$CHANGES_DIR/overridden-$name"
+              else
+                jq -f "$override" "$CHANGES_DIR/fetched-$name" > "$CHANGES_DIR/overridden-$name"
+              fi
+              mv "$CHANGES_DIR/overridden-$name" "$CHANGES_DIR/fetched-$name"
+            fi
             if cmp -s "$local_path" "$CHANGES_DIR/fetched-$name"; then
               echo "$name is identical to the published spec"
               continue

@@ -21,7 +21,7 @@ Execution is atomic: an order fills completely or not at all, so there are no pa
 | NGN ↔ USDC | Either way |
 | NGN ↔ BTC | Either way |
 
-Live rates for the crypto pairs (BTC/USDT, BTC/USDC, USDC/USDT) come from [List all prices](/api-reference/trading/list-all-prices) and [Get price by pair](/api-reference/trading/get-price-by-pair). NGN pairs aren't returned there; read indicative naira rates from [Get exchange rate](/api-reference/exchange-rates/get-single-pair-rate).
+Live rates for the crypto pairs (BTC/USDT, BTC/USDC, USDC/USDT) come from [List all prices](/api-reference/trading/list-all-prices). NGN pairs aren't returned there; read indicative naira rates from [Get exchange rate](/api-reference/exchange-rates/get-single-pair-rate).
 
 <Note>
   The Bitnob team enables NGN trading together with virtual accounts once your KYB is complete. There's no self-serve toggle, and review usually takes 24 to 48 hours after all documents are in. NGN orders always need a locked quote; see [Create a quote](/docs/trading/create-quote).
@@ -40,8 +40,6 @@ Live rates for the crypto pairs (BTC/USDT, BTC/USDC, USDC/USDT) come from [List 
     `trade.completed` or `trade.failed` reports the outcome; see [Receive trade webhooks](/docs/trading/trade-webhooks). Balances update immediately on completion.
   </Step>
 </Steps>
-
-Beyond spot orders, the API also supports [scheduled orders](/api-reference/trading/create-scheduled-order) on a recurring cadence and [target orders](/api-reference/trading/create-target-order) that execute when a price is reached.
 
 ## Where to go next
 

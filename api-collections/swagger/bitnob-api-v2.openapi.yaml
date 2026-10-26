@@ -41,7 +41,8 @@ servers:
 - url: https://api.bitnob.com
   description: Production
 security:
-- BitnobHmacAuth: []
+- BitnobClientId: []
+  BitnobClientSecret: []
 tags:
 - name: Identity
   description: Authentication probe for verifying workspace credentials.
@@ -57,8 +58,6 @@ tags:
   description: Point-in-time conversion rates between supported currencies.
 - name: Trading
   description: 'Spot trading: quotes, orders, scheduled DCA, and target (limit-style) orders.'
-- name: Bulk transfers
-  description: Batched disbursements from CSV or inline items, with optional recurring schedules.
 - name: Virtual accounts
   description: Dedicated NGN bank account numbers issued against a customer. Deposits credit your NGN balance.
 - name: Cards
@@ -96,6 +95,35 @@ paths:
                   environment: sandbox
                   permissions: null
                 timestamp: '2026-06-19T10:39:49.945108267Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      active:
+                        type: boolean
+                      active_company_id:
+                        type: string
+                        format: uuid
+                      auth_method:
+                        type: string
+                      client_id:
+                        type: string
+                        format: uuid
+                      client_name:
+                        type: string
+                      environment:
+                        type: string
+                      permissions:
+                        nullable: true
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -177,6 +205,45 @@ paths:
                     created_at: '2026-06-04T07:35:05.574532+00:00'
                   company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
                 timestamp: '2026-06-19T10:39:50.811363982Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      accounts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            account_id:
+                              type: string
+                              format: uuid
+                            account_number:
+                              type: string
+                            currency:
+                              type: string
+                            ledger_balance:
+                              type: string
+                            available_balance:
+                              type: string
+                            ledger_balance_formatted:
+                              type: string
+                            available_balance_formatted:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                      company_id:
+                        type: string
+                        format: uuid
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -237,6 +304,32 @@ paths:
                   pending_balance: '0'
                   total_balance: '5017200'
                 timestamp: '2026-06-19T10:39:51.424374223Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      account_number:
+                        type: string
+                      available_balance:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      currency:
+                        type: string
+                      pending_balance:
+                        type: string
+                      total_balance:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -291,6 +384,35 @@ paths:
                   label: test-address
                   reference: addr-1781865600
                 timestamp: '2026-06-19T10:40:01.010497229Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      chain:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      address:
+                        type: string
+                      status:
+                        type: string
+                      label:
+                        type: string
+                      reference:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -524,6 +646,47 @@ paths:
                   next_cursor: ''
                   has_more: false
                 timestamp: '2026-06-19T10:40:01.677696254Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      addresses:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            address:
+                              type: string
+                            company_id:
+                              type: string
+                              format: uuid
+                            label:
+                              type: string
+                            chain:
+                              type: string
+                            status:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            reference:
+                              type: string
+                      next_cursor:
+                        type: string
+                      has_more:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -586,6 +749,38 @@ paths:
                   created_at: '2026-06-19T10:40:00.865575Z'
                   reference: addr-1781865600
                 timestamp: '2026-06-19T10:40:02.298371085Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      address:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      label:
+                        type: string
+                      chain:
+                        type: string
+                      status:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      reference:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -636,6 +831,25 @@ paths:
                   address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
                   chain: ethereum
                 timestamp: '2026-06-19T10:40:02.968832668Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      valid:
+                        type: boolean
+                      address:
+                        type: string
+                      chain:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -767,6 +981,42 @@ paths:
                     - symbol: USDC
                       decimals: 6
                 timestamp: '2026-06-19T10:40:04.611879891Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      chains:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            chain:
+                              type: string
+                            native_token:
+                              type: object
+                              properties:
+                                symbol:
+                                  type: string
+                                decimals:
+                                  type: number
+                            stablecoins:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  symbol:
+                                    type: string
+                                  decimals:
+                                    type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -999,6 +1249,116 @@ paths:
                   total_count: 10
                   has_more: true
                 timestamp: '2026-06-19T10:40:05.927542085Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            transaction_id:
+                              type: string
+                              format: uuid
+                            account_number:
+                              type: string
+                            currency:
+                              type: string
+                            type:
+                              type: string
+                            state:
+                              type: string
+                            amount:
+                              type: string
+                            fee:
+                              type: string
+                            reference:
+                              type: string
+                              format: uuid
+                            idempotency_key:
+                              type: string
+                            trade_id:
+                              type: string
+                              format: uuid
+                            metadata:
+                              type: object
+                              properties:
+                                flow_type:
+                                  type: string
+                                from_address:
+                                  type: string
+                                base_amount:
+                                  type: string
+                                card_id:
+                                  type: string
+                                  format: uuid
+                                company_id:
+                                  type: string
+                                  format: uuid
+                                customer_id:
+                                  type: string
+                                  format: uuid
+                                fee_amount:
+                                  type: string
+                                operation:
+                                  type: string
+                                provider_transaction_id:
+                                  type: string
+                                settled_at:
+                                  type: string
+                                  format: date-time
+                                transaction_id:
+                                  type: string
+                                  format: uuid
+                                tx_id:
+                                  type: string
+                                  format: uuid
+                                type:
+                                  type: string
+                                fill_id:
+                                  type: string
+                                  format: uuid
+                                order_side:
+                                  type: string
+                                order_type:
+                                  type: string
+                                settlement_type:
+                                  type: string
+                                order_id:
+                                  type: string
+                                  format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            value_date:
+                              type: string
+                            amount_formatted:
+                              type: string
+                            fee_formatted:
+                              type: string
+                            side:
+                              type: string
+                      next_cursor:
+                        type: string
+                      previous_cursor:
+                        type: string
+                      total_count:
+                        type: number
+                      has_more:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1083,6 +1443,89 @@ paths:
                   fee_formatted: 1.0 USDC
                   side: Debit
                 timestamp: '2026-06-19T10:40:06.83128084Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transaction_id:
+                        type: string
+                        format: uuid
+                      account_number:
+                        type: string
+                      currency:
+                        type: string
+                      type:
+                        type: string
+                      state:
+                        type: string
+                      amount:
+                        type: string
+                      fee:
+                        type: string
+                      reference:
+                        type: string
+                        format: uuid
+                      idempotency_key:
+                        type: string
+                      trade_id:
+                        type: string
+                      metadata:
+                        type: object
+                        properties:
+                          flow_type:
+                            type: string
+                          from_address:
+                            type: string
+                          base_amount:
+                            type: string
+                          card_id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          fee_amount:
+                            type: string
+                          operation:
+                            type: string
+                          provider_transaction_id:
+                            type: string
+                          settled_at:
+                            type: string
+                          transaction_id:
+                            type: string
+                            format: uuid
+                          tx_id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                      value_date:
+                        type: string
+                      amount_formatted:
+                        type: string
+                      fee_formatted:
+                        type: string
+                      side:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1280,6 +1723,57 @@ paths:
                       - 'GBP: rate not available: GBP'
                       - 'EUR: rate not available: EUR'
                     timestamp: '2026-06-19T10:39:52.616058133Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      base_currency:
+                        type: string
+                      target_currency:
+                        type: string
+                      buy_rate:
+                        type: string
+                      sell_rate:
+                        type: string
+                      mid_rate:
+                        type: string
+                      inverse_rate:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                      valid_for_seconds:
+                        type: number
+                      percent_change_24h:
+                        type: string
+                      rates:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            target_currency:
+                              type: string
+                            buy_rate:
+                              type: string
+                            sell_rate:
+                              type: string
+                            inverse_rate:
+                              type: string
+                            percent_change_24h:
+                              type: string
+                      skipped_currencies:
+                        type: array
+                        items:
+                          type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1355,6 +1849,32 @@ paths:
                   rate_used: '1375.59771120'
                   timestamp: '2026-06-19T10:39:17Z'
                 timestamp: '2026-06-19T10:39:53.318011355Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      from_currency:
+                        type: string
+                      to_currency:
+                        type: string
+                      from_amount:
+                        type: string
+                      to_amount:
+                        type: string
+                      rate_used:
+                        type: string
+                      timestamp:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1430,53 +1950,45 @@ paths:
                         price: '62460.650'
                         as_of: '2026-06-19T10:50:02.880752101Z'
                     timestamp: '2026-06-19T10:50:02.922017174Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/trading/prices/{pair}:
-    get:
-      tags:
-      - Trading
-      summary: Get price by pair
-      description: Spot price for a single pair (e.g. `BTCUSD`, `ETHUSD`).
-      operationId: get_api_trading_prices_pair
-      parameters:
-      - name: pair
-        in: path
-        required: true
-        schema:
-          type: string
-        description: pair identifier
-      responses:
-        '200':
-          description: Successful response
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      prices:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            base_currency:
+                              type: string
+                            quote_currency:
+                              type: string
+                            price:
+                              type: string
+                            as_of:
+                              type: string
+                              format: date-time
+                      price:
+                        type: object
+                        properties:
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          price:
+                            type: string
+                          as_of:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1542,6 +2054,60 @@ paths:
                       receive_quantity: '0.001'
                       receive_currency: BTC
                 timestamp: '2026-06-19T10:46:52.85245707Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      quote:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            type: string
+                            format: date-time
+                          original_quantity:
+                            type: string
+                          consumed_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          is_exhausted:
+                            type: boolean
+                          exchange:
+                            type: object
+                            properties:
+                              send_quantity:
+                                type: string
+                              send_currency:
+                                type: string
+                              receive_quantity:
+                                type: string
+                              receive_currency:
+                                type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1646,6 +2212,39 @@ paths:
                   is_exhausted: false
                   consumption_count: '0'
                 timestamp: '2026-06-19T11:53:21.142152573Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      quote_id:
+                        type: string
+                        format: uuid
+                      original_quantity:
+                        type: string
+                      consumed_quantity:
+                        type: string
+                      remaining_quantity:
+                        type: string
+                      price:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+                      is_expired:
+                        type: boolean
+                      is_exhausted:
+                        type: boolean
+                      consumption_count:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1684,8 +2283,6 @@ paths:
       description: Execute a BUY or SELL. Supply the `quote_id` from a fresh quote for best pricing. NGN (Fiat Trading) pairs are supported; see the fiatTradingNgn example.
       operationId: post_api_trading_orders
       responses:
-        '200':
-          description: Successful response
         '201':
           description: Successful response
           content:
@@ -1721,6 +2318,84 @@ paths:
                     remaining_quantity: '0'
                     is_exhausted: true
                 timestamp: '2026-06-19T11:24:38.520718534Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          order_type:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          filled_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          quote_id:
+                            type: string
+                            format: uuid
+                          reference:
+                            type: string
+                      fills:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            order_id:
+                              type: string
+                              format: uuid
+                            counterparty_order_id:
+                              type: string
+                            quantity:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                      quote_consumption:
+                        type: object
+                        properties:
+                          quote_id:
+                            type: string
+                            format: uuid
+                          consumed_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          is_exhausted:
+                            type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1887,6 +2562,63 @@ paths:
                   has_more: false
                   next_cursor: ''
                 timestamp: '2026-06-19T10:46:53.757762926Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      orders:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            base_currency:
+                              type: string
+                            quote_currency:
+                              type: string
+                            side:
+                              type: string
+                            order_type:
+                              type: string
+                            quantity:
+                              type: string
+                            price:
+                              type: string
+                            status:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            filled_quantity:
+                              type: string
+                            remaining_quantity:
+                              type: string
+                            quote_id:
+                              type: string
+                              format: uuid
+                            reference:
+                              type: string
+                              format: uuid
+                      total_count:
+                        type: string
+                      has_more:
+                        type: boolean
+                      next_cursor:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -1956,6 +2688,54 @@ paths:
                     quote_id: fd4e18d5-7075-458f-b333-cab9ae490b03
                     reference: order-1781868277
                 timestamp: '2026-06-19T11:24:39.086668061Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          order_type:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          filled_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          quote_id:
+                            type: string
+                            format: uuid
+                          reference:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -2024,1339 +2804,53 @@ paths:
                     quote_id: ''
                     reference: order-1781868277
                 timestamp: '2026-06-19T11:24:40.444335629Z'
-  /api/trading/scheduled-orders:
-    post:
-      tags:
-      - Trading
-      summary: Create scheduled order
-      description: Creates a recurring buy/sell on a `daily`, `weekly`, or `monthly` cadence.
-      operationId: post_api_trading_scheduled_orders
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                currency:
-                  type: string
-                  example: BTC
-                quote_currency:
-                  type: string
-                  example: USDT
-                amount:
-                  type: string
-                  example: '50000000'
-                frequency:
-                  type: string
-                  example: weekly
-                day_of_week:
-                  type: integer
-                execution_time:
-                  type: string
-                  example: 09:00
-                reference:
-                  type: string
-                  example: dca-ref-001
-              required:
-              - currency
-              - quote_currency
-              - amount
-              - frequency
-              - day_of_week
-              - execution_time
-              - reference
-            example:
-              currency: BTC
-              quote_currency: USDT
-              amount: '50000000'
-              frequency: weekly
-              day_of_week: 1
-              execution_time: 09:00
-              reference: dca-ref-001
-    get:
-      tags:
-      - Trading
-      summary: List scheduled orders
-      description: All scheduled orders for the workspace.
-      operationId: get_api_trading_scheduled_orders
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/trading/scheduled-orders/{id}:
-    get:
-      tags:
-      - Trading
-      summary: Get scheduled order
-      description: Details for a single recurring order.
-      operationId: get_api_trading_scheduled_orders_id
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: id identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    put:
-      tags:
-      - Trading
-      summary: Update scheduled order
-      description: 'Mutate amount, cadence, or status. Pass `status: paused` to halt future executions without cancelling.'
-      operationId: put_api_trading_scheduled_orders_id
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: id identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                amount:
-                  type: string
-                  example: '200000000'
-                status:
-                  type: string
-                  example: paused
-                execution_time:
-                  type: string
-                  example: '10:00'
-              required:
-              - amount
-              - status
-              - execution_time
-            example:
-              amount: '200000000'
-              status: paused
-              execution_time: '10:00'
-  /api/trading/scheduled-orders/{id}/executions:
-    get:
-      tags:
-      - Trading
-      summary: List scheduled-order executions
-      description: Execution log for a scheduled order.
-      operationId: get_api_trading_scheduled_orders_id_executions
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: id identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/trading/target-orders:
-    post:
-      tags:
-      - Trading
-      summary: Create target order
-      description: Creates a target order that fires when `target_price` is met. Optionally set `expires_at` to auto-cancel.
-      operationId: post_api_trading_target_orders
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                base_currency:
-                  type: string
-                  example: BTC
-                quote_currency:
-                  type: string
-                  example: USDT
-                side:
-                  type: string
-                  example: BUY
-                quantity:
-                  type: string
-                  example: '0.10'
-                target_price:
-                  type: string
-                  example: '60000.00'
-                expires_at:
-                  type: string
-                  example: ''
-                reference:
-                  type: string
-                  example: target-ref-001
-              required:
-              - base_currency
-              - quote_currency
-              - side
-              - quantity
-              - target_price
-              - reference
-            example:
-              base_currency: BTC
-              quote_currency: USDT
-              side: BUY
-              quantity: '0.10'
-              target_price: '60000.00'
-              expires_at: ''
-              reference: target-ref-001
-    get:
-      tags:
-      - Trading
-      summary: List target orders
-      description: All target orders, filterable by status.
-      operationId: get_api_trading_target_orders
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/trading/target-orders/{id}:
-    get:
-      tags:
-      - Trading
-      summary: Get target order
-      description: Details for a single target order.
-      operationId: get_api_trading_target_orders_id
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: id identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Create draft batch
-      description: Creates a draft with inline items. Amounts are in base units.
-      operationId: post_api_bulk_transfers
-      responses:
-        '200':
-          description: Successful response
-        '201':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer draft created successfully
-                data:
-                  batch:
-                    id: 019edf7e-e18d-75e5-a339-3c58967a37a3
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: March payroll batch
-                    status: draft
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-19T10:48:14.991283525Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  items:
-                  - id: 019edf7e-e18d-75ef-8f44-43de117656ab
-                    batch_id: 019edf7e-e18d-75e5-a339-3c58967a37a3
-                    row_index: 1
-                    chain: ethereum
-                    currency: USDT
-                    address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                    amount: '1'
-                    description: payout
-                    status: pending
-                    failure_reason: ''
-                    retries: 0
-                    withdrawal_id: ''
-                timestamp: '2026-06-19T10:48:15.001010438Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                description:
-                  type: string
-                  example: March payroll batch
-                items:
-                  type: array
-                  items:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
                     type: object
                     properties:
-                      row_index:
-                        type: integer
-                      chain:
-                        type: string
-                        example: ethereum
-                      currency:
-                        type: string
-                        example: USDT
-                      address:
-                        type: string
-                        example: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                      amount:
-                        type: string
-                        example: '100000000'
-                      reference:
-                        type: string
-                        example: bulk-item-1
-                    required:
-                    - row_index
-                    - chain
-                    - currency
-                    - address
-                    - amount
-                    - reference
-              required:
-              - description
-              - items
-            example:
-              description: March payroll batch
-              items:
-              - row_index: 1
-                chain: ethereum
-                currency: USDT
-                address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                amount: '1'
-                description: payout
-    get:
-      tags:
-      - Bulk transfers
-      summary: List batches
-      description: Paginated batch history.
-      operationId: get_api_bulk_transfers
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfers retrieved successfully
-                data:
-                  batches:
-                  - id: 019edbc7-445b-724e-93a0-3e903e14d6ee
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: Docs sample batch
-                    status: draft
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-18T17:28:50.016413Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  - id: 019edbba-a534-7c1a-9f32-c0be4b403516
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: audit draft
-                    status: draft
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-18T17:15:02.84441Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  - id: 019edb3b-3c7a-7875-be2e-043fd58cfa79
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: March payroll batch
-                    status: draft
-                    total_items: 2
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-18T14:55:52.963515Z'
-                    submitted_at: ''
-                    completed_at: ''
-                  next_page_token: ''
-                timestamp: '2026-06-19T10:46:57.751333739Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers/upload-urls:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Get upload URL (S3 presigned)
-      description: Returns a presigned PUT URL for uploading a CSV. Upload directly to S3, then call **Preview uploaded file** with the returned `upload_id`.
-      operationId: post_api_bulk_transfers_upload_urls
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filename:
-                  type: string
-                  example: payroll.csv
-              required:
-              - filename
-            example:
-              filename: payroll.csv
-  /api/bulk-transfers/previews:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Preview uploaded file
-      description: Parses and validates the uploaded CSV, returning row-level status before confirmation.
-      operationId: post_api_bulk_transfers_previews
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                upload_id:
-                  type: string
-                  example: '{{upload_id}}'
-              required:
-              - upload_id
-            example:
-              upload_id: '{{upload_id}}'
-  /api/bulk-transfers/{batchId}:
-    get:
-      tags:
-      - Bulk transfers
-      summary: Get batch
-      description: Single batch with per-item status.
-      operationId: get_api_bulk_transfers_batchId
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: batchId identifier
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer retrieved successfully
-                data:
-                  batch:
-                    id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: Docs verified batch
-                    status: processing
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-19T11:23:12.045402Z'
-                    submitted_at: '2026-06-19T11:23:12.851565Z'
-                    completed_at: ''
-                  items:
-                  - id: 019edf9e-e12b-735c-85ea-7ebd7f76f778
-                    batch_id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    row_index: 1
-                    chain: ethereum
-                    currency: USDT
-                    address: '0xd0438C776d03df4FCfF69db78B97e2E6B5Cf033b'
-                    amount: '1'
-                    description: verify
-                    status: pending
-                    failure_reason: ''
-                    retries: 0
-                    withdrawal_id: ''
-                timestamp: '2026-06-19T11:23:13.665366937Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers/{batchId}/confirm:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Confirm batch
-      description: Promotes a draft batch to execution. Irreversible — funds are debited.
-      operationId: post_api_bulk_transfers_batchId_confirm
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: batchId identifier
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer confirmed successfully
-                data:
-                  batch:
-                    id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    description: Docs verified batch
-                    status: processing
-                    total_items: 1
-                    success_count: 0
-                    failed_count: 0
-                    created_at: '2026-06-19T11:23:12.045402Z'
-                    submitted_at: '2026-06-19T11:23:12.851565556Z'
-                    completed_at: ''
-                timestamp: '2026-06-19T11:23:12.856906512Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-            example: {}
-  /api/bulk-transfers/{batchId}/retry:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Retry failed items
-      description: Retries only the listed item ids within a partially-failed batch.
-      operationId: post_api_bulk_transfers_batchId_retry
-      parameters:
-      - name: batchId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: batchId identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                item_ids:
-                  type: array
-                  items:
+                      order:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          base_currency:
+                            type: string
+                          quote_currency:
+                            type: string
+                          side:
+                            type: string
+                          order_type:
+                            type: string
+                          quantity:
+                            type: string
+                          price:
+                            type: string
+                          status:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          filled_quantity:
+                            type: string
+                          remaining_quantity:
+                            type: string
+                          quote_id:
+                            type: string
+                          reference:
+                            type: string
+                  timestamp:
                     type: string
-                    example: item-uuid-1
-              required:
-              - item_ids
-            example:
-              item_ids:
-              - item-uuid-1
-              - item-uuid-2
-  /api/bulk-transfers/schedules:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Create schedule
-      description: Clones `template_batch_id` on the given cadence. Leave `end_date` empty for open-ended.
-      operationId: post_api_bulk_transfers_schedules
-      responses:
-        '200':
-          description: Successful response
-        '201':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer schedule created successfully
-                data:
-                  schedule:
-                    id: 019edfba-a069-71bc-992f-d778a4a3f685
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    template_batch_id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    frequency: weekly
-                    execution_time: 09:00
-                    day_of_week: 1
-                    day_of_month: 0
-                    start_date: '2026-07-01'
-                    end_date: ''
-                    next_run_at: '2026-07-01T09:00:00Z'
-                    status: active
-                    created_at: '2026-06-19T11:53:30.473116012Z'
-                    updated_at: '2026-06-19T11:53:30.473116012Z'
-                timestamp: '2026-06-19T11:53:30.482716971Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                template_batch_id:
-                  type: string
-                  example: batch_template_1
-                frequency:
-                  type: string
-                  example: weekly
-                execution_time:
-                  type: string
-                  example: 09:00
-                day_of_week:
-                  type: integer
-                day_of_month:
-                  type: integer
-                start_date:
-                  type: string
-                  format: date
-                  example: '2026-05-01'
-                end_date:
-                  type: string
-                  example: ''
-              required:
-              - template_batch_id
-              - frequency
-              - execution_time
-              - day_of_week
-              - start_date
-            example:
-              template_batch_id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-              frequency: weekly
-              execution_time: 09:00
-              day_of_week: 1
-              day_of_month: 0
-              start_date: '2026-07-01'
-              end_date: ''
-    get:
-      tags:
-      - Bulk transfers
-      summary: List schedules
-      description: All active and paused schedules.
-      operationId: get_api_bulk_transfers_schedules
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers/schedules/{scheduleId}:
-    put:
-      tags:
-      - Bulk transfers
-      summary: Update schedule
-      description: Mutate cadence, execution window, or pause/resume via `status`.
-      operationId: put_api_bulk_transfers_schedules_scheduleId
-      parameters:
-      - name: scheduleId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: scheduleId identifier
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer schedule updated successfully
-                data:
-                  schedule:
-                    id: 019edfba-a069-71bc-992f-d778a4a3f685
-                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
-                    template_batch_id: 019edf9e-e12b-734d-abb3-a9377dd2bd0d
-                    frequency: weekly
-                    execution_time: '10:00'
-                    day_of_week: 1
-                    day_of_month: 0
-                    start_date: '2026-07-01'
-                    end_date: ''
-                    next_run_at: '2026-07-01T09:00:00Z'
-                    status: paused
-                    created_at: '2026-06-19T11:53:30.473116Z'
-                    updated_at: '2026-06-19T11:54:11.749895763Z'
-                timestamp: '2026-06-19T11:54:11.755260825Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: paused
-                execution_time:
-                  type: string
-                  example: '10:00'
-                day_of_week:
-                  type: integer
-                day_of_month:
-                  type: integer
-                end_date:
-                  type: string
-                  example: ''
-              required:
-              - status
-              - execution_time
-              - day_of_week
-            example:
-              status: paused
-              execution_time: '10:00'
-              day_of_week: 1
-              day_of_month: 0
-              end_date: ''
-  /api/bulk-transfers/schedules/{scheduleId}/executions:
-    get:
-      tags:
-      - Bulk transfers
-      summary: List schedule executions
-      description: Execution history for a schedule. Each execution resolves to a concrete batch id.
-      operationId: get_api_bulk_transfers_schedules_scheduleId_executions
-      parameters:
-      - name: scheduleId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: scheduleId identifier
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              example:
-                success: true
-                message: Bulk transfer executions retrieved successfully
-                data:
-                  executions: []
-                  next_page_token: ''
-                timestamp: '2026-06-19T11:54:12.481462097Z'
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/bulk-transfers/executions/{executionId}/retry:
-    post:
-      tags:
-      - Bulk transfers
-      summary: Retry failed execution
-      description: Retries an execution that failed partway. No-op if already completed.
-      operationId: post_api_bulk_transfers_executions_executionId_retry
-      parameters:
-      - name: executionId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: executionId identifier
-      responses:
-        '200':
-          description: Successful response
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized (bad HMAC signature or client id)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Resource not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '422':
-          description: Semantic validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-            example: {}
+                    format: date-time
   /api/virtual-accounts:
     post:
       tags:
@@ -3388,6 +2882,53 @@ paths:
                     created_at: '2026-08-09T21:13:22Z'
                     updated_at: '2026-08-09T21:13:22Z'
                 timestamp: '2026-08-09T21:13:22.411398413Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_account:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          account_number:
+                            type: string
+                          account_name:
+                            type: string
+                          bank_name:
+                            type: string
+                          reference:
+                            type: string
+                          customer_id:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          status:
+                            type: string
+                          account_alias:
+                            type: string
+                          account_type:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3644,6 +3185,64 @@ paths:
                     has_previous_page: false
                     total: 13
                 timestamp: '2026-08-09T21:13:25.479924666Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_accounts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            account_number:
+                              type: string
+                            account_name:
+                              type: string
+                            bank_name:
+                              type: string
+                            reference:
+                              type: string
+                            customer_id:
+                              type: string
+                              format: uuid
+                            currency:
+                              type: string
+                            status:
+                              type: string
+                            account_alias:
+                              type: string
+                            account_type:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3696,6 +3295,29 @@ paths:
                   limit: 20
                   offset: 0
                 timestamp: '2026-08-09T21:13:26.03958539Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      currencies:
+                        type: array
+                        items:
+                          type: string
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3764,6 +3386,53 @@ paths:
                     created_at: '2026-08-09T21:13:22Z'
                     updated_at: '2026-08-09T21:13:24Z'
                 timestamp: '2026-08-09T21:13:24.942852888Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_account:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          account_number:
+                            type: string
+                          account_name:
+                            type: string
+                          bank_name:
+                            type: string
+                          reference:
+                            type: string
+                          customer_id:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          status:
+                            type: string
+                          account_alias:
+                            type: string
+                          account_type:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3834,6 +3503,59 @@ paths:
                   limit: 20
                   offset: 0
                 timestamp: '2026-08-09T21:13:23.822837247Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            virtual_account_id:
+                              type: string
+                              format: uuid
+                            provider_transaction_id:
+                              type: string
+                            ledger_transaction_id:
+                              type: string
+                              format: uuid
+                            amount:
+                              type: string
+                            currency:
+                              type: string
+                            type:
+                              type: string
+                            status:
+                              type: string
+                            reference:
+                              type: string
+                            metadata:
+                              type: string
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3902,6 +3624,53 @@ paths:
                     created_at: '2026-08-09T21:13:22Z'
                     updated_at: '2026-08-09T21:13:24Z'
                 timestamp: '2026-08-09T21:13:24.388662373Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      virtual_account:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          account_number:
+                            type: string
+                          account_name:
+                            type: string
+                          bank_name:
+                            type: string
+                          reference:
+                            type: string
+                          customer_id:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          status:
+                            type: string
+                          account_alias:
+                            type: string
+                          account_type:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -3984,6 +3753,53 @@ paths:
                     updated_at: '2026-08-09T21:13:23Z'
                   new_balance: '800000'
                 timestamp: '2026-08-09T21:13:23.264249227Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transaction:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          virtual_account_id:
+                            type: string
+                            format: uuid
+                          provider_transaction_id:
+                            type: string
+                          ledger_transaction_id:
+                            type: string
+                            format: uuid
+                          amount:
+                            type: string
+                          currency:
+                            type: string
+                          type:
+                            type: string
+                          status:
+                            type: string
+                          reference:
+                            type: string
+                          metadata:
+                            type: string
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                      new_balance:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4060,6 +3876,86 @@ paths:
                     created_at: '2026-06-22T15:36:28Z'
                     updated_at: '2026-06-22T15:36:28Z'
                 timestamp: '2026-06-22T15:36:28.262981966Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          created_status:
+                            type: string
+                          card_brand:
+                            type: string
+                          name:
+                            type: string
+                          preferred_name:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          display_amount:
+                            type: number
+                          contactless_payment:
+                            type: boolean
+                          card_limits:
+                            type: object
+                            properties: {}
+                          reference:
+                            type: string
+                          webhook_url:
+                            type: string
+                          user_metadata:
+                            type: string
+                          billing_address:
+                            type: object
+                            properties:
+                              line1:
+                                type: string
+                              line2:
+                                type: string
+                              city:
+                                type: string
+                              state:
+                                type: string
+                              postal_code:
+                                type: string
+                              country:
+                                type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4231,6 +4127,103 @@ paths:
                     next_cursor: eyJpZCI6ImE1NTYwOWIyLThiNjItNDI1MS04ZWM3LWI3YzBjMjVmM2U4NSIsInRpbWVzdGFtcCI6IjIwMjYtMDUtMjVUMTQ6NDU6MzcuNDE4ODgyWiJ9
                     total: 1
                 timestamp: '2026-06-19T10:46:58.655780895Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      cards:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            customer_id:
+                              type: string
+                              format: uuid
+                            card_type:
+                              type: string
+                            status:
+                              type: string
+                            created_status:
+                              type: string
+                            card_brand:
+                              type: string
+                            name:
+                              type: string
+                            preferred_name:
+                              type: string
+                            first_six_digit:
+                              type: string
+                            last_four_digit:
+                              type: string
+                            masked_pan:
+                              type: string
+                            balance_amount:
+                              type: string
+                            balance_currency:
+                              type: string
+                            display_amount:
+                              type: number
+                            contactless_payment:
+                              type: boolean
+                            card_limits:
+                              type: object
+                              properties: {}
+                            reference:
+                              type: string
+                            user_metadata:
+                              type: string
+                            billing_address:
+                              type: object
+                              properties:
+                                line1:
+                                  type: string
+                                line2:
+                                  type: string
+                                city:
+                                  type: string
+                                state:
+                                  type: string
+                                postal_code:
+                                  type: string
+                                country:
+                                  type: string
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          previous_cursor:
+                            type: string
+                          next_cursor:
+                            type: string
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4285,6 +4278,34 @@ paths:
                   last_name: Okafor
                   normalized_status: approved
                 timestamp: '2026-04-18T13:01:06.145180019Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      customer_id:
+                        type: string
+                        format: uuid
+                      status:
+                        type: string
+                      completion_link:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      last_name:
+                        type: string
+                      normalized_status:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4507,6 +4528,84 @@ paths:
                     created_at: '2026-06-22T15:48:24Z'
                     updated_at: '2026-06-22T15:48:24Z'
                 timestamp: '2026-06-22T15:48:24.073616886Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          created_status:
+                            type: string
+                          name:
+                            type: string
+                          preferred_name:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          display_amount:
+                            type: number
+                          contactless_payment:
+                            type: boolean
+                          card_limits:
+                            type: object
+                            properties: {}
+                          reference:
+                            type: string
+                          webhook_url:
+                            type: string
+                          user_metadata:
+                            type: string
+                          billing_address:
+                            type: object
+                            properties:
+                              line1:
+                                type: string
+                              line2:
+                                type: string
+                              city:
+                                type: string
+                              state:
+                                type: string
+                              postal_code:
+                                type: string
+                              country:
+                                type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4721,6 +4820,88 @@ paths:
                     next_cursor: eyJpZCI6IjZjMDNkNTFiLThiZDYtNDUwMS04Y2ZkLWU1YzAzZGMyYWZlOCIsInRpbWVzdGFtcCI6IjIwMjYtMDUtMjVUMTQ6NDU6MzcuNDI4NzQ5WiJ9
                     total: 3
                 timestamp: '2026-06-19T10:46:59.926822816Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            card_id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            type:
+                              type: string
+                            status:
+                              type: string
+                            amount:
+                              type: string
+                            currency:
+                              type: string
+                            reference:
+                              type: string
+                            display_amount:
+                              type: number
+                            provider_transaction_id:
+                              type: string
+                            balance_before:
+                              type: string
+                            balance_after:
+                              type: string
+                            fee_amount:
+                              type: string
+                            fee_type:
+                              type: string
+                            description:
+                              type: string
+                            metadata:
+                              type: string
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            transaction_date:
+                              type: string
+                              format: date-time
+                            cardholder_name:
+                              type: string
+                            last_four_digit:
+                              type: string
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          previous_cursor:
+                            type: string
+                          next_cursor:
+                            type: string
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4809,6 +4990,96 @@ paths:
                     created_at: '2026-06-19T12:38:36Z'
                     updated_at: '2026-06-19T12:38:37Z'
                 timestamp: '2026-06-19T12:38:37.529102254Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          created_status:
+                            type: string
+                          card_brand:
+                            type: string
+                          name:
+                            type: string
+                          preferred_name:
+                            type: string
+                          first_six_digit:
+                            type: string
+                          last_four_digit:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          display_amount:
+                            type: number
+                          contactless_payment:
+                            type: boolean
+                          card_limits:
+                            type: object
+                            properties: {}
+                          reference:
+                            type: string
+                          user_metadata:
+                            type: string
+                          billing_address:
+                            type: object
+                            properties:
+                              line1:
+                                type: string
+                              line2:
+                                type: string
+                              city:
+                                type: string
+                              state:
+                                type: string
+                              postal_code:
+                                type: string
+                              country:
+                                type: string
+                          topup_current_month:
+                            type: string
+                          display_topup_current_month:
+                            type: number
+                          spent_current_month:
+                            type: string
+                          display_spent_current_month:
+                            type: number
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -4853,8 +5124,6 @@ paths:
           type: string
         description: cardId identifier
       responses:
-        '200':
-          description: Successful response
         '400':
           description: Validation error
           content:
@@ -4885,6 +5154,105 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                success: true
+                message: Card terminated successfully
+                data:
+                  message: Card termination processing
+                  success: false
+                  transaction:
+                    amount: '0'
+                    balance_after: '0'
+                    balance_before: '2000000'
+                    business_pool: false
+                    card_id: 01a1065d-1d30-7a57-86d6-f58d00398b3c
+                    cardholder_name: Ifeoma Okafor
+                    company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
+                    created_at: '2026-10-26T03:33:38.036429010Z'
+                    created_by: 2c9f5b61-8b1a-4c3d-a4f7-6d9e12b4c890
+                    currency: USD
+                    description: Card termination balance refund
+                    display_amount: 0
+                    fee_amount: '0'
+                    id: 01a17645-5674-771e-8c65-05c1827c4b49
+                    last_four_digit: '1376'
+                    reference: CARD_TERMN_FC4195A6A5D5
+                    status: pending
+                    transaction_date: '2026-10-26T03:33:38.036429010Z'
+                    type: termination
+                    updated_at: '2026-10-26T03:33:38.036458746Z'
+                timestamp: '2026-10-26T03:33:38.207420653Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      success:
+                        type: boolean
+                      transaction:
+                        type: object
+                        properties:
+                          amount:
+                            type: string
+                          balance_after:
+                            type: string
+                          balance_before:
+                            type: string
+                          business_pool:
+                            type: boolean
+                          card_id:
+                            type: string
+                            format: uuid
+                          cardholder_name:
+                            type: string
+                          company_id:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          created_by:
+                            type: string
+                            format: uuid
+                          currency:
+                            type: string
+                          description:
+                            type: string
+                          display_amount:
+                            type: number
+                          fee_amount:
+                            type: string
+                          id:
+                            type: string
+                            format: uuid
+                          last_four_digit:
+                            type: string
+                          reference:
+                            type: string
+                          status:
+                            type: string
+                          transaction_date:
+                            type: string
+                            format: date-time
+                          type:
+                            type: string
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
       requestBody:
         required: true
         content:
@@ -4930,6 +5298,35 @@ paths:
                     expiry_year: '2033'
                     name: Ifeoma Okafor
                 timestamp: '2026-06-19T12:38:37.991298572Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      details:
+                        type: object
+                        properties:
+                          card_id:
+                            type: string
+                            format: uuid
+                          card_number:
+                            type: string
+                          cvv:
+                            type: string
+                          expiry_month:
+                            type: string
+                          expiry_year:
+                            type: string
+                          name:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5031,6 +5428,84 @@ paths:
                     next_cursor: eyJpZCI6IjAxOWVkZmUzLWVjNDUtNzNiZS04MGM3LWYxMWUzYjE0MGVlMyIsInRpbWVzdGFtcCI6IjIwMjYtMDYtMTlUMTI6Mzg6MzYuODY5Mjc2WiJ9
                     total: 2
                 timestamp: '2026-06-19T12:38:46.314683543Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            card_id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            type:
+                              type: string
+                            status:
+                              type: string
+                            amount:
+                              type: string
+                            currency:
+                              type: string
+                            reference:
+                              type: string
+                            display_amount:
+                              type: number
+                            balance_before:
+                              type: string
+                            balance_after:
+                              type: string
+                            fee_amount:
+                              type: string
+                            fee_type:
+                              type: string
+                            description:
+                              type: string
+                            metadata:
+                              type: string
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            transaction_date:
+                              type: string
+                              format: date-time
+                            cardholder_name:
+                              type: string
+                      page_info:
+                        type: object
+                        properties:
+                          has_next_page:
+                            type: boolean
+                          has_previous_page:
+                            type: boolean
+                          previous_cursor:
+                            type: string
+                          next_cursor:
+                            type: string
+                          total:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5112,6 +5587,69 @@ paths:
                     transaction_date: '2026-06-19T12:38:37.038082Z'
                     cardholder_name: Ifeoma Okafor
                 timestamp: '2026-06-19T12:38:46.788722789Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transaction:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          card_id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                          status:
+                            type: string
+                          amount:
+                            type: string
+                          currency:
+                            type: string
+                          reference:
+                            type: string
+                          display_amount:
+                            type: number
+                          balance_before:
+                            type: string
+                          balance_after:
+                            type: string
+                          fee_amount:
+                            type: string
+                          fee_type:
+                            type: string
+                          description:
+                            type: string
+                          metadata:
+                            type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          transaction_date:
+                            type: string
+                            format: date-time
+                          cardholder_name:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5190,6 +5728,75 @@ paths:
                     cardholder_name: Ifeoma Okafor
                     last_four_digit: '9781'
                 timestamp: '2026-06-19T12:43:05.912774441Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                      transaction:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          card_id:
+                            type: string
+                            format: uuid
+                          company_id:
+                            type: string
+                            format: uuid
+                          type:
+                            type: string
+                          status:
+                            type: string
+                          amount:
+                            type: string
+                          currency:
+                            type: string
+                          reference:
+                            type: string
+                          display_amount:
+                            type: number
+                          balance_before:
+                            type: string
+                          balance_after:
+                            type: string
+                          fee_amount:
+                            type: string
+                          fee_type:
+                            type: string
+                          description:
+                            type: string
+                          metadata:
+                            type: string
+                          created_by:
+                            type: string
+                            format: uuid
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                          transaction_date:
+                            type: string
+                            format: date-time
+                          cardholder_name:
+                            type: string
+                          last_four_digit:
+                            type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5281,6 +5888,50 @@ paths:
                     reference: CARD_CREATE_019EDFE3EC3F
                     display_amount: 2
                 timestamp: '2026-06-19T12:38:47.407353587Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                      card:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          card_type:
+                            type: string
+                          status:
+                            type: string
+                          masked_pan:
+                            type: string
+                          balance_amount:
+                            type: string
+                          balance_currency:
+                            type: string
+                          card_brand:
+                            type: string
+                          name:
+                            type: string
+                          reference:
+                            type: string
+                          display_amount:
+                            type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5351,6 +6002,23 @@ paths:
                   success: true
                   message: Spending limits updated successfully
                 timestamp: '2026-06-19T12:39:38.453369897Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5445,6 +6113,23 @@ paths:
                   success: true
                   message: Card contact updated successfully
                 timestamp: '2026-06-21T22:14:07.464989465Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                      message:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5512,6 +6197,29 @@ paths:
                   dispatched: false
                   skip_reason: no callback URL configured on card and no provider URL resolved
                 timestamp: '2026-05-26T11:58:59.285804528Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      event_type:
+                        type: string
+                      reference:
+                        type: string
+                      callback_url:
+                        type: string
+                      dispatched:
+                        type: boolean
+                      skip_reason:
+                        type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5580,8 +6288,6 @@ paths:
       description: Issues a BOLT11 invoice for the given customer. Amount is in satoshis.
       operationId: post_api_lightning_invoices
       responses:
-        '200':
-          description: Successful response
         '400':
           description: Validation error
           content:
@@ -5612,6 +6318,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                success: true
+                message: Lightning invoice created successfully
+                data:
+                  id: 01a1725f-9bd7-7bd0-9591-fc1032d46f02
+                  payment_hash: 5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457
+                  request: lntb50u1p4dmj4xpp5twfre9mtn7yzfc6r3k9crrh3lpfeg4wjh73gkgdl2wqpq6yc23tsdpqg3hkxueqv4uxzmtsd3jjq6twwehkjcm9cqzpgxqrrs0sp5xraqk3u6zg2sgg7nez7sw9z3s7cx2d4txn4xahlddezdzjpgtdqs9qrsgq2frzzvxp902a59xuquexxpk9y3ra4kln27wwdcg97e6epcjpcrdpxd7vftuy2a2m66dmv332gd0upme2r50qne5gn2d7ffk8h7dtmvqptqtupq
+                  amount_sat: '5000'
+                  description: Docs example invoice
+                  status: pending
+                  expires_at: '2026-10-25T10:23:50Z'
+                  created_at: '2026-10-25T09:23:50Z'
+                timestamp: '2026-10-25T09:23:50.877504884Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      payment_hash:
+                        type: string
+                      request:
+                        type: string
+                      amount_sat:
+                        type: string
+                      description:
+                        type: string
+                      status:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+                      created_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
       requestBody:
         required: true
         content:
@@ -5664,6 +6419,28 @@ paths:
                   page: 1
                   page_size: 20
                 timestamp: '2026-06-19T10:47:00.859028243Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      invoices:
+                        type: array
+                        items: {}
+                      total_count:
+                        type: string
+                      page:
+                        type: number
+                      page_size:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -5709,8 +6486,6 @@ paths:
           type: string
         description: id identifier
       responses:
-        '200':
-          description: Successful response
         '400':
           description: Validation error
           content:
@@ -5741,6 +6516,83 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                success: true
+                message: Lightning invoice retrieved successfully
+                data:
+                  id: 01a167c7-7bc7-724b-8dd2-6585511bd3f2
+                  payment_hash: db6ac3d735644215d68cb92b67b87120d447453140e942a2e53ebfddcac7e8f7
+                  request: lntb51520n1p4dk9zepp5md4v84e4v3ppt45vhy4k0wr3yr2yw3f3gr559gh986lamjk8armsdqcf9h8vmmfvdjjqurp09kk2mn5cqzpgxqztzsp5zakyw5txml67njzv7t2y2068p57hqvslptypuhv00dzlhqh0dupq9qrsgqsrdek2s88u0wlz6qlm64am2hk439d5wksv5njcn9vgtmtg97dtnrzek4pc7wqmuuvu3qsnjmzr3g6c7cvkydam7yywghw4yxu8svlcqqzfaggm
+                  preimage: a0631c45e28cf14d1c5731c5462e4fb8c5d951e73cf7ca8a6e6d00a8cf209e68
+                  amount_sat: '5152'
+                  amount_msat: '5152000'
+                  fee_sat: '0'
+                  fee_msat: '0'
+                  description: Invoice payment
+                  status: expired
+                  direction: incoming
+                  company_id: 7a3f909c-1208-42d5-927a-583c41281d8a
+                  customer_id: ''
+                  reference: QT2_21053599
+                  expires_at: '1792742844'
+                  created_at: '2026-10-23T08:01:29Z'
+                  updated_at: '2026-10-23T08:07:41Z'
+                timestamp: '2026-10-25T06:48:04.576046884Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      payment_hash:
+                        type: string
+                      request:
+                        type: string
+                      preimage:
+                        type: string
+                      amount_sat:
+                        type: string
+                      amount_msat:
+                        type: string
+                      fee_sat:
+                        type: string
+                      fee_msat:
+                        type: string
+                      description:
+                        type: string
+                      status:
+                        type: string
+                      direction:
+                        type: string
+                      company_id:
+                        type: string
+                        format: uuid
+                      customer_id:
+                        type: string
+                      reference:
+                        type: string
+                      expires_at:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
   /api/lightning/decode:
     post:
       tags:
@@ -5749,8 +6601,6 @@ paths:
       description: Structurally decodes a BOLT11 string into amount, expiry, description, routing hints, etc. Does not initiate payment.
       operationId: post_api_lightning_decode
       responses:
-        '200':
-          description: Successful response
         '400':
           description: Validation error
           content:
@@ -5781,6 +6631,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                success: true
+                message: Payment request decoded successfully
+                data:
+                  payment_hash: 5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457
+                  destination: 0378a9c9e82bb9c856e6a1cd0c5566bf3595bf5731e636b5c7121d9c1a8884e62a
+                  amount_sat: '5000'
+                  amount_msat: '5000000'
+                  description: Docs example invoice
+                  expires_at: '1792923829'
+                  is_expired: false
+                timestamp: '2026-10-25T09:25:07.028980345Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payment_hash:
+                        type: string
+                      destination:
+                        type: string
+                      amount_sat:
+                        type: string
+                      amount_msat:
+                        type: string
+                      description:
+                        type: string
+                      expires_at:
+                        type: string
+                      is_expired:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
       requestBody:
         required: true
         content:
@@ -7361,6 +8254,38 @@ paths:
                     dial_code: '+263'
                     flag: 🇿🇼
                 timestamp: '2026-06-19T10:39:53.938116026Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      countries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            code:
+                              type: string
+                            code3:
+                              type: string
+                            currency_code:
+                              type: string
+                            currency_name:
+                              type: string
+                            dial_code:
+                              type: string
+                            flag:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7416,6 +8341,22 @@ paths:
                 data:
                   states: []
                 timestamp: '2026-06-19T10:39:54.603810092Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      states:
+                        type: array
+                        items: {}
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7454,8 +8395,6 @@ paths:
       description: Create a customer record. KYC fields (`id_type`, `id_number`) are required for card issuance in most regions.
       operationId: post_api_customers
       responses:
-        '200':
-          description: Successful response
         '201':
           description: Successful response
           content:
@@ -7477,6 +8416,48 @@ paths:
                   phone_number: '+2348012345678'
                   updated_at: '2026-06-18T20:21:55.397813Z'
                 timestamp: '2026-06-19T10:39:55.355654126Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      company_id:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      created_by:
+                        type: string
+                        format: uuid
+                      customer_type:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      id:
+                        type: string
+                        format: uuid
+                      is_active:
+                        type: boolean
+                      last_name:
+                        type: string
+                      metadata:
+                        type: string
+                      phone_number:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7641,6 +8622,77 @@ paths:
                   page_size: 20
                   total: 3
                 timestamp: '2026-06-19T10:39:55.895559697Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      customers:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            company_id:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            created_by:
+                              type: string
+                              format: uuid
+                            customer_type:
+                              type: string
+                            email:
+                              type: string
+                            first_name:
+                              type: string
+                            id:
+                              type: string
+                              format: uuid
+                            is_active:
+                              type: boolean
+                            last_name:
+                              type: string
+                            metadata:
+                              type: string
+                            phone_number:
+                              type: string
+                            updated_at:
+                              type: string
+                              format: date-time
+                            city:
+                              type: string
+                            country:
+                              type: string
+                            date_of_birth:
+                              type: string
+                            dial_code:
+                              type: string
+                            id_number:
+                              type: string
+                            id_type:
+                              type: string
+                            line1:
+                              type: string
+                            postal_code:
+                              type: string
+                            state:
+                              type: string
+                      page:
+                        type: number
+                      page_size:
+                        type: number
+                      total:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7707,6 +8759,48 @@ paths:
                   phone_number: '+2348012345678'
                   updated_at: '2026-06-18T20:21:55.397813Z'
                 timestamp: '2026-06-19T10:39:56.678282817Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      company_id:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      created_by:
+                        type: string
+                        format: uuid
+                      customer_type:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      id:
+                        type: string
+                        format: uuid
+                      is_active:
+                        type: boolean
+                      last_name:
+                        type: string
+                      metadata:
+                        type: string
+                      phone_number:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7772,6 +8866,48 @@ paths:
                   phone_number: '+00000000000'
                   updated_at: '2026-06-19T15:10:02.664939383Z'
                 timestamp: '2026-06-19T15:10:02.670980824Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      company_id:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      created_by:
+                        type: string
+                        format: uuid
+                      customer_type:
+                        type: string
+                      email:
+                        type: string
+                      first_name:
+                        type: string
+                      id:
+                        type: string
+                        format: uuid
+                      is_active:
+                        type: boolean
+                      last_name:
+                        type: string
+                      metadata:
+                        type: string
+                      phone_number:
+                        type: string
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -7833,8 +8969,6 @@ paths:
       description: Save a recipient for reuse. Crypto beneficiaries require `wallet_address`, `currency`, and `network`.
       operationId: post_api_beneficiaries
       responses:
-        '200':
-          description: Successful response
         '201':
           description: Successful response
           content:
@@ -7857,6 +8991,50 @@ paths:
                   created_at: '2026-06-18T18:11:01.180899Z'
                   updated_at: '2026-06-18T18:11:38.825552Z'
                 timestamp: '2026-06-19T10:39:57.956753903Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      company_id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                      name:
+                        type: string
+                      wallet_address:
+                        type: string
+                      currency:
+                        type: string
+                      network:
+                        type: string
+                      destination:
+                        type: string
+                      is_blacklisted:
+                        type: boolean
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8000,6 +9178,61 @@ paths:
                   offset: 0
                   total: 5
                 timestamp: '2026-06-19T10:39:58.652709368Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      beneficiaries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            company_id:
+                              type: string
+                              format: uuid
+                            type:
+                              type: string
+                            name:
+                              type: string
+                            destination:
+                              type: string
+                            is_blacklisted:
+                              type: boolean
+                            is_active:
+                              type: boolean
+                            created_by:
+                              type: string
+                              format: uuid
+                            created_at:
+                              type: string
+                              format: date-time
+                            updated_at:
+                              type: string
+                              format: date-time
+                            wallet_address:
+                              type: string
+                            currency:
+                              type: string
+                            network:
+                              type: string
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                      total:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8067,6 +9300,50 @@ paths:
                   created_at: '2026-06-18T18:11:01.180899Z'
                   updated_at: '2026-06-18T18:11:38.825552Z'
                 timestamp: '2026-06-19T10:39:59.395686981Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      company_id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                      name:
+                        type: string
+                      wallet_address:
+                        type: string
+                      currency:
+                        type: string
+                      network:
+                        type: string
+                      destination:
+                        type: string
+                      is_blacklisted:
+                        type: boolean
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8133,6 +9410,50 @@ paths:
                   created_at: '2026-06-18T18:11:01.180899Z'
                   updated_at: '2026-06-19T10:40:00.20999369Z'
                 timestamp: '2026-06-19T10:40:00.217004617Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      company_id:
+                        type: string
+                        format: uuid
+                      type:
+                        type: string
+                      name:
+                        type: string
+                      wallet_address:
+                        type: string
+                      currency:
+                        type: string
+                      network:
+                        type: string
+                      destination:
+                        type: string
+                      is_blacklisted:
+                        type: boolean
+                      is_active:
+                        type: boolean
+                      created_by:
+                        type: string
+                        format: uuid
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8226,6 +9547,84 @@ paths:
                     created_at: '2026-07-04T21:56:36.911340825Z'
                     updated_at: '2026-07-04T21:56:36.911340825Z'
                 timestamp: '2026-07-04T21:56:36.919134356Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payout:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          quote_id:
+                            type: string
+                          company_id:
+                            type: string
+                            format: uuid
+                          status:
+                            type: string
+                          source:
+                            type: string
+                          from_asset:
+                            type: string
+                          to_currency:
+                            type: string
+                          sat_amount:
+                            type: string
+                          btc_amount:
+                            type: string
+                          cent_amount:
+                            type: string
+                          amount:
+                            type: string
+                          settlement_amount:
+                            type: string
+                          cent_fees:
+                            type: string
+                          fees:
+                            type: string
+                          exchange_rate:
+                            type: object
+                            properties:
+                              rate:
+                                type: string
+                              btc_rate:
+                                type: string
+                              currency:
+                                type: string
+                              effective_rate:
+                                type: string
+                          trip:
+                            type: object
+                            properties:
+                              quote_at:
+                                type: string
+                                format: date-time
+                          payment_reason:
+                            type: string
+                          reference:
+                            type: string
+                          country:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8359,6 +9758,88 @@ paths:
                     updated_at: null
                   data: null
                 timestamp: '2026-07-04T21:56:37.105232508Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payout:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          quote_id:
+                            type: string
+                          company_id:
+                            type: string
+                          status:
+                            type: string
+                          source:
+                            type: string
+                          from_asset:
+                            type: string
+                          to_currency:
+                            type: string
+                          sat_amount:
+                            type: string
+                          btc_amount:
+                            type: string
+                          amount:
+                            type: string
+                          settlement_amount:
+                            type: string
+                          cent_fees:
+                            type: string
+                          fees:
+                            type: string
+                          exchange_rate:
+                            type: object
+                            properties:
+                              rate:
+                                type: string
+                              btc_rate:
+                                type: string
+                              currency:
+                                type: string
+                              effective_rate:
+                                type: string
+                          beneficiary:
+                            type: object
+                            properties:
+                              account_name:
+                                type: string
+                              account_number:
+                                type: string
+                              bank_code:
+                                type: string
+                              country:
+                                type: string
+                              destination_type:
+                                type: string
+                          payment_reason:
+                            type: string
+                          reference:
+                            type: string
+                          country:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            nullable: true
+                          updated_at:
+                            nullable: true
+                      data:
+                        nullable: true
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -8649,6 +10130,31 @@ paths:
                   country: NG
                   is_verified: true
                 timestamp: '2026-06-19T10:47:03.950149804Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      account_name:
+                        type: string
+                      account_number:
+                        type: string
+                      bank_code:
+                        type: string
+                      bank_name:
+                        type: string
+                      country:
+                        type: string
+                      is_verified:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -9826,6 +11332,43 @@ paths:
                       - bank
                       - swift
                 timestamp: '2026-06-19T10:47:01.371886375Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      countries:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            code:
+                              type: string
+                            name:
+                              type: string
+                            flag:
+                              type: string
+                            dial_code:
+                              type: string
+                            corridors:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  currency:
+                                    type: string
+                                  destination_types:
+                                    type: array
+                                    items:
+                                      type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -10636,6 +12179,95 @@ paths:
                       - bank_code
                       - account_number
                 timestamp: '2026-06-19T10:47:01.987567118Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      name:
+                        type: string
+                      flag:
+                        type: string
+                      dial_code:
+                        type: string
+                      destination_types:
+                        type: object
+                        properties:
+                          bank:
+                            type: object
+                            properties:
+                              key:
+                                type: string
+                              label:
+                                type: string
+                              fields:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    key:
+                                      type: string
+                                    label:
+                                      type: string
+                                    type:
+                                      type: string
+                                    required:
+                                      type: boolean
+                                    component:
+                                      type: string
+                                    options:
+                                      type: array
+                                      items: {}
+                                    options_ref:
+                                      type: string
+                                    fields:
+                                      type: array
+                                      items: {}
+                                    variants:
+                                      type: object
+                                      properties: {}
+                                    pattern:
+                                      type: string
+                                    description:
+                                      type: string
+                                    placeholder:
+                                      type: string
+                              banks:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    code:
+                                      type: string
+                              limits:
+                                type: object
+                                properties:
+                                  min_amount:
+                                    type: string
+                                  max_amount:
+                                    type: string
+                                  currency:
+                                    type: string
+                              lookup_fields:
+                                type: array
+                                items:
+                                  type: string
+                              receipt_fields:
+                                type: array
+                                items:
+                                  type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -10954,6 +12586,36 @@ paths:
                     min_amount_usd: '1.22'
                     max_amount_usd: '109753.42'
                 timestamp: '2026-06-19T10:47:02.758175719Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      limits:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            country:
+                              type: string
+                            currency:
+                              type: string
+                            min_amount:
+                              type: string
+                            max_amount:
+                              type: string
+                            min_amount_usd:
+                              type: string
+                            max_amount_usd:
+                              type: string
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11728,6 +13390,34 @@ paths:
                   country_name: Nigeria
                   total: 358
                 timestamp: '2026-06-19T10:47:03.309040201Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      banks:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            bank_name:
+                              type: string
+                            bank_code:
+                              type: string
+                      country_code:
+                        type: string
+                      country_name:
+                        type: string
+                      total:
+                        type: number
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11794,6 +13484,30 @@ paths:
                   offset: 0
                   has_more: false
                 timestamp: '2026-06-19T10:47:04.431490635Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items: {}
+                      total_count:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+                      has_more:
+                        type: boolean
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11886,6 +13600,107 @@ paths:
                     created_at: '2026-06-19T11:50:18.933833Z'
                     updated_at: '2026-06-19T11:50:19.531892Z'
                 timestamp: '2026-06-19T11:51:05.77225279Z'
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      payout:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          quote_id:
+                            type: string
+                          company_id:
+                            type: string
+                            format: uuid
+                          customer_id:
+                            type: string
+                            format: uuid
+                          status:
+                            type: string
+                          source:
+                            type: string
+                          from_asset:
+                            type: string
+                          chain:
+                            type: string
+                          to_currency:
+                            type: string
+                          sat_amount:
+                            type: string
+                          btc_amount:
+                            type: string
+                          cent_amount:
+                            type: string
+                          amount:
+                            type: string
+                          settlement_amount:
+                            type: string
+                          cent_fees:
+                            type: string
+                          fees:
+                            type: string
+                          exchange_rate:
+                            type: object
+                            properties:
+                              rate:
+                                type: string
+                              btc_rate:
+                                type: string
+                              currency:
+                                type: string
+                              effective_rate:
+                                type: string
+                          beneficiary:
+                            type: object
+                            properties:
+                              account_name:
+                                type: string
+                              account_number:
+                                type: string
+                              bank_code:
+                                type: string
+                              country:
+                                type: string
+                              destination_type:
+                                type: string
+                          trip:
+                            type: object
+                            properties:
+                              quote_at:
+                                type: string
+                                format: date-time
+                              initialized_at:
+                                type: string
+                                format: date-time
+                          reference:
+                            type: string
+                          callback_url:
+                            type: string
+                          provider_settlement_id:
+                            type: string
+                          country:
+                            type: string
+                          expires_at:
+                            type: string
+                            format: date-time
+                          created_at:
+                            type: string
+                            format: date-time
+                          updated_at:
+                            type: string
+                            format: date-time
+                  timestamp:
+                    type: string
+                    format: date-time
         '400':
           description: Validation error
           content:
@@ -11918,18 +13733,28 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
-    BitnobHmacAuth:
+    BitnobClientId:
       type: apiKey
       in: header
-      name: X-Auth-Signature
+      name: X-Auth-Client
       description: |
-        HMAC-SHA256 authentication. All calls must include four headers:
+        Your workspace client id.
+
+        All calls must include four headers:
         - `X-Auth-Client`   — your workspace client id
         - `X-Auth-Timestamp` — Unix seconds
         - `X-Auth-Nonce`    — 16-byte random hex
         - `X-Auth-Signature` — hex(HMAC-SHA256(
           `{client_id}:{timestamp}:{nonce}:{compact_json_body}`,
           client_secret))
+
+        The playground computes the timestamp, nonce and signature for you.
+    BitnobClientSecret:
+      type: apiKey
+      in: header
+      name: X-Playground-Client-Secret
+      description: |
+        Your sandbox client secret. The playground uses it to sign the request in your browser and removes it before the request is sent. Never send your client secret as a header in your own integration.
   schemas:
     Error:
       type: object

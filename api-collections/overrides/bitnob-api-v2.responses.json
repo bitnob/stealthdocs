@@ -1,0 +1,98 @@
+{
+  "GET /api/lightning/invoices/{id}": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Lightning invoice retrieved successfully",
+      "data": {
+        "id": "01a167c7-7bc7-724b-8dd2-6585511bd3f2",
+        "payment_hash": "db6ac3d735644215d68cb92b67b87120d447453140e942a2e53ebfddcac7e8f7",
+        "request": "lntb51520n1p4dk9zepp5md4v84e4v3ppt45vhy4k0wr3yr2yw3f3gr559gh986lamjk8armsdqcf9h8vmmfvdjjqurp09kk2mn5cqzpgxqztzsp5zakyw5txml67njzv7t2y2068p57hqvslptypuhv00dzlhqh0dupq9qrsgqsrdek2s88u0wlz6qlm64am2hk439d5wksv5njcn9vgtmtg97dtnrzek4pc7wqmuuvu3qsnjmzr3g6c7cvkydam7yywghw4yxu8svlcqqzfaggm",
+        "preimage": "a0631c45e28cf14d1c5731c5462e4fb8c5d951e73cf7ca8a6e6d00a8cf209e68",
+        "amount_sat": "5152",
+        "amount_msat": "5152000",
+        "fee_sat": "0",
+        "fee_msat": "0",
+        "description": "Invoice payment",
+        "status": "expired",
+        "direction": "incoming",
+        "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+        "customer_id": "",
+        "reference": "QT2_21053599",
+        "expires_at": "1792742844",
+        "created_at": "2026-10-23T08:01:29Z",
+        "updated_at": "2026-10-23T08:07:41Z"
+      },
+      "timestamp": "2026-10-25T06:48:04.576046884Z"
+    }
+  },
+  "POST /api/lightning/invoices": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "message": "Lightning invoice created successfully",
+      "data": {
+        "id": "01a1725f-9bd7-7bd0-9591-fc1032d46f02",
+        "payment_hash": "5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457",
+        "request": "lntb50u1p4dmj4xpp5twfre9mtn7yzfc6r3k9crrh3lpfeg4wjh73gkgdl2wqpq6yc23tsdpqg3hkxueqv4uxzmtsd3jjq6twwehkjcm9cqzpgxqrrs0sp5xraqk3u6zg2sgg7nez7sw9z3s7cx2d4txn4xahlddezdzjpgtdqs9qrsgq2frzzvxp902a59xuquexxpk9y3ra4kln27wwdcg97e6epcjpcrdpxd7vftuy2a2m66dmv332gd0upme2r50qne5gn2d7ffk8h7dtmvqptqtupq",
+        "amount_sat": "5000",
+        "description": "Docs example invoice",
+        "status": "pending",
+        "expires_at": "2026-10-25T10:23:50Z",
+        "created_at": "2026-10-25T09:23:50Z"
+      },
+      "timestamp": "2026-10-25T09:23:50.877504884Z"
+    }
+  },
+  "POST /api/lightning/decode": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Payment request decoded successfully",
+      "data": {
+        "payment_hash": "5b923c976b9f8824e3438d8b818ef1f8539455d2bfa28b21bf53801068985457",
+        "destination": "0378a9c9e82bb9c856e6a1cd0c5566bf3595bf5731e636b5c7121d9c1a8884e62a",
+        "amount_sat": "5000",
+        "amount_msat": "5000000",
+        "description": "Docs example invoice",
+        "expires_at": "1792923829",
+        "is_expired": false
+      },
+      "timestamp": "2026-10-25T09:25:07.028980345Z"
+    }
+  },
+  "DELETE /api/cards/{cardId}": {
+    "status": 200,
+    "body": {
+      "success": true,
+      "message": "Card terminated successfully",
+      "data": {
+        "message": "Card termination processing",
+        "success": false,
+        "transaction": {
+          "amount": "0",
+          "balance_after": "0",
+          "balance_before": "2000000",
+          "business_pool": false,
+          "card_id": "01a1065d-1d30-7a57-86d6-f58d00398b3c",
+          "cardholder_name": "Ifeoma Okafor",
+          "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+          "created_at": "2026-10-26T03:33:38.036429010Z",
+          "created_by": "2c9f5b61-8b1a-4c3d-a4f7-6d9e12b4c890",
+          "currency": "USD",
+          "description": "Card termination balance refund",
+          "display_amount": 0,
+          "fee_amount": "0",
+          "id": "01a17645-5674-771e-8c65-05c1827c4b49",
+          "last_four_digit": "1376",
+          "reference": "CARD_TERMN_FC4195A6A5D5",
+          "status": "pending",
+          "transaction_date": "2026-10-26T03:33:38.036429010Z",
+          "type": "termination",
+          "updated_at": "2026-10-26T03:33:38.036458746Z"
+        }
+      },
+      "timestamp": "2026-10-26T03:33:38.207420653Z"
+    }
+  }
+}
