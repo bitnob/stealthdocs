@@ -349,37 +349,40 @@
                 ]
               },
               {
-                "group": "Sponsored transfers",
+                "group": "Gas sponsorship",
                 "icon": "gas-pump",
                 "pages": [
-                  "docs/platform/sponsored-transfers/overview",
+                  "docs/platform/gas-sponsorship/overview",
                   {
                     "group": "Concepts",
                     "pages": [
-                      "docs/platform/sponsored-transfers/how-sponsored-transfers-work",
-                      "docs/platform/sponsored-transfers/signing-by-chain"
+                      "docs/platform/gas-sponsorship/how-gas-stations-work",
+                      "docs/platform/gas-sponsorship/how-sponsored-transfers-work",
+                      "docs/platform/gas-sponsorship/signing-by-chain"
                     ]
                   },
                   {
                     "group": "Get started",
                     "pages": [
-                      "docs/platform/sponsored-transfers/send-your-first-sponsored-transfer"
+                      "docs/platform/gas-sponsorship/set-up-a-gas-station",
+                      "docs/platform/gas-sponsorship/send-your-first-sponsored-transfer"
                     ]
                   },
                   {
                     "group": "Guides",
                     "pages": [
-                      "docs/platform/sponsored-transfers/sign-on-evm-chains",
-                      "docs/platform/sponsored-transfers/sign-on-tron",
-                      "docs/platform/sponsored-transfers/charge-a-partner-fee",
-                      "docs/platform/sponsored-transfers/sweep-a-full-balance",
-                      "docs/platform/sponsored-transfers/handle-failures-and-expiry"
+                      "docs/platform/gas-sponsorship/sign-on-evm-chains",
+                      "docs/platform/gas-sponsorship/sign-on-tron",
+                      "docs/platform/gas-sponsorship/charge-a-partner-fee",
+                      "docs/platform/gas-sponsorship/sweep-a-full-balance",
+                      "docs/platform/gas-sponsorship/handle-failures-and-expiry"
                     ]
                   },
                   {
                     "group": "Reference",
                     "pages": [
-                      "docs/platform/sponsored-transfers/statuses-errors-and-events"
+                      "docs/platform/gas-sponsorship/gas-station-reference",
+                      "docs/platform/gas-sponsorship/statuses-errors-and-events"
                     ]
                   }
                 ]

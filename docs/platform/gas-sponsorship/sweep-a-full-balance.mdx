@@ -3,9 +3,9 @@ title: "Sweep a full stablecoin balance with gross mode"
 sidebarTitle: "Sweep a full balance"
 description: "Use treat_as_gross_amount to send an address's entire token balance, with fees taken out of the amount, so the transfer never overdraws."
 related:
-  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
-  - /docs/platform/sponsored-transfers/charge-a-partner-fee
-  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/charge-a-partner-fee
+  - /docs/platform/gas-sponsorship/handle-failures-and-expiry
 ---
 
 To empty an address in net mode, you'd have to work out the balance minus fees yourself. Net mode adds the fees on top, so sending the full balance always overdraws. Gross mode turns it around: `amount` becomes the total that leaves the sender, and the fees come out of it.

@@ -3,9 +3,9 @@ title: "How Bitnob sponsored transfers work"
 sidebarTitle: "How it works"
 description: "Who signs what, how the sponsorship fee and partner fee are charged, net versus gross amounts, quote expiry, and the transfer lifecycle."
 related:
-  - /docs/platform/sponsored-transfers/signing-by-chain
-  - /docs/platform/sponsored-transfers/statuses-errors-and-events
-  - /docs/platform/sponsored-transfers/sweep-a-full-balance
+  - /docs/platform/gas-sponsorship/signing-by-chain
+  - /docs/platform/gas-sponsorship/statuses-errors-and-events
+  - /docs/platform/gas-sponsorship/sweep-a-full-balance
 ---
 
 A sponsored transfer has two signers. Your user signs to authorise moving their tokens. Bitnob signs as the operator that pays the network fee. Neither signature is enough alone, and neither party can change what the other signed.
@@ -30,7 +30,7 @@ A quote breaks the transfer into parts:
 |---|---|
 | `recipient_amount` | What the recipient receives. |
 | `fee` | Bitnob's sponsorship fee, with `amount`, `asset`, and a `usd` value. |
-| `partner_fee` | Your optional markup, sent to an address you choose. Present only if you asked for one. See [Charge a partner fee](/docs/platform/sponsored-transfers/charge-a-partner-fee). |
+| `partner_fee` | Your optional markup, sent to an address you choose. Present only if you asked for one. See [Charge a partner fee](/docs/platform/gas-sponsorship/charge-a-partner-fee). |
 | `total_debit` | What leaves the sender's address. |
 
 `total_debit` always equals `recipient_amount` + `fee.amount` + `partner_fee.amount`.
@@ -40,7 +40,7 @@ A quote breaks the transfer into parts:
 `amount` on the quote request means one of two things:
 
 - **Net mode, the default**: `amount` is what the recipient receives. The fees are added on top, so `total_debit` is more than `amount`. Use it for payments, where the recipient must get an exact amount.
-- **Gross mode**, with `treat_as_gross_amount: true`: `amount` is the sender's total debit. The fees come out of it, so the recipient gets less than `amount`. Use it to empty an address without overdrawing it. See [Sweep a full balance](/docs/platform/sponsored-transfers/sweep-a-full-balance).
+- **Gross mode**, with `treat_as_gross_amount: true`: `amount` is the sender's total debit. The fees come out of it, so the recipient gets less than `amount`. Use it to empty an address without overdrawing it. See [Sweep a full balance](/docs/platform/gas-sponsorship/sweep-a-full-balance).
 
 For a 10.50 USDC transfer with a 0.02 USDC fee and no partner fee:
 
@@ -97,7 +97,7 @@ A signature that doesn't verify doesn't fail the transfer. Submit returns `422` 
 - **Daily budget.** Your organisation has a daily sponsored-gas budget. Past it, quotes return `429` with `budget_exceeded` until the budget resets.
 - **Capacity.** Rarely, sponsorship capacity is briefly unavailable, and quotes return `503` with `capacity_unavailable`.
 
-Every `429` carries a `Retry-After` header. [Handle failures and expiry](/docs/platform/sponsored-transfers/handle-failures-and-expiry) covers how to respond to each.
+Every `429` carries a `Retry-After` header. [Handle failures and expiry](/docs/platform/gas-sponsorship/handle-failures-and-expiry) covers how to respond to each.
 
 ## How this differs from Enterprise wallet transfers
 

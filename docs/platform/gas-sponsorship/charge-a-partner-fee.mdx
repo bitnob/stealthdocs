@@ -3,9 +3,9 @@ title: "Charge your own fee on sponsored transfers"
 sidebarTitle: "Charge a partner fee"
 description: "Add a flat partner fee to each sponsored transfer, paid in the same token to an address you control, settled with the transfer."
 related:
-  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
-  - /docs/platform/sponsored-transfers/sweep-a-full-balance
-  - /docs/platform/sponsored-transfers/statuses-errors-and-events
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/sweep-a-full-balance
+  - /docs/platform/gas-sponsorship/statuses-errors-and-events
 ---
 
 A partner fee is your own charge on a sponsored transfer, on top of Bitnob's sponsorship fee. It is paid in the token being sent, to an address you choose, and settled as part of the transfer. You don't need a separate collection step, and you never hold the user's funds.
@@ -63,7 +63,7 @@ The recipient still receives 10.50 USDC. The sender is debited 10.72: the transf
 
 In net mode, the default, your fee is added on top: `total_debit` = `amount` + `fee` + `partner_fee`.
 
-In gross mode, with `treat_as_gross_amount: true`, your fee comes out of `amount` along with Bitnob's: `recipient_amount` = `amount` − `fee` − `partner_fee`. If `amount` doesn't exceed both fees together, the quote returns `400 invalid_request`. See [Sweep a full balance](/docs/platform/sponsored-transfers/sweep-a-full-balance).
+In gross mode, with `treat_as_gross_amount: true`, your fee comes out of `amount` along with Bitnob's: `recipient_amount` = `amount` − `fee` − `partner_fee`. If `amount` doesn't exceed both fees together, the quote returns `400 invalid_request`. See [Sweep a full balance](/docs/platform/gas-sponsorship/sweep-a-full-balance).
 
 ## Show it to the user
 

@@ -3,9 +3,9 @@ title: "Send your first sponsored transfer on Solana"
 sidebarTitle: "Send your first transfer"
 description: "Quote a gasless USDC transfer on Solana devnet, sign it with the sender's key, submit the signature, and track it to completed."
 related:
-  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
-  - /docs/platform/sponsored-transfers/signing-by-chain
-  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/signing-by-chain
+  - /docs/platform/gas-sponsorship/handle-failures-and-expiry
 ---
 
 This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. Solana is the simplest scheme to start with: one signature over one message.
@@ -15,7 +15,7 @@ This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. S
 - A sandbox API key exported as `PLATFORM_API_KEY`. See [Set up your account](/docs/platform/account-setup).
 - A test sender: a Solana keypair holding devnet USDC and **no SOL**. Get devnet USDC from [Circle's faucet](https://faucet.circle.com). Export the base58 secret key as `SENDER_SECRET_KEY`. Use a key you made for testing only.
 - A recipient address on devnet.
-- Node.js 18 or later, with `@solana/web3.js`, `tweetnacl`, and `bs58` installed.
+- Node.js 20 or later, with `@solana/web3.js`, `tweetnacl`, and `bs58` installed.
 
 <Steps>
   <Step title="Request a quote">
@@ -168,6 +168,6 @@ Polling is fine for a test. In production, use webhooks and poll only as a fallb
 
 ## Next steps
 
-- Send on EVM chains, which need two signatures: [Sign on EVM chains](/docs/platform/sponsored-transfers/sign-on-evm-chains).
-- Send USDT on Tron, with the one-time approval: [Sign on Tron](/docs/platform/sponsored-transfers/sign-on-tron).
-- Handle expiry, budgets, and on-chain failures: [Handle failures and expiry](/docs/platform/sponsored-transfers/handle-failures-and-expiry).
+- Send on EVM chains, which need two signatures: [Sign on EVM chains](/docs/platform/gas-sponsorship/sign-on-evm-chains).
+- Send USDT on Tron, with the one-time approval: [Sign on Tron](/docs/platform/gas-sponsorship/sign-on-tron).
+- Handle expiry, budgets, and on-chain failures: [Handle failures and expiry](/docs/platform/gas-sponsorship/handle-failures-and-expiry).

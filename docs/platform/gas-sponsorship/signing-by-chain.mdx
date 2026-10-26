@@ -3,9 +3,9 @@ title: "What users sign for a sponsored transfer, by chain"
 sidebarTitle: "Signing by chain"
 description: "The sign payload differs on Solana, EVM chains, and Tron. See which fields each scheme returns and which signatures to submit."
 related:
-  - /docs/platform/sponsored-transfers/sign-on-evm-chains
-  - /docs/platform/sponsored-transfers/sign-on-tron
-  - /docs/platform/sponsored-transfers/send-your-first-sponsored-transfer
+  - /docs/platform/gas-sponsorship/sign-on-evm-chains
+  - /docs/platform/gas-sponsorship/sign-on-tron
+  - /docs/platform/gas-sponsorship/send-your-first-sponsored-transfer
 ---
 
 Every quote carries a `sign` object. Its `scheme` tells you which fields are filled in, what the user signs, and which fields you submit. Branch on `sign.scheme`, not on `chain`.
@@ -31,7 +31,7 @@ Every quote carries a `sign` object. Its `scheme` tells you which fields are fil
 
 The user signs the decoded bytes with their ed25519 key. You submit the 64-byte signature, base58-encoded, as `signature`. Bitnob adds the fee payer's signature and broadcasts.
 
-[Send your first sponsored transfer](/docs/platform/sponsored-transfers/send-your-first-sponsored-transfer) has working code.
+[Send your first sponsored transfer](/docs/platform/gas-sponsorship/send-your-first-sponsored-transfer) has working code.
 
 ## `evm_7702`
 
@@ -47,7 +47,7 @@ Submit both as `signatures.authorization` and `signatures.witness`. Each is a 0x
 
 The quote response also returns `router_version`, the router contract version the quote was built against. Leave `router_version` out of your request to get the chain's default.
 
-See [Sign on EVM chains](/docs/platform/sponsored-transfers/sign-on-evm-chains).
+See [Sign on EVM chains](/docs/platform/gas-sponsorship/sign-on-evm-chains).
 
 ## `tron_router`
 
@@ -60,7 +60,7 @@ The user signs `digest` with their secp256k1 key, and you submit it as `tron_sig
 
 The approval lets Bitnob's router contract move that token from the sender's address. It is needed once per sender per token, and the quoted fee already covers its cost. If the sender's account has never been used on chain, Bitnob activates it first.
 
-See [Sign on Tron](/docs/platform/sponsored-transfers/sign-on-tron).
+See [Sign on Tron](/docs/platform/gas-sponsorship/sign-on-tron).
 
 ## Where signing happens
 

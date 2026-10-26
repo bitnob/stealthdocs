@@ -1,0 +1,74 @@
+---
+title: "Gas sponsorship on Bitnob Enterprise"
+sidebarTitle: "Overview"
+description: "Pay network fees so your users never hold ETH, SOL, or TRX: gas stations for your wallets, sponsored transfers for self-custody users."
+related:
+  - /docs/platform/gas-sponsorship/how-gas-stations-work
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/send-your-first-sponsored-transfer
+---
+
+Every transfer on chain costs a fee in the chain's native asset: ETH on Ethereum and its L2s, SOL on Solana, TRX on Tron. A user who holds only USDT or USDC can't send it without first buying some of the native asset. Gas sponsorship removes that step. Someone else pays the native fee, and your user only ever deals in the stablecoin.
+
+Bitnob Enterprise offers sponsorship in three forms. Which one you use depends on who holds the sending key.
+
+| The funds are in | Use | Who pays the native fee | Who holds the key |
+|---|---|---|---|
+| **Your Bitnob Enterprise wallets**, such as per-customer deposit wallets | A [gas station](/docs/platform/gas-sponsorship/how-gas-stations-work) | You, from a gas station you pre-fund | Bitnob Secure Enclave, governed by your policies |
+| **Your users' own addresses**, in wallets they control | [Sponsored transfers](/docs/platform/gas-sponsorship/how-sponsored-transfers-work) | Bitnob, recovered as a fee in the token | The end user |
+| **A Tron transaction someone already signed** | [Sponsor and broadcast](/api-reference/platform/gasstations/sponsor-and-broadcast-external-tron-transaction) | You, from a gas station | Whoever signed it |
+
+## Gas stations
+
+A gas station is a native-asset balance your organisation pre-funds on one chain. When a transfer out of one of your Enterprise wallets is sponsored, the gas station pays its network fee, so the wallet itself never needs gas. You set a threshold, and the gas station can refill itself from a treasury wallet when it runs low.
+
+Use gas stations when you hold customer funds in Enterprise wallets: an exchange paying withdrawal fees, or a neobank moving balances between customer and treasury wallets.
+
+- [How gas stations work](/docs/platform/gas-sponsorship/how-gas-stations-work)
+- [Set up a gas station](/docs/platform/gas-sponsorship/set-up-a-gas-station)
+
+## Sponsored transfers
+
+A sponsored transfer moves a stablecoin from an address your user controls, with no Bitnob wallet involved. Bitnob pays the gas and takes a small fee in the token being sent. You don't pre-fund anything. The user signs a payload you show them, and Bitnob adds its own signature and broadcasts.
+
+Use sponsored transfers in self-custody wallet apps, and in checkout or payout flows where customers pay from their own wallets.
+
+| Chain | `chain` value | Signing scheme |
+|---|---|---|
+| Solana | `solana` | `solana_ed25519` |
+| Ethereum, Base, Arbitrum, Optimism, Polygon, BSC | `ethereum`, `base`, `arbitrum`, `optimism`, `polygon`, `bsc` | `evm_7702` |
+| Tron | `tron` | `tron_router` |
+
+The asset is a supported stablecoin on that chain, typically USDC on Solana and the EVM chains, and USDT on Tron. [List assets](/api-reference/platform/assets/list-assets) shows what your organisation can use.
+
+<Steps>
+  <Step title="Quote">
+    [Create sponsored transfer](/api-reference/platform/sponsored-transfers/create-sponsored-transfer-quote) returns the fee, the sender's total debit, a `sign` payload, and an `expires_at`.
+  </Step>
+  <Step title="The user signs">
+    The user signs the `sign` payload exactly as returned. See [Signing by chain](/docs/platform/gas-sponsorship/signing-by-chain).
+  </Step>
+  <Step title="Submit">
+    [Submit signatures](/api-reference/platform/sponsored-transfers/submit-signatures) before `expires_at`. Bitnob verifies, co-signs, and broadcasts.
+  </Step>
+  <Step title="Track">
+    Follow it to `completed` with `sponsored_transfer.*` webhooks or [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer).
+  </Step>
+</Steps>
+
+## In this section
+
+<Columns cols={2}>
+  <Card title="Concepts" icon="lightbulb" href="/docs/platform/gas-sponsorship/how-gas-stations-work">
+    Gas stations, sponsored transfers, fees, and what each chain asks the user to sign.
+  </Card>
+  <Card title="Get started" icon="rocket" href="/docs/platform/gas-sponsorship/set-up-a-gas-station">
+    Set up a gas station, or send your first sponsored transfer on Solana.
+  </Card>
+  <Card title="Guides" icon="book" href="/docs/platform/gas-sponsorship/sign-on-evm-chains">
+    EVM and Tron signing, partner fees, full-balance sweeps, and failure handling.
+  </Card>
+  <Card title="Reference" icon="list" href="/docs/platform/gas-sponsorship/gas-station-reference">
+    Gas station fields and events, and sponsored transfer statuses and errors.
+  </Card>
+</Columns>

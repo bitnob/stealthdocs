@@ -1,10 +1,10 @@
 ---
 title: "Sponsored transfer statuses, errors, and events"
-sidebarTitle: "Statuses and errors"
+sidebarTitle: "Sponsored transfer statuses"
 description: "Every sponsored transfer status, failure code, API error code, request and response field, and the webhook events to subscribe to."
 related:
-  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
-  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+  - /docs/platform/gas-sponsorship/how-sponsored-transfers-work
+  - /docs/platform/gas-sponsorship/handle-failures-and-expiry
   - /docs/platform/webhooks
 ---
 
@@ -89,7 +89,7 @@ Both endpoints require an `Idempotency-Key` header.
 | `partner_fee` | Your markup: `address`, `amount`, `asset`, `usd`. Present only if requested. |
 | `total_debit` | What leaves the sender. Equals `recipient_amount` + `fee` + `partner_fee`. |
 | `treat_as_gross_amount` | Whether gross mode was applied. |
-| `sign` | What the sender signs. Present only while `quoted`. See [Signing by chain](/docs/platform/sponsored-transfers/signing-by-chain). |
+| `sign` | What the sender signs. Present only while `quoted`. See [Signing by chain](/docs/platform/gas-sponsorship/signing-by-chain). |
 | `expires_at` | Quote expiry. Present only while `quoted`. |
 | `router_version` | EVM only. The router version quoted against. |
 | `tx_hash`, `confirmations` | Set once broadcast. |
