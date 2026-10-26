@@ -1075,6 +1075,10 @@
   "navbar": {
     "links": [
       {
+        "label": "Status",
+        "href": "https://status.bitnob.com"
+      },
+      {
         "label": "Dashboard",
         "href": "https://app.bitnob.com"
       }

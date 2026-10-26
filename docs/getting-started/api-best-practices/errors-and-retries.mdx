@@ -47,6 +47,8 @@ Error responses follow [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807)
 
 Every error body carries `correlation_id`, and repeats it as `request_id`. Log `correlation_id` on every failure. Quote it along with your `reference` when you contact support, because together they locate the request without a search.
 
+If `5xx` errors or timeouts persist across retries, check [status.bitnob.com](https://status.bitnob.com) for an ongoing incident before contacting support.
+
 ## Rate limits
 
 The API allows 500 requests per minute. Every response carries `X-Ratelimit-Limit`, `X-Ratelimit-Remaining`, and `X-Ratelimit-Reset`, so you can see how close you are before you're throttled. A request over the limit returns `429`: back off exponentially and retry after the reset. Design batch jobs to pace themselves rather than racing the limiter; see [Send payouts in bulk](/docs/payouts/mass-payouts) for the pattern.
