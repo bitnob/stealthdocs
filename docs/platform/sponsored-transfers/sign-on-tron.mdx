@@ -1,0 +1,122 @@
+---
+title: "Sign sponsored USDT transfers on Tron"
+sidebarTitle: "Sign on Tron"
+description: "Sign a tron_router quote, including the one-time token approval for first-time senders, so users can send USDT with no TRX."
+related:
+  - /docs/platform/sponsored-transfers/signing-by-chain
+  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+  - /docs/platform/sponsored-transfers/statuses-errors-and-events
+---
+
+On Tron a quote returns `"scheme": "tron_router"`. Sending USDT normally costs TRX for energy and bandwidth, and a brand-new address can't send at all until it is activated. With a sponsored transfer, the sender needs neither: Bitnob activates the account if needed and pays the resources, and the fee is taken in USDT.
+
+## Request the quote
+
+```bash
+curl https://api.platform.bitnob.com/v1/sponsored-transfers \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: transfer-0003" \
+  -d '{
+    "chain": "tron",
+    "asset": "USDT",
+    "from": "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE",
+    "to": "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
+    "amount": "50.00"
+  }'
+```
+
+## First transfer or later transfer
+
+Check whether `sign.approve` is present.
+
+**Later transfers** only have `sign.digest`:
+
+```json
+"sign": {
+  "scheme": "tron_router",
+  "digest": "0x5c2b...e91f"
+}
+```
+
+**The sender's first sponsored transfer of this token** also has an `approve` block:
+
+```json
+"sign": {
+  "scheme": "tron_router",
+  "digest": "0x5c2b...e91f",
+  "approve": {
+    "needed": true,
+    "digest": "0x9ad0...44c2",
+    "token": "TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj",
+    "spender": "TRouter...contract",
+    "selector": "0x095ea7b3"
+  }
+}
+```
+
+The approval lets Bitnob's router contract, the `spender`, move this token from the sender's address. It is a one-time step for each sender and token. The quoted fee already covers it, so the sender pays nothing extra.
+
+Before you ask the user to sign an approval, check what it grants. `token` should be the token being sent, `spender` the router, and `selector` `0x095ea7b3`, which is the standard `approve(address,uint256)` function. Show the user that this is a one-time approval for the router.
+
+## Sign
+
+Both digests are 32-byte hashes that are ready to sign. Sign them directly with the sender's secp256k1 key, without hashing them again.
+
+```javascript sign-tron.mjs
+import { SigningKey } from "ethers";
+
+export function signTronQuote(quote, privateKeyHex) {
+  const { scheme, digest, approve } = quote.sign;
+  if (scheme !== "tron_router") throw new Error(`Unexpected scheme ${scheme}`);
+
+  const key = new SigningKey(privateKeyHex.startsWith("0x") ? privateKeyHex : `0x${privateKeyHex}`);
+  const body = { tron_signature: key.sign(digest).serialized };
+
+  if (approve?.needed) {
+    body.tron_approve_signature = key.sign(approve.digest).serialized;
+  }
+  return body;
+}
+```
+
+`serialized` is the 0x-prefixed 65-byte signature, `r`, `s`, and `v`, which Submit expects.
+
+<Warning>
+  Don't use TronWeb's `signMessageV2` or `trx.sign` here. They hash the input again, or expect a full transaction, so the signature won't verify against the digest.
+</Warning>
+
+## Submit both signatures together
+
+When `approve` was present, send `tron_approve_signature` in the same call as `tron_signature`. Submitting `tron_signature` alone for a first-time sender returns `422 signature_invalid`, and the transfer can't be broadcast without the approval.
+
+```bash
+curl https://api.platform.bitnob.com/v1/sponsored-transfers/$TRANSFER_ID/submit \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: transfer-0003-submit" \
+  -d '{
+    "tron_signature": "0x1f6a...1b",
+    "tron_approve_signature": "0x77c3...1c"
+  }'
+```
+
+## What happens for a first-time sender
+
+After `submitted`, a first-time sender's transfer passes through extra statuses while Bitnob onboards the address:
+
+| Status | What Bitnob is doing |
+|---|---|
+| `tron_activating` | Activating an address that has never been used on chain. |
+| `tron_approving` | Broadcasting the one-time approval. |
+| `pending` | Broadcasting the transfer itself. |
+
+An address that is already active skips `tron_activating`. A sender who has approved before skips both. Allow a little more time for a first transfer, and show the user a status such as "Setting up your address" rather than an error.
+
+## Common problems
+
+| Symptom | Cause |
+|---|---|
+| `422 signature_invalid` on a first transfer | `tron_approve_signature` is missing, or was signed with a different key. |
+| `422 signature_invalid` on any transfer | The digest was hashed again, or a TronWeb signing helper was used. |
+| `failed` with `insufficient_token_balance` | The sender's USDT dropped below `total_debit` before broadcast. |

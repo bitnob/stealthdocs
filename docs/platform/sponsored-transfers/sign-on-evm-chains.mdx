@@ -1,0 +1,134 @@
+---
+title: "Sign sponsored transfers on EVM chains"
+sidebarTitle: "Sign on EVM chains"
+description: "Sign the EIP-7702 authorization and EIP-712 witness from an evm_7702 quote, and submit both signatures for a gasless USDC transfer."
+related:
+  - /docs/platform/sponsored-transfers/signing-by-chain
+  - /docs/platform/sponsored-transfers/send-your-first-sponsored-transfer
+  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+---
+
+On Ethereum, Base, Arbitrum, Optimism, Polygon, and BSC, a quote returns `"scheme": "evm_7702"`. The sender signs twice with the same key:
+
+1. An **EIP-7702 authorization**, which lets their address run Bitnob's paymaster router code for the transfer.
+2. An **EIP-712 witness**, which binds the router to exactly the transfer that was quoted.
+
+The sender doesn't need ETH, POL, or BNB. Bitnob pays the gas.
+
+## Request the quote
+
+The request is the same as on every chain. Only `chain`, `asset`, and the address format change.
+
+```bash
+curl https://api.platform.bitnob.com/v1/sponsored-transfers \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: transfer-0002" \
+  -d '{
+    "chain": "base",
+    "asset": "USDC",
+    "from": "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE",
+    "to": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    "amount": "25.00"
+  }'
+```
+
+The `sign` block contains:
+
+| Field | Contents |
+|---|---|
+| `scheme` | `evm_7702` |
+| `authorization` | The EIP-7702 tuple to sign: `chainId`, `address` (the router contract), and `nonce` |
+| `witness` | The EIP-712 typed data to sign |
+| `digests` | The 32-byte hashes of both, for signers that only sign hashes |
+
+The response also includes `router_version`, the router contract version this quote targets. Leave `router_version` out of the request unless Bitnob support has asked you to pin one.
+
+## Sign with a local key
+
+This example uses [ethers](https://docs.ethers.org/v6/) v6.14 or later, which can sign EIP-7702 authorizations. It's suited to sandbox tests and to self-custody apps where your client code holds the user's key.
+
+```javascript sign-evm.mjs
+import { Wallet } from "ethers";
+
+export async function signEvmQuote(quote, privateKey) {
+  const { scheme, authorization, witness } = quote.sign;
+  if (scheme !== "evm_7702") throw new Error(`Unexpected scheme ${scheme}`);
+
+  const wallet = new Wallet(privateKey);
+  if (wallet.address.toLowerCase() !== quote.from.toLowerCase()) {
+    throw new Error("This key is not the quote's sender");
+  }
+
+  // 1. EIP-7702 authorization for the router contract
+  const auth = await wallet.authorize({
+    address: authorization.address,
+    chainId: BigInt(authorization.chainId),
+    nonce: BigInt(authorization.nonce),
+  });
+
+  // 2. EIP-712 witness. ethers derives the domain type itself.
+  const { EIP712Domain, ...types } = witness.types;
+  const witnessSig = await wallet.signTypedData(witness.domain, types, witness.message);
+
+  return {
+    signatures: {
+      authorization: auth.signature.serialized,
+      witness: witnessSig,
+    },
+  };
+}
+```
+
+Both values are 0x-prefixed 65-byte signatures (`r`, `s`, `v`), which is the format Submit expects.
+
+<Note>
+  These examples assume `witness` is standard EIP-712 typed data, with `domain`, `types`, `primaryType`, and `message`, and that `digests` has `authorization` and `witness` keys. Log one sandbox quote and check its shape before building on it.
+</Note>
+
+## Sign with a hardware or custom signer
+
+If your signer can't take structured EIP-7702 or EIP-712 input, sign the two hashes in `sign.digests` directly. The result is the same pair of signatures.
+
+```javascript
+import { SigningKey } from "ethers";
+
+const key = new SigningKey(privateKey);
+const signatures = {
+  authorization: key.sign(quote.sign.digests.authorization).serialized,
+  witness: key.sign(quote.sign.digests.witness).serialized,
+};
+```
+
+Sign a digest without hashing it again. `signMessage` and `personal_sign` add the EIP-191 prefix and produce a different signature, which Submit rejects with `422`.
+
+## Signing in the user's browser wallet
+
+Your user's wallet has to support signing EIP-7702 authorizations for an arbitrary contract, and many browser extension wallets don't yet allow it. Before you build on a wallet, test it in sandbox with a real quote. Embedded wallets and self-custody apps that hold the key in your own client code can use the local-key example above.
+
+## Submit and track
+
+Send both signatures in one call to [Submit signatures](/api-reference/platform/sponsored-transfers/submit-signatures):
+
+```bash
+curl https://api.platform.bitnob.com/v1/sponsored-transfers/$TRANSFER_ID/submit \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: transfer-0002-submit" \
+  -d '{
+    "signatures": {
+      "authorization": "0x8f1c...1b",
+      "witness": "0x4a7e...1c"
+    }
+  }'
+```
+
+On EVM chains the status passes through `assembled`, when Bitnob has built the fully signed transaction, before `pending` and `completed`.
+
+## Common problems
+
+| Symptom | Cause |
+|---|---|
+| `422 signature_invalid` | A different key signed, the payload was changed, or a digest was hashed again. The quote is still valid, so sign again. |
+| `failed` with `insufficient_token_balance` | The sender's balance dropped below `total_debit` before broadcast. |
+| `failed` with `transfer_reverts` or `reverted` | The token transfer reverted, for example because the token blocks the sender or recipient. |

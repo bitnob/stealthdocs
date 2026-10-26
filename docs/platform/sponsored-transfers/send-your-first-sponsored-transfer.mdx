@@ -1,0 +1,173 @@
+---
+title: "Send your first sponsored transfer on Solana"
+sidebarTitle: "Send your first transfer"
+description: "Quote a gasless USDC transfer on Solana devnet, sign it with the sender's key, submit the signature, and track it to completed."
+related:
+  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
+  - /docs/platform/sponsored-transfers/signing-by-chain
+  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+---
+
+This guide sends 1.00 USDC on Solana devnet from an address that holds no SOL. Solana is the simplest scheme to start with: one signature over one message.
+
+## Before you start
+
+- A sandbox API key exported as `PLATFORM_API_KEY`. See [Set up your account](/docs/platform/account-setup).
+- A test sender: a Solana keypair holding devnet USDC and **no SOL**. Get devnet USDC from [Circle's faucet](https://faucet.circle.com). Export the base58 secret key as `SENDER_SECRET_KEY`. Use a key you made for testing only.
+- A recipient address on devnet.
+- Node.js 18 or later, with `@solana/web3.js`, `tweetnacl`, and `bs58` installed.
+
+<Steps>
+  <Step title="Request a quote">
+    [Create sponsored transfer](/api-reference/platform/sponsored-transfers/create-sponsored-transfer-quote) takes the chain, asset, sender, recipient, and amount. It requires an `Idempotency-Key`. Use one per transfer, so a retry returns the same quote instead of creating a second one.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/sponsored-transfers \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: transfer-0001" \
+      -d '{
+        "chain": "solana",
+        "asset": "USDC",
+        "from": "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
+        "to": "3xTdGq5N9cMwvGq8FvdE1DbW9ZtCZr1k6Rr2nC9pHnQe",
+        "amount": "1.00"
+      }'
+    ```
+
+    ```json
+    {
+      "object": "sponsored_transfer",
+      "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+      "status": "quoted",
+      "chain": "solana",
+      "asset": "USDC",
+      "from": "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
+      "to": "3xTdGq5N9cMwvGq8FvdE1DbW9ZtCZr1k6Rr2nC9pHnQe",
+      "recipient_amount": "1.00",
+      "fee": { "amount": "0.02", "asset": "USDC", "usd": "0.02" },
+      "total_debit": "1.02",
+      "treat_as_gross_amount": false,
+      "expires_at": "2026-05-16T10:32:00Z",
+      "sign": {
+        "scheme": "solana_ed25519",
+        "signer": "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
+        "message_base64": "AQACBf3m..."
+      }
+    }
+    ```
+
+    The recipient gets `1.00` and the sender is debited `1.02`. Before going on, check that `sign.scheme` is `solana_ed25519`.
+  </Step>
+
+  <Step title="Show the user what they're signing">
+    In a real app, show `recipient_amount`, `fee`, `total_debit`, and the recipient before you ask for a signature, and get the user's confirmation. Request the quote when they're ready to confirm, because it expires at `expires_at`.
+  </Step>
+
+  <Step title="Sign the message">
+    Decode `message_base64` and sign the raw bytes with the sender's key. Don't change or hash the message first.
+
+    ```javascript sign.mjs
+    import { Keypair } from "@solana/web3.js";
+    import nacl from "tweetnacl";
+    import bs58 from "bs58";
+
+    export function signSolanaQuote(quote) {
+      if (quote.sign.scheme !== "solana_ed25519") {
+        throw new Error(`Unexpected scheme ${quote.sign.scheme}`);
+      }
+
+      const sender = Keypair.fromSecretKey(bs58.decode(process.env.SENDER_SECRET_KEY));
+      if (sender.publicKey.toBase58() !== quote.sign.signer) {
+        throw new Error("This key is not the quote's signer");
+      }
+
+      const message = Buffer.from(quote.sign.message_base64, "base64");
+      const signature = nacl.sign.detached(message, sender.secretKey);
+      return bs58.encode(signature);
+    }
+    ```
+
+    In production the user's wallet does this step. Test your wallet integration in sandbox first: it must sign the bytes exactly as given, without adding a prefix.
+  </Step>
+
+  <Step title="Submit the signature">
+    [Submit signatures](/api-reference/platform/sponsored-transfers/submit-signatures) takes the base58 signature as `signature`. It also requires an `Idempotency-Key`.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/sponsored-transfers/$TRANSFER_ID/submit \
+      -H "X-API-Key: $PLATFORM_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: transfer-0001-submit" \
+      -d '{ "signature": "5Hx3kq...base58sig" }'
+    ```
+
+    A `202` means Bitnob verified the signature, added its own, and queued the transfer for broadcast. A `422 signature_invalid` means the signature didn't match. The quote is still valid, so sign again and resubmit.
+  </Step>
+
+  <Step title="Track it to completed">
+    Subscribe to `sponsored_transfer.*` events, or poll [Get sponsored transfer](/api-reference/platform/sponsored-transfers/get-sponsored-transfer) until the status is terminal.
+
+    ```bash
+    curl https://api.platform.bitnob.com/v1/sponsored-transfers/$TRANSFER_ID \
+      -H "X-API-Key: $PLATFORM_API_KEY"
+    ```
+
+    The status moves from `validating` to `submitted` to `pending`, and then to `completed`. Once it's `pending`, `tx_hash` is set and you can look the transaction up on a devnet explorer. The sender's SOL balance is still zero.
+  </Step>
+</Steps>
+
+## Put it together
+
+```javascript transfer.mjs
+import { signSolanaQuote } from "./sign.mjs";
+
+const api = (path, init = {}) =>
+  fetch(`https://api.platform.bitnob.com/v1${path}`, {
+    ...init,
+    headers: {
+      "X-API-Key": process.env.PLATFORM_API_KEY,
+      "Content-Type": "application/json",
+      ...init.headers,
+    },
+  }).then(async (res) => ({ status: res.status, body: await res.json() }));
+
+const transferKey = `transfer-${crypto.randomUUID()}`;
+
+const quote = await api("/sponsored-transfers", {
+  method: "POST",
+  headers: { "Idempotency-Key": transferKey },
+  body: JSON.stringify({
+    chain: "solana",
+    asset: "USDC",
+    from: process.env.SENDER_ADDRESS,
+    to: process.env.RECIPIENT_ADDRESS,
+    amount: "1.00",
+  }),
+});
+
+const signature = signSolanaQuote(quote.body);
+
+const submitted = await api(`/sponsored-transfers/${quote.body.id}/submit`, {
+  method: "POST",
+  headers: { "Idempotency-Key": `${transferKey}-submit` },
+  body: JSON.stringify({ signature }),
+});
+if (submitted.status !== 202) throw new Error(JSON.stringify(submitted.body));
+
+const terminal = new Set(["completed", "failed", "expired", "cancelled"]);
+let transfer = submitted.body;
+while (!terminal.has(transfer.status)) {
+  await new Promise((r) => setTimeout(r, 3000));
+  transfer = (await api(`/sponsored-transfers/${quote.body.id}`)).body;
+}
+console.log(transfer.status, transfer.tx_hash, transfer.failure_code ?? "");
+```
+
+Polling is fine for a test. In production, use webhooks and poll only as a fallback.
+
+## Next steps
+
+- Send on EVM chains, which need two signatures: [Sign on EVM chains](/docs/platform/sponsored-transfers/sign-on-evm-chains).
+- Send USDT on Tron, with the one-time approval: [Sign on Tron](/docs/platform/sponsored-transfers/sign-on-tron).
+- Handle expiry, budgets, and on-chain failures: [Handle failures and expiry](/docs/platform/sponsored-transfers/handle-failures-and-expiry).

@@ -349,6 +349,42 @@
                 ]
               },
               {
+                "group": "Sponsored transfers",
+                "icon": "gas-pump",
+                "pages": [
+                  "docs/platform/sponsored-transfers/overview",
+                  {
+                    "group": "Concepts",
+                    "pages": [
+                      "docs/platform/sponsored-transfers/how-sponsored-transfers-work",
+                      "docs/platform/sponsored-transfers/signing-by-chain"
+                    ]
+                  },
+                  {
+                    "group": "Get started",
+                    "pages": [
+                      "docs/platform/sponsored-transfers/send-your-first-sponsored-transfer"
+                    ]
+                  },
+                  {
+                    "group": "Guides",
+                    "pages": [
+                      "docs/platform/sponsored-transfers/sign-on-evm-chains",
+                      "docs/platform/sponsored-transfers/sign-on-tron",
+                      "docs/platform/sponsored-transfers/charge-a-partner-fee",
+                      "docs/platform/sponsored-transfers/sweep-a-full-balance",
+                      "docs/platform/sponsored-transfers/handle-failures-and-expiry"
+                    ]
+                  },
+                  {
+                    "group": "Reference",
+                    "pages": [
+                      "docs/platform/sponsored-transfers/statuses-errors-and-events"
+                    ]
+                  }
+                ]
+              },
+              {
                 "group": "Bitcoin",
                 "icon": "bitcoin",
                 "pages": [

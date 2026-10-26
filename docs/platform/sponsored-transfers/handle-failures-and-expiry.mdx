@@ -1,0 +1,66 @@
+---
+title: "Handle sponsored transfer failures and expiry"
+sidebarTitle: "Handle failures"
+description: "Recover from expired quotes, bad signatures, rate limits, budget limits, and on-chain failures, and know when to re-quote versus re-sign."
+related:
+  - /docs/platform/sponsored-transfers/statuses-errors-and-events
+  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
+  - /docs/platform/making-requests
+---
+
+Most problems with a sponsored transfer fall into one of three groups, and each has a different fix:
+
+| Group | Example | Fix |
+|---|---|---|
+| The quote can't be used | Expired, already submitted | Request a new quote, and have the user sign again |
+| The signature is wrong | `signature_invalid` | Have the user sign the same quote again |
+| The transfer failed after broadcast | `insufficient_token_balance` | Fix the cause, then quote again |
+
+## When quoting fails
+
+| Response | Code | What to do |
+|---|---|---|
+| `400` | `invalid_request` | Fix the request: an unsupported chain, asset, or network, a malformed address or amount, a gross `amount` that doesn't cover the fees, or an invalid `partner_fee`. Don't retry unchanged. |
+| `429` | `rate_limited` | You're quoting too fast. Wait for `Retry-After`, then retry. |
+| `429` | `budget_exceeded` | Your organisation has used its daily sponsored-gas budget. Retrying soon won't help. Tell the user sponsored sends are unavailable for now, and alert your team. |
+| `503` | `capacity_unavailable` | Sponsorship capacity is briefly unavailable. Retry after a short backoff. |
+
+Branch on `429` by its `code`. Treating `budget_exceeded` like an ordinary rate limit makes you retry for hours.
+
+<Tip>
+  Request quotes only when the user is about to confirm. Quoting every time someone opens a send screen uses up your quote rate and daily budget on transfers that never happen.
+</Tip>
+
+## When submitting fails
+
+| Response | Code | Quote still usable | What to do |
+|---|---|---|---|
+| `422` | `signature_invalid` | Yes | The signature doesn't recover to `from`, or the Tron approval signature is missing. Have the user sign the **same** quote again, then resubmit. |
+| `409` | `quote_expired` | No | Request a new quote. Show the new amounts, because the fee can change, and have the user sign again. |
+| `409` | `conflict` | No | The quote was already submitted. Don't submit again: fetch the transfer and track it. |
+
+A `409 conflict` usually means a retry after a timeout. If the first submit reached Bitnob, the transfer is already moving. Retries with the same `Idempotency-Key` and body return the original response instead of `409`, so reuse the key when you retry a submit.
+
+## When the transfer fails on chain
+
+A transfer in `failed` status carries `failure_code` and `failure_reason`. It is terminal: that transfer won't be retried.
+
+| `failure_code` | Meaning | What to do |
+|---|---|---|
+| `insufficient_token_balance` | The sender's balance was below `total_debit` at broadcast. | Ask the user to top up, or quote a smaller amount. |
+| `transfer_reverts` | The transfer was found to revert before broadcast, for example because the token contract blocks the sender or recipient. | Check the addresses. Don't retry unchanged. |
+| `reverted` | The transaction was mined but reverted. | Check the addresses and token state, then quote again if appropriate. |
+
+Other codes may be added. Show `failure_reason` in your logs, and fall back to a generic message for codes you don't recognise.
+
+## Expired and cancelled transfers
+
+`expired` means the quote passed `expires_at` without a valid submission. Nothing was signed by Bitnob, and nothing moved. `cancelled` means the transfer was cancelled before broadcast. Both are terminal and safe to retry with a new quote.
+
+## Never double-send
+
+The user's funds only move when a submitted quote broadcasts. Use these rules to make sure each payment intent results in at most one transfer:
+
+- Give each payment intent one quote `Idempotency-Key` and one submit `Idempotency-Key`, and reuse them on retries.
+- Before you request a replacement quote, check that the previous transfer is `expired`, `failed`, or `cancelled`, not still `pending`.
+- Store the transfer `id` against your payment intent as soon as the quote returns.

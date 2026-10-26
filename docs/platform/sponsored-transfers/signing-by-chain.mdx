@@ -1,0 +1,69 @@
+---
+title: "What users sign for a sponsored transfer, by chain"
+sidebarTitle: "Signing by chain"
+description: "The sign payload differs on Solana, EVM chains, and Tron. See which fields each scheme returns and which signatures to submit."
+related:
+  - /docs/platform/sponsored-transfers/sign-on-evm-chains
+  - /docs/platform/sponsored-transfers/sign-on-tron
+  - /docs/platform/sponsored-transfers/send-your-first-sponsored-transfer
+---
+
+Every quote carries a `sign` object. Its `scheme` tells you which fields are filled in, what the user signs, and which fields you submit. Branch on `sign.scheme`, not on `chain`.
+
+<Warning>
+  Sign the payload exactly as returned. Don't rebuild the message, re-encode it, or let a wallet library hash it again. Bitnob checks that the signature recovers to `from` over these exact bytes, and anything else returns `422 signature_invalid`.
+</Warning>
+
+## Summary
+
+| `scheme` | Chains | User signs | Key type | Submit as |
+|---|---|---|---|---|
+| `solana_ed25519` | Solana | The raw bytes of `sign.message_base64` | ed25519 | `signature` (base58) |
+| `evm_7702` | Ethereum, Base, Arbitrum, Optimism, Polygon, BSC | `sign.authorization` (EIP-7702) and `sign.witness` (EIP-712) | secp256k1 | `signatures.authorization` and `signatures.witness` (0x-prefixed, 65 bytes each) |
+| `tron_router` | Tron | `sign.digest`, plus `sign.approve.digest` on a first transfer | secp256k1 | `tron_signature`, plus `tron_approve_signature` when needed |
+
+## `solana_ed25519`
+
+| Field | Meaning |
+|---|---|
+| `message_base64` | The transaction message, base64-encoded. Decode it and sign the bytes as they are. |
+| `signer` | The key that must sign. Always equal to `from`. |
+
+The user signs the decoded bytes with their ed25519 key. You submit the 64-byte signature, base58-encoded, as `signature`. Bitnob adds the fee payer's signature and broadcasts.
+
+[Send your first sponsored transfer](/docs/platform/sponsored-transfers/send-your-first-sponsored-transfer) has working code.
+
+## `evm_7702`
+
+EVM transfers need two signatures from the same `from` key:
+
+| Field | What it is | How to sign it |
+|---|---|---|
+| `authorization` | An EIP-7702 authorization tuple: `chainId`, `address`, and `nonce`. It lets the user's address run Bitnob's paymaster router code for this transfer. | As an EIP-7702 authorization, for example with viem's `signAuthorization`. |
+| `witness` | EIP-712 typed data that binds the quoted transfer, so the router can only execute what was quoted. | As typed data, with `eth_signTypedData_v4` or viem's `signTypedData`. |
+| `digests` | The raw 32-byte hashes of both, for hardware wallets and custom signers that sign hashes directly. | Optional. Sign these only if your signer can't take the structured form. |
+
+Submit both as `signatures.authorization` and `signatures.witness`. Each is a 0x-prefixed 65-byte signature, which is `r`, `s`, and `v` concatenated.
+
+The quote response also returns `router_version`, the router contract version the quote was built against. Leave `router_version` out of your request to get the chain's default.
+
+See [Sign on EVM chains](/docs/platform/sponsored-transfers/sign-on-evm-chains).
+
+## `tron_router`
+
+| Field | Meaning |
+|---|---|
+| `digest` | A 0x-prefixed 32-byte EIP-191 digest that authorises the transfer. Always present. |
+| `approve` | Present only on the sender's first sponsored transfer of this token. It contains `needed` (always `true`), the `digest` to sign, and `token`, `spender`, and `selector` so you can check what is being approved. |
+
+The user signs `digest` with their secp256k1 key, and you submit it as `tron_signature`. When `approve` is present, the user also signs `approve.digest`, and you submit that as `tron_approve_signature` **in the same call**. Submitting only `tron_signature` when `approve` is present returns `422`.
+
+The approval lets Bitnob's router contract move that token from the sender's address. It is needed once per sender per token, and the quoted fee already covers its cost. If the sender's account has never been used on chain, Bitnob activates it first.
+
+See [Sign on Tron](/docs/platform/sponsored-transfers/sign-on-tron).
+
+## Where signing happens
+
+The user's key never touches your servers or Bitnob's. In production, the signing step runs in the user's wallet: a browser extension, a mobile wallet, or your own self-custody app. Your backend requests the quote, passes the `sign` payload to the client, and receives the signature back.
+
+The examples in these guides sign with a local test key, to keep them short. Use them in sandbox, and replace the signing step with your wallet integration in production.

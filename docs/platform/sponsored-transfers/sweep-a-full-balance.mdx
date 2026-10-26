@@ -1,0 +1,59 @@
+---
+title: "Sweep a full stablecoin balance with gross mode"
+sidebarTitle: "Sweep a full balance"
+description: "Use treat_as_gross_amount to send an address's entire token balance, with fees taken out of the amount, so the transfer never overdraws."
+related:
+  - /docs/platform/sponsored-transfers/how-sponsored-transfers-work
+  - /docs/platform/sponsored-transfers/charge-a-partner-fee
+  - /docs/platform/sponsored-transfers/handle-failures-and-expiry
+---
+
+To empty an address in net mode, you'd have to work out the balance minus fees yourself. Net mode adds the fees on top, so sending the full balance always overdraws. Gross mode turns it around: `amount` becomes the total that leaves the sender, and the fees come out of it.
+
+Use it for "send all", for closing out an account, or for moving a user's whole balance to a new address.
+
+## Request a gross quote
+
+Read the sender's current token balance, then pass it as `amount` with `treat_as_gross_amount: true`.
+
+```bash
+curl https://api.platform.bitnob.com/v1/sponsored-transfers \
+  -H "X-API-Key: $PLATFORM_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: sweep-0001" \
+  -d '{
+    "chain": "tron",
+    "asset": "USDT",
+    "from": "TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE",
+    "to": "TWd4WrZ9wn84f5x1hZhL4DHvk738ns5jwb",
+    "amount": "84.37",
+    "treat_as_gross_amount": true
+  }'
+```
+
+```json
+{
+  "object": "sponsored_transfer",
+  "status": "quoted",
+  "treat_as_gross_amount": true,
+  "total_debit": "84.37",
+  "fee": { "amount": "1.10", "asset": "USDT", "usd": "1.10" },
+  "recipient_amount": "83.27"
+}
+```
+
+`total_debit` equals `amount`, so the address ends at exactly zero. Check that `treat_as_gross_amount` is `true` in the response before you ask the user to sign.
+
+The fee here is illustrative. Tron fees are usually higher for a first-time sender, which needs the one-time approval, than for later transfers.
+
+## Edge cases
+
+- **The balance is too small.** If `amount` doesn't exceed the sponsorship fee plus any partner fee, the quote returns `400 invalid_request`. Don't offer "send all" for dust balances. Hide it, or explain that the balance is below the minimum.
+- **The balance changes before broadcast.** If the address receives more tokens after the quote, the extra stays behind. If it sends tokens elsewhere first, the transfer fails with `insufficient_token_balance`. Read the balance immediately before you quote.
+- **With a partner fee.** Both fees come out of `amount`: `recipient_amount` = `amount` − `fee` − `partner_fee`.
+
+## Show the right number
+
+In gross mode, the number the user typed or picked is what they pay, not what the recipient gets. Make your confirmation screen lead with `recipient_amount`, so the recipient's side is clear:
+
+> Send all 84.37 USDT. The recipient gets 83.27 USDT after a 1.10 USDT network fee.
