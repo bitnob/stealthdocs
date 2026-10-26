@@ -7370,9 +7370,6 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful response"
-          },
           "400": {
             "description": "Validation error",
             "content": {
@@ -7419,6 +7416,142 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Card terminated successfully",
+                  "data": {
+                    "message": "Card termination processing",
+                    "success": false,
+                    "transaction": {
+                      "amount": "0",
+                      "balance_after": "0",
+                      "balance_before": "2000000",
+                      "business_pool": false,
+                      "card_id": "01a1065d-1d30-7a57-86d6-f58d00398b3c",
+                      "cardholder_name": "Ifeoma Okafor",
+                      "company_id": "7a3f909c-1208-42d5-927a-583c41281d8a",
+                      "created_at": "2026-10-26T03:33:38.036429010Z",
+                      "created_by": "2c9f5b61-8b1a-4c3d-a4f7-6d9e12b4c890",
+                      "currency": "USD",
+                      "description": "Card termination balance refund",
+                      "display_amount": 0,
+                      "fee_amount": "0",
+                      "id": "01a17645-5674-771e-8c65-05c1827c4b49",
+                      "last_four_digit": "1376",
+                      "reference": "CARD_TERMN_FC4195A6A5D5",
+                      "status": "pending",
+                      "transaction_date": "2026-10-26T03:33:38.036429010Z",
+                      "type": "termination",
+                      "updated_at": "2026-10-26T03:33:38.036458746Z"
+                    }
+                  },
+                  "timestamp": "2026-10-26T03:33:38.207420653Z"
+                },
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "success": {
+                          "type": "boolean"
+                        },
+                        "transaction": {
+                          "type": "object",
+                          "properties": {
+                            "amount": {
+                              "type": "string"
+                            },
+                            "balance_after": {
+                              "type": "string"
+                            },
+                            "balance_before": {
+                              "type": "string"
+                            },
+                            "business_pool": {
+                              "type": "boolean"
+                            },
+                            "card_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "cardholder_name": {
+                              "type": "string"
+                            },
+                            "company_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "created_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "created_by": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "currency": {
+                              "type": "string"
+                            },
+                            "description": {
+                              "type": "string"
+                            },
+                            "display_amount": {
+                              "type": "number"
+                            },
+                            "fee_amount": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "last_four_digit": {
+                              "type": "string"
+                            },
+                            "reference": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            },
+                            "transaction_date": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "type": {
+                              "type": "string"
+                            },
+                            "updated_at": {
+                              "type": "string",
+                              "format": "date-time"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
                 }
               }
             }
