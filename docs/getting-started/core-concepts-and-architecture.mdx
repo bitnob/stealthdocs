@@ -33,6 +33,13 @@ A customer is a person or business you serve. You create customers when a produc
 
 This distinction matters for compliance. When you issue a card, the card carries your customer's identity, not yours.
 
+### Addresses
+
+An address is where you receive crypto. You generate one per asset and network: a bitcoin address for on-chain deposits, or a stablecoin address on a supported chain, such as USDT or USDC on ERC20 or TRC20.
+
+Funds sent to an address you issued land in your balance for that currency, and a webhook event tells you when.
+
+
 ### Balances
 
 You hold a balance per currency. Balances are your working capital on the platform.
@@ -44,6 +51,16 @@ Funds arrive in a balance in three ways:
 - The proceeds of a trade.
 
 Funds leave a balance through a payout, a withdrawal, a card funding operation, or a trade.
+
+### Transactions
+
+A transaction is the record of one movement of value. Every movement in or out of a balance produces one, whatever the rail:
+
+* **Crypto:** on-chain bitcoin transfers, Lightning payments, and stablecoin transfers.
+* **Fiat:** deposits from bank accounts or mobile money, and payouts back to them.
+* **Cards and trades:** card funding and conversions between currencies.
+
+Read transactions to reconcile. Use webhook events to learn when a transaction's status changes.
 
 ### References
 
@@ -75,7 +92,7 @@ Every authenticated call follows the same path.
 
 ![Architecture diagram](/images/architecture-diagram.png)
 
-## Why money movement is asynchronous
+## Money movement is asynchronous
 
 The API answers in milliseconds. Bitcoin, stablecoin chains, and bank rails do not.
 
