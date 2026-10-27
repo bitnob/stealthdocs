@@ -17,7 +17,7 @@ An on-chain address is a standard Bitcoin address on the main blockchain. When a
 
 ### Generating addresses
 
-When creating an address, you can specify:
+When creating an address with [Generate address](/api-reference/addresses/generate-address), you can specify:
 
 | Field | Definition |
 |---|---|
@@ -80,7 +80,7 @@ Lightning invoices allow near-instant BTC payments on top of Bitcoin’s second-
 
 ### Creating a Lightning invoice
 
-Similar to on-chain addresses, you generate a Lightning invoice via the Bitnob Business API. The invoice is a BOLT11 string that starts with ln. This is what you display or provide to the payer.
+Similar to on-chain addresses, you generate a Lightning invoice via the Bitnob Business API, with [Create invoice](/api-reference/lightning/create-invoice). The invoice is a BOLT11 string that starts with ln. This is what you display or provide to the payer.
 
 ```bash
 POST /api/lightning/invoices

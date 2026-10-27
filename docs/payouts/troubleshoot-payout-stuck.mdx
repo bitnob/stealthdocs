@@ -30,7 +30,7 @@ For **onchain** payouts, nothing happens until your crypto deposit arrives at th
 
 ## Cause 2: you are reading the wrong status field
 
-Webhook payloads and status lookups do not always use the same vocabulary for the same state. If your code compares a webhook's `data.status` value against the values documented for Get Payout, a valid transition can look like "no change" to your system even though the payout moved forward.
+Webhook payloads and status lookups do not always use the same vocabulary for the same state. If your code compares a webhook's `data.status` value against the values documented for [Get payout](/api-reference/payouts/get-payout), a valid transition can look like "no change" to your system even though the payout moved forward.
 
 **Check:** log the raw webhook body and the raw response from `GET /api/payouts/{id}` side by side for the same payout. Map both vocabularies explicitly in your integration rather than assuming they match.
 
