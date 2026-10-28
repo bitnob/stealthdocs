@@ -1152,6 +1152,194 @@
   },
   "redirects": [
     {
+      "source": "/docs/bitcoin/a-practical-guide-for-non-technical-pms/_index",
+      "destination": "/learn/courses/bitcoin-for-product-managers"
+    },
+    {
+      "source": "/docs/card-issuing/card-fraud-course/_index",
+      "destination": "/learn/courses/card-fraud"
+    },
+    {
+      "source": "/docs/card-issuing/card-issuing-course/_index",
+      "destination": "/learn/courses/card-issuing"
+    },
+    {
+      "source": "/docs/courses/mastering-bitcoin-core-from-the-command-line/_index",
+      "destination": "/learn/courses/bitcoin-core-cli"
+    },
+    {
+      "source": "/docs/payouts/payouts-for-pms/_index",
+      "destination": "/learn/courses/payouts-for-product-managers"
+    },
+    {
+      "source": "/docs/payouts/payouts-for-pms/module-11-circular",
+      "destination": "/learn/courses/payouts-for-product-managers/module-11"
+    },
+    {
+      "source": "/docs/payouts/payouts-use-cases-unlocking-the-potential-of-bitcoin-and-stablecoin-settlement",
+      "destination": "/learn/courses/payouts-for-product-managers/payouts-use-cases-unlocking-the-potential-of-bitcoin-and-stablecoin-settlement"
+    },
+    {
+      "source": "/docs/genesis/api-best-practices/_index",
+      "destination": "/docs/getting-started/api-best-practices/api-keys-and-credentials"
+    },
+    {
+      "source": "/docs/genesis/core-concepts-and-architecture/_index",
+      "destination": "/docs/getting-started/core-concepts-and-architecture"
+    },
+    {
+      "source": "/docs/genesis/tutorials/_index",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/genesis/tutorials/_buy-airtime",
+      "destination": "/docs/getting-started/overview"
+    },
+    {
+      "source": "/docs/card-issuing/decrypt-card-secured-details",
+      "destination": "/docs/card-issuing/decrypt-card-details"
+    },
+    {
+      "source": "/docs/changelogs",
+      "destination": "/changelog"
+    },
+    {
+      "source": "/docs/changelogs/overview",
+      "destination": "/changelog"
+    },
+    {
+      "source": "/docs/developer-resources/_sdks",
+      "destination": "/docs/developer-resources/overview"
+    },
+    {
+      "source": "/docs/home",
+      "destination": "/"
+    },
+    {
+      "source": "/docs/home/overview",
+      "destination": "/"
+    },
+    {
+      "source": "/docs/payouts/_tutorials/how-to-send-payouts-with-bitnob",
+      "destination": "/docs/payouts/send-your-first-payout"
+    },
+    {
+      "source": "/docs/stablecoins/_internal-wallet-to-wallet-transfers",
+      "destination": "/docs/stablecoins/internal-wallet-to-wallet-transfers"
+    },
+    {
+      "source": "/api-reference/addresses/addresses",
+      "destination": "/api-reference/addresses/list-addresses"
+    },
+    {
+      "source": "/api-reference/authentication/webhook-verification",
+      "destination": "/api-reference/webhooks"
+    },
+    {
+      "source": "/api-reference/beneficiary/beneficiary",
+      "destination": "/api-reference/beneficiaries/list-beneficiaries"
+    },
+    {
+      "source": "/api-reference/bulk-transfers/bulk-transfers",
+      "destination": "/docs/payouts/overview"
+    },
+    {
+      "source": "/api-reference/bulk-transfers/get-bulk-transfer",
+      "destination": "/docs/payouts/overview"
+    },
+    {
+      "source": "/api-reference/customers/customers",
+      "destination": "/api-reference/customers/list-customers"
+    },
+    {
+      "source": "/api-reference/exchange-rates/exchange-rates",
+      "destination": "/api-reference/exchange-rates/get-single-pair-rate"
+    },
+    {
+      "source": "/api-reference/lightning/lightning",
+      "destination": "/api-reference/lightning/create-invoice"
+    },
+    {
+      "source": "/api-reference/payouts/get-supported-countries",
+      "destination": "/api-reference/payouts/supported-countries"
+    },
+    {
+      "source": "/api-reference/payouts/payouts",
+      "destination": "/api-reference/payouts/create-quote"
+    },
+    {
+      "source": "/api-reference/stablecoins/stablecoins",
+      "destination": "/docs/stablecoins/overview"
+    },
+    {
+      "source": "/api-reference/trading/_scheduled-order",
+      "destination": "/api-reference/trading/submit-order"
+    },
+    {
+      "source": "/api-reference/trading/create-scheduled-order",
+      "destination": "/api-reference/trading/submit-order"
+    },
+    {
+      "source": "/api-reference/trading/create-target-order",
+      "destination": "/api-reference/trading/submit-order"
+    },
+    {
+      "source": "/api-reference/trading/get-scheduled-order",
+      "destination": "/api-reference/trading/get-order-by-id-or-reference"
+    },
+    {
+      "source": "/api-reference/trading/trading",
+      "destination": "/api-reference/trading/create-quote"
+    },
+    {
+      "source": "/api-reference/transactions/transactions",
+      "destination": "/api-reference/transactions/list-transactions"
+    },
+    {
+      "source": "/api-reference/virtual-accounts/virtual-accounts",
+      "destination": "/api-reference/virtual-accounts/create-virtual-account"
+    },
+    {
+      "source": "/api-reference/virtual-accounts/webhooks",
+      "destination": "/docs/virtual-accounts/deposit-webhook"
+    },
+    {
+      "source": "/api-reference/virtual-cards/_update-spending-limits",
+      "destination": "/api-reference/cards/update-spend-limits"
+    },
+    {
+      "source": "/api-reference/virtual-cards/card-kyc",
+      "destination": "/api-reference/cards/card-kyc"
+    },
+    {
+      "source": "/api-reference/virtual-cards/card-transactions",
+      "destination": "/api-reference/cards/list-all-card-transactions"
+    },
+    {
+      "source": "/api-reference/virtual-cards/get-card-details",
+      "destination": "/api-reference/cards/get-secure-card-details"
+    },
+    {
+      "source": "/api-reference/virtual-cards/simulate-webhook",
+      "destination": "/api-reference/cards/simulate-card-webhook-sandbox"
+    },
+    {
+      "source": "/api-reference/virtual-cards/update-card-contact",
+      "destination": "/api-reference/cards/update-card-contact"
+    },
+    {
+      "source": "/api-reference/virtual-cards/virtual-cards",
+      "destination": "/api-reference/cards/create-card"
+    },
+    {
+      "source": "/api-reference/webhooks/overview",
+      "destination": "/api-reference/webhooks"
+    },
+    {
+      "source": "/api-reference/withdrawal/withdrawal",
+      "destination": "/api-reference/withdrawals/initiate-withdrawal"
+    },
+    {
       "source": "/docs/payouts/mass-payouts",
       "destination": "/docs/payouts/overview"
     },
