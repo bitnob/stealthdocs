@@ -110,3 +110,16 @@ def infer_schema:
     end
     | infer_schema
   )}
+# Endpoint pages take their title from the summary, and these two share one.
+# x-mint gives each a distinct page title; href keeps the existing URL.
+| {
+    "POST /api/payouts/quotes": {"title": "Create payout quote", "href": "/api-reference/payouts/create-quote"},
+    "POST /api/trading/quotes": {"title": "Create trading quote", "href": "/api-reference/trading/create-quote"}
+  } as $titles
+| reduce ($titles | to_entries[]) as $entry (.;
+    ($entry.key | split(" ")) as [$method, $path]
+    | ($method | ascii_downcase) as $method
+    | if .paths[$path][$method] == null then .
+      else .paths[$path][$method]["x-mint"] |= ((. // {}) * {"metadata": {"title": $entry.value.title}, "href": $entry.value.href})
+      end
+  )

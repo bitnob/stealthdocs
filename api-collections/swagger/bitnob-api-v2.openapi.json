@@ -3184,6 +3184,12 @@
               }
             }
           }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Create trading quote"
+          },
+          "href": "/api-reference/trading/create-quote"
         }
       }
     },
@@ -13873,6 +13879,12 @@
               }
             }
           }
+        },
+        "x-mint": {
+          "metadata": {
+            "title": "Create payout quote"
+          },
+          "href": "/api-reference/payouts/create-quote"
         }
       }
     },

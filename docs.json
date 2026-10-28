@@ -1139,7 +1139,8 @@
     "metatags": {
       "og:site_name": "Bitnob Docs",
       "twitter:card": "summary_large_image",
-      "twitter:site": "@bitnob"
+      "twitter:site": "@bitnob",
+      "twitter:creator": "@bitnob"
     },
     "organization": {
       "name": "Bitnob",

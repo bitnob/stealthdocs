@@ -2179,6 +2179,10 @@ paths:
                   quote_currency: USDT
                   side: SELL
                   quantity: '500'
+      x-mint:
+        metadata:
+          title: Create trading quote
+        href: /api-reference/trading/create-quote
   /api/trading/quotes/{id}:
     get:
       tags:
@@ -9702,6 +9706,10 @@ paths:
               settlement_amount: '1000'
               payment_reason: Invoice payment
               reference: your-unique-ref-123
+      x-mint:
+        metadata:
+          title: Create payout quote
+        href: /api-reference/payouts/create-quote
   /api/payouts/{quoteId}/initialize:
     post:
       tags:
