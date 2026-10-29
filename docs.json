@@ -1143,11 +1143,20 @@
       "twitter:creator": "@bitnob"
     },
     "organization": {
+      "id": "https://bitnob.com/#organization",
       "name": "Bitnob",
-      "url": "https://bitnob.com",
+      "url": "https://bitnob.com/",
+      "logo": "https://bitnob.com/bitnob-logo.png",
+      "description": "Bitnob is crypto infrastructure for businesses: global payouts, wallet-as-a-service, card issuing, OTC trading, treasury and developer APIs on one platform.",
       "sameAs": [
         "https://x.com/bitnob",
-        "https://github.com/bitnob"
+        "https://twitter.com/Bitnob_Official",
+        "https://linkedin.com/company/bitnob",
+        "https://github.com/bitnob",
+        "https://instagram.com/Bitnob",
+        "https://youtube.com/@bitnob",
+        "https://facebook.com/bitnob",
+        "https://tiktok.com/@bitnob"
       ]
     }
   },
