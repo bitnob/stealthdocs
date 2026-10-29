@@ -103,7 +103,11 @@ The background behind that overlay is `images/og-background.png`, wired up in `d
 
 Do not set a global `og:image` in `seo.metatags`. That replaces the generated card with one static image on every page, so every link unfurls with the same title. Set `og:image` in a single page's frontmatter only when that page needs a bespoke card.
 
+The PNG is rendered from `images/source/og-background.svg` at 1200x630, with Inter for the wordmark. Mintlify writes the section, title, and description across most of the width, from about x 70 to x 1050 and from y 200 down. Keep anything that would compete with the text out of that area: the wordmark sits above it and the rings stay faint.
+
 Social previews served from `mint dev`, including through a tunnel, do not always resolve the generated image. Verify unfurls against the deployed site.
+
+Mintlify does not output `twitter:site`, whether it is set in `seo.metatags` or in frontmatter. `twitter:creator` is set alongside it so X still attributes cards to @bitnob.
 
 ## Changelog
 

@@ -10219,6 +10219,10 @@ paths:
       summary: Rotate signing secret
       tags:
       - Subscriptions
+      x-mint:
+        metadata:
+          title: Rotate subscription signing secret
+        href: /api-reference/platform/subscriptions/rotate-signing-secret
   /transactions:
     get:
       description: Returns a paginated list of transactions. Filterable by wallet_id, status, direction, asset, and created_at range.
@@ -10415,6 +10419,10 @@ paths:
       summary: List transactions
       tags:
       - Transactions
+      x-mint:
+        metadata:
+          title: List transactions across wallets
+        href: /api-reference/platform/transactions/list-transactions
     post:
       description: |-
         Creates a new transaction. The transaction is automatically signed using your API key credentials and submitted for broadcast. Requires the Idempotency-Key header.
@@ -12367,6 +12375,10 @@ paths:
       summary: List addresses
       tags:
       - Wallets
+      x-mint:
+        metadata:
+          title: List wallet addresses
+        href: /api-reference/platform/wallets/list-addresses
     post:
       description: 'Derives an address for the wallet. Account-based chains (Ethereum / EVM L2s, Solana, Tron, TON) hold exactly one address per wallet — repeated calls with an asset_id on the same chain return the existing primary (with `X-Idempotent-Replayed: true`). Bitcoin permits multiple addresses, so each call derives a new one.'
       operationId: postWalletsByIdAddresses
@@ -14342,6 +14354,10 @@ paths:
       summary: Rotate signing secret
       tags:
       - Webhooks
+      x-mint:
+        metadata:
+          title: Rotate webhook signing secret
+        href: /api-reference/platform/webhooks/rotate-signing-secret
 security:
 - ApiKeyAuth: []
 servers:
