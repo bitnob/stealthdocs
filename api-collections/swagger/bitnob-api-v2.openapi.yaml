@@ -5772,6 +5772,8 @@ paths:
       summary: List crypto addresses
       tags:
       - Addresses
+      x-mint:
+        href: /api-reference/addresses/list-addresses
     post:
       description: Mints a new deposit address on a chain. It never returns an existing address (except on Stellar, which uses one memo-routed address per organisation); a repeated reference is 409. With customer_id or customer_email the address belongs to a customer, which needs the customers and customer_addresses switches (403 FEATURE_NOT_ENABLED); customer_email finds or creates the customer.
       operationId: addressesGenerate
@@ -6084,6 +6086,8 @@ paths:
       summary: Generate a crypto address
       tags:
       - Addresses
+      x-mint:
+        href: /api-reference/addresses/generate-address
   /api/addresses/supported-chains:
     get:
       description: Returns the chains available in the request environment, sorted by name, with each chain's native token and stablecoins. Gated chains are not included.
@@ -6168,6 +6172,8 @@ paths:
       summary: List supported chains
       tags:
       - Addresses
+      x-mint:
+        href: /api-reference/addresses/supported-chains
   /api/addresses/validate:
     post:
       description: Checks whether an address is valid for a chain on the network the request environment resolves to. An invalid address is reported in the result (valid false with an error), not as an HTTP error.
@@ -6294,6 +6300,8 @@ paths:
       summary: Validate a crypto address
       tags:
       - Addresses
+      x-mint:
+        href: /api-reference/addresses/validate-address
   /api/addresses/{id}:
     get:
       description: Returns one of the organisation's addresses by id.
@@ -6442,6 +6450,8 @@ paths:
       summary: Get a crypto address
       tags:
       - Addresses
+      x-mint:
+        href: /api-reference/addresses/get-address-by-id
   /api/balances:
     get:
       description: Returns every ledger account of your organisation with its ledger and available balance.
@@ -6548,6 +6558,8 @@ paths:
       summary: List balances
       tags:
       - Balances
+      x-mint:
+        href: /api-reference/balances/list-balances
   /api/balances/{currency}:
     get:
       description: Returns the balance of the account in one currency (case-insensitive match). A currency with no account is refused with 400 VALIDATION_ERROR ("no account found for currency"). pending_balance is total_balance minus available_balance.
@@ -6690,6 +6702,8 @@ paths:
       summary: Get a balance by currency
       tags:
       - Balances
+      x-mint:
+        href: /api-reference/balances/get-balance-by-currency
   /api/banks/{countryCode}:
     get:
       deprecated: true
@@ -6920,6 +6934,8 @@ paths:
       summary: List beneficiaries
       tags:
       - Beneficiaries
+      x-mint:
+        href: /api-reference/beneficiaries/list-beneficiaries
     post:
       description: Saves a crypto or bank beneficiary for your organisation. A crypto beneficiary needs wallet_address, currency and network, and the address must match the network's format. A bank beneficiary needs a destination with at least account_number, account_name and bank_code; send it as a JSON object (a JSON-encoded string is still accepted). If an identical beneficiary already exists, that one is returned with 201 instead of creating a duplicate.
       operationId: beneficiariesCreate
@@ -7118,6 +7134,8 @@ paths:
       summary: Create a beneficiary
       tags:
       - Beneficiaries
+      x-mint:
+        href: /api-reference/beneficiaries/create-beneficiary
   /api/beneficiaries/{beneficiaryId}:
     delete:
       description: Soft-deletes a beneficiary.
@@ -7318,6 +7336,8 @@ paths:
       summary: Get a beneficiary
       tags:
       - Beneficiaries
+      x-mint:
+        href: /api-reference/beneficiaries/get-beneficiary
     put:
       description: Updates the fields sent; the rest are kept. The result is validated like a create, so a bank destination must still carry account_number, account_name and bank_code.
       operationId: beneficiariesUpdate
@@ -7466,6 +7486,8 @@ paths:
       summary: Update a beneficiary
       tags:
       - Beneficiaries
+      x-mint:
+        href: /api-reference/beneficiaries/update-beneficiary
   /api/cards:
     get:
       description: Lists the company's cards, excluding team-member cards (see /api/cards/team-members). Cursor paginated through page_info. balance_breakdown is null on list rows.
@@ -7921,6 +7943,8 @@ paths:
       summary: List cards
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/list-cards
     post:
       description: 'Issues a card for an existing customer (customer_id) or an inline customer. card_program picks the issuer: prepaid cards are Miden cards and can be funded at creation (amount, micro-units, $2 to $2,500, debited from the company balance with the creation fee); collateral and collateral_business are Rain cards, which take no initial funding and need the customer approved by card KYC first. A Rain card takes one spending limit. The card comes back with status pending and created_status processing while the issuer provisions it; the card.created webhook follows. Needs an active org and the virtual_cards and card_creation_enabled features; a card for anyone other than the company''s own team members also needs the customers and customer_cards switches. reference is unique per company.'
       operationId: cardsCreate
@@ -8370,6 +8394,8 @@ paths:
       summary: Create a card
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/create-card
   /api/cards/encryption-key:
     post:
       description: Stores the company's RSA public key and turns on encrypted card details for the company. Within about 30 seconds GET /api/cards/{cardId}/secure returns encrypted_details sealed to this key instead of details; a Bitnob platform switch can turn encryption off for everyone during an incident. Replacing the key keeps encryption on and affects every later details read. Dashboard reveals stay plaintext. Turning encryption off again needs Bitnob support.
@@ -9001,6 +9027,8 @@ paths:
       summary: Start individual card KYC
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/card-kyc
   /api/cards/kyc/corporate:
     post:
       description: Starts business verification (KYB) for corporate cards (collateral_business, Rain), for an existing business customer (customer_id) or an inline one; exactly one is required. entity, company_address and admin are required; the service also needs entity.tax_id, at least one UBO, and admin.is_terms_of_service_accepted. completion_link is a bearer link to the hosted KYB page. Needs the customers and customer_cards switches. The company is charged the KYB fee; a restarted application is not charged again.
@@ -10574,6 +10602,8 @@ paths:
       summary: Create a lite card
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/create-lite-card
   /api/cards/team-members:
     get:
       description: Lists cards held by the company's team-member customers. Cursor paginated. Malformed numeric, boolean and date filters are ignored rather than refused; card_id must be a UUID.
@@ -11248,6 +11278,8 @@ paths:
       summary: List card transactions
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/list-all-card-transactions
   /api/cards/{cardId}:
     delete:
       description: Permanently terminates the card. A JSON body with reason is required. Irreversible. Not allowed within 24 hours of creation. The card moves to pending_termination and the remaining balance is refunded to the company balance asynchronously, so the result normally carries success false and a pending termination transaction.
@@ -11449,6 +11481,8 @@ paths:
       summary: Terminate a card
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/terminate-card
     get:
       description: Returns one card with its live balance breakdown and current-month top-up and spend aggregates.
       operationId: cardsGet
@@ -11590,6 +11624,8 @@ paths:
       summary: Get a card
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/get-card
   /api/cards/{cardId}/balance:
     post:
       description: type fund moves money from the company balance to the card; withdraw moves it back to the company balance. amount is micro-units (1 USD = 1,000,000). Funding is $2 to $2,500 per top-up, one top-up per card every two minutes, plus the top-up fee, and counts against the tier outflow limit; a withdrawal must leave at least $1 on the card and counts against the tier inflow limit. Needs virtual_cards and card_topup_enabled (fund) or card_withdrawal_enabled (withdraw). data.success is false while the movement is still processing. A reference that already funded the card returns that transaction again. Funding a card held by a customer of the company (not a team member) also needs the customers and customer_cards switches; withdrawing does not.
@@ -12179,6 +12215,8 @@ paths:
       summary: Fund or withdraw from a card
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/fund-or-withdraw-balance
   /api/cards/{cardId}/contact:
     patch:
       description: Updates the cardholder email and/or mobile number at the card issuer. At least one is required; omitted fields are unchanged.
@@ -12371,6 +12409,8 @@ paths:
       summary: Update cardholder contact
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/update-card-contact
   /api/cards/{cardId}/deposit-addresses:
     get:
       description: Lists the card's crypto deposit addresses, one per network. A confirmed stablecoin deposit to one of them funds the card. A card id that is not yours returns an empty list.
@@ -13720,6 +13760,8 @@ paths:
       summary: Reveal card details
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/get-secure-card-details
   /api/cards/{cardId}/simulate-webhook:
     post:
       description: 'Sandbox only: the request always runs on the sandbox plane. Sends a synthetic card event ($5.00 at "Sandbox Test Merchant") to the card''s webhook_url, or the company webhook when the card has none. Writes no transaction. callback_url is masked; dispatched is false, with skip_reason, when nothing was sent. A card id that matches none of yours answers 500 today, not 404.'
@@ -13846,6 +13888,8 @@ paths:
       summary: Simulate a card webhook
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/simulate-card-webhook-sandbox
   /api/cards/{cardId}/spend-limits:
     put:
       description: Sets the card's spending limits, in micro-units (1 USD = 1,000,000), at the issuer. Prepaid (Miden) cards take any combination; collateral (Rain) cards hold exactly one limit, and a business card holds none or one of daily, weekly, monthly, yearly or all_time (an empty spending_limits clears it). updated_by is ignored. data is omitted.
@@ -14031,6 +14075,8 @@ paths:
       summary: Update spending limits
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/update-spend-limits
   /api/cards/{cardId}/spending-limits:
     put:
       deprecated: true
@@ -14555,6 +14601,8 @@ paths:
       summary: Freeze or unfreeze a card
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/freeze-or-unfreeze
   /api/cards/{cardId}/terminate:
     post:
       deprecated: true
@@ -15079,6 +15127,8 @@ paths:
       summary: List a card's transactions
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/list-card-transactions-by-card
   /api/cards/{cardId}/transactions/{transactionId}:
     get:
       description: Returns one card transaction, looked up by transaction ID within the company.
@@ -15199,6 +15249,8 @@ paths:
       summary: Get a card transaction
       tags:
       - Cards
+      x-mint:
+        href: /api-reference/cards/get-single-card-transaction
   /api/cards/{cardId}/unfreeze:
     post:
       deprecated: true
@@ -16223,6 +16275,8 @@ paths:
       summary: List customers
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/customers/list-customers
     post:
       description: Creates a customer for the authenticated organisation. Needs the customers switch (403 FEATURE_NOT_ENABLED) and, on live, an active organisation (403 ORG_NOT_ACTIVE). If a customer with the same email, phone number or ID document already exists in the organisation, that customer is returned (201) instead of a new one, so a retried create is safe. A country on the compliance block list is refused with 403 COMPLIANCE_CHECK_FAILED.
       operationId: customersCreate
@@ -16576,6 +16630,8 @@ paths:
       summary: Create a customer
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/customers/create-customer
   /api/customers/countries:
     get:
       description: Returns the countries a customer can be onboarded in. Compliance-blocked countries are left out because customer creation refuses them.
@@ -16658,6 +16714,8 @@ paths:
       summary: List supported countries
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/customers/list-countries
   /api/customers/countries/{countryCode}/states:
     get:
       description: Returns the states or provinces of a country, identified by ISO 3166-1 alpha-2 or alpha-3 code (case-insensitive). A country with no subdivision data returns an empty states list.
@@ -16771,6 +16829,8 @@ paths:
       summary: List states for a country
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/customers/list-states-for-country
   /api/customers/{customerId}:
     delete:
       description: Soft-deletes one of the organisation's customers.
@@ -17079,6 +17139,8 @@ paths:
       summary: Get a customer
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/customers/get-customer
     put:
       description: Updates the supplied fields of a customer; omitted fields are left unchanged. Needs the customers switch (403 FEATURE_NOT_ENABLED) unless the customer is the organisation's own team member, and an active organisation on live (403 ORG_NOT_ACTIVE). An email, phone or ID document already held by another active customer is refused with 400. The onboarding quality checks of create are not re-run.
       operationId: customersUpdate
@@ -17351,6 +17413,8 @@ paths:
       summary: Update a customer
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/customers/update-customer
   /api/customers/{customerId}/cards:
     get:
       deprecated: true
@@ -17502,6 +17566,8 @@ paths:
       summary: List a customer's cards
       tags:
       - Customers
+      x-mint:
+        href: /api-reference/cards/get-cards-by-customer
   /api/exchange-rates:
     get:
       description: 'With from and to, returns the rate for that pair; with neither, returns every rate from base (default USD). Giving only one of from and to is 400 INVALID_PARAMS. Codes are case-insensitive. Rates come from a matrix rebuilt every minute from Brails (fiat and stablecoins) and the trading engine (BTC), with your organisation''s spread applied: sell_rate is what 1 base gets you, buy_rate what 1 base costs, mid_rate their average and inverse_rate 1/sell_rate. Rates are fixed to 8 decimal places (a tiny inverse shows as 0.00000001) and percent_change_24h to 2, measured against a daily snapshot. valid_for_seconds is 300. A matrix older than 7 minutes is refused with 422. In all-rates mode the order of rates is not fixed, base_currency echoes base as you sent it, and pairs that cannot be priced are listed in skipped_currencies instead of failing the request.'
@@ -17685,6 +17751,8 @@ paths:
       summary: Get exchange rates
       tags:
       - Exchange rates
+      x-mint:
+        href: /api-reference/exchange-rates/get-single-pair-rate
   /api/exchange-rates/all:
     get:
       deprecated: true
@@ -18318,6 +18386,8 @@ paths:
       summary: Convert an amount
       tags:
       - Exchange rates
+      x-mint:
+        href: /api-reference/exchange-rates/convert-amount
     post:
       deprecated: true
       description: Deprecated; use GET /api/exchange-rates/convert. Same calculation with the inputs in a JSON body. An unparseable body is 400 INVALID_BODY; missing fields or a non-positive amount are 400 INVALID_PARAMS. Responses carry Deprecation and Link (rel successor-version) headers.
@@ -18641,6 +18711,8 @@ paths:
       summary: Decode a BOLT11 invoice
       tags:
       - Lightning
+      x-mint:
+        href: /api-reference/lightning/decode-bolt11
   /api/lightning/invoices:
     get:
       description: Lists your organisation's invoices (incoming) and payments (outgoing), newest first. Pagination is returned inside data (total_count is a string), not in metadata. List items carry no preimage and no updated_at; read one invoice for those. Amounts are integer sats or msats encoded as strings; expires_at is Unix seconds.
@@ -18776,6 +18848,8 @@ paths:
       summary: List invoices
       tags:
       - Lightning
+      x-mint:
+        href: /api-reference/lightning/list-invoices
     post:
       description: 'Creates a BOLT11 invoice to receive a payment. amount is in sats (1 to 20,000,000); expiry is in seconds (default 86400). reference is the idempotency key: reusing it returns the existing invoice, whatever its status, with 201. When customer_id is set the customers and customer_lightning products must be enabled. auto_settle is sandbox only; sent with a live key it is refused with 422.'
       operationId: lightningCreateInvoice
@@ -19014,6 +19088,8 @@ paths:
       summary: Create an invoice
       tags:
       - Lightning
+      x-mint:
+        href: /api-reference/lightning/create-invoice
   /api/lightning/invoices/{id}:
     get:
       description: Returns one invoice or outgoing payment. Another organisation's invoice is reported as not found. preimage is empty until paid; expires_at is Unix seconds.
@@ -19169,6 +19245,8 @@ paths:
       summary: Get an invoice
       tags:
       - Lightning
+      x-mint:
+        href: /api-reference/lightning/get-invoice
   /api/lightning/invoices/{id}/simulate-payment:
     post:
       description: 'Sandbox only: pays one of your own pending incoming invoices through the simulator. The route always runs against sandbox, so a live invoice id is reported as not found. The credit and the webhook follow within a few seconds.'
@@ -19703,6 +19781,8 @@ paths:
       summary: Pay an invoice
       tags:
       - Lightning
+      x-mint:
+        href: /api-reference/lightning/send-payment
   /api/lightning/payments/initiate:
     post:
       deprecated: true
@@ -20536,6 +20616,8 @@ paths:
       summary: Preview a payment
       tags:
       - Lightning
+      x-mint:
+        href: /api-reference/lightning/preview-payment
   /api/lnurl/addresses:
     get:
       description: 'Lists one customer''s lightning addresses in your organisation. customer_id is required: an empty or non-UUID value is rejected with 400. Sendable amounts are integer sats as strings.'
@@ -23506,6 +23588,8 @@ paths:
       summary: List payouts
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/list-payouts
   /api/payouts/account-lookup:
     get:
       description: Verifies an account with the provider and returns the account holder's name, so you can show it before initializing a payout. For mobile money set type=mobile_money and pass the network as bank_code. Any provider failure, including a timeout, is answered as a 400 lookup failure.
@@ -23691,6 +23775,8 @@ paths:
       summary: Look up a bank or mobile money account
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/account-lookup
   /api/payouts/banks/{countryCode}:
     get:
       description: Lists the banks you can pay out to in a country, with the code to use as bank_code, unique across the country's destination types. banks is null when the country has no bank list (its schema takes the bank details as text).
@@ -23805,6 +23891,8 @@ paths:
       summary: List banks for a country
       tags:
       - Banks
+      x-mint:
+        href: /api-reference/payouts/banks-by-country
   /api/payouts/beneficiary-lookup:
     post:
       deprecated: true
@@ -24073,6 +24161,8 @@ paths:
       summary: Get payout limits
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/payout-limits
   /api/payouts/quotes:
     post:
       description: 'Prices a fiat payout. This is step one of three: create a quote, initialize it with the beneficiary (POST /api/payouts/{quoteId}/initialize), then finalize it (POST /api/payouts/{quoteId}/finalize). Give exactly one of amount (major units of from_asset), amount_in_base_units (satoshis, 10^-6 for USDT and USDC, kobo for NGN) or settlement_amount (what the beneficiary receives). The quote expires 6 minutes after creation for BTC and 16 minutes for USDT, USDC and NGN; expires_at says when. Fees are exclusive: amount is the principal, source_fee is the fee in the source asset and total_amount (amount + source_fee) is what is debited, or what must be deposited for an onchain quote. fees is the same fee in fee_currency (USD, or NGN for a naira source). Corridors whose rail depends on the beneficiary (USD ACH, wire or SWIFT; crypto to GHS bank or mobile money) show a zero fee here and are priced at initialize. Needs the send_fiat feature; the amount is checked against the corridor
@@ -24654,6 +24744,8 @@ paths:
       summary: Create a payout quote
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/create-quote
   /api/payouts/quotes/{quoteId}:
     get:
       description: Returns a quote by its quote_id, in whatever status it has reached. For an onchain quote that has been initialized, deposit_address (and payout.address) is where to send total_amount of from_asset.
@@ -26049,6 +26141,8 @@ paths:
       summary: List payout countries
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/supported-countries
   /api/payouts/supported-countries/{countryCode}/requirements:
     get:
       deprecated: true
@@ -26342,6 +26436,8 @@ paths:
       summary: Get a country's beneficiary requirements
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/country-requirements
   /api/payouts/{id}:
     get:
       description: Returns a payout by its id.
@@ -26528,6 +26624,8 @@ paths:
       summary: Get a payout
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/get-payout
   /api/payouts/{quoteId}/finalize:
     post:
       description: 'Step three of quote, initialize, finalize. Approves an INITIATED payout: the tier limit is checked and reserved, total_amount (principal plus fee) is held on the source balance, the payout moves to PENDING and is sent to the provider in the background. Follow it with GET /api/payouts/{id}, your callback_url or webhooks; it moves to PROCESSING and then SUCCESS or FAILED. Finalizing a payout that is already PENDING or PROCESSING returns it unchanged, so a retry is safe. An expired quote is refused before anything is held. An onchain payout can only be finalized once its deposit has been received. An offchain payout whose provider fee is not known yet is refused with payout_fee_pending: fetch the quote again until the fee appears, or create a new quote. No body.'
@@ -26855,6 +26953,8 @@ paths:
       summary: Finalize a payout
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/finalize-payout
   /api/payouts/{quoteId}/initialize:
     post:
       description: 'Step two of quote, initialize, finalize. Attaches the beneficiary to a quote, validates it against the country''s schema (GET /api/payouts/supported-countries/{country}), checks the balance covers amount plus fee, and stages the payout with the provider, which prices any fee the quote could not (USD ACH, wire or SWIFT; GHS bank or mobile money). The response carries fees, source_fee and total_amount, which is what finalize will hold. The quote must still be in QUOTE status and unexpired. beneficiary.country is required, and destination_type picks the schema (bank when absent); USD payouts must say ach, wire or swift. A customer_id makes the payout on behalf of that customer and needs the customers and customer_payouts switches; a value that is not a UUID is ignored (the payout is made without a customer) and an unknown customer is refused. A SWIFT payout with a business on either side needs invoice_s3_key. For an onchain quote the status becomes PENDING_ADDRESS_DEPOSIT
@@ -27560,6 +27660,8 @@ paths:
       summary: Initialize a payout
       tags:
       - Payouts
+      x-mint:
+        href: /api-reference/payouts/initialize-payout
   /api/stablecoins/supported-chains:
     get:
       deprecated: true
@@ -27758,6 +27860,8 @@ paths:
       summary: List trade orders
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/list-orders
     post:
       description: 'Submits a market order for a currency pair; side is relative to the base currency and quantity is always an amount of base. Crypto-to-crypto pairs (BTC, USDT, USDC) trade on the trading engine and return its fills and, with a quote_id, how much of the quote was used. Pairs where exactly one side is NGN and the other is BTC, USDT or USDC settle as an internal conversion and return the same order shape with no fills: with a quote_id from POST /api/trading/quotes the order fills at the locked price (the quote must be unexpired, unused, for the same pair and side, and its rate fresh; BTC quotes are also refused when the market moved too far since); without one a quote is taken and filled at once, and reference is then required. For NGN pairs reference (or else the quote id) is the idempotency key: repeating it returns the existing order with 201 and moves nothing. The order id of an NGN order is its conversion id. Requires an active organisation.'
       operationId: tradingSubmitOrder
@@ -28250,6 +28354,8 @@ paths:
       summary: Submit a trade order
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/submit-order
   /api/trading/orders/{id}:
     delete:
       description: Cancels an open order on the trading engine and returns the updated order. NGN conversion orders cannot be cancelled (the engine does not know them, so they read as 404). Errors carry the trading engine's own detail. Requires an active organisation.
@@ -28356,6 +28462,8 @@ paths:
       summary: Cancel a trade order
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/cancel-order
     get:
       description: Returns one order by id. If the trading engine does not know the id, it is looked up as an NGN conversion and returned in the order shape (side and base currency are rebuilt from the conversion legs; quote_id, reference and updated_at are empty; status is pending until the conversion completes). An id the engine does not know is therefore answered by the conversion lookup, which needs a UUID.
       operationId: tradingGetOrder
@@ -28504,6 +28612,8 @@ paths:
       summary: Get a trade order
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/get-order-by-id-or-reference
   /api/trading/prices:
     get:
       description: With both base_currency and quote_currency, returns the trading engine's mid price for that pair (quote currency per unit of base); with neither, returns all prices. Supplying only one of the two is a 400. Currency codes are trimmed and upper-cased before lookup; unknown pairs are refused by the engine. These are indicative prices with no spread and nothing locked; use POST /api/trading/quotes for a price you can trade at.
@@ -28623,6 +28733,8 @@ paths:
       summary: Get trading prices
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/list-all-prices
   /api/trading/quotes:
     post:
       description: Locks a price for a pair, side and quantity of base until expires_at; pass the returned id as quote_id when submitting the order. Crypto-to-crypto pairs are quoted by the trading engine, which sets the lifetime and canonical_price (the price in the system's usual pair direction). NGN pairs are quoted by the conversion service from the same rates as GET /api/exchange-rates (your spread included) and live 30 seconds by default; exchange gives what you send and receive, quantity echoes the request as sent, canonical_price is empty, and price is quote per base rounded to 8 places. For NGN pairs the source amount is rounded up to its smallest unit, the naira side must be within the per-conversion range (500 to 10000000 NGN by default), the balance you send from must cover it, and quotes are limited per organisation.
@@ -28986,6 +29098,8 @@ paths:
       summary: Request a trade quote
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/create-quote
   /api/trading/quotes/{id}:
     get:
       description: Returns how much of a trading-engine quote has been consumed, what remains, and whether it has expired or been exhausted. The id must be a UUID. NGN quotes are not tracked by the trading engine and read as 404. consumption_count is an int64 encoded as a string.
@@ -29084,6 +29198,8 @@ paths:
       summary: Get quote status
       tags:
       - Trading
+      x-mint:
+        href: /api-reference/trading/get-quote-status
   /api/trading/quotes/{id}/status:
     get:
       deprecated: true
@@ -29432,6 +29548,8 @@ paths:
       summary: List transactions
       tags:
       - Transactions
+      x-mint:
+        href: /api-reference/transactions/list-transactions
   /api/transactions/{id}:
     get:
       description: Returns one ledger transaction belonging to your organisation.
@@ -29543,6 +29661,8 @@ paths:
       summary: Get a transaction
       tags:
       - Transactions
+      x-mint:
+        href: /api-reference/transactions/get-transaction-by-id
   /api/transfers/internal:
     post:
       description: 'Moves funds from your balance to another Bitnob organisation''s balance in the same currency, in one ledger transaction with no fee: the recipient receives the full amount. amount is in base units (satoshis for BTC, 10^-6 for USDT and USDC, kobo for NGN). idempotency_key makes it safe to retry: a retry with the same key returns the original transfer. Needs the internal_transfer feature and an active organisation; the amount is checked and reserved against your tier limit (naira is not limited).'
@@ -30021,6 +30141,8 @@ paths:
       summary: List virtual accounts
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/list-virtual-accounts
     post:
       description: 'Opens an NGN bank account for an existing customer; all KYC and the account type come from the customer record, and a customer with id_type bvn has the BVN checked against their name and date of birth. Needs receive_fiat plus the customers and customer_virtual_accounts switches (403 FEATURE_NOT_ENABLED), and an active organisation on live (403 ORG_NOT_ACTIVE). reference is the idempotency key: a reference already used by the organisation returns that account (201) without opening another, and a concurrent create with the same reference is 409 DUPLICATE_REFERENCE. Deposits are delivered through the organisation''s webhooks.'
       operationId: virtualAccountsCreate
@@ -30390,6 +30512,8 @@ paths:
       summary: Create a virtual account
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/create-virtual-account
   /api/virtual-accounts/supported-currencies:
     get:
       description: Returns the currency codes a virtual account can be opened in, paged by limit and offset. Zero counts are omitted.
@@ -30476,6 +30600,8 @@ paths:
       summary: List supported currencies
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/supported-currencies
   /api/virtual-accounts/{id}:
     get:
       description: Returns one of the organisation's virtual accounts. An account owned by another organisation reads as not found.
@@ -30625,6 +30751,8 @@ paths:
       summary: Get a virtual account
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/get-virtual-account
   /api/virtual-accounts/{id}/alias:
     patch:
       description: Sets or clears the display alias of a virtual account. account_alias is required; an empty string clears it. Needs an active organisation on live (403 ORG_NOT_ACTIVE).
@@ -30847,6 +30975,8 @@ paths:
       summary: Update a virtual account alias
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/update-account-alias
   /api/virtual-accounts/{id}/simulate-deposit:
     post:
       description: 'Sandbox only: the route always runs against the sandbox environment. Credits a fixed 10,000 NGN to a sandbox virtual account and sends the virtual_account.deposit.success webhook, as a real deposit does. Credits are capped at 100,000 NGN per organisation per hour (429). The body is optional. Another organisation''s account id is 400; an id that matches no account is 500 today.'
@@ -31055,6 +31185,8 @@ paths:
       summary: Simulate a deposit (sandbox)
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/simulate-deposit-sandbox
   /api/virtual-accounts/{id}/transactions:
     get:
       description: Returns an offset-paginated page of transactions on one of the organisation's virtual accounts.
@@ -31216,6 +31348,8 @@ paths:
       summary: List virtual account transactions
       tags:
       - Virtual accounts
+      x-mint:
+        href: /api-reference/virtual-accounts/get-account-transactions
   /api/wallets/transfers:
     post:
       deprecated: true
@@ -31859,6 +31993,8 @@ paths:
       summary: Check your credentials
       tags:
       - Authentication
+      x-mint:
+        href: /api-reference/identity/who-am-i
     post:
       description: |-
         Echoes the authenticated client and organisation. Accepts any method and any body, so it is the quickest way to test request signing. Not subject to the active-organisation check.
@@ -32492,6 +32628,8 @@ paths:
       summary: Send crypto to an address
       tags:
       - Withdrawals
+      x-mint:
+        href: /api-reference/withdrawals/initiate-withdrawal
 security:
 - BitnobClientId: []
   BitnobClientSecret: []

@@ -437,7 +437,8 @@
             "icon": "id-card",
             "expanded": true,
             "pages": [
-              "GET /api/whoami"
+              "GET /api/whoami",
+              "POST /api/whoami"
             ]
           },
           {
@@ -459,7 +460,8 @@
               "POST /api/customers",
               "GET /api/customers",
               "GET /api/customers/{customerId}",
-              "PUT /api/customers/{customerId}"
+              "PUT /api/customers/{customerId}",
+              "DELETE /api/customers/{customerId}"
             ]
           },
           {
@@ -470,7 +472,8 @@
               "POST /api/beneficiaries",
               "GET /api/beneficiaries",
               "GET /api/beneficiaries/{beneficiaryId}",
-              "PUT /api/beneficiaries/{beneficiaryId}"
+              "PUT /api/beneficiaries/{beneficiaryId}",
+              "DELETE /api/beneficiaries/{beneficiaryId}"
             ]
           },
           {
@@ -482,7 +485,14 @@
               "GET /api/addresses",
               "GET /api/addresses/{id}",
               "POST /api/addresses/validate",
-              "GET /api/stablecoins/supported-chains"
+              "GET /api/addresses/supported-chains",
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "GET /api/stablecoins/supported-chains"
+                ]
+              }
             ]
           },
           {
@@ -493,9 +503,68 @@
               "POST /api/lightning/invoices",
               "GET /api/lightning/invoices",
               "GET /api/lightning/invoices/{id}",
+              "POST /api/lightning/invoices/{id}/simulate-payment",
               "POST /api/lightning/decode",
               "POST /api/lightning/preview",
-              "POST /api/lightning/pay"
+              "POST /api/lightning/pay",
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "POST /api/lightning/payments/initiate",
+                  "POST /api/lightning/payments/send"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "LNURL",
+            "icon": "at",
+            "expanded": true,
+            "pages": [
+              "POST /api/lnurl/pay",
+              "POST /api/lnurl/resolve",
+              "POST /api/lnurl/decode",
+              "POST /api/lnurl/encode",
+              {
+                "group": "Lightning addresses",
+                "icon": "address-card",
+                "pages": [
+                  "POST /api/lnurl/addresses",
+                  "GET /api/lnurl/addresses",
+                  "GET /api/lnurl/addresses/{id}",
+                  "PATCH /api/lnurl/addresses/{id}",
+                  "DELETE /api/lnurl/addresses/{id}"
+                ]
+              },
+              {
+                "group": "Domains",
+                "icon": "globe",
+                "pages": [
+                  "POST /api/lnurl/domains",
+                  "GET /api/lnurl/domains",
+                  "GET /api/lnurl/domains/{id}",
+                  "POST /api/lnurl/domains/{id}/verify",
+                  "POST /api/lnurl/domains/{id}/disable"
+                ]
+              },
+              {
+                "group": "Withdraw links",
+                "icon": "link",
+                "pages": [
+                  "POST /api/lnurl/withdrawals",
+                  "GET /api/lnurl/withdrawals/{id}",
+                  "POST /api/lnurl/withdrawals/{id}/cancel"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Nodes",
+            "icon": "server",
+            "expanded": true,
+            "pages": [
+              "POST /api/nodes"
             ]
           },
           {
@@ -503,7 +572,22 @@
             "icon": "arrow-up-from-bracket",
             "expanded": true,
             "pages": [
-              "POST /api/withdrawals"
+              "POST /api/withdrawals",
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "POST /api/wallets/transfers"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Transfers",
+            "icon": "right-left",
+            "expanded": true,
+            "pages": [
+              "POST /api/transfers/internal"
             ]
           },
           {
@@ -521,7 +605,18 @@
             "expanded": true,
             "pages": [
               "GET /api/exchange-rates",
-              "GET /api/exchange-rates/convert"
+              "GET /api/exchange-rates/convert",
+              "POST /api/exchange-rates/conversions",
+              "GET /api/exchange-rates/conversions",
+              "GET /api/exchange-rates/conversions/{id}",
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "GET /api/exchange-rates/all",
+                  "POST /api/exchange-rates/convert"
+                ]
+              }
             ]
           },
           {
@@ -535,7 +630,14 @@
               "POST /api/trading/orders",
               "GET /api/trading/orders",
               "GET /api/trading/orders/{id}",
-              "DELETE /api/trading/orders/{id}"
+              "DELETE /api/trading/orders/{id}",
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "GET /api/trading/quotes/{id}/status"
+                ]
+              }
             ]
           },
           {
@@ -544,6 +646,7 @@
             "expanded": true,
             "pages": [
               "POST /api/payouts/quotes",
+              "GET /api/payouts/quotes/{quoteId}",
               "POST /api/payouts/{quoteId}/initialize",
               "POST /api/payouts/{quoteId}/finalize",
               "GET /api/payouts/account-lookup",
@@ -552,7 +655,19 @@
               "GET /api/payouts/limits",
               "GET /api/payouts/banks/{countryCode}",
               "GET /api/payouts",
-              "GET /api/payouts/{id}"
+              "GET /api/payouts/{id}",
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "GET /api/payouts/reference/{reference}",
+                  "POST /api/payouts/quotes/{quoteId}/initialize",
+                  "POST /api/payouts/quotes/{quoteId}/finalize",
+                  "POST /api/payouts/beneficiary-lookup",
+                  "GET /api/payouts/supported-countries/{countryCode}/requirements",
+                  "GET /api/banks/{countryCode}"
+                ]
+              }
             ]
           },
           {
@@ -574,10 +689,9 @@
             "icon": "credit-card",
             "expanded": true,
             "pages": [
-              "POST /api/cards/kyc",
               "POST /api/cards",
               "GET /api/cards",
-              "POST /api/cards/lite",
+              "GET /api/cards/team-members",
               "GET /api/cards/transactions",
               "GET /api/cards/{cardId}",
               "DELETE /api/cards/{cardId}",
@@ -588,8 +702,41 @@
               "POST /api/cards/{cardId}/status",
               "PUT /api/cards/{cardId}/spend-limits",
               "PATCH /api/cards/{cardId}/contact",
+              "GET /api/cards/{cardId}/deposit-addresses",
+              "POST /api/cards/{cardId}/deposit-addresses",
+              "GET /api/cards/funding-details/{customerId}",
+              "POST /api/cards/encryption-key",
               "POST /api/cards/{cardId}/simulate-webhook",
-              "GET /api/customers/{customerId}/cards"
+              {
+                "group": "Card KYC",
+                "icon": "user-shield",
+                "pages": [
+                  "POST /api/cards/kyc",
+                  "GET /api/cards/kyc/{customerId}",
+                  "GET /api/cards/kyc/customer",
+                  "GET /api/cards/kyc/occupations",
+                  "GET /api/cards/kyc/industries",
+                  "POST /api/cards/kyc/corporate",
+                  "GET /api/cards/kyc/corporate/{customerId}",
+                  "POST /api/cards/kyc/corporate/{customerId}/cardholders",
+                  "POST /api/cards/kyc/{customerId}/simulate-webhook"
+                ]
+              },
+              {
+                "group": "Deprecated",
+                "icon": "box-archive",
+                "pages": [
+                  "POST /api/cards/lite",
+                  "GET /api/customers/{customerId}/cards",
+                  "GET /api/cards/{cardId}/details",
+                  "POST /api/cards/{cardId}/freeze",
+                  "POST /api/cards/{cardId}/unfreeze",
+                  "POST /api/cards/{cardId}/fund",
+                  "POST /api/cards/{cardId}/withdraw",
+                  "POST /api/cards/{cardId}/terminate",
+                  "PUT /api/cards/{cardId}/spending-limits"
+                ]
+              }
             ]
           }
         ],

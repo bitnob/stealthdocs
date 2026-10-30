@@ -8018,7 +8018,10 @@
         "summary": "List crypto addresses",
         "tags": [
           "Addresses"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/addresses/list-addresses"
+        }
       },
       "post": {
         "description": "Mints a new deposit address on a chain. It never returns an existing address (except on Stellar, which uses one memo-routed address per organisation); a repeated reference is 409. With customer_id or customer_email the address belongs to a customer, which needs the customers and customer_addresses switches (403 FEATURE_NOT_ENABLED); customer_email finds or creates the customer.",
@@ -8464,7 +8467,10 @@
         "summary": "Generate a crypto address",
         "tags": [
           "Addresses"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/addresses/generate-address"
+        }
       }
     },
     "/api/addresses/supported-chains": {
@@ -8612,7 +8618,10 @@
         "summary": "List supported chains",
         "tags": [
           "Addresses"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/addresses/supported-chains"
+        }
       }
     },
     "/api/addresses/validate": {
@@ -8805,7 +8814,10 @@
         "summary": "Validate a crypto address",
         "tags": [
           "Addresses"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/addresses/validate-address"
+        }
       }
     },
     "/api/addresses/{id}": {
@@ -9026,7 +9038,10 @@
         "summary": "Get a crypto address",
         "tags": [
           "Addresses"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/addresses/get-address-by-id"
+        }
       }
     },
     "/api/balances": {
@@ -9195,7 +9210,10 @@
         "summary": "List balances",
         "tags": [
           "Balances"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/balances/list-balances"
+        }
       }
     },
     "/api/balances/{currency}": {
@@ -9424,7 +9442,10 @@
         "summary": "Get a balance by currency",
         "tags": [
           "Balances"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/balances/get-balance-by-currency"
+        }
       }
     },
     "/api/banks/{countryCode}": {
@@ -9764,7 +9785,10 @@
         "summary": "List beneficiaries",
         "tags": [
           "Beneficiaries"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/beneficiaries/list-beneficiaries"
+        }
       },
       "post": {
         "description": "Saves a crypto or bank beneficiary for your organisation. A crypto beneficiary needs wallet_address, currency and network, and the address must match the network's format. A bank beneficiary needs a destination with at least account_number, account_name and bank_code; send it as a JSON object (a JSON-encoded string is still accepted). If an identical beneficiary already exists, that one is returned with 201 instead of creating a duplicate.",
@@ -10034,7 +10058,10 @@
         "summary": "Create a beneficiary",
         "tags": [
           "Beneficiaries"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/beneficiaries/create-beneficiary"
+        }
       }
     },
     "/api/beneficiaries/{beneficiaryId}": {
@@ -10339,7 +10366,10 @@
         "summary": "Get a beneficiary",
         "tags": [
           "Beneficiaries"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/beneficiaries/get-beneficiary"
+        }
       },
       "put": {
         "description": "Updates the fields sent; the rest are kept. The result is validated like a create, so a bank destination must still carry account_number, account_name and bank_code.",
@@ -10556,7 +10586,10 @@
         "summary": "Update a beneficiary",
         "tags": [
           "Beneficiaries"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/beneficiaries/update-beneficiary"
+        }
       }
     },
     "/api/cards": {
@@ -11180,7 +11213,10 @@
         "summary": "List cards",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/list-cards"
+        }
       },
       "post": {
         "description": "Issues a card for an existing customer (customer_id) or an inline customer. card_program picks the issuer: prepaid cards are Miden cards and can be funded at creation (amount, micro-units, $2 to $2,500, debited from the company balance with the creation fee); collateral and collateral_business are Rain cards, which take no initial funding and need the customer approved by card KYC first. A Rain card takes one spending limit. The card comes back with status pending and created_status processing while the issuer provisions it; the card.created webhook follows. Needs an active org and the virtual_cards and card_creation_enabled features; a card for anyone other than the company's own team members also needs the customers and customer_cards switches. reference is unique per company.",
@@ -11777,7 +11813,10 @@
         "summary": "Create a card",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/create-card"
+        }
       }
     },
     "/api/cards/encryption-key": {
@@ -12699,7 +12738,10 @@
         "summary": "Start individual card KYC",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/card-kyc"
+        }
       }
     },
     "/api/cards/kyc/corporate": {
@@ -14958,7 +15000,10 @@
         "summary": "Create a lite card",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/create-lite-card"
+        }
       }
     },
     "/api/cards/team-members": {
@@ -15897,7 +15942,10 @@
         "summary": "List card transactions",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/list-all-card-transactions"
+        }
       }
     },
     "/api/cards/{cardId}": {
@@ -16186,7 +16234,10 @@
         "summary": "Terminate a card",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/terminate-card"
+        }
       },
       "get": {
         "description": "Returns one card with its live balance breakdown and current-month top-up and spend aggregates.",
@@ -16378,7 +16429,10 @@
         "summary": "Get a card",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/get-card"
+        }
       }
     },
     "/api/cards/{cardId}/balance": {
@@ -17148,7 +17202,10 @@
         "summary": "Fund or withdraw from a card",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/fund-or-withdraw-balance"
+        }
       }
     },
     "/api/cards/{cardId}/contact": {
@@ -17439,7 +17496,10 @@
         "summary": "Update cardholder contact",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/update-card-contact"
+        }
       }
     },
     "/api/cards/{cardId}/deposit-addresses": {
@@ -19387,7 +19447,10 @@
         "summary": "Reveal card details",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/get-secure-card-details"
+        }
       }
     },
     "/api/cards/{cardId}/simulate-webhook": {
@@ -19582,7 +19645,10 @@
         "summary": "Simulate a card webhook",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/simulate-card-webhook-sandbox"
+        }
       }
     },
     "/api/cards/{cardId}/spend-limits": {
@@ -19867,7 +19933,10 @@
         "summary": "Update spending limits",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/update-spend-limits"
+        }
       }
     },
     "/api/cards/{cardId}/spending-limits": {
@@ -20636,7 +20705,10 @@
         "summary": "Freeze or unfreeze a card",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/freeze-or-unfreeze"
+        }
       }
     },
     "/api/cards/{cardId}/terminate": {
@@ -21378,7 +21450,10 @@
         "summary": "List a card's transactions",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/list-card-transactions-by-card"
+        }
       }
     },
     "/api/cards/{cardId}/transactions/{transactionId}": {
@@ -21553,7 +21628,10 @@
         "summary": "Get a card transaction",
         "tags": [
           "Cards"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/get-single-card-transaction"
+        }
       }
     },
     "/api/cards/{cardId}/unfreeze": {
@@ -22994,7 +23072,10 @@
         "summary": "List customers",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/customers/list-customers"
+        }
       },
       "post": {
         "description": "Creates a customer for the authenticated organisation. Needs the customers switch (403 FEATURE_NOT_ENABLED) and, on live, an active organisation (403 ORG_NOT_ACTIVE). If a customer with the same email, phone number or ID document already exists in the organisation, that customer is returned (201) instead of a new one, so a retried create is safe. A country on the compliance block list is refused with 403 COMPLIANCE_CHECK_FAILED.",
@@ -23461,7 +23542,10 @@
         "summary": "Create a customer",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/customers/create-customer"
+        }
       }
     },
     "/api/customers/countries": {
@@ -23592,7 +23676,10 @@
         "summary": "List supported countries",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/customers/list-countries"
+        }
       }
     },
     "/api/customers/countries/{countryCode}/states": {
@@ -23771,7 +23858,10 @@
         "summary": "List states for a country",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/customers/list-states-for-country"
+        }
       }
     },
     "/api/customers/{customerId}": {
@@ -24215,7 +24305,10 @@
         "summary": "Get a customer",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/customers/get-customer"
+        }
       },
       "put": {
         "description": "Updates the supplied fields of a customer; omitted fields are left unchanged. Needs the customers switch (403 FEATURE_NOT_ENABLED) unless the customer is the organisation's own team member, and an active organisation on live (403 ORG_NOT_ACTIVE). An email, phone or ID document already held by another active customer is refused with 400. The onboarding quality checks of create are not re-run.",
@@ -24589,7 +24682,10 @@
         "summary": "Update a customer",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/customers/update-customer"
+        }
       }
     },
     "/api/customers/{customerId}/cards": {
@@ -24810,7 +24906,10 @@
         "summary": "List a customer's cards",
         "tags": [
           "Customers"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/cards/get-cards-by-customer"
+        }
       }
     },
     "/api/exchange-rates": {
@@ -25077,7 +25176,10 @@
         "summary": "Get exchange rates",
         "tags": [
           "Exchange rates"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/exchange-rates/get-single-pair-rate"
+        }
       }
     },
     "/api/exchange-rates/all": {
@@ -26006,7 +26108,10 @@
         "summary": "Convert an amount",
         "tags": [
           "Exchange rates"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/exchange-rates/convert-amount"
+        }
       },
       "post": {
         "deprecated": true,
@@ -26474,7 +26579,10 @@
         "summary": "Decode a BOLT11 invoice",
         "tags": [
           "Lightning"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/lightning/decode-bolt11"
+        }
       }
     },
     "/api/lightning/invoices": {
@@ -26663,7 +26771,10 @@
         "summary": "List invoices",
         "tags": [
           "Lightning"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/lightning/list-invoices"
+        }
       },
       "post": {
         "description": "Creates a BOLT11 invoice to receive a payment. amount is in sats (1 to 20,000,000); expiry is in seconds (default 86400). reference is the idempotency key: reusing it returns the existing invoice, whatever its status, with 201. When customer_id is set the customers and customer_lightning products must be enabled. auto_settle is sandbox only; sent with a live key it is refused with 422.",
@@ -27002,7 +27113,10 @@
         "summary": "Create an invoice",
         "tags": [
           "Lightning"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/lightning/create-invoice"
+        }
       }
     },
     "/api/lightning/invoices/{id}": {
@@ -27217,7 +27331,10 @@
         "summary": "Get an invoice",
         "tags": [
           "Lightning"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/lightning/get-invoice"
+        }
       }
     },
     "/api/lightning/invoices/{id}/simulate-payment": {
@@ -27955,7 +28072,10 @@
         "summary": "Pay an invoice",
         "tags": [
           "Lightning"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/lightning/send-payment"
+        }
       }
     },
     "/api/lightning/payments/initiate": {
@@ -29120,7 +29240,10 @@
         "summary": "Preview a payment",
         "tags": [
           "Lightning"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/lightning/preview-payment"
+        }
       }
     },
     "/api/lnurl/addresses": {
@@ -33360,7 +33483,10 @@
         "summary": "List payouts",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/list-payouts"
+        }
       }
     },
     "/api/payouts/account-lookup": {
@@ -33626,7 +33752,10 @@
         "summary": "Look up a bank or mobile money account",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/account-lookup"
+        }
       }
     },
     "/api/payouts/banks/{countryCode}": {
@@ -33801,7 +33930,10 @@
         "summary": "List banks for a country",
         "tags": [
           "Banks"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/banks-by-country"
+        }
       }
     },
     "/api/payouts/beneficiary-lookup": {
@@ -34192,7 +34324,10 @@
         "summary": "Get payout limits",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/payout-limits"
+        }
       }
     },
     "/api/payouts/quotes": {
@@ -34952,7 +35087,10 @@
         "summary": "Create a payout quote",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/create-quote"
+        }
       }
     },
     "/api/payouts/quotes/{quoteId}": {
@@ -36820,7 +36958,10 @@
         "summary": "List payout countries",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/supported-countries"
+        }
       }
     },
     "/api/payouts/supported-countries/{countryCode}/requirements": {
@@ -37254,7 +37395,10 @@
         "summary": "Get a country's beneficiary requirements",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/country-requirements"
+        }
       }
     },
     "/api/payouts/{id}": {
@@ -37504,7 +37648,10 @@
         "summary": "Get a payout",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/get-payout"
+        }
       }
     },
     "/api/payouts/{quoteId}/finalize": {
@@ -37955,7 +38102,10 @@
         "summary": "Finalize a payout",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/finalize-payout"
+        }
       }
     },
     "/api/payouts/{quoteId}/initialize": {
@@ -38859,7 +39009,10 @@
         "summary": "Initialize a payout",
         "tags": [
           "Payouts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/payouts/initialize-payout"
+        }
       }
     },
     "/api/stablecoins/supported-chains": {
@@ -39169,7 +39322,10 @@
         "summary": "List trade orders",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/list-orders"
+        }
       },
       "post": {
         "description": "Submits a market order for a currency pair; side is relative to the base currency and quantity is always an amount of base. Crypto-to-crypto pairs (BTC, USDT, USDC) trade on the trading engine and return its fills and, with a quote_id, how much of the quote was used. Pairs where exactly one side is NGN and the other is BTC, USDT or USDC settle as an internal conversion and return the same order shape with no fills: with a quote_id from POST /api/trading/quotes the order fills at the locked price (the quote must be unexpired, unused, for the same pair and side, and its rate fresh; BTC quotes are also refused when the market moved too far since); without one a quote is taken and filled at once, and reference is then required. For NGN pairs reference (or else the quote id) is the idempotency key: repeating it returns the existing order with 201 and moves nothing. The order id of an NGN order is its conversion id. Requires an active organisation.",
@@ -39832,7 +39988,10 @@
         "summary": "Submit a trade order",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/submit-order"
+        }
       }
     },
     "/api/trading/orders/{id}": {
@@ -39986,7 +40145,10 @@
         "summary": "Cancel a trade order",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/cancel-order"
+        }
       },
       "get": {
         "description": "Returns one order by id. If the trading engine does not know the id, it is looked up as an NGN conversion and returned in the order shape (side and base currency are rebuilt from the conversion legs; quote_id, reference and updated_at are empty; status is pending until the conversion completes). An id the engine does not know is therefore answered by the conversion lookup, which needs a UUID.",
@@ -40199,7 +40361,10 @@
         "summary": "Get a trade order",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/get-order-by-id-or-reference"
+        }
       }
     },
     "/api/trading/prices": {
@@ -40389,7 +40554,10 @@
         "summary": "Get trading prices",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/list-all-prices"
+        }
       }
     },
     "/api/trading/quotes": {
@@ -40891,7 +41059,10 @@
         "summary": "Request a trade quote",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/create-quote"
+        }
       }
     },
     "/api/trading/quotes/{id}": {
@@ -41041,7 +41212,10 @@
         "summary": "Get quote status",
         "tags": [
           "Trading"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/trading/get-quote-status"
+        }
       }
     },
     "/api/trading/quotes/{id}/status": {
@@ -41550,7 +41724,10 @@
         "summary": "List transactions",
         "tags": [
           "Transactions"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/transactions/list-transactions"
+        }
       }
     },
     "/api/transactions/{id}": {
@@ -41724,7 +41901,10 @@
         "summary": "Get a transaction",
         "tags": [
           "Transactions"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/transactions/get-transaction-by-id"
+        }
       }
     },
     "/api/transfers/internal": {
@@ -42415,7 +42595,10 @@
         "summary": "List virtual accounts",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/list-virtual-accounts"
+        }
       },
       "post": {
         "description": "Opens an NGN bank account for an existing customer; all KYC and the account type come from the customer record, and a customer with id_type bvn has the BVN checked against their name and date of birth. Needs receive_fiat plus the customers and customer_virtual_accounts switches (403 FEATURE_NOT_ENABLED), and an active organisation on live (403 ORG_NOT_ACTIVE). reference is the idempotency key: a reference already used by the organisation returns that account (201) without opening another, and a concurrent create with the same reference is 409 DUPLICATE_REFERENCE. Deposits are delivered through the organisation's webhooks.",
@@ -42931,7 +43114,10 @@
         "summary": "Create a virtual account",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/create-virtual-account"
+        }
       }
     },
     "/api/virtual-accounts/supported-currencies": {
@@ -43067,7 +43253,10 @@
         "summary": "List supported currencies",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/supported-currencies"
+        }
       }
     },
     "/api/virtual-accounts/{id}": {
@@ -43289,7 +43478,10 @@
         "summary": "Get a virtual account",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/get-virtual-account"
+        }
       }
     },
     "/api/virtual-accounts/{id}/alias": {
@@ -43620,7 +43812,10 @@
         "summary": "Update a virtual account alias",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/update-account-alias"
+        }
       }
     },
     "/api/virtual-accounts/{id}/simulate-deposit": {
@@ -43928,7 +44123,10 @@
         "summary": "Simulate a deposit (sandbox)",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/simulate-deposit-sandbox"
+        }
       }
     },
     "/api/virtual-accounts/{id}/transactions": {
@@ -44168,7 +44366,10 @@
         "summary": "List virtual account transactions",
         "tags": [
           "Virtual accounts"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/virtual-accounts/get-account-transactions"
+        }
       }
     },
     "/api/wallets/transfers": {
@@ -45073,7 +45274,10 @@
         "summary": "Check your credentials",
         "tags": [
           "Authentication"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/identity/who-am-i"
+        }
       },
       "post": {
         "description": "Echoes the authenticated client and organisation. Accepts any method and any body, so it is the quickest way to test request signing. Not subject to the active-organisation check.\n\nSign each request with four headers:\n\n- `X-Auth-Client`: your client id.\n- `X-Auth-Timestamp`: the current Unix time in seconds; refused when more than 5 minutes from the server clock.\n- `X-Auth-Nonce`: 8 to 128 characters, new for every request.\n- `X-Auth-Signature`: lowercase hex HMAC-SHA256, keyed with your client secret, of `client_id:timestamp:nonce:body`, where body is the raw request body exactly as sent (empty for a GET).\n\nFor example, a GET signed at 2026-10-30T09:15:02Z:\n\n```\nGET /api/whoami\nX-Auth-Client: 019a3b5c-2b3c-7d4e-9f50-6b7c8d9e0f12\nX-Auth-Timestamp: 1793351702\nX-Auth-Nonce: 7f3c9a1e5b2d4f60\nX-Auth-Signature: hex(HMAC_SHA256(secret, \"019a3b5c-2b3c-7d4e-9f50-6b7c8d9e0f12:1793351702:7f3c9a1e5b2d4f60:\"))\n```\n\nSecret mode sends `X-Auth-Client` and `X-Auth-Secret` (the secret itself) instead and needs no signature; auth_method in the response says which mode was used.",
@@ -45947,7 +46151,10 @@
         "summary": "Send crypto to an address",
         "tags": [
           "Withdrawals"
-        ]
+        ],
+        "x-mint": {
+          "href": "/api-reference/withdrawals/initiate-withdrawal"
+        }
       }
     }
   },
