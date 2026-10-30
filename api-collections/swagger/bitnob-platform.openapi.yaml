@@ -3196,16 +3196,46 @@ info:
 
     ## Rate limits
 
-    Every response carries the current rate-limit state:
+    Wallet/business API and node RPC traffic have **independent rate-limit budgets**,
+    even when they use the same API key and organization:
+
+    | Traffic | Limit |
+    |---|---|
+    | Wallet and other non-RPC API requests | A per-key requests-per-minute allowance plus a configured burst, and a shared organization per-minute allowance |
+    | **POST /rpc/{chain_network}**, including the **/v1/rpc/{chain_network}** alias | A shared organization requests-per-second limit, counted per JSON-RPC call |
+
+    Authenticated RPC requests do not consume your wallet API quota, and wallet
+    requests do not consume your RPC limit. The RPC limit is shared across all keys
+    and chains in your organization; creating another key does not increase it.
+
+    A JSON-RPC batch counts each call in the batch, not as a single request — batching
+    many calls into one HTTP request consumes the limit per call. On live there is
+    currently no additional per-day volume cap; sandbox applies a low per-second and
+    per-day default so it cannot be used as production infrastructure. An RPC 429
+    carries **Retry-After**.
+
+    Rate-limited responses expose the current state:
 
     - **X-RateLimit-Limit** — requests permitted in the current window.
     - **X-RateLimit-Remaining** — requests still available in this window.
     - **X-RateLimit-Reset** — Unix time (seconds) when the window resets.
-    - **X-RateLimit-Scope** — the scope the limit was applied at.
+    - **X-RateLimit-Scope** — **key** for authenticated non-RPC traffic, or **ip**
+      for unauthenticated/failed-auth traffic. (RPC uses a separate per-second limit
+      and returns only Retry-After on 429.)
+
+    For non-RPC traffic, **X-Org-RateLimit-Limit**, **X-Org-RateLimit-Remaining**,
+    and **X-Org-RateLimit-Reset** describe your organization-wide allowance shared
+    across keys; the unprefixed headers report your per-key allowance or the
+    organization allowance, whichever has less remaining. RPC proxy traffic is limited
+    separately and returns only **Retry-After** on 429 (no X-RateLimit headers).
 
     Read these proactively and slow down before you are throttled. When a limit is
     exceeded the API responds **429** with a **Retry-After** header (seconds to
     wait); retry only after that delay.
+
+    These are request-quota boundaries, not dedicated infrastructure: CPU, database
+    and upstream provider capacity may still be shared. Authentication, permissions,
+    IP restrictions, signatures and nonce replay protection are unchanged.
 
     ## Idempotency
 
@@ -3520,7 +3550,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -3627,7 +3657,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -3724,7 +3754,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -3827,7 +3857,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -3933,7 +3963,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4051,7 +4081,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4170,7 +4200,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4289,7 +4319,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4410,7 +4440,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4557,7 +4587,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4660,7 +4690,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4795,7 +4825,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -4948,7 +4978,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5068,7 +5098,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5184,7 +5214,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5317,7 +5347,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5470,7 +5500,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5595,7 +5625,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5722,7 +5752,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5829,7 +5859,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -5954,7 +5984,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6076,7 +6106,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6187,7 +6217,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6299,7 +6329,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6422,7 +6452,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6524,7 +6554,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6699,7 +6729,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6830,7 +6860,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -6953,7 +6983,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7073,7 +7103,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7163,7 +7193,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7273,7 +7303,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7376,7 +7406,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7508,7 +7538,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7640,7 +7670,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7769,7 +7799,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -7929,7 +7959,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8058,7 +8088,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8174,7 +8204,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8303,7 +8333,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8420,7 +8450,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8481,7 +8511,7 @@ paths:
       - Policies
   /rpc/{chain_network}:
     post:
-      description: Proxies a JSON-RPC 2.0 call to the specified blockchain node. Use a chain-network path like eth-mainnet or bsc-mainnet. The request body and response body are passed through verbatim.
+      description: Proxies a JSON-RPC 2.0 call to the specified blockchain node. Use a chain-network path like eth-mainnet or bsc-mainnet. RPC has an independent organization-wide per-second request limit, counted per JSON-RPC call so a batch counts each element, shared across your keys and chains; it does not consume your wallet API quota. HTTP 429 includes Retry-After. The request body and response body are passed through verbatim.
       operationId: postRpcByChain_network
       parameters:
       - description: Target chain and network, e.g. ethereum-mainnet or bitcoin-testnet
@@ -8541,7 +8571,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8671,7 +8701,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8798,7 +8828,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -8910,7 +8940,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9045,7 +9075,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9215,7 +9245,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9328,7 +9358,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9484,7 +9514,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9586,7 +9616,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9696,7 +9726,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9805,7 +9835,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -9919,7 +9949,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10045,7 +10075,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10160,7 +10190,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10368,7 +10398,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10511,7 +10541,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10576,7 +10606,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10716,7 +10746,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10845,7 +10875,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -10961,7 +10991,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11104,7 +11134,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11201,7 +11231,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11322,7 +11352,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11440,7 +11470,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11614,7 +11644,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11735,7 +11765,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -11912,7 +11942,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12031,7 +12061,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12165,7 +12195,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12314,7 +12344,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12436,7 +12466,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12554,7 +12584,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12670,7 +12700,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12772,7 +12802,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -12908,7 +12938,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13107,7 +13137,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13243,7 +13273,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13352,7 +13382,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13465,7 +13495,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13615,7 +13645,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13717,7 +13747,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13827,7 +13857,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -13936,7 +13966,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -14046,7 +14076,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -14168,7 +14198,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
@@ -14283,7 +14313,7 @@ paths:
               schema:
                 type: integer
             X-RateLimit-Scope:
-              description: Scope the rate limit was applied at.
+              description: 'Scope the rate limit was applied at: key for authenticated API traffic, or ip for unauthenticated/failed-auth traffic. RPC proxy traffic is limited separately (per second, per organization) and is not bucketed here.'
               schema:
                 type: string
             X-Request-Id:
