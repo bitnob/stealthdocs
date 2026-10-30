@@ -1,9 +1,9 @@
 # Local changes layered on the published v2 spec until engineering ships them.
 # spec-sync applies this filter to every fetched copy, so keep it idempotent.
 #
-# The published spec has one apiKey scheme for X-Auth-Signature, which makes the
-# playground ask for a signature. These two schemes ask for the client id and
-# the sandbox secret instead, and test-playground.js signs the request with them.
+# The published spec has apiKey schemes for X-Auth-Signature and X-Auth-Secret,
+# which make the playground ask for a signature or a raw secret. These two
+# schemes ask for the client id and the sandbox secret instead, and test-playground.js signs the request with them.
 # The secret header is removed in the browser and never sent.
 #
 # Most responses in the published spec carry an example but no schema, so the
@@ -32,7 +32,7 @@ def infer_schema:
   else {"nullable": true}
   end;
 
-.components.securitySchemes |= (del(.BitnobHmacAuth) + {
+.components.securitySchemes |= (del(.BitnobHmacAuth, .hmac, .secret) + {
   "BitnobClientId": {
     "type": "apiKey",
     "in": "header",

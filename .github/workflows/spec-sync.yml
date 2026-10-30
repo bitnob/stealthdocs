@@ -15,7 +15,7 @@ env:
   SPEC_BASE_URL: ${{ vars.SPEC_BASE_URL || 'https://bitnob.dev/api-collections/swagger' }}
   # Comma-separated. Each entry is a filename fetched from SPEC_BASE_URL, or
   # name=url to fetch that file from its own address.
-  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json,bitnob-platform.openapi.json=https://api.platform.bitnob.com/openapi.json' }}
+  SPEC_FILES: ${{ vars.SPEC_FILES || 'bitnob-api-v2.openapi.json=https://api.steyjinn.top/api/openapi.json,bitnob-platform.openapi.json=https://api.platform.bitnob.com/openapi.json' }}
   PYYAML_VERSION: "6.0.3"
 
 jobs:
